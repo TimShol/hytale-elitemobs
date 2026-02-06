@@ -1,15 +1,36 @@
 # EliteMobs
 
-EliteMobs makes combat more dangerous, rewarding, and dynamic by introducing tiered variants of mobs with special abilities, enhanced stats, visual feedback, and improved loot. It is highly configurable and designed for both casual servers and hardcore experiences, while remaining compatible with other mods.
+## Tiered elites that change combat, loot, and progression
 
-Currently enhancing 162 NPC types (more to come).
+EliteMobs transforms standard NPCs into tiered elites with stronger stats, distinct visuals, and improved rewards. It is configurable, supports runtime reloads, and is built for both casual and hardcore servers.
 
-## Features
+## Feature Highlights
 
-- **Elite abilities**: Mobs gain special abilities such as leaps, resistances, and conditional effects. Scaling per tier makes higher-tier elites significantly more dangerous.
-- **Enhanced combat feedback**: Combat text overlay with clearer damage numbers.
-- **Enhanced loot**: Tiered loot tables, armor and weapon equips by tier, and per-item drop chances.
-- **Runtime config reload**: Update configs without restarting the server.
+### Combat
+
+- Tiered health and damage scaling
+- Ability mechanics (leaps, heals, summons)
+- Clearer damage numbers for readability
+
+### Loot & Gear
+
+- Tiered loot tables and extra drops
+- Rarity‑based equipment rolls
+- Chance to drop equipped items
+
+### Identity
+
+- Tiered nameplates and family prefixes
+- Optional model scaling per tier
+- Distinct elite presence in the world
+
+## Quick Start
+
+```text
+1. Install EliteMobs
+2. Start the server to generate config
+3. Edit YAML files and reload
+```
 
 ## Documentation
 
@@ -17,55 +38,46 @@ Docs live in `docs/` and are built with Mintlify.
 
 ## Installation
 
-1. Download the correct EliteMobs `.jar`.
+1. Download the EliteMobs `.jar`.
 2. Place it in your server `mods` folder.
-3. Start the server. Config files will be generated automatically.
+3. Start the server to generate configuration files.
 
 ## Configuration
 
-Almost everything is configurable under:
+Config files live under:
 
-`%APPDATA%\\Hytale\\UserData\\Saves\\<save name>\\mods\\EliteMobs`
+```
+%APPDATA%\Hytale\UserData\Saves\<save name>\mods\EliteMobs
+```
 
-The `Server/` folder is an asset pack generated at runtime from the `.yml` files.
+Key files:
+- `main.yml` global systems, spawning, scaling
+- `mobs.yml` NPC rules and weapon overrides
+- `abilities.yml` abilities and gating
+- `drops.yml` loot rules
+- `visuals.yml` nameplates and scaling
 
 ## Runtime Reload
 
-`/elitemobs reload`
+```text
+/elitemobs reload
+```
 
-This reloads configuration files without restarting the server. Some changes that affect already-spawned mobs or generated assets may need a restart to fully apply.
+Reloads YAML configuration without restarting the server. Some changes may require a restart to affect existing elites.
 
 ## Uninstalling
 
-If you remove the mod, leftover NPCs will still have changed stats, equipment, and nameplates. Do **not** try to kill them. Instead:
+If you remove the mod, leftover elite NPCs can remain with modified stats and equipment. Do not kill them directly because it can crash the game. Use:
 
-`/npc clean --confirm`
+```text
+/npc clean --confirm
+```
 
-Repeat until all remaining EliteMobs are removed.
-
-## Permissions
-
-- `elitemobs.reload` — allows runtime config reload.
+Repeat until all remaining elite NPCs are removed.
 
 ## Compatibility
 
-Designed to be compatible with any mod. For mods that scale damage, multipliers can stack and may impact balance.
-
-Recommended companion mod:
-- Perfect Parries
-
-## Roadmap
-
-- Advanced abilities with conditional triggers and combos
-- Advanced loot systems with better scaling and rare elite drops
-- Combat flow improvements (faster potion and food use)
-- Smarter difficulty scaling over time
-
-## Local Structure
-
-- `docs/` Mintlify documentation site
-- `Server/` generated templates and assets
-- `*.yml` core configuration files
+EliteMobs is designed to work with other mods. If you use RPG Leveling, install the EliteMobs RPG Leveling Compatibility mod for proper nameplate and tier integration.
 
 ## License
 
