@@ -77,14 +77,3 @@ Model:
 | `enableModelScaling` | Toggle size scaling on or off. | `true` |
 | `modelScaleMultiplierPerTier` | Scale multiplier per tier. `1.0` is vanilla size. | See above |
 | `modelScaleRandomVariance` | Random size offset to prevent identical-looking elites. `0.04` means +/-4%. | `0.04` |
-
-## Asset Generation
-
-Internal settings for the tiered asset file generation system. You generally do not need to change these.
-
-```yaml
-AssetGenerator:
-  tierSuffixes: ["Tier_1", "Tier_2", "Tier_3", "Tier_4", "Tier_5"]
-```
-
-These suffixes are appended to template asset filenames when generating per-tier variants.

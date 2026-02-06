@@ -51,16 +51,16 @@ charge_leap:
   knockbackForcePerTier: [0, 0, 0, 20, 26]
 ```
 
-| Setting | What it does |
-| :--- | :--- |
+| Setting | What it does                                                          |
+| :--- |:----------------------------------------------------------------------|
 | `minRange` / `maxRange` | The elite will only leap if the target is within this distance range. |
-| `faceTarget` | Whether the mob turns to face the player before leaping. |
-| `slamBaseDamagePerTier` | Flat damage dealt on impact for each tier. |
-| `applyForcePerTier` | Launch velocity force. Higher values mean faster, longer leaps. |
-| `slamRangePerTier` | Area-of-effect radius for the slam damage. |
-| `knockbackLiftPerTier` | Upward knockback applied to nearby players on landing. |
-| `knockbackPushAwayPerTier` | Horizontal knockback (negative values pull inward). |
-| `knockbackForcePerTier` | Overall knockback strength. |
+| `faceTarget` | Whether the mob turns to face the player before leaping.              |
+| `slamBaseDamagePerTier` | Flat damage dealt on impact for each tier.                            |
+| `applyForcePerTier` | Launch velocity force. Higher values mean faster, longer leaps.       |
+| `slamRangePerTier` | Area-of-effect radius for the slam damage.                            |
+| `knockbackLiftPerTier` | Upward knockback applied to nearby players on landing.                |
+| `knockbackPushAwayPerTier` | Horizontal knockback (positive values pull inward).                            |
+| `knockbackForcePerTier` | Overall knockback strength.                                           |
 
 ## Heal Potion
 
@@ -89,7 +89,7 @@ heal_potion:
 
 ## Undead Summon
 
-Allows undead elites (skeletons, zombies, wraiths) to summon reinforcement minions during combat. When the summoner dies, all its minions despawn.
+Allows undead type elites to summon reinforcement minions (skeleton archers, zombies, wraiths) during combat. When the summoner dies, all its minions despawn.
 
 ```yaml
 undead_summon:
