@@ -5,23 +5,23 @@ description: Common questions and quick answers.
 
 # FAQ
 
-## Why did my YAML file change after editing?
+## Why do YAML files change after editing?
 
-EliteMobs reconciles configs on boot. Defaults are the source of truth, and missing keys are re-added automatically. Keep edits minimal and avoid deleting whole sections.
+EliteMobs was built to reconcile configs on boot. Defaults are the source of truth, and missing keys are re-added automatically. Keep edits minimal and avoid deleting whole sections.
 
-## How do I make elites rarer?
+## How to make elites rarer?
 
 Lower the values in `Spawning.spawnChancePerTier` in `main.yml`, or disable specific environments in `environmentTierSpawns`.
 
-## How do I disable elites in a specific zone?
+## How to disable elites in a specific zone?
 
 Set `enabled: false` for that environment in `main.yml` under `environmentTierSpawns`.
 
-## How do I change elite names?
+## How to change elite names?
 
 Edit `visuals.yml` under `Nameplates.tierPrefixesByFamily` and `nameplatePrefixPerTier`.
 
-## How do I stop a specific NPC from becoming elite?
+## How to stop a specific NPC from becoming elite?
 
 Add or adjust a rule in `mobs.yml` using `matchExcludes`, or disable a specific rule with `enabled: false`.
 
