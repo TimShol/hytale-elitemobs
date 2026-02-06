@@ -1,20 +1,18 @@
 ---
-title: Visuals Configuration
-description: Customizing nameplates and model scaling in visuals.yml.
+title: Visuals
+description: Customizing nameplates, model scaling, and asset generation.
 ---
 
-`visuals.yml` controls the aesthetic presentation of EliteMobs.
+`visuals.yml` controls how elites look in the world. This includes their overhead nameplates, physical size, and the internal asset generation system.
 
 ## Nameplates
 
-Nameplates help players identify the threat level of an enemy from a distance.
+Nameplates are the overhead text labels that help players identify an elite's tier at a glance.
 
 ```yaml
 Nameplates:
   nameplatesEnabled: true
-  nameplateMode: RANKED_ROLE  # Shows "[• •] Rotting Zombie"
-  
-  # Visual indicators for Tiers 1-5
+  nameplateMode: RANKED_ROLE
   nameplatePrefixPerTier:
     - "[•]"
     - "[• •]"
@@ -23,30 +21,70 @@ Nameplates:
     - "[• • • • •]"
 ```
 
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `nameplatesEnabled` | Master toggle for all elite nameplates. | `true` |
+| `nameplateMode` | `RANKED_ROLE` shows the tier prefix and a themed name (e.g., "[• •] Rotting Zombie"). `SIMPLE` shows just the tier prefix. | `RANKED_ROLE` |
+| `nameplatePrefixPerTier` | The visual indicator prepended to the mob's name for each tier. | See above |
+| `nameplatesEnabledPerTier` | Toggle nameplates per tier individually. | All `true` |
+
+### Nameplate Filtering
+
+You can control which mobs get nameplates using include/exclude lists.
+
+```yaml
+Nameplates:
+  nameplateMustContainRoles: []
+  nameplateMustNotContainRoles: []
+```
+
+Leave `nameplateMustContainRoles` empty to allow all mobs. Add role name fragments to restrict nameplates to specific mob types. Use `nameplateMustNotContainRoles` to exclude specific mobs.
+
+### Family Prefixes
+
+Elites get themed name prefixes based on their mob family. A zombie might be called "Rotting" at Tier 1 and "Evolved" at Tier 5, while a skeleton could be "Broken" at Tier 1 and "Ascendant" at Tier 5.
+
+```yaml
+Nameplates:
+  tierPrefixesByFamily:
+    zombie: ["Rotting", "Ravenous", "Putrid", "Monstrous", "Evolved"]
+    skeleton: ["Broken", "Reforged", "Grim", "Deathbound", "Ascendant"]
+    goblin: ["Sneaky", "Cutthroat", "Brutal", "Overseer", "Overlord"]
+    void: ["Faded", "Shaded", "Umbral", "Abyssal", "Voidborn"]
+    default: ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
+```
+
+Each list must have exactly 5 entries (one per tier). The `default` entry is used for mob families not explicitly listed. You can add or customize families to match your server's theme.
+
 ## Model Scaling
 
-Makes higher-tier mobs physically larger.
+Makes higher-tier mobs physically larger so players can judge threat level by size.
 
 ```yaml
 Model:
   enableModelScaling: true
-  # Scale multipliers (1.0 = vanilla size)
   modelScaleMultiplierPerTier:
-    - 0.74 # Tier 1 (Smaller/Standard)
-    - 0.85
-    - 0.96
-    - 1.07
-    - 1.18 # Tier 5 (18% larger)
-    
-  # Random variance to prevent uniform clones
+    - 0.74  # Tier 1 — slightly smaller than normal
+    - 0.85  # Tier 2
+    - 0.96  # Tier 3 — near vanilla size
+    - 1.07  # Tier 4 — slightly larger
+    - 1.18  # Tier 5 — 18% larger than normal
   modelScaleRandomVariance: 0.04
 ```
 
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `enableModelScaling` | Toggle size scaling on or off. | `true` |
+| `modelScaleMultiplierPerTier` | Scale multiplier per tier. `1.0` is vanilla size. | See above |
+| `modelScaleRandomVariance` | Random size offset to prevent identical-looking elites. `0.04` means +/-4%. | `0.04` |
+
 ## Asset Generation
 
-Internal settings for generating tiered asset files. You generally do not need to touch this unless you are customizing the resource pack generation logic.
+Internal settings for the tiered asset file generation system. You generally do not need to change these.
 
 ```yaml
 AssetGenerator:
   tierSuffixes: ["Tier_1", "Tier_2", "Tier_3", "Tier_4", "Tier_5"]
 ```
+
+These suffixes are appended to template asset filenames when generating per-tier variants.

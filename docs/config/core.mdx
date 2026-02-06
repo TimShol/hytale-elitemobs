@@ -1,31 +1,33 @@
 ---
-title: Core Settings (core.yml)
-description: Global settings for spawning, diagnostics, reconciliation, and compatibility.
+title: Core Settings
+description: Global system settings for diagnostics, reconciliation, and compatibility.
 ---
 
-EliteMobs was built with global systems defined in `core.yml`. These settings affect how elites spawn, how the mod behaves during reloads, and diagnostic output.
+`core.yml` contains the global system settings that control how EliteMobs behaves behind the scenes. This includes debug logging, config reload behavior, and compatibility with other mods.
 
-## System
+## Config Version
 
 ```yaml
 System:
   configVersion: "1.1.0"
 ```
 
-This is auto-managed. You should not edit it.
+This is managed automatically by the mod. Do not edit this value. It is used internally to detect when configuration files need to be migrated after an update.
 
 ## Reconcile
 
-Reconcile updates existing elites after a config reload.
+When you reload the configuration with `/elitemobs reload`, existing elites in the world need to be updated to match the new settings. The reconcile system handles this.
 
 ```yaml
 Reconcile:
-  announceReconcile: true
   reconcileWindowTicks: 40
+  announceReconcile: true
 ```
 
-- `reconcileWindowTicks`: ticks to re-apply features to existing elites after reload. `0` disables.
-- `announceReconcile`: logs when reconcile starts and ends.
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `reconcileWindowTicks` | Number of game ticks to spend updating existing elites after a reload. Set to `0` to skip reconciliation entirely (existing elites keep their old stats until they despawn). | `40` |
+| `announceReconcile` | Logs a message in the server console when reconciliation starts and finishes. | `true` |
 
 ## Debug
 
@@ -35,25 +37,20 @@ Debug:
   debugMobRuleScanIntervalSeconds: 5
 ```
 
-Enables extra logs for spawn scans and ability decisions. The scan interval controls how often NPCs are evaluated against mob rules.
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `isDebugModeEnabled` | Enables detailed logging for spawn scans, ability decisions, and damage events. Turn this off in production to reduce log noise. | `true` |
+| `debugMobRuleScanIntervalSeconds` | How often (in seconds) the debug logger reports mob rule scan statistics. | `5` |
 
-## Compatibility Messages
+## Compatibility
 
 ```yaml
 Compat:
   showCompatJoinMessages: true
 ```
 
-Shows compatibility messages when players join, useful for identifying active integrations.
+When a player joins the server, EliteMobs can display a message if it detects compatible mods (like RPG Leveling). Set this to `false` to silence those messages.
 
-## Spawning
+## Related Files
 
-Spawning logic remains in `core.yml`. See [Spawning](/EliteMobs_spawning) for full details.
-
-## Health & Damage Scaling
-
-These have been moved to `stats.yml`.
-
-## Gear & Asset Generation
-
-Gear durability and catalogs have been moved to `gear.yml`. Asset generator naming has been moved to `visuals.yml`.
+Spawning settings have moved to their own file. See [Spawning](/config/spawning) for progression style, spawn chances, and zone rules.

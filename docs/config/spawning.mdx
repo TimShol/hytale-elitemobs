@@ -1,0 +1,122 @@
+---
+title: Spawning
+description: Control how, where, and when Elite mobs appear in your world.
+---
+
+`spawning.yml` is where you decide how Elite mobs enter your world. You can control the overall spawn rate, choose a progression style that fits your server, and fine-tune per-zone tier distributions.
+
+## Spawn Chance
+
+Every time a hostile NPC spawns in the world, EliteMobs rolls a dice to decide whether it becomes an Elite. This setting controls that chance.
+
+```yaml
+Spawning:
+  globalSpawnChance: 0.15
+```
+
+| Value | Meaning |
+| :--- | :--- |
+| `0.0` | No elites spawn at all. |
+| `0.15` | 15% of hostile mobs become Elites (default). |
+| `1.0` | Every hostile mob becomes an Elite. |
+
+**Tip:** On a fresh server, start with the default `0.15`. If the world feels too quiet, bump it up to `0.25`. If players are overwhelmed, try `0.08`.
+
+## Progression Style
+
+This is the most important setting in the file. It determines **how tier difficulty is distributed** across your world.
+
+```yaml
+Spawning:
+  progressionStyle: ENVIRONMENT
+```
+
+### ENVIRONMENT (Default)
+
+Tiers are tied to Hytale's built-in zone system. Early zones spawn weaker elites, late zones spawn stronger ones.
+
+- **Zone 1** (Emerald Grove): Mostly Tier 1-2, no Tier 4-5.
+- **Zone 2** (Howling Sands): Mix of Tier 1-3, rare Tier 4.
+- **Zone 3** (Borea): Tier 2-5, no Tier 1.
+- **Zone 4** (Devastated Lands): Tier 3-5 only, the hardest content.
+
+This is the recommended style for most servers because it naturally matches the game's built-in difficulty curve.
+
+### DISTANCE_FROM_SPAWN
+
+Difficulty increases the further players travel from world coordinates `(0, 0)`. This creates a smooth, radiating difficulty gradient.
+
+```yaml
+Spawning:
+  progressionStyle: DISTANCE_FROM_SPAWN
+  distancePerTier: 1000.0
+  distanceBonusInterval: 100.0
+  distanceHealthBonusPerInterval: 0.01
+  distanceDamageBonusPerInterval: 0.005
+  distanceHealthBonusCap: 0.5
+  distanceDamageBonusCap: 0.5
+```
+
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `distancePerTier` | Blocks of distance needed before the next tier unlocks. At 1000 blocks from spawn, Tier 2 starts appearing. At 2000, Tier 3, and so on. | `1000.0` |
+| `distanceBonusInterval` | Every this many blocks, a small stat bonus is added on top of the tier multiplier. | `100.0` |
+| `distanceHealthBonusPerInterval` | Health bonus per interval. `0.01` means +1% extra health every 100 blocks. | `0.01` |
+| `distanceDamageBonusPerInterval` | Damage bonus per interval. `0.005` means +0.5% extra damage every 100 blocks. | `0.005` |
+| `distanceHealthBonusCap` | Maximum health bonus from distance. `0.5` means the distance bonus can add at most +50% health on top of the tier multiplier. | `0.5` |
+| `distanceDamageBonusCap` | Maximum damage bonus from distance. | `0.5` |
+
+This style works well with custom world generation mods or maps that don't use Hytale's standard zone tags.
+
+### NONE
+
+Any tier can spawn anywhere. Tier distribution is completely random based on the global weights. Good for hardcore servers or arenas.
+
+```yaml
+Spawning:
+  progressionStyle: NONE
+```
+
+## Tier Weights
+
+When using `NONE` or as a fallback, these weights control how likely each tier is to be chosen.
+
+```yaml
+Spawning:
+  spawnChancePerTier:
+    - 0.46  # Tier 1 — 46% chance
+    - 0.28  # Tier 2 — 28% chance
+    - 0.16  # Tier 3 — 16% chance
+    - 0.08  # Tier 4 — 8% chance
+    - 0.04  # Tier 5 — 4% chance
+```
+
+The values should add up to `1.0`. Higher values mean that tier appears more often.
+
+## Environment Tier Rules
+
+When using `ENVIRONMENT` progression, you can override the tier distribution for specific zones and sub-zones.
+
+```yaml
+Spawning:
+  enableEnvironmentTierSpawns: true
+  environmentTierSpawns:
+    Env_Zone1:
+      enabled: true
+      spawnChancePerTier: [0.60, 0.25, 0.15, 0.00, 0.00]
+    Env_Zone2:
+      enabled: true
+      spawnChancePerTier: [0.50, 0.25, 0.18, 0.07, 0.00]
+    Env_Zone3:
+      enabled: true
+      spawnChancePerTier: [0.00, 0.32, 0.28, 0.22, 0.18]
+    Env_Zone4:
+      enabled: true
+      spawnChancePerTier: [0.00, 0.00, 0.40, 0.33, 0.27]
+```
+
+Each key is a Hytale environment identifier. The mod ships with rules for every known sub-zone (caves, dungeons, forests, etc.). If a mob spawns in a zone that has no matching rule, the `default` entry is used.
+
+You can add your own rules for custom environments by adding a new key that matches the environment ID.
+
+**Tip:** Set `enabled: false` on any zone rule to prevent elites from spawning there entirely. This is useful for safe zones or player towns.

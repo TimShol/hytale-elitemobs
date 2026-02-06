@@ -7,48 +7,59 @@ description: Understanding the core systems of EliteMobs.
 
 EliteMobs classifies enemies into 5 tiers of power. These tiers determine an entity's health, damage output, equipment quality, and ability access.
 
-| Tier | Name | Color Indicator | Challenge Level |
+| Tier | Name | Indicator | Challenge Level |
 | :--- | :--- | :--- | :--- |
 | **1** | Common | `[•]` | Baseline challenge, slightly stronger than vanilla. |
-| **2** | Uncommon | `[• •]` | Noticeable threat, often has basic abilities. |
-| **3** | Rare | `[• • •]` | dangerous, requires decent gear. |
-| **4** | Epic | `[• • • •]` | Mini-boss difficulty, high chance of ability use. |
-| **5** | Legendary | `[• • • • •]` | Boss-level threat, best loot, maximum size. |
+| **2** | Uncommon | `[• •]` | Noticeable threat, better equipped. |
+| **3** | Rare | `[• • •]` | Dangerous, requires decent gear to fight. |
+| **4** | Epic | `[• • • •]` | Mini-boss difficulty, can use combat abilities. |
+| **5** | Legendary | `[• • • • •]` | Boss-level threat, best loot, maximum size, full ability access. |
 
 ## Progression Styles
 
-The mod decides *where* high-tier mobs spawn based on the `progressionStyle` setting in `core.yml`.
+The mod decides *where* high-tier mobs spawn based on the `progressionStyle` setting in `spawning.yml`.
 
 ### 1. Environment (Default)
 Tiers are tied to Hytale's zone difficulty.
-*   **Zone 1 (Green):** Mostly T1/T2.
-*   **Zone 2 (Yellow):** Mix of T2/T3.
-*   **Zone 3 (Red):** Heavy on T3/T4.
-*   **Zone 4 (Devastated):** Dangerous T4/T5 spawns.
+*   **Zone 1 (Emerald Grove):** Mostly Tier 1-2, no Tier 4-5.
+*   **Zone 2 (Howling Sands):** Mix of Tier 1-3, rare Tier 4.
+*   **Zone 3 (Borea):** Tier 2-5, no Tier 1.
+*   **Zone 4 (Devastated Lands):** Tier 3-5 only, the hardest content.
 
 ### 2. Distance from Spawn
 Difficulty scales linearly as you travel further from coordinates `(0,0)`.
-*   **Near Spawn:** Safe, mostly vanilla or T1.
+*   **Near Spawn:** Safe, mostly vanilla or Tier 1.
 *   **Deep Wilderness:** Tiers gradually increase every ~1000 blocks (configurable).
 *   **Bonus Stats:** Mobs gain small health/damage bonuses every ~100 blocks between tier jumps, creating a smooth difficulty curve.
 
 ### 3. None (Random)
-A truly chaotic mode where any tier can spawn anywhere based on global weights. Good for hardcore survival servers.
+Any tier can spawn anywhere based on global weights. Good for hardcore survival servers or arena maps.
 
 ## Combat Mechanics
 
 ### Abilities
 Elites aren't just stat sponges. Depending on their tier and type, they can:
-*   **Leap:** Close the distance instantly with a physics-based slam.
-*   **Heal:** Drink potions during combat if not interrupted.
-*   **Summon:** Call reinforcements (e.g., Skeleton Archers) to overwhelm players.
+*   **Charge Leap:** Launch themselves at a player with a physics-based slam attack.
+*   **Heal:** Drink potions during combat. Players can interrupt the heal by dealing damage.
+*   **Summon:** Call reinforcement minions (e.g., Skeleton Archers) to overwhelm players.
+
+Abilities are only available to Tier 4 and 5 elites by default. See [Abilities](/config/abilities) for full configuration.
 
 ### Scaling
-*   **Health:** Multiplied per tier (e.g., Tier 5 might have 2.6x base health).
+*   **Health:** Multiplied per tier (e.g., Tier 5 has +260% base health).
 *   **Damage:** Multiplied per tier (e.g., Tier 5 deals 2.6x damage).
 *   **Size:** Higher tiers are physically larger (up to +18% scale).
 
+See [Stats](/config/stats) for tuning these values.
+
+## Equipment
+
+Elites spawn with tier-appropriate gear. Higher tiers get rarer weapons and more armor pieces. A Tier 1 common goblin might have a crude wooden weapon, while a Tier 5 legendary skeleton could wield an adamantite longsword with full armor.
+
+See [Gear](/config/gear) for equipment catalogs and rarity rules.
+
 ## Loot System
-Elites drop vanilla loot with multipliers (e.g., 4x drops) and have a chance to drop their equipped gear.
-*   **Equipment:** Weapons and armor roll with rarities (Common to Legendary) matching the mob's tier.
-*   **Custom Drops:** You can configure rare items (essences, gems) to drop only from specific tiers.
+
+Elites drop vanilla loot with multipliers (e.g., 6x drops from Tier 5) and have a chance to drop their equipped gear. Custom drop tables add crafting materials, potions, and gems that scale with tier difficulty.
+
+See [Loot](/config/loot) for drop rates and custom drop tables.

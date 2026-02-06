@@ -1,32 +1,67 @@
 ---
-title: Mobs Configuration
-description: Overriding specific NPC behaviors in mobs.yml.
+title: Mobs
+description: Defining per-mob rules for equipment and elite eligibility.
 ---
 
-`mobs.yml` allows you to define specific rules for individual NPC types (e.g., "Goblin Duke" vs "Goblin Miner").
+`mobs.yml` lets you define specific rules for individual NPC types. This is where you control which mobs can become elites, what weapons they should use, and how they are matched by the system.
 
-## Mob Rules
+## How Mob Rules Work
 
-A Mob Rule tells the system how to handle a specific Entity ID found in the world.
+When a hostile NPC spawns, EliteMobs checks it against the mob rules list. The first matching rule wins. If no rule matches, the mob is **not** transformed into an elite.
+
+Rules are matched using a scoring system:
+- **Exact match** (highest priority) -- the mob's role ID matches a value in `matchExact`.
+- **Prefix match** -- the role ID starts with a value in `matchStartsWith`.
+- **Contains match** -- the role ID contains a value in `matchContains`.
+- **Exclusions** -- if the role ID contains any value in `matchExcludes`, the rule is skipped.
+
+## Example Rules
 
 ```yaml
 Mobs:
   rules:
     Goblin_Miner:
-      # Is this mob allowed to be Elite?
-      enabledPerTier: [true, true, true, true, true]
-      
-      # Force it to only use pickaxes
+      enabled: true
+      matchExact: ["Goblin_Miner"]
+      enableWeaponOverrideForTier: [true, true, true, true, true]
       weaponOverrideMode: ALWAYS
       weaponIdMustContain: ["pickaxe"]
-      
+      weaponIdMustNotContain: []
+
     Trork_Shaman:
-      # Force it to only use staffs
+      enabled: true
+      matchExact: ["Trork_Shaman"]
       weaponOverrideMode: ALWAYS
       weaponIdMustContain: ["staff"]
+
+    Goblin_Lobber:
+      enabled: true
+      matchExact: ["Goblin_Lobber"]
+      enableWeaponOverrideForTier: [false, false, false, false, false]
+      weaponOverrideMode: ONLY_IF_EMPTY
 ```
 
-### Weapon Logic
-*   **ALWAYS:** Forces the mob to equip an item matching the criteria, replacing whatever it had.
-*   **ONLY_IF_EMPTY:** Only equips an item if the mob has empty hands.
-*   **NONE:** Never changes the mob's equipment (good for custom bosses or unarmed mobs).
+## Weapon Override Modes
+
+| Mode | What it does |
+| :--- | :--- |
+| `ALWAYS` | Replaces the mob's weapon with one matching the criteria, regardless of what it was holding. |
+| `ONLY_IF_EMPTY` | Only equips a weapon if the mob's hands are empty. |
+| `NONE` | Never changes the mob's equipment. Use this for custom bosses or unarmed mobs. |
+
+## Weapon Filtering
+
+Use `weaponIdMustContain` and `weaponIdMustNotContain` to restrict what weapons a mob can be given.
+
+- `weaponIdMustContain: ["pickaxe"]` -- the mob will only receive weapons whose ID contains "pickaxe".
+- `weaponIdMustNotContain: ["shortbow", "crossbow"]` -- the mob will never receive ranged weapons.
+
+## Per-Tier Enable
+
+The `enableWeaponOverrideForTier` array lets you toggle weapon overrides per tier. Set a tier to `false` to let the mob keep its default weapon at that tier level.
+
+```yaml
+enableWeaponOverrideForTier: [true, true, true, true, true]
+```
+
+**Tip:** The default configuration includes rules for all standard Hytale hostile NPCs. If you add custom NPCs from another mod, add a matching rule here so they can become elites.

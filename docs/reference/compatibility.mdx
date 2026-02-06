@@ -1,15 +1,24 @@
 ---
 title: Compatibility
-description: Mod interoperability notes.
+description: Mod interoperability and integration notes.
 ---
 
-EliteMobs is designed to be compatible with standard Hytale modding practices.
+EliteMobs is designed to work alongside other Hytale mods with minimal configuration.
 
 ## RPG Leveling Mods
-EliteMobs includes internal logic to detect popular leveling mods. When detected, it may attempt to align its Tier system with the external Level system for nameplate consistency.
+
+EliteMobs automatically detects popular leveling mods at startup. When detected, it can align its tier system with the external level system for consistent nameplate display. If a compatible bridge plugin (EliteMobsRPGLevelingCompat) is detected, the integration is seamless. Without the bridge, a warning is shown to players on join.
+
+You can toggle these join messages with `showCompatJoinMessages` in `core.yml`.
 
 ## Custom Item Mods
-If you have a mod that adds new weapons (e.g., `SpartanWeaponry_Longsword_Iron`), you must manually add these IDs to `gear.yml` in the `weaponCatalog`. If you don't, Elites will never roll them.
+
+If you have a mod that adds new weapons or armor (e.g., `SpartanWeaponry_Longsword_Iron`), you need to add those item IDs to the `weaponCatalog` or `armorMaterials` lists in `gear.yml`. Otherwise, elites will never equip them.
+
+You should also add keyword-to-rarity mappings in `weaponRarityRulesContains` and `armorRarityRulesContains` so the items are assigned the correct rarity tier.
 
 ## World Generation Mods
-The `ENVIRONMENT` progression style relies on standard Hytale biome/zone tags. If a custom biome mod does not apply standard tags (e.g., `Zone1`), Elites may default to Tier 1 spawning rules. Use `progressionStyle: DISTANCE_FROM_SPAWN` for better compatibility with custom maps.
+
+The `ENVIRONMENT` progression style relies on standard Hytale zone tags (e.g., `Env_Zone1`, `Env_Zone2`). If a custom world generation mod does not apply these tags, elites may fall back to the `default` tier distribution.
+
+For the best compatibility with custom maps and world generation, use `progressionStyle: DISTANCE_FROM_SPAWN` in `spawning.yml`. This mode uses world coordinates instead of zone tags.

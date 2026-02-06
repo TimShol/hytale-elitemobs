@@ -1,46 +1,119 @@
 ---
-title: Abilities Configuration
-description: Configuring special combat abilities in abilities.yml.
+title: Abilities
+description: Configuring the special combat abilities that elites can use.
 ---
 
-Abilities make Elites dangerous. `abilities.yml` defines what abilities exist, who can use them, and how powerful they are per tier.
+`abilities.yml` defines the special combat abilities that make elites more than just stat-boosted mobs. Each ability has its own activation rules, cooldowns, and per-tier scaling.
 
-## Ability Structure
+## Common Fields
 
-Each ability (Charge Leap, Heal, Summon) has common fields:
+Every ability shares these settings:
 
-*   `isEnabled`: Global toggle.
-*   `chancePerTier`: Probability an Elite of this tier gets the ability.
-*   `cooldownSecondsPerTier`: How often it can be used.
-*   `gate`: Restrictions on who can use it (e.g., "Must hold a sword", "Cannot be a Void Eye").
+| Field | What it does |
+| :--- | :--- |
+| `isEnabled` | Master toggle for the ability. |
+| `isEnabledPerTier` | Toggle per tier. For example, `[false, false, false, true, true]` means only Tier 4-5 elites can use this ability. |
+| `chancePerTier` | Probability that an elite of each tier gets this ability when it spawns. `1.0` = guaranteed. |
+| `cooldownSecondsPerTier` | Minimum time between uses for each tier. |
+| `gate` | Restrictions on which mobs can use this ability based on role name or weapon type. |
+
+### Ability Gating
+
+Gates prevent certain mobs from using abilities that don't make sense for them.
+
+```yaml
+gate:
+  roleMustContain: []
+  roleMustNotContain: ["Eye_Void", "Crawler_Void"]
+  weaponIdMustContain: []
+  weaponIdMustNotContain: ["shortbow", "crossbow", "staff"]
+```
+
+For example, the Charge Leap gate excludes ranged mobs (they shouldn't leap) and specific void creatures.
 
 ## Charge Leap
 
-Propels the mob toward the player to close distance.
+A physics-based attack where the elite launches itself at a nearby player, dealing slam damage on impact.
 
 ```yaml
 charge_leap:
-  slamBaseDamagePerTier: [0, 0, 0, 20, 30] # Damage on impact
-  applyForcePerTier: [0, 0, 0, 530, 530]   # Velocity force
+  isEnabled: true
+  isEnabledPerTier: [false, false, false, true, true]
+  cooldownSecondsPerTier: [0, 0, 0, 16, 20]
+  minRange: 9.0
+  maxRange: 30.0
+  faceTarget: true
+  slamBaseDamagePerTier: [0, 0, 0, 20, 30]
+  applyForcePerTier: [0, 0, 0, 530, 530]
+  slamRangePerTier: [0, 0, 0, 3, 4]
+  knockbackLiftPerTier: [0, 0, 0, 3, 6]
+  knockbackPushAwayPerTier: [0, 0, 0, -3, -6]
+  knockbackForcePerTier: [0, 0, 0, 20, 26]
 ```
+
+| Setting | What it does |
+| :--- | :--- |
+| `minRange` / `maxRange` | The elite will only leap if the target is within this distance range. |
+| `faceTarget` | Whether the mob turns to face the player before leaping. |
+| `slamBaseDamagePerTier` | Flat damage dealt on impact for each tier. |
+| `applyForcePerTier` | Launch velocity force. Higher values mean faster, longer leaps. |
+| `slamRangePerTier` | Area-of-effect radius for the slam damage. |
+| `knockbackLiftPerTier` | Upward knockback applied to nearby players on landing. |
+| `knockbackPushAwayPerTier` | Horizontal knockback (negative values pull inward). |
+| `knockbackForcePerTier` | Overall knockback strength. |
 
 ## Heal Potion
 
-Allows the mob to drink a potion when low on health.
+Allows the elite to drink a healing potion when its health drops below a threshold. Players can interrupt the heal by dealing enough hits during the drinking animation.
 
 ```yaml
 heal_potion:
-  minHealthTriggerPercent: 0.50 # Triggers below 50% HP
-  instantHealChance: 1.0        # vs Regeneration
-  npcDrinkDurationSeconds: 3.0  # Time to interrupt
+  isEnabled: true
+  isEnabledPerTier: [false, false, false, true, true]
+  cooldownSecondsPerTier: [0, 0, 0, 15, 15]
+  minHealthTriggerPercent: 0.50
+  maxHealthTriggerPercent: 0.50
+  instantHealChance: 1.0
+  instantHealAmountPerTier: [0, 0, 0, 0.25, 0.25]
+  npcDrinkDurationSeconds: 3.0
+  npcDrinkItemId: "Potion_Health_Greater"
 ```
+
+| Setting | What it does |
+| :--- | :--- |
+| `minHealthTriggerPercent` / `maxHealthTriggerPercent` | The health threshold range at which the heal triggers. A random value between min and max is chosen once when the elite spawns. `0.50` means the elite tries to heal at 50% HP. |
+| `instantHealChance` | Chance to use an instant heal (restores health immediately) vs. regeneration over time. `1.0` = always instant. |
+| `instantHealAmountPerTier` | Fraction of max health restored by instant heal. `0.25` = heals 25% of max HP. |
+| `npcDrinkDurationSeconds` | How long the drinking animation lasts. Players have this window to interrupt it. |
+| `npcDrinkItemId` | The item the mob visually holds while drinking. |
 
 ## Undead Summon
 
-Summons reinforcements (usually Skeleton Archers) during combat.
+Allows undead elites (skeletons, zombies, wraiths) to summon reinforcement minions during combat. When the summoner dies, all its minions despawn.
 
 ```yaml
 undead_summon:
-  maxAlive: 7                   # Max minions at once
-  skeletonArcherWeight: 100     # Summon pool weight
+  isEnabled: true
+  isEnabledPerTier: [false, false, false, false, true]
+  chancePerTier: [0, 0, 0, 1.0, 1.0]
+  cooldownSecondsPerTier: [0, 0, 0, 15, 15]
+  maxAlive: 7
+  skeletonArcherWeight: 100
+  zombieWeight: 8
+  wraithWeight: 3
+  roleIdentifiers:
+    - "Skeleton_Frost"
+    - "Skeleton_Sand"
+    - "Skeleton_Burnt"
+    - "Skeleton"
 ```
+
+| Setting | What it does |
+| :--- | :--- |
+| `maxAlive` | Maximum number of summoned minions alive at once per summoner. Capped at 0-50. |
+| `skeletonArcherWeight` | Weight for skeleton archers in the summon pool. Higher = more likely. |
+| `zombieWeight` | Weight for zombie minions. |
+| `wraithWeight` | Weight for wraith minions. |
+| `roleIdentifiers` | List of role name fragments used to pick which variant of minion gets summoned. The summoner's own role is checked against this list to pick a matching variant. |
+
+**Tip:** The summon ability is gated to undead mobs by default (`roleMustContain: ["skeleton_", "zombie_", "wraith"]`). If you want other mob types to summon, modify the gate settings.

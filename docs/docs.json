@@ -25,6 +25,7 @@
         "group": "Configuration",
         "pages": [
           "config/core",
+          "config/spawning",
           "config/stats",
           "config/gear",
           "config/loot",

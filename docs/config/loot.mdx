@@ -1,47 +1,81 @@
 ---
-title: Loot Configuration
-description: Configuring drops and rewards in loot.yml.
+title: Loot
+description: Configuring what rewards players get for defeating elites.
 ---
 
-`loot.yml` (formerly `drops.yml`) controls the rewards players receive for defeating Elites.
+`loot.yml` controls the drops and rewards that elites leave behind when defeated. This includes their equipped gear, vanilla loot multipliers, and custom drop tables.
 
-## Equipment Drop Chances
+## Equipment Drops
 
-These settings control how likely an Elite is to drop the actual gear it is wearing.
+Elites have a chance to drop the gear they are wearing. Each slot rolls independently.
 
 ```yaml
 Loot:
-  dropWeaponChance: 0.05       # 5% chance
-  dropArmorPieceChance: 0.05   # 5% chance per piece
-  dropOffhandItemChance: 0.05  # 5% chance (shield/torch)
+  dropWeaponChance: 0.05
+  dropArmorPieceChance: 0.05
+  dropOffhandItemChance: 0.05
 ```
 
-## Vanilla Multipliers
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `dropWeaponChance` | Chance for the elite to drop its main-hand weapon. | `0.05` (5%) |
+| `dropArmorPieceChance` | Chance for each armor piece to drop individually. | `0.05` (5%) |
+| `dropOffhandItemChance` | Chance for the off-hand item (shield, torch) to drop. | `0.05` (5%) |
 
-Multiplies the standard loot table (bones, flesh, etc.) by the mob's tier.
+**Tip:** If you want equipment drops to feel special and rare, keep these low. If you want a more generous loot experience, raise them to `0.15` or higher.
+
+## Vanilla Loot Multiplier
+
+Higher-tier elites drop more of their standard loot (bones, rotten flesh, etc.).
 
 ```yaml
 Loot:
-  # Multiplier per tier (Tier 1 to Tier 5)
   vanillaDroplistMultiplierPerTier:
-    - 0  # Tier 1 (Vanilla amount)
-    - 0  # Tier 2
-    - 2  # Tier 3 (2x drops)
-    - 4  # Tier 4 (4x drops)
-    - 6  # Tier 5 (6x drops)
+    - 0  # Tier 1 — normal vanilla drops
+    - 0  # Tier 2 — normal vanilla drops
+    - 2  # Tier 3 — 2x vanilla drops
+    - 4  # Tier 4 — 4x vanilla drops
+    - 6  # Tier 5 — 6x vanilla drops
 ```
+
+A value of `0` means the mob drops its normal vanilla amount. A value of `4` means it drops 4 times the normal amount.
 
 ## Extra Drops
 
-Custom drop tables for specific tiers. You can add rare materials, potions, or currency items here.
+Custom items that only drop from specific tier ranges. This is where you add crafting materials, potions, gems, and other rewards.
 
 ```yaml
 Loot:
   extraDrops:
-    - itemId: "Potion_Health_Greater"
-      chance: 0.12        # 12% drop chance
-      minTier: 4          # Only drops from Tier 4+
-      maxTier: 4
-      minAmount: 1
-      maxAmount: 2
+    - itemId: "Ingredient_Life_Essence"
+      chance: 1.0
+      minTierInclusive: 3
+      maxTierInclusive: 4
+      minQty: 11
+      maxQty: 21
+
+    - itemId: "Ore_Mithril"
+      chance: 0.15
+      minTierInclusive: 4
+      maxTierInclusive: 4
+      minQty: 1
+      maxQty: 5
+
+    - itemId: "Rock_Gem_Diamond"
+      chance: 0.02
+      minTierInclusive: 4
+      maxTierInclusive: 4
+      minQty: 1
+      maxQty: 1
 ```
+
+| Field | What it does |
+| :--- | :--- |
+| `itemId` | The Hytale item identifier to drop. |
+| `chance` | Drop probability from `0.0` (never) to `1.0` (always). |
+| `minTierInclusive` | Lowest tier that can drop this item (0-4). |
+| `maxTierInclusive` | Highest tier that can drop this item (0-4). |
+| `minQty` | Minimum stack size when dropped. |
+| `maxQty` | Maximum stack size when dropped. |
+
+The default configuration includes a progression of crafting materials: copper and iron ores from early tiers, cobalt and thorium from mid tiers, and mithril, onyxium, adamantite, gems, and potions from the highest tiers.

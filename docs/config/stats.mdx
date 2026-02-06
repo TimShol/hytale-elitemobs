@@ -1,42 +1,49 @@
 ---
-title: Stats Configuration
-description: Tuning health and damage multipliers in stats.yml.
+title: Stats
+description: Tuning health and damage scaling for each Elite tier.
 ---
 
-`stats.yml` controls the raw math behind Elite difficulty. This is where you adjust how "spongy" or "deadly" the mobs are.
+`stats.yml` controls the core combat numbers. This is where you adjust how much health elites have and how hard they hit.
 
 ## Health Scaling
 
-Controls the maximum health of EliteMobs relative to their vanilla counterparts.
+Each tier has a health multiplier that is added to the mob's base health. A value of `1.0` means the mob gets +100% health (double its normal amount).
 
 ```yaml
 Health:
   enableHealthScaling: true
-  # Multipliers for Tier 1 to Tier 5
   healthMultiplierPerTier:
-    - 0.1  # Tier 1 (1.1x total health)
-    - 0.5  # Tier 2 (1.5x total health)
-    - 1.1  # Tier 3 (2.1x total health)
-    - 1.8  # Tier 4 (2.8x total health)
-    - 2.6  # Tier 5 (3.6x total health)
+    - 0.1   # Tier 1 — +10% health
+    - 0.5   # Tier 2 — +50% health
+    - 1.1   # Tier 3 — +110% health (roughly double)
+    - 1.8   # Tier 4 — +180% health (nearly triple)
+    - 2.6   # Tier 5 — +260% health
 ```
+
+Set `enableHealthScaling` to `false` to give all elites their normal vanilla health regardless of tier.
+
+**Tip:** If Tier 1 elites feel too similar to regular mobs, raise the first value to `0.3`. If Tier 5 elites are too spongy, lower the last value.
 
 ## Damage Scaling
 
-Controls the physical damage output.
+Controls how much damage elites deal relative to their base attack.
 
 ```yaml
 Damage:
   enableMobDamageMultiplier: true
-  # Damage multipliers for Tier 1 to Tier 5
   mobDamageMultiplierPerTier:
-    - 0.6
-    - 1.1
-    - 1.6
-    - 2.1
-    - 2.6
-  # Randomness factor (+/- 5%) to make hits feel less static
+    - 0.6   # Tier 1 — 60% of base damage (weaker than vanilla)
+    - 1.1   # Tier 2 — 110% of base damage
+    - 1.6   # Tier 3 — 160% of base damage
+    - 2.1   # Tier 4 — 210% of base damage
+    - 2.6   # Tier 5 — 260% of base damage
   mobDamageRandomVariance: 0.05
 ```
 
-**Tip:** If you feel Tier 1 mobs are too weak, increase the first value in `healthMultiplierPerTier`. If Tier 5 mobs one-shot players, lower the last value in `mobDamageMultiplierPerTier`.
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `enableMobDamageMultiplier` | Toggle damage scaling on or off. | `true` |
+| `mobDamageMultiplierPerTier` | Damage multiplier for each tier. Values below `1.0` make mobs weaker than vanilla. | See above |
+| `mobDamageRandomVariance` | Adds a random offset to each hit. `0.05` means damage varies by +/-5%, so combat feels less predictable. | `0.05` |
+
+**Tip:** If players are getting one-shot by Tier 5 mobs, lower the last damage value to `2.0`. If Tier 1 feels too easy, raise the first value above `1.0`.

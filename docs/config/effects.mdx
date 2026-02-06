@@ -1,21 +1,29 @@
 ---
-title: Effects Configuration
-description: Configuring passive status effects in effects.yml.
+title: Effects
+description: Configuring passive status effects applied to elites.
 ---
 
-`effects.yml` controls the passive buffs and visual particle effects applied to EliteMobs.
+`effects.yml` controls the passive status effects that are applied to elites. These are ongoing buffs that affect gameplay and have visible particle effects.
 
 ## Projectile Resistance
 
-This effect gives Elites resistance against ranged attacks (bows, crossbows).
+This effect reduces the damage elites take from ranged attacks (bows, crossbows, staffs). It encourages players to engage high-tier elites in melee combat rather than kiting them from a distance.
 
 ```yaml
-EFFECT_PROJECTILE_RESISTANCE:
-  isEnabled: true
-  # Percentage of resistance per tier (0.0 to 1.0)
-  # Tier 4 gets 70% resistance, Tier 5 gets 85%
-  amountMultiplierPerTier: [0.0, 0.0, 0.0, 0.7, 0.85]
-  infinite: true
+Effects:
+  byId:
+    EFFECT_PROJECTILE_RESISTANCE:
+      isEnabled: true
+      isEnabledPerTier: [false, false, false, true, true]
+      amountMultiplierPerTier: [0.0, 0.0, 0.0, 0.7, 0.85]
+      infinite: true
 ```
 
-*   **Tip:** If you find the particle effects for this resistance visually overwhelming, you can set `isEnabled: false` to disable both the mechanics and the visuals.
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `isEnabled` | Master toggle for this effect. Disabling it removes both the mechanic and the particle visuals. | `true` |
+| `isEnabledPerTier` | Toggle per tier. By default, only Tier 4 and 5 have projectile resistance. | `[false, false, false, true, true]` |
+| `amountMultiplierPerTier` | The resistance percentage for each tier. `0.7` means 70% of projectile damage is blocked. `0.85` means 85%. | `[0, 0, 0, 0.7, 0.85]` |
+| `infinite` | Whether the effect lasts forever or has a limited duration. | `true` |
+
+**Tip:** If you find the particle effects visually overwhelming, set `isEnabled` to `false`. If you want ranged builds to remain viable against high-tier elites, lower the resistance values (e.g., `0.3` and `0.5`).

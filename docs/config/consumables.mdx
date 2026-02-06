@@ -1,26 +1,49 @@
 ---
-title: Consumables Configuration
-description: Configuring potion and food behavior in consumables.yml.
+title: Consumables
+description: Configuring potion and food behavior for elite mobs.
 ---
 
-`consumables.yml` defines how items consumed by Elites behave. This is primarily used by the **Heal Potion** ability.
+`consumables.yml` defines how items consumed by elites behave during combat. This mainly affects the **Heal Potion** ability, controlling how fast elites drink and how much it slows them down.
 
 ## Potion Behavior
 
-When an Elite drinks a potion, these settings control the animation duration and movement penalty.
+When an elite drinks a potion, it slows down and plays a drinking animation. These settings control the timing and movement penalty.
 
 ```yaml
 Consumables:
   byId:
     EliteMobs_Consumable_Big_Potions:
-      # Movement speed multiplier while drinking (0.7 = 30% slow)
       horizontalSpeedMultiplier: 0.7
-      # Duration in seconds to finish drinking
       consumeDuration: 1.8
-      
+
     EliteMobs_Consumable_Small_Potions:
       horizontalSpeedMultiplier: 0.7
       consumeDuration: 1.2
 ```
 
-These IDs correspond to the internal asset tags used by the ability system.
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `horizontalSpeedMultiplier` | Movement speed while consuming. `0.7` means the mob moves at 70% speed (30% slower). Lower values make it easier for players to close distance during the animation. | `0.7` |
+| `consumeDuration` | Time in seconds to finish consuming the item. Longer durations give players more time to interrupt the heal. | `1.8` (big) / `1.2` (small) |
+
+## Food Tiers
+
+The default configuration also includes entries for food items used internally:
+
+```yaml
+Consumables:
+  byId:
+    EliteMobs_Consumable_Food_Tier1:
+      horizontalSpeedMultiplier: 0.7
+      consumeDuration: 1.0
+
+    EliteMobs_Consumable_Food_Tier2:
+      horizontalSpeedMultiplier: 0.7
+      consumeDuration: 1.2
+
+    EliteMobs_Consumable_Food_Tier3:
+      horizontalSpeedMultiplier: 0.7
+      consumeDuration: 1.4
+```
+
+**Tip:** If heals feel too easy for elites to complete, increase `consumeDuration` to give players a longer interrupt window. If elites are too easy to kite while drinking, raise `horizontalSpeedMultiplier` closer to `1.0`.

@@ -583,47 +583,47 @@ public final class EliteMobsConfig {
     }
 
     public static final class SpawningConfig {
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Global chance for a mob to become Elite (0.0 to 1.0).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Global chance for a mob to become Elite (0.0 to 1.0).")
         public float globalSpawnChance = 0.15f;
 
         @Default
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Progression system: ENVIRONMENT (Zone-based), DISTANCE_FROM_SPAWN (Linear scaling), or NONE (Random).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Progression system: ENVIRONMENT (Zone-based), DISTANCE_FROM_SPAWN (Linear scaling), or NONE (Random).")
         public ProgressionStyle progressionStyle = ProgressionStyle.ENVIRONMENT;
 
         @Default
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Blocks required per tier transition (e.g. 1000m = Tier 1, 2000m = Tier 2).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Blocks required per tier transition (e.g. 1000m = Tier 1, 2000m = Tier 2).")
         public double distancePerTier = 1000.0;
 
         @Default
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Block interval for applying bonus stats (e.g. every 100 blocks).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Block interval for applying bonus stats (e.g. every 100 blocks).")
         public double distanceBonusInterval = 100.0;
 
         @Default
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Health multiplier bonus added per interval (0.01 = +1% health every 100m).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Health multiplier bonus added per interval (0.01 = +1% health every 100m).")
         public float distanceHealthBonusPerInterval = 0.01f;
 
         @Default
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Damage multiplier bonus added per interval (0.005 = +0.5% damage every 100m).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Damage multiplier bonus added per interval (0.005 = +0.5% damage every 100m).")
         public float distanceDamageBonusPerInterval = 0.005f;
 
         @Default
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Max bonus health multiplier added by distance progression (0.5 = +50% base health max).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Max bonus health multiplier added by distance progression (0.5 = +50% base health max).")
         public float distanceHealthBonusCap = 0.5f;
 
         @Default
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Max bonus damage multiplier added by distance progression (0.5 = +50% base damage max).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Max bonus damage multiplier added by distance progression (0.5 = +50% base damage max).")
         public float distanceDamageBonusCap = 0.5f;
 
         @Default
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Used if style is ENVIRONMENT. Enable zone-specific tier probabilities.")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Used if style is ENVIRONMENT. Enable zone-specific tier probabilities.")
         public boolean enableEnvironmentTierSpawns = true;
 
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Global tier weights used for NONE style or as fallback. Higher = more common.")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Global tier weights used for NONE style or as fallback. Higher = more common.")
         public double[] spawnChancePerTier = {0.46, 0.28, 0.16, 0.08, 0.04};
 
-        @Cfg(group = "Spawning", file = "core.yml", comment = "Zone-specific rules. Key is environment id (e.g. Env_Zone1_Forests).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Zone-specific rules. Key is environment id (e.g. Env_Zone1_Forests).")
         public Map<String, EnvironmentTierRule> environmentTierSpawns = defaultEnvironmentTierSpawns();
     }
 
@@ -1515,7 +1515,7 @@ public final class EliteMobsConfig {
     }
 
     public static final class MobsConfig {
-        @Cfg(group = "Spawning", file = "mobs.yml", comment = "Mob rules: decide what to do if our scan found a NPC Entity with this id. If the id of the mob is not on the list, it will get the fist (it won't be transformed into an EliteMob. First mobRule match wins btw.")
+        @Cfg(group = "Mobs", file = "mobs.yml", comment = "Mob rules: decide what to do if our scan found a NPC Entity with this id. If the id of the mob is not on the list, it will get the fist (it won't be transformed into an EliteMob. First mobRule match wins btw.")
         public Map<String, MobRule> rules = defaultMobRules();
     }
 

@@ -1,23 +1,28 @@
 ---
-title: Gear Configuration
-description: Managing equipment catalogs, durability, and restrictions in gear.yml.
+title: Gear
+description: Managing what equipment elites can wear and how it is assigned.
 ---
 
-`gear.yml` (formerly `catalogs.yml`) defines what items Elites can wear and how powerful those items are.
+`gear.yml` defines the pool of weapons and armor that elites can equip, how item rarity is determined, and the rules for each tier's equipment quality.
 
 ## Durability
 
-Controls the condition of gear when it spawns (and potentially drops).
+Gear spawned on elites is never at full condition. This makes dropped equipment feel like a used battlefield pickup rather than a brand-new item.
 
 ```yaml
 Gear:
-  spawnGearDurabilityMin: 0.02 # 2% durability
-  spawnGearDurabilityMax: 0.30 # 30% durability
+  spawnGearDurabilityMin: 0.02
+  spawnGearDurabilityMax: 0.30
 ```
 
-## Two-Handed Logic
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `spawnGearDurabilityMin` | Minimum durability fraction. `0.02` means gear can spawn at as low as 2% condition. | `0.02` |
+| `spawnGearDurabilityMax` | Maximum durability fraction. `0.30` means gear spawns at most at 30% condition. | `0.30` |
 
-Prevents mobs from dual-wielding items that logically require two hands (like bows or heavy axes) with a shield.
+## Two-Handed Weapons
+
+Weapons in this list are treated as two-handed. Mobs holding a two-handed weapon will never equip a shield in their off-hand.
 
 ```yaml
 Gear:
@@ -25,30 +30,93 @@ Gear:
     - "shortbow"
     - "crossbow"
     - "spear"
+    - "staff"
     - "battleaxe"
+    - "longsword"
+    - "bomb"
 ```
 
-## Catalogs & Rarity
+If a weapon ID contains any of these strings, it counts as two-handed. Add your own modded weapon keywords here if needed.
 
-This section maps item keywords to rarities. For example, if a weapon ID contains "rusty", it is treated as "common".
+## Rarity Rules
+
+EliteMobs determines an item's rarity by checking its ID against keyword rules. The first matching keyword wins.
 
 ```yaml
 Gear:
-  # Maps keyword -> rarity
   weaponRarityRulesContains:
-    "rusty": "common"
+    "wood": "common"
+    "copper": "common"
+    "iron": "uncommon"
+    "steel": "uncommon"
+    "thorium": "rare"
+    "cobalt": "rare"
+    "adamantite": "epic"
     "void": "epic"
     "flame": "legendary"
+```
 
-  # Which tiers can wear which rarities
+Armor uses the same system with `armorRarityRulesContains`.
+
+## Tier Equipment Quality
+
+Each tier has restrictions on what rarity of equipment it can use, and weighted chances for picking a rarity.
+
+```yaml
+Gear:
   tierAllowedRarities:
-    - ["common"]              # Tier 1
-    - ["uncommon"]            # Tier 2
-    - ["rare"]                # Tier 3
-    - ["epic"]                # Tier 4
-    - ["epic", "legendary"]   # Tier 5
+    - ["common"]               # Tier 1
+    - ["uncommon"]             # Tier 2
+    - ["rare"]                 # Tier 3
+    - ["epic"]                 # Tier 4
+    - ["epic", "legendary"]    # Tier 5
+
+  tierEquipmentRarityWeights:
+    - { "common": 1.0 }                       # Tier 1
+    - { "uncommon": 1.0 }                     # Tier 2
+    - { "rare": 0.70, "uncommon": 0.30 }      # Tier 3
+    - { "epic": 0.70, "rare": 0.30 }          # Tier 4
+    - { "legendary": 0.40, "epic": 0.60 }     # Tier 5
+```
+
+## Armor Slots
+
+Controls how many armor pieces each tier equips and the chance of getting an off-hand utility item.
+
+```yaml
+Gear:
+  armorPiecesToEquipPerTier:
+    - 0  # Tier 1 — no armor
+    - 1  # Tier 2 — one piece
+    - 2  # Tier 3
+    - 3  # Tier 4
+    - 4  # Tier 5 — fully armored
+
+  shieldUtilityChancePerTier:
+    - 0.0   # Tier 1
+    - 0.0   # Tier 2
+    - 0.20  # Tier 3 — 20% chance of a shield
+    - 0.40  # Tier 4 — 40% chance
+    - 0.60  # Tier 5 — 60% chance
 ```
 
 ## Equipment Lists
 
-The `weaponCatalog` and `armorMaterials` lists are the "database" the mod draws from when equipping mobs. If you add modded items to Hytale, add their IDs here so Elites can use them.
+The `weaponCatalog` and `armorMaterials` lists are the item pools that elites draw from. If you add new weapons or armor from another mod, add their IDs here so elites can equip them.
+
+```yaml
+Gear:
+  weaponCatalog:
+    - "Weapon_Sword_Iron"
+    - "Weapon_Axe_Cobalt"
+    - "Weapon_Staff_Bone"
+    # ... full list in the generated config file
+
+  armorMaterials:
+    - "Iron"
+    - "Cobalt"
+    - "Adamantite"
+    # ... full list in the generated config file
+```
+
+The default lists include all standard Hytale weapons and armor materials. The full lists are written to the generated config file on first run.
