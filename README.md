@@ -42,7 +42,7 @@ Compatibility Mods:
 
 ## Documentation
 
-Documentation is available at https://docs.elitemobs.frotty27.com/. The source is stored in `docs/` so changes can be versioned with the mod.
+Documentation is available at https://docs.elitemobs.frotty27.com/. The source lives in `docs/` and is versioned alongside the mod.
 
 ## Installation
 
