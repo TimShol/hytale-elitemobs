@@ -1,0 +1,6 @@
+{
+  "Interactions": [
+    ${abilities.undead_summon.templates.entryInteractionSummon},
+    ${abilities.heal_potion.templates.entryInteractionInstant}
+  ]
+}

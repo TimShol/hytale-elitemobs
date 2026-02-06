@@ -1,0 +1,34 @@
+{
+  "Parent": "DamageEntityParent",
+  "DamageCalculator": {
+    "BaseDamage": {
+      "Physical": ${abilities.charge_leap.slamBaseDamagePerTier}
+    }
+  },
+  "DamageEffects": {
+    "Knockback": {
+      "Type": "Force",
+      "VelocityConfig": {
+        "AirResistance": 0.99,
+        "AirResistanceMax": 0.98,
+        "GroundResistance": 0.94,
+        "GroundResistanceMax": 0.3,
+        "Threshold": 3.0,
+        "Style": "Linear"
+      },
+      "Direction": {
+        "X": 0,
+        "Y": ${abilities.charge_leap.knockbackLiftPerTier},
+        "Z": ${abilities.charge_leap.knockbackPushAwayPerTier}
+      },
+      "Force": ${abilities.charge_leap.knockbackForcePerTier},
+      "VelocityType": "Set"
+    },
+    "WorldParticles": [
+      {
+        "SystemId": "Impact_Mace_Signature"
+      }
+    ],
+    "CameraEffect": "Impact_Light"
+  }
+}

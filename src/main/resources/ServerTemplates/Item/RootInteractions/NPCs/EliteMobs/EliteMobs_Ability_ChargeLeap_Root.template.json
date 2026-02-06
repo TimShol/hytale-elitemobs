@@ -1,0 +1,8 @@
+{
+  "Interactions": [
+    ${abilities.charge_leap.templates.entryInteraction}
+  ],
+  "Tags": {
+    "Attack": ["Melee"]
+  }
+}

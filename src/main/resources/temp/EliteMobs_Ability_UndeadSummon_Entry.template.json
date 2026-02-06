@@ -1,0 +1,54 @@
+{
+  "Type": "Simple",
+  "RunTime": 2.5,
+  "Effects": {
+    "ItemPlayerAnimationsId": "Axe",
+    "ItemAnimationId": "SummonAbility",
+    "WorldSoundEventId": "SFX_Skeleton_Praetorian_Search_2",
+    "Particles": [
+      {
+        "SystemId": "Praetorian_Summon_Ground",
+        "TargetEntityPart": "Entity",
+        "DetachedFromModel": true
+      },
+      {
+        "SystemId": "Praetorian_Summon_Energy",
+        "TargetEntityPart": "Entity",
+        "TargetNodeName": "L-Hand",
+        "Scale": 1.5
+      },
+      {
+        "SystemId": "Praetorian_Summon_Energy",
+        "TargetEntityPart": "Entity",
+        "TargetNodeName": "R-Hand",
+        "Scale": 1.0
+      },
+      {
+        "SystemId": "Undead_Digging",
+        "TargetEntityPart": "Entity",
+        "PositionOffset": {
+          "Y": 0.1
+        }
+      }
+    ],
+    "MovementEffects": {
+      "DisableAll": true
+    }
+  },
+  "Next": {
+    "Type": "Serial",
+    "Interactions": [
+      {
+        "Type": "Simple",
+        "Effects": {
+          "WorldSoundEventId": "SFX_Skeleton_Mage_Spellbook_Impact"
+        }
+      },
+      {
+        "Type": "TriggerSpawnMarkers",
+        "MarkerType": ${abilities.undead_summon.templates.summonMarker},
+        "Range": 30
+      }
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.3.0'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+}
+
+repositories {
+    mavenCentral()
+}
+
+def hytaleJar = file("${System.getProperty("user.home")}/AppData/Roaming/Hytale/install/release/package/game/${project.property("game_build")}/Server/HytaleServer.jar")
+def userModsDir = file("${System.getProperty("user.home")}/AppData/Roaming/Hytale/UserData/Mods")
+
+// Fallback for building inside WSL environment where user.home differs from Windows
+if (!hytaleJar.exists() && file("/mnt/c/Users/Tim-s").exists()) {
+    hytaleJar = file("/mnt/c/Users/Tim-s/AppData/Roaming/Hytale/install/release/package/game/${project.property("game_build")}/Server/HytaleServer.jar")
+    userModsDir = file("/mnt/c/Users/Tim-s/AppData/Roaming/Hytale/UserData/Mods")
+}
+
+dependencies {
+    implementation "org.yaml:snakeyaml:2.2"
+    compileOnly("org.jspecify:jspecify:0.3.0")
+    compileOnly files(hytaleJar)
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
+    testImplementation files(hytaleJar)
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.10.2"
+}
+
+tasks.processResources {
+    def expandProps = [
+            'name'          : project.name,
+            'version'       : project.version,
+            'group'         : project.group,
+            'description'   : project.hasProperty('description') ? project.description : '',
+            'website'       : project.hasProperty('website') ? project.website : '',
+            'server_version': project.hasProperty('server_version') ? project.server_version : '',
+            'entry_point'   : project.hasProperty('entry_point') ? project.entry_point : ''
+    ]
+
+    filesMatching('manifest.json') {
+        expand(expandProps)
+    }
+    inputs.properties(expandProps)
+}
+
+tasks.shadowJar {
+    archiveClassifier.set('') // make it produce MyMod-1.0.0.jar (no "-all")
+    // Optional safety against duplicate META-INF entries
+    // duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.test {
+    useJUnitPlatform()
+    systemProperty "java.util.logging.manager", "com.hypixel.hytale.logger.backend.HytaleLogManager"
+    testLogging {
+        events = ["passed", "skipped", "failed"]
+        exceptionFormat = "short"
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
+tasks.register('deploy') {
+    group = 'hytale'
+    description = 'Builds the shadow jar and copies it to the Hytale UserData Mods folder'
+    dependsOn tasks.shadowJar
+
+    doLast {
+        userModsDir.mkdirs()
+        def jarFile = tasks.shadowJar.archiveFile.get().asFile
+
+        copy {
+            from jarFile
+            into userModsDir
+        }
+
+        println "Deployed ${jarFile.name} to ${userModsDir}"
+    }
+}
+
+// Make `gradle build` also deploy
+tasks.build {
+    dependsOn tasks.shadowJar
+    finalizedBy tasks.deploy
+}

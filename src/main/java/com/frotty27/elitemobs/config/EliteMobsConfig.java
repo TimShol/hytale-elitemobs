@@ -1,0 +1,4026 @@
+package com.frotty27.elitemobs.config;
+
+import com.frotty27.elitemobs.assets.AssetConfig;
+import com.frotty27.elitemobs.assets.AssetType;
+import com.frotty27.elitemobs.assets.EliteMobsAssetCatalog;
+import com.frotty27.elitemobs.assets.TieredAssetConfig;
+import com.frotty27.elitemobs.config.schema.*;
+import com.google.gson.Gson;
+
+import java.util.*;
+
+import static com.frotty27.elitemobs.assets.EliteMobsAssetCatalog.ABILITY_CHARGE_LEAP;
+import static com.frotty27.elitemobs.assets.EliteMobsAssetCatalog.EFFECT_PROJECTILE_RESISTANCE;
+import static com.frotty27.elitemobs.utils.Constants.TIERS_AMOUNT;
+
+
+public final class EliteMobsConfig {
+
+    private static final List<String> DENY_ABILITY_CHARGE_LEAP_LIST =
+            List.of("Eye_Void", "Crawler_Void", "Skeleton_Burnt_Praetorian");
+
+    private static final List<String> UNDEAD_ROLE_NAME_CONTAINS =
+            List.of("skeleton_", "zombie_", "wraith");
+    private static final List<String> DAMAGE_MELEE_ONLY_NOT_CONTAINS = List.of("shortbow",
+                                                                               "crossbow",
+                                                                               "staff",
+                                                                               "pickaxe",
+                                                                               "bomb",
+                                                                               "kunai",
+                                                                               "blunderbuss",
+                                                                               "spellbook"
+    );
+    private static final List<String> DAMAGE_MELEE_SWORDS_ONLY = List.of("_sword");
+    private static final List<String> DAMAGE_MELEE_AXES_ONLY = List.of("axe");
+    private static final List<String> DAMAGE_MELEE_LONGSWORD_ONLY = List.of("longsword");
+    private static final List<String> DAMAGE_MELEE_CLUBS_ONLY = List.of("club");
+    private static final List<String> DAMAGE_MELEE_SPEARS_ONLY = List.of("spear");
+    private static final List<String> DAMAGE_MELEE_DAGGERS_ONLY = List.of("daggers");
+    private static final List<String> DAMAGE_MELEE_PICKAXE_ONLY = List.of("pickaxe");
+    private static final List<String> DAMAGE_MELEE_SHARP_WEAPONS_ONLY = List.of("sword", "axe");
+    private static final List<String> DAMAGE_MELEE_TWO_HANDED_SHARP_WEAPONS_ONLY = List.of("longsword", "battleaxe");
+    private static final List<String> DAMAGE_RANGED_BOWS_ONLY = List.of("shortbow", "crossbow");
+    private static final List<String> DAMAGE_RANGED_STAFFS_ONLY = List.of("staff");
+    private static final List<String> DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY = List.of("blunderbuss");
+    private static final List<String> DAMAGE_RANGED_SPELLBOOK_ONLY = List.of("spellbook");
+
+
+    public static final String ABILITY_CHARGE_LEAP_KEY = "charge_leap";
+    public static final String ABILITY_HEAL_POTION_KEY = "heal_potion";
+    public static final String ABILITY_UNDEAD_SUMMON_KEY = "undead_summon";
+    public static final String SUMMON_ROLE_PREFIX = "EliteMobs_Summon_";
+    public static final int DEFAULT_SUMMON_MAX_ALIVE = 7;
+    public static final int SUMMON_MAX_ALIVE_MIN = 0;
+    public static final int SUMMON_MAX_ALIVE_MAX = 50;
+
+    @CfgVersion
+    @Cfg(group = "System", file = "main.yml", comment = "Configuration version. Automatically updated by the mod.")
+    public String configVersion = "0.0.0";
+
+    public final SpawningConfig spawning = new SpawningConfig();
+    public final MobsConfig mobs = new MobsConfig();
+    public final HealthConfig health = new HealthConfig();
+    public final DamageConfig damage = new DamageConfig();
+    public final ModelConfig model = new ModelConfig();
+    public final GearConfig gear = new GearConfig();
+    public final LootConfig loot = new LootConfig();
+    public final NameplatesConfig nameplates = new NameplatesConfig();
+    public final AssetGeneratorConfig assetGenerator = new AssetGeneratorConfig();
+    public final CatalogsConfig catalogs = new CatalogsConfig();
+    public final AbilitiesConfig abilities = new AbilitiesConfig();
+    public final EffectsConfig effects = new EffectsConfig();
+    public final ConsumablesConfig consumables = new ConsumablesConfig();
+    public final DebugConfig debug = new DebugConfig();
+    public final CompatConfig compat = new CompatConfig();
+    public final ReconcileConfig reconcile = new ReconcileConfig();
+
+    private static Map<String, List<String>> defaultTierPrefixes() {
+        Map<String, List<String>> m = new LinkedHashMap<>();
+
+        m.put("zombie", List.of("Rotting", "Ravenous", "Putrid", "Monstrous", "Evolved"));
+        m.put("zombie_burnt", List.of("Charred", "Smoldering", "Ashen", "Cinderborn", "Infernal"));
+        m.put("zombie_frost", List.of("Chilled", "Rimed", "Frostbitten", "Glacial", "Permafrost"));
+        m.put("zombie_sand", List.of("Dustworn", "Scoured", "Dune-Cursed", "Tomb-Woken", "Sunwithered"));
+        m.put("zombie_aberrant", List.of("Twisted", "Warped", "Mutated", "Horrid", "Eldritch"));
+
+        m.put("skeleton", List.of("Broken", "Reforged", "Grim", "Deathbound", "Ascendant"));
+        m.put("skeleton_burnt", List.of("Charred", "Smoldering", "Ashen", "Cinderforged", "Infernal"));
+        m.put("skeleton_frost", List.of("Chilled", "Rimed", "Frostbound", "Glacial", "Permafrost"));
+        m.put("skeleton_sand", List.of("Dustworn", "Scoured", "Sun-Cursed", "Tomb-Bound", "Sandscoured"));
+        m.put("skeleton_pirate", List.of("Bilge", "Saltstained", "Blackwater", "Drowned", "Forsaken"));
+        m.put("skeleton_incandescent", List.of("Husk", "Vanguard", "Sentinel", "Warden", "Paragon"));
+
+        m.put("goblin", List.of("Sneaky", "Cutthroat", "Brutal", "Overseer", "Overlord"));
+        m.put("trork", List.of("Rough", "Hardened", "Blooded", "Warbound", "Warlord"));
+        m.put("outlander", List.of("Ragged", "Veteran", "Battle-Scarred", "Ruthless", "Legendary"));
+
+        m.put("void", List.of("Faded", "Shaded", "Umbral", "Abyssal", "Voidborn"));
+
+        m.put("default", List.of("Common", "Uncommon", "Rare", "Epic", "Legendary"));
+        return m;
+    }
+
+    private static Map<String, EnvironmentTierRule> defaultEnvironmentTierSpawns() {
+        Map<String, EnvironmentTierRule> map = new LinkedHashMap<>();
+
+        EnvironmentTierRule defaultRule = new EnvironmentTierRule();
+        defaultRule.enabled = true;
+        defaultRule.spawnChancePerTier = new double[]{0.46, 0.28, 0.16, 0.08, 0.04};
+        map.put("default", defaultRule);
+
+        EnvironmentTierRule Env_Zone1 = new EnvironmentTierRule();
+        Env_Zone1.enabled = true;
+        Env_Zone1.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1", Env_Zone1);
+
+        EnvironmentTierRule Env_Zone1_Autumn = new EnvironmentTierRule();
+        Env_Zone1_Autumn.enabled = true;
+        Env_Zone1_Autumn.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Autumn", Env_Zone1_Autumn);
+
+        EnvironmentTierRule Env_Zone1_Azure = new EnvironmentTierRule();
+        Env_Zone1_Azure.enabled = true;
+        Env_Zone1_Azure.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Azure", Env_Zone1_Azure);
+
+        EnvironmentTierRule Env_Zone1_Caves = new EnvironmentTierRule();
+        Env_Zone1_Caves.enabled = true;
+        Env_Zone1_Caves.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves", Env_Zone1_Caves);
+
+        EnvironmentTierRule Env_Zone1_Caves_Forests = new EnvironmentTierRule();
+        Env_Zone1_Caves_Forests.enabled = true;
+        Env_Zone1_Caves_Forests.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Forests", Env_Zone1_Caves_Forests);
+
+        EnvironmentTierRule Env_Zone1_Caves_Goblins = new EnvironmentTierRule();
+        Env_Zone1_Caves_Goblins.enabled = true;
+        Env_Zone1_Caves_Goblins.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Goblins", Env_Zone1_Caves_Goblins);
+
+        EnvironmentTierRule Env_Zone1_Caves_Mountains = new EnvironmentTierRule();
+        Env_Zone1_Caves_Mountains.enabled = true;
+        Env_Zone1_Caves_Mountains.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Mountains", Env_Zone1_Caves_Mountains);
+
+        EnvironmentTierRule Env_Zone1_Caves_Plains = new EnvironmentTierRule();
+        Env_Zone1_Caves_Plains.enabled = true;
+        Env_Zone1_Caves_Plains.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Plains", Env_Zone1_Caves_Plains);
+
+        EnvironmentTierRule Env_Zone1_Caves_Rats = new EnvironmentTierRule();
+        Env_Zone1_Caves_Rats.enabled = true;
+        Env_Zone1_Caves_Rats.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Rats", Env_Zone1_Caves_Rats);
+
+        EnvironmentTierRule Env_Zone1_Caves_Spiders = new EnvironmentTierRule();
+        Env_Zone1_Caves_Spiders.enabled = true;
+        Env_Zone1_Caves_Spiders.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Spiders", Env_Zone1_Caves_Spiders);
+
+        EnvironmentTierRule Env_Zone1_Caves_Swamps = new EnvironmentTierRule();
+        Env_Zone1_Caves_Swamps.enabled = true;
+        Env_Zone1_Caves_Swamps.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Swamps", Env_Zone1_Caves_Swamps);
+
+        EnvironmentTierRule Env_Zone1_Caves_Volcanic_T1 = new EnvironmentTierRule();
+        Env_Zone1_Caves_Volcanic_T1.enabled = true;
+        Env_Zone1_Caves_Volcanic_T1.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Volcanic_T1", Env_Zone1_Caves_Volcanic_T1);
+
+        EnvironmentTierRule Env_Zone1_Caves_Volcanic_T2 = new EnvironmentTierRule();
+        Env_Zone1_Caves_Volcanic_T2.enabled = true;
+        Env_Zone1_Caves_Volcanic_T2.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Volcanic_T2", Env_Zone1_Caves_Volcanic_T2);
+
+        EnvironmentTierRule Env_Zone1_Caves_Volcanic_T3 = new EnvironmentTierRule();
+        Env_Zone1_Caves_Volcanic_T3.enabled = true;
+        Env_Zone1_Caves_Volcanic_T3.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Caves_Volcanic_T3", Env_Zone1_Caves_Volcanic_T3);
+
+        EnvironmentTierRule Env_Zone1_Dungeons = new EnvironmentTierRule();
+        Env_Zone1_Dungeons.enabled = true;
+        Env_Zone1_Dungeons.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Dungeons", Env_Zone1_Dungeons);
+
+        EnvironmentTierRule Env_Zone1_Encounters = new EnvironmentTierRule();
+        Env_Zone1_Encounters.enabled = true;
+        Env_Zone1_Encounters.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Encounters", Env_Zone1_Encounters);
+
+        EnvironmentTierRule Env_Zone1_Forests = new EnvironmentTierRule();
+        Env_Zone1_Forests.enabled = true;
+        Env_Zone1_Forests.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Forests", Env_Zone1_Forests);
+
+        EnvironmentTierRule Env_Zone1_Graveyard = new EnvironmentTierRule();
+        Env_Zone1_Graveyard.enabled = true;
+        Env_Zone1_Graveyard.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Graveyard", Env_Zone1_Graveyard);
+
+        EnvironmentTierRule Env_Zone1_Kweebec = new EnvironmentTierRule();
+        Env_Zone1_Kweebec.enabled = true;
+        Env_Zone1_Kweebec.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Kweebec", Env_Zone1_Kweebec);
+
+        EnvironmentTierRule Env_Zone1_Mage_Towers = new EnvironmentTierRule();
+        Env_Zone1_Mage_Towers.enabled = true;
+        Env_Zone1_Mage_Towers.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Mage_Towers", Env_Zone1_Mage_Towers);
+
+        EnvironmentTierRule Env_Zone1_Mineshafts = new EnvironmentTierRule();
+        Env_Zone1_Mineshafts.enabled = true;
+        Env_Zone1_Mineshafts.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Mineshafts", Env_Zone1_Mineshafts);
+
+        EnvironmentTierRule Env_Zone1_Mountains = new EnvironmentTierRule();
+        Env_Zone1_Mountains.enabled = true;
+        Env_Zone1_Mountains.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Mountains", Env_Zone1_Mountains);
+
+        EnvironmentTierRule Env_Zone1_Plains = new EnvironmentTierRule();
+        Env_Zone1_Plains.enabled = true;
+        Env_Zone1_Plains.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Plains", Env_Zone1_Plains);
+
+        EnvironmentTierRule Env_Zone1_Shores = new EnvironmentTierRule();
+        Env_Zone1_Shores.enabled = true;
+        Env_Zone1_Shores.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Shores", Env_Zone1_Shores);
+
+        EnvironmentTierRule Env_Zone1_Swamps = new EnvironmentTierRule();
+        Env_Zone1_Swamps.enabled = true;
+        Env_Zone1_Swamps.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Swamps", Env_Zone1_Swamps);
+
+        EnvironmentTierRule Env_Zone1_Trork = new EnvironmentTierRule();
+        Env_Zone1_Trork.enabled = true;
+        Env_Zone1_Trork.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
+        map.put("Env_Zone1_Trork", Env_Zone1_Trork);
+
+        EnvironmentTierRule Env_Zone2 = new EnvironmentTierRule();
+        Env_Zone2.enabled = true;
+        Env_Zone2.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2", Env_Zone2);
+
+        EnvironmentTierRule Env_Zone2_Caves = new EnvironmentTierRule();
+        Env_Zone2_Caves.enabled = true;
+        Env_Zone2_Caves.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves", Env_Zone2_Caves);
+
+        EnvironmentTierRule Env_Zone2_Caves_Deserts = new EnvironmentTierRule();
+        Env_Zone2_Caves_Deserts.enabled = true;
+        Env_Zone2_Caves_Deserts.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Deserts", Env_Zone2_Caves_Deserts);
+
+        EnvironmentTierRule Env_Zone2_Caves_Goblins = new EnvironmentTierRule();
+        Env_Zone2_Caves_Goblins.enabled = true;
+        Env_Zone2_Caves_Goblins.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Goblins", Env_Zone2_Caves_Goblins);
+
+        EnvironmentTierRule Env_Zone2_Caves_Plateaus = new EnvironmentTierRule();
+        Env_Zone2_Caves_Plateaus.enabled = true;
+        Env_Zone2_Caves_Plateaus.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Plateaus", Env_Zone2_Caves_Plateaus);
+
+        EnvironmentTierRule Env_Zone2_Caves_Rats = new EnvironmentTierRule();
+        Env_Zone2_Caves_Rats.enabled = true;
+        Env_Zone2_Caves_Rats.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Rats", Env_Zone2_Caves_Rats);
+
+        EnvironmentTierRule Env_Zone2_Caves_Savanna = new EnvironmentTierRule();
+        Env_Zone2_Caves_Savanna.enabled = true;
+        Env_Zone2_Caves_Savanna.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Savanna", Env_Zone2_Caves_Savanna);
+
+        EnvironmentTierRule Env_Zone2_Caves_Scarak = new EnvironmentTierRule();
+        Env_Zone2_Caves_Scarak.enabled = true;
+        Env_Zone2_Caves_Scarak.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Scarak", Env_Zone2_Caves_Scarak);
+
+        EnvironmentTierRule Env_Zone2_Caves_Scrub = new EnvironmentTierRule();
+        Env_Zone2_Caves_Scrub.enabled = true;
+        Env_Zone2_Caves_Scrub.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Scrub", Env_Zone2_Caves_Scrub);
+
+        EnvironmentTierRule Env_Zone2_Caves_Volcanic_T1 = new EnvironmentTierRule();
+        Env_Zone2_Caves_Volcanic_T1.enabled = true;
+        Env_Zone2_Caves_Volcanic_T1.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Volcanic_T1", Env_Zone2_Caves_Volcanic_T1);
+
+        EnvironmentTierRule Env_Zone2_Caves_Volcanic_T2 = new EnvironmentTierRule();
+        Env_Zone2_Caves_Volcanic_T2.enabled = true;
+        Env_Zone2_Caves_Volcanic_T2.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Volcanic_T2", Env_Zone2_Caves_Volcanic_T2);
+
+        EnvironmentTierRule Env_Zone2_Caves_Volcanic_T3 = new EnvironmentTierRule();
+        Env_Zone2_Caves_Volcanic_T3.enabled = true;
+        Env_Zone2_Caves_Volcanic_T3.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Caves_Volcanic_T3", Env_Zone2_Caves_Volcanic_T3);
+
+        EnvironmentTierRule Env_Zone2_Deserts = new EnvironmentTierRule();
+        Env_Zone2_Deserts.enabled = true;
+        Env_Zone2_Deserts.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Deserts", Env_Zone2_Deserts);
+
+        EnvironmentTierRule Env_Zone2_Dungeons = new EnvironmentTierRule();
+        Env_Zone2_Dungeons.enabled = true;
+        Env_Zone2_Dungeons.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Dungeons", Env_Zone2_Dungeons);
+
+        EnvironmentTierRule Env_Zone2_Encounters = new EnvironmentTierRule();
+        Env_Zone2_Encounters.enabled = true;
+        Env_Zone2_Encounters.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Encounters", Env_Zone2_Encounters);
+
+        EnvironmentTierRule Env_Zone2_Feran = new EnvironmentTierRule();
+        Env_Zone2_Feran.enabled = true;
+        Env_Zone2_Feran.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Feran", Env_Zone2_Feran);
+
+        EnvironmentTierRule Env_Zone2_Mage_Towers = new EnvironmentTierRule();
+        Env_Zone2_Mage_Towers.enabled = true;
+        Env_Zone2_Mage_Towers.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Mage_Towers", Env_Zone2_Mage_Towers);
+
+        EnvironmentTierRule Env_Zone2_Mineshafts = new EnvironmentTierRule();
+        Env_Zone2_Mineshafts.enabled = true;
+        Env_Zone2_Mineshafts.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Mineshafts", Env_Zone2_Mineshafts);
+
+        EnvironmentTierRule Env_Zone2_Oasis = new EnvironmentTierRule();
+        Env_Zone2_Oasis.enabled = true;
+        Env_Zone2_Oasis.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Oasis", Env_Zone2_Oasis);
+
+        EnvironmentTierRule Env_Zone2_Plateaus = new EnvironmentTierRule();
+        Env_Zone2_Plateaus.enabled = true;
+        Env_Zone2_Plateaus.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Plateaus", Env_Zone2_Plateaus);
+
+        EnvironmentTierRule Env_Zone2_Savanna = new EnvironmentTierRule();
+        Env_Zone2_Savanna.enabled = true;
+        Env_Zone2_Savanna.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Savanna", Env_Zone2_Savanna);
+
+        EnvironmentTierRule Env_Zone2_Scarak = new EnvironmentTierRule();
+        Env_Zone2_Scarak.enabled = true;
+        Env_Zone2_Scarak.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Scarak", Env_Zone2_Scarak);
+
+        EnvironmentTierRule Env_Zone2_Scrub = new EnvironmentTierRule();
+        Env_Zone2_Scrub.enabled = true;
+        Env_Zone2_Scrub.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Scrub", Env_Zone2_Scrub);
+
+        EnvironmentTierRule Env_Zone2_Shores = new EnvironmentTierRule();
+        Env_Zone2_Shores.enabled = true;
+        Env_Zone2_Shores.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
+        map.put("Env_Zone2_Shores", Env_Zone2_Shores);
+
+        EnvironmentTierRule Env_Zone3 = new EnvironmentTierRule();
+        Env_Zone3.enabled = true;
+        Env_Zone3.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3", Env_Zone3);
+
+        EnvironmentTierRule Env_Zone3_Caves = new EnvironmentTierRule();
+        Env_Zone3_Caves.enabled = true;
+        Env_Zone3_Caves.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves", Env_Zone3_Caves);
+
+        EnvironmentTierRule Env_Zone3_Caves_Forests = new EnvironmentTierRule();
+        Env_Zone3_Caves_Forests.enabled = true;
+        Env_Zone3_Caves_Forests.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves_Forests", Env_Zone3_Caves_Forests);
+
+        EnvironmentTierRule Env_Zone3_Caves_Glacial = new EnvironmentTierRule();
+        Env_Zone3_Caves_Glacial.enabled = true;
+        Env_Zone3_Caves_Glacial.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves_Glacial", Env_Zone3_Caves_Glacial);
+
+        EnvironmentTierRule Env_Zone3_Caves_Mountains = new EnvironmentTierRule();
+        Env_Zone3_Caves_Mountains.enabled = true;
+        Env_Zone3_Caves_Mountains.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves_Mountains", Env_Zone3_Caves_Mountains);
+
+        EnvironmentTierRule Env_Zone3_Caves_Spider = new EnvironmentTierRule();
+        Env_Zone3_Caves_Spider.enabled = true;
+        Env_Zone3_Caves_Spider.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves_Spider", Env_Zone3_Caves_Spider);
+
+        EnvironmentTierRule Env_Zone3_Caves_Tundra = new EnvironmentTierRule();
+        Env_Zone3_Caves_Tundra.enabled = true;
+        Env_Zone3_Caves_Tundra.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves_Tundra", Env_Zone3_Caves_Tundra);
+
+        EnvironmentTierRule Env_Zone3_Caves_Volcanic_T1 = new EnvironmentTierRule();
+        Env_Zone3_Caves_Volcanic_T1.enabled = true;
+        Env_Zone3_Caves_Volcanic_T1.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves_Volcanic_T1", Env_Zone3_Caves_Volcanic_T1);
+
+        EnvironmentTierRule Env_Zone3_Caves_Volcanic_T2 = new EnvironmentTierRule();
+        Env_Zone3_Caves_Volcanic_T2.enabled = true;
+        Env_Zone3_Caves_Volcanic_T2.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves_Volcanic_T2", Env_Zone3_Caves_Volcanic_T2);
+
+        EnvironmentTierRule Env_Zone3_Caves_Volcanic_T3 = new EnvironmentTierRule();
+        Env_Zone3_Caves_Volcanic_T3.enabled = true;
+        Env_Zone3_Caves_Volcanic_T3.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Caves_Volcanic_T3", Env_Zone3_Caves_Volcanic_T3);
+
+        EnvironmentTierRule Env_Zone3_Dungeons = new EnvironmentTierRule();
+        Env_Zone3_Dungeons.enabled = true;
+        Env_Zone3_Dungeons.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Dungeons", Env_Zone3_Dungeons);
+
+        EnvironmentTierRule Env_Zone3_Encounters = new EnvironmentTierRule();
+        Env_Zone3_Encounters.enabled = true;
+        Env_Zone3_Encounters.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Encounters", Env_Zone3_Encounters);
+
+        EnvironmentTierRule Env_Zone3_Forests = new EnvironmentTierRule();
+        Env_Zone3_Forests.enabled = true;
+        Env_Zone3_Forests.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Forests", Env_Zone3_Forests);
+
+        EnvironmentTierRule Env_Zone3_Glacial = new EnvironmentTierRule();
+        Env_Zone3_Glacial.enabled = true;
+        Env_Zone3_Glacial.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Glacial", Env_Zone3_Glacial);
+
+        EnvironmentTierRule Env_Zone3_Glacial_Henges = new EnvironmentTierRule();
+        Env_Zone3_Glacial_Henges.enabled = true;
+        Env_Zone3_Glacial_Henges.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Glacial_Henges", Env_Zone3_Glacial_Henges);
+
+        EnvironmentTierRule Env_Zone3_Hedera = new EnvironmentTierRule();
+        Env_Zone3_Hedera.enabled = true;
+        Env_Zone3_Hedera.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Hedera", Env_Zone3_Hedera);
+
+        EnvironmentTierRule Env_Zone3_Mage_Towers = new EnvironmentTierRule();
+        Env_Zone3_Mage_Towers.enabled = true;
+        Env_Zone3_Mage_Towers.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Mage_Towers", Env_Zone3_Mage_Towers);
+
+        EnvironmentTierRule Env_Zone3_Mineshafts = new EnvironmentTierRule();
+        Env_Zone3_Mineshafts.enabled = true;
+        Env_Zone3_Mineshafts.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Mineshafts", Env_Zone3_Mineshafts);
+
+        EnvironmentTierRule Env_Zone3_Mountains = new EnvironmentTierRule();
+        Env_Zone3_Mountains.enabled = true;
+        Env_Zone3_Mountains.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Mountains", Env_Zone3_Mountains);
+
+        EnvironmentTierRule Env_Zone3_Outlander = new EnvironmentTierRule();
+        Env_Zone3_Outlander.enabled = true;
+        Env_Zone3_Outlander.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Outlander", Env_Zone3_Outlander);
+
+        EnvironmentTierRule Env_Zone3_Shores = new EnvironmentTierRule();
+        Env_Zone3_Shores.enabled = true;
+        Env_Zone3_Shores.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Shores", Env_Zone3_Shores);
+
+        EnvironmentTierRule Env_Zone3_Tundra = new EnvironmentTierRule();
+        Env_Zone3_Tundra.enabled = true;
+        Env_Zone3_Tundra.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
+        map.put("Env_Zone3_Tundra", Env_Zone3_Tundra);
+
+        EnvironmentTierRule Env_Zone4 = new EnvironmentTierRule();
+        Env_Zone4.enabled = true;
+        Env_Zone4.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4", Env_Zone4);
+
+        EnvironmentTierRule Env_Zone4_Caves = new EnvironmentTierRule();
+        Env_Zone4_Caves.enabled = true;
+        Env_Zone4_Caves.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Caves", Env_Zone4_Caves);
+
+        EnvironmentTierRule Env_Zone4_Caves_Volcanic = new EnvironmentTierRule();
+        Env_Zone4_Caves_Volcanic.enabled = true;
+        Env_Zone4_Caves_Volcanic.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Caves_Volcanic", Env_Zone4_Caves_Volcanic);
+
+        EnvironmentTierRule Env_Zone4_Crucible = new EnvironmentTierRule();
+        Env_Zone4_Crucible.enabled = true;
+        Env_Zone4_Crucible.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Crucible", Env_Zone4_Crucible);
+
+        EnvironmentTierRule Env_Zone4_Dungeons = new EnvironmentTierRule();
+        Env_Zone4_Dungeons.enabled = true;
+        Env_Zone4_Dungeons.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Dungeons", Env_Zone4_Dungeons);
+
+        EnvironmentTierRule Env_Zone4_Encounters = new EnvironmentTierRule();
+        Env_Zone4_Encounters.enabled = true;
+        Env_Zone4_Encounters.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Encounters", Env_Zone4_Encounters);
+
+        EnvironmentTierRule Env_Zone4_Forests = new EnvironmentTierRule();
+        Env_Zone4_Forests.enabled = true;
+        Env_Zone4_Forests.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Forests", Env_Zone4_Forests);
+
+        EnvironmentTierRule Env_Zone4_Jungles = new EnvironmentTierRule();
+        Env_Zone4_Jungles.enabled = true;
+        Env_Zone4_Jungles.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Jungles", Env_Zone4_Jungles);
+
+        EnvironmentTierRule Env_Zone4_Mage_Towers = new EnvironmentTierRule();
+        Env_Zone4_Mage_Towers.enabled = true;
+        Env_Zone4_Mage_Towers.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Mage_Towers", Env_Zone4_Mage_Towers);
+
+        EnvironmentTierRule Env_Zone4_Sewers = new EnvironmentTierRule();
+        Env_Zone4_Sewers.enabled = true;
+        Env_Zone4_Sewers.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Sewers", Env_Zone4_Sewers);
+
+        EnvironmentTierRule Env_Zone4_Shores = new EnvironmentTierRule();
+        Env_Zone4_Shores.enabled = true;
+        Env_Zone4_Shores.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Shores", Env_Zone4_Shores);
+
+        EnvironmentTierRule Env_Zone4_Volcanoes = new EnvironmentTierRule();
+        Env_Zone4_Volcanoes.enabled = true;
+        Env_Zone4_Volcanoes.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Volcanoes", Env_Zone4_Volcanoes);
+
+        EnvironmentTierRule Env_Zone4_Wastes = new EnvironmentTierRule();
+        Env_Zone4_Wastes.enabled = true;
+        Env_Zone4_Wastes.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
+        map.put("Env_Zone4_Wastes", Env_Zone4_Wastes);
+
+        return map;
+    }
+
+    public static final class NameplatesConfig {
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Enable nameplates for EliteMobs.")
+        public boolean nameplatesEnabled = true;
+
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Nameplate formatting mode: Currently only RANKED_ROLE is supported.")
+        public NameplateMode nameplateMode = NameplateMode.RANKED_ROLE;
+
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Tier prefixes per mob family. Each entry must have exactly 5 values (tier 1–5).")
+        public Map<String, List<String>> tierPrefixesByFamily = defaultTierPrefixes();
+
+        @FixedArraySize(TIERS_AMOUNT)
+        @Default
+        @Cfg(group = "Nameplates", file = "visuals.yml")
+        public String[] nameplatePrefixPerTier = {"[•]", "[• •]", "[• • •]", "[• • • •]", "[• • • • •]"};
+
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Only apply nameplates to NPC roles that contain any of these NPC ids (case-insensitive). Empty = allow all.")
+        public List<String> nameplateMustContainRoles = List.of();
+
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Never apply nameplates to NPC roles that contain any of these NPC ids (case-insensitive). Empty = allow all.")
+        public List<String> nameplateMustNotContainRoles = List.of();
+
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Enable nameplates per tier.")
+        public boolean[] nameplatesEnabledPerTier = {true, true, true, true, true};
+    }
+
+    public static final class ReconcileConfig {
+        @Min(0.0)
+        @Default
+        @Cfg(group = "Reconcile", file = "main.yml", comment = "How many world ticks to reconcile existing elites after a config reload. 0 = disable.")
+        public int reconcileWindowTicks = 40;
+
+        @Default
+        @Cfg(group = "Reconcile", file = "main.yml", comment = "Log a message when reconcile starts and ends.")
+        public boolean announceReconcile = true;
+    }
+
+    public enum NameplateMode {
+        SIMPLE, RANKED_ROLE
+    }
+
+    public static final class SpawningConfig {
+        @Default
+        @Cfg(group = "Spawning", file = "main.yml", comment = "Enable per-environment tier spawn chances (progressive mode).")
+        public boolean enableEnvironmentTierSpawns = true;
+
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Spawning", file = "main.yml", comment = "Base tier spawn chances (used when no environment override is found). Higher = more common.")
+        public double[] spawnChancePerTier = {0.46, 0.28, 0.16, 0.08, 0.04};
+
+        @Cfg(group = "Spawning", file = "main.yml", comment = "Per-environment tier chances. Key = Environment id (e.g. Env_Zone1_Forests). If enabled=false, elites never spawn there.")
+        public Map<String, EnvironmentTierRule> environmentTierSpawns = defaultEnvironmentTierSpawns();
+    }
+
+    public static final class EnvironmentTierRule {
+        @Default
+        public boolean enabled = true;
+
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        public double[] spawnChancePerTier = {0.46, 0.28, 0.16, 0.08, 0.04};
+    }
+
+    public static final class HealthConfig {
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Health", file = "main.yml", comment = "Health multiplier per tier used to compute max-health in SpawnSystem.")
+        public float[] healthMultiplierPerTier = {0.1f, 0.5f, 1.1f, 1.8f, 2.6f};
+
+        @Default
+        @Cfg(group = "Health", file = "main.yml", comment = "Enable health scaling.")
+        public boolean enableHealthScaling = true;
+    }
+
+    public static final class AssetGeneratorConfig {
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "AssetGenerator", file = "main.yml", comment = "Tier suffixes for Asset Generator.")
+        public String[] tierSuffixes = {"Tier_1", "Tier_2", "Tier_3", "Tier_4", "Tier_5"};
+    }
+
+    public static final class GearConfig {
+        @Min(0.001)
+        @Max(1.0)
+        @Default
+        @Cfg(group = "Gear", file = "main.yml", comment = "Spawn durability min as fraction of max.")
+        public double spawnGearDurabilityMin = 0.02;
+
+        @Min(0.001)
+        @Max(1.0)
+        @Default
+        @Cfg(group = "Gear", file = "main.yml", comment = "Spawn durability max as fraction of max.")
+        public double spawnGearDurabilityMax = 0.30;
+    }
+
+    public static final class ModelConfig {
+        @Default
+        @Cfg(group = "Model", file = "visuals.yml", comment = "Enable model scaling.")
+        public boolean enableModelScaling = true;
+
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Model", file = "visuals.yml", comment = "Model scale multiplier per tier. I wouldn't tweak this too much since hitboxes freak out.")
+        public float[] modelScaleMultiplierPerTier = {0.74f, 0.85f, 0.96f, 1.07f, 1.18f};
+
+        @Min(0.0)
+        @Max(0.2)
+        @Default
+        @Cfg(group = "Model", file = "visuals.yml", comment = "Random variance applied to model scale. Example 0.04 => +/-4%.")
+        public float modelScaleRandomVariance = 0.04f; // +/- 3%
+    }
+
+    public static final class LootConfig {
+        @Min(0.0)
+        @Max(1.0)
+        @Default
+        @Cfg(group = "Loot", file = "drops.yml", comment = "Weapon drop chance.")
+        public double dropWeaponChance = 0.05;
+
+        @Min(0.0)
+        @Max(1.0)
+        @Default
+        @Cfg(group = "Loot", file = "drops.yml", comment = "Armor piece drop chance.")
+        public double dropArmorPieceChance = 0.05;
+
+        @Min(0.0)
+        @Max(1.0)
+        @Default
+        @Cfg(group = "Loot", file = "drops.yml", comment = "Utility item (shields, torches, ...) drop chance.")
+        public double dropOffhandItemChance = 0.05;
+
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Loot", file = "drops.yml", comment = "Multiplies vanilla resource drops per tier.")
+        public int[] vanillaDroplistMultiplierPerTier = {0, 0, 2, 4, 6};
+
+        @Cfg(group = "Loot", file = "drops.yml", comment = "Extra rare drops rules. Minimum mob tier is 0 , Maximum mob tier is 4.")
+        public List<ExtraDropRule> extraDrops = defaultExtraDrops();
+    }
+
+    public static final class DamageConfig {
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Damage", file = "main.yml", comment = "Damage dealt by mobs multiplier per tier.")
+        public float[] mobDamageMultiplierPerTier = {0.6f, 1.1f, 1.6f, 2.1f, 2.6f};
+
+        @Default
+        @Cfg(group = "Damage", file = "main.yml", comment = "Enables damage multiplier dealt by mobs.")
+        public boolean enableMobDamageMultiplier = true;
+
+        @Default
+        @Min(0.0)
+        @Max(1.0)
+        @Cfg(group = "Damage", file = "main.yml", comment = "Adds a random variance to the damage dealt by mobs multiplier.")
+        public float mobDamageRandomVariance = 0.05f; // +/- 5%
+    }
+
+    private static List<ExtraDropRule> defaultExtraDrops() {
+        List<ExtraDropRule> list = new ArrayList<>();
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 3, 4, 11, 21));
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 2, 2, 3, 7));
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 1, 1, 1, 2));
+
+        list.add(createExtraDropRule("Ore_Copper", 0.1, 1, 2, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Copper", 0.07, 1, 2, 1, 4));
+        list.add(createExtraDropRule("Ore_Iron", 0.1, 1, 3, 1, 4));
+        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 1, 3, 1, 3));
+
+        // Vicious+ (tier 2): better
+        list.add(createExtraDropRule("Ore_Silver", 0.07, 2, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 2, 4, 1, 2));
+        list.add(createExtraDropRule("Ore_Gold", 0.07, 2, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 2, 4, 1, 2));
+        list.add(createExtraDropRule("Ore_Cobalt", 0.07, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Cobalt", 0.05, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Bronze", 0.05, 2, 3, 1, 2));
+
+        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.1, 2, 2, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.13, 2, 2, 1, 3));
+
+        // Dread+ (tier 3): strong
+        list.add(createExtraDropRule("Ore_Thorium", 0.07, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Thorium", 0.05, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ore_Prisma", 0.07, 3, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Prisma", 0.05, 3, 4, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Leather_Heavy", 0.09, 3, 3, 2, 5));
+        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.11, 3, 3, 2, 5));
+        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.15, 3, 3, 2, 5));
+        list.add(createExtraDropRule("Potion_Mana", 0.07, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Regen_Health", 0.07, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Health_Greater", 0.12, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Potion_Stamina_Greater", 0.12, 4, 4, 1, 2));
+
+        // Elite (tier 4): top end
+        list.add(createExtraDropRule("Ore_Mithril", 0.15, 4, 4, 1, 5));
+        list.add(createExtraDropRule("Ingredient_Bar_Mithril", 0.1, 4, 4, 1, 5));
+        list.add(createExtraDropRule("Ore_Onyxium", 0.15, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Ingredient_Bar_Onyxium", 0.1, 4, 4, 1, 5));
+        list.add(createExtraDropRule("Ore_Adamantite", 0.15, 3, 4, 1, 5));
+        list.add(createExtraDropRule("Ingredient_Bar_Adamantite", 0.1, 3, 4, 1, 5));
+        list.add(createExtraDropRule("Ingredient_Leather_Heavy", 0.3, 4, 4, 3, 7));
+        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.4, 4, 4, 3, 7));
+        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.5, 4, 4, 3, 7));
+        list.add(createExtraDropRule("Tool_Repair_Kit_Iron", 0.3, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Potion_Mana_Large", 0.1, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Potion_Regen_Health_Large", 0.1, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Regen_Stamina_Large", 0.1, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Health_Greater", 0.2, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Potion_Stamina_Greater", 0.2, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Potion_Health_Large", 0.1, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Potion_Stamina_Large", 0.1, 4, 4, 1, 2));
+
+        list.add(createExtraDropRule("Rock_Gem_Diamond", 0.02, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Rock_Gem_Ruby", 0.03, 3, 4, 1, 1));
+        list.add(createExtraDropRule("Rock_Gem_Sapphire", 0.03, 3, 4, 1, 1));
+        list.add(createExtraDropRule("Rock_Gem_Voidstone", 0.02, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Rock_Gem_Zephyr", 0.02, 4, 4, 1, 1));
+
+        return list;
+    }
+
+    public static final class ConsumableConfig extends AssetConfig {
+        public float horizontalSpeedMultiplier = 0.6f;
+        public float consumeDuration = 1f;
+
+        @Override
+        public AssetType namespace() {
+            return AssetType.CONSUMABLES;
+        }
+    }
+
+    public static final class ConsumablesConfig {
+        @Default
+        @Cfg(group = "Consumables", file = "consumables.yml")
+        public Map<String, ConsumableConfig> byId = defaultConsumables();
+    }
+
+    private static Map<String, ConsumableConfig> defaultConsumables() {
+         Map<String, ConsumableConfig> m = new LinkedHashMap<>();
+         ConsumableConfig food_tier1 = new ConsumableConfig();
+         food_tier1.consumeDuration = 1.0f;
+         food_tier1.horizontalSpeedMultiplier = 0.7f;
+         m.put(EliteMobsAssetCatalog.CONSUMABLE_FOOD_TIER1, food_tier1);
+
+         ConsumableConfig food_tier2 = new ConsumableConfig();
+         food_tier2.consumeDuration = 1.2f;
+         food_tier2.horizontalSpeedMultiplier = 0.7f;
+         m.put(EliteMobsAssetCatalog.CONSUMABLE_FOOD_TIER2, food_tier2);
+
+         ConsumableConfig food_tier3 = new ConsumableConfig();
+         food_tier3.consumeDuration = 1.4f;
+         food_tier3.horizontalSpeedMultiplier = 0.7f;
+         m.put(EliteMobsAssetCatalog.CONSUMABLE_FOOD_TIER3, food_tier3);
+
+         ConsumableConfig all_small_potions = new ConsumableConfig();
+         all_small_potions.consumeDuration = 1.2f;
+         all_small_potions.horizontalSpeedMultiplier = 0.7f;
+         m.put(EliteMobsAssetCatalog.CONSUMABLE_SMALL_POTIONS, all_small_potions);
+
+         ConsumableConfig all_big_potions = new ConsumableConfig();
+         all_big_potions.consumeDuration = 1.8f;
+         all_big_potions.horizontalSpeedMultiplier = 0.7f;
+         m.put(EliteMobsAssetCatalog.CONSUMABLE_BIG_POTIONS, all_big_potions);
+         return m;
+    }
+
+    public static final class EffectsConfig {
+        @Default
+        @Cfg(file = "effects.yml", comment = "Effects configuration lives here. Say hello.")
+        public Map<String, EntityEffectConfig> byId = defaultEntityEffects();
+    }
+
+    private static Map<String, EntityEffectConfig> defaultEntityEffects() {
+        Map<String, EntityEffectConfig> m = new LinkedHashMap<>();
+        EntityEffectConfig projectileResistance = new EntityEffectConfig();
+        projectileResistance.isEnabled = true;
+        projectileResistance.isEnabledPerTier = new boolean[]{false, false, false, true, true};
+        projectileResistance.amountMultiplierPerTier = new float[]{0f, 0f, 0f, 0.7f, 0.85f};
+        projectileResistance.infinite = true;
+        projectileResistance.templates.add(EFFECT_PROJECTILE_RESISTANCE,
+                                           "Entity/Effects/EliteMobs/EliteMobs_Effect_ProjectileResistance.template.json"
+        );
+        m.put(EFFECT_PROJECTILE_RESISTANCE, projectileResistance);
+
+        return m;
+    }
+
+    public static final class EntityEffectConfig extends TieredAssetConfig {
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] amountMultiplierPerTier = new float[]{1f, 1f, 1f, 1f, 1f};
+        public boolean infinite = true;
+
+        @Override
+        public AssetType namespace() {
+            return AssetType.EFFECTS;
+        }
+    }
+
+    public static final class DebugConfig {
+        @Default
+        @Cfg(group = "Debug", file = "main.yml", comment = "Enables debug mode.")
+        public boolean isDebugModeEnabled = true;
+
+        @Min(1.0)
+        @Default
+        @Cfg(group = "Debug", file = "main.yml", comment = "Debug interval for scanning NPC's that match the MobRules in seconds.")
+        public int debugMobRuleScanIntervalSeconds = 5;
+    }
+
+    public static final class CompatConfig {
+        @Default
+        @Cfg(group = "Compat", file = "main.yml", comment = "Show compatibility messages to players when they join.")
+        public boolean showCompatJoinMessages = true;
+    }
+
+    public static final class CatalogsConfig {
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Weapon rarity rules: checks if the weapon id contains 'scarab' for example, and maps that to a rarity. First match wins if added multiple times.")
+        public Map<String, String> weaponRarityRulesContains = defaultWeaponRarityRulesContains();
+
+        private static Map<String, String> defaultWeaponRarityRulesContains() {
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("scarab", "common");
+            m.put("silversteel", "common");
+            m.put("iron_rusty", "common");
+            m.put("steel_rusty", "common");
+            m.put("wood", "common");
+            m.put("crude", "common");
+            m.put("copper", "common");
+
+            m.put("iron", "uncommon");
+            m.put("stone", "uncommon");
+            m.put("steel", "uncommon");
+            m.put("scrap", "uncommon");
+            m.put("bronze_ancient", "uncommon");
+            m.put("bronze", "uncommon");
+            m.put("potion_poison", "uncommon");
+
+            m.put("thorium", "rare");
+            m.put("spectral", "rare");
+            m.put("bone", "rare");
+            m.put("doomed", "rare");
+            m.put("cobalt", "rare");
+            m.put("ancient_steel", "rare");
+            m.put("steel_ancient", "rare");
+            m.put("tribal", "rare");
+            m.put("bomb_stun", "rare");
+
+            m.put("adamantite", "epic");
+            m.put("onyxium", "epic");
+            m.put("mithril", "epic");
+            m.put("void", "epic");
+            m.put("Halloween_Broomstick", "epic");
+            m.put("bomb_continuous", "epic");
+            m.put("praetorian", "epic");
+
+            m.put("flame", "legendary");
+
+            return m;
+        }
+
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Armor rarity rules: checks if the armor id contains 'cotton' for example, and maps that to a rarity. First match wins if added multiple times.")
+        public Map<String, String> armorRarityRulesContains = defaultArmorRarityRulesContains();
+
+        private static Map<String, String> defaultArmorRarityRulesContains() {
+            Map<String, String> m = new LinkedHashMap<>();
+            m.put("cotton", "common");
+            m.put("linen", "common");
+            m.put("silk", "common");
+            m.put("wool", "common");
+            m.put("wood", "common");
+            m.put("copper", "common");
+            m.put("club_zombie", "common");
+
+            m.put("diving", "uncommon");
+            m.put("kweebec", "uncommon");
+            m.put("leather", "uncommon");
+            m.put("trork", "uncommon");
+            m.put("iron", "uncommon");
+            m.put("steel", "uncommon");
+            m.put("bronze", "uncommon");
+
+            m.put("thorium", "rare");
+            m.put("cobalt", "rare");
+            m.put("steel_ancient", "rare");
+            m.put("cindercloth", "rare");
+            m.put("bronze_ornate", "rare");
+
+            m.put("prisma", "epic");
+            m.put("adamantite", "epic");
+            m.put("mithril", "epic");
+            m.put("praetorian", "epic");
+            m.put("onyxium", "epic");
+
+            return m;
+        }
+
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "What tiers are allowed which rarities and weights. To do: fix naming so it's consistent. Common = tier 0, Elite = tier 4.")
+        public List<List<String>> tierAllowedRarities = defaultTierAllowedRarities();
+
+        private static List<List<String>> defaultTierAllowedRarities() {
+            return List.of(List.of("common"),                    // tier 0
+                           List.of("uncommon"),                  // tier 1
+                           List.of("rare"),                      // tier 2
+                           List.of("epic"),                      // tier 3
+                           List.of("epic", "legendary")           // tier 4
+            );
+        }
+
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "The chance that the tier will equip something of that rarity.")
+        public List<Map<String, Double>> tierEquipmentRarityWeights = defaultTierRarityWeights();
+
+        private static List<Map<String, Double>> defaultTierRarityWeights() {
+            return List.of(mapOf("common", 1.0),                              // tier 0
+                           mapOf("uncommon", 1.0),                            // tier 1
+                           mapOf("rare", 0.70, "uncommon", 0.30),             // tier 2
+                           mapOf("epic", 0.70, "rare", 0.30),                 // tier 3
+                           mapOf("legendary", 0.40, "epic", 0.60)             // tier 4
+            );
+        }
+
+
+        // Weapon catalog (IDs)
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Weapon catalog (IDs). You can reference the Asset Editor or the ID displayed when you hover over an item in the creative inventory.")
+        public List<String> weaponCatalog = new ArrayList<>(List.of("Weapon_Axe_Adamantite",
+                                                                    "Weapon_Axe_Bone",
+                                                                    "Weapon_Axe_Cobalt",
+                                                                    "Weapon_Axe_Copper",
+                                                                    "Weapon_Axe_Crude",
+                                                                    "Weapon_Axe_Doomed",
+                                                                    "Weapon_Axe_Iron_Rusty",
+                                                                    "Weapon_Axe_Iron",
+                                                                    "Weapon_Axe_Mithril",
+                                                                    "Weapon_Axe_Onyxium",
+                                                                    "Weapon_Axe_Stone_Trork",
+                                                                    "Weapon_Axe_Thorium",
+                                                                    "Weapon_Axe_Tribal",
+
+                // Battleaxe
+                                                                    "Weapon_Battleaxe_Adamantite",
+                                                                    "Weapon_Battleaxe_Cobalt",
+                                                                    "Weapon_Battleaxe_Copper",
+                                                                    "Weapon_Battleaxe_Crude",
+                                                                    "Weapon_Battleaxe_Doomed",
+                                                                    "Weapon_Battleaxe_Iron",
+                                                                    "Weapon_Battleaxe_Mithril",
+                                                                    "Weapon_Battleaxe_Onyxium",
+                                                                    "Weapon_Battleaxe_Scarab",
+                                                                    "Weapon_Battleaxe_Scythe_Void",
+                                                                    "Weapon_Battleaxe_Steel_Rusty",
+                                                                    "Weapon_Battleaxe_Stone_Trork",
+                                                                    "Weapon_Battleaxe_Thorium",
+                                                                    "Weapon_Battleaxe_Tribal",
+                                                                    "Weapon_Battleaxe_Wood_Fence",
+
+                // Club
+                                                                    "Weapon_Club_Adamantite",
+                                                                    "Weapon_Club_Cobalt",
+                                                                    "Weapon_Club_Copper",
+                                                                    "Weapon_Club_Crude",
+                                                                    "Weapon_Club_Doomed",
+                                                                    "Weapon_Club_Iron_Rusty",
+                                                                    "Weapon_Club_Iron",
+                                                                    "Weapon_Club_Mithril",
+                                                                    "Weapon_Club_Onyxium",
+                                                                    "Weapon_Club_Scrap",
+                                                                    "Weapon_Club_Steel_Flail_Rusty",
+                                                                    "Weapon_Club_Stone_Trork",
+                                                                    "Weapon_Club_Thorium",
+                                                                    "Weapon_Club_Tribal",
+                                                                    "Weapon_Club_Zombie_Arm",
+                                                                    "Weapon_Club_Zombie_Burnt_Arm",
+                                                                    "Weapon_Club_Zombie_Burnt_Leg",
+                                                                    "Weapon_Club_Zombie_Frost_Arm",
+                                                                    "Weapon_Club_Zombie_Frost_Leg",
+                                                                    "Weapon_Club_Zombie_Leg",
+                                                                    "Weapon_Club_Zombie_Sand_Arm",
+                                                                    "Weapon_Club_Zombie_Sand_Leg",
+
+                // Crossbow
+                                                                    "Weapon_Crossbow_Ancient_Steel",
+                                                                    "Weapon_Crossbow_Iron",
+
+                // Daggers
+                                                                    "Weapon_Daggers_Adamantite_Saurian",
+                                                                    "Weapon_Daggers_Adamantite",
+                                                                    "Weapon_Daggers_Bone",
+                                                                    "Weapon_Daggers_Bronze_Ancient",
+                                                                    "Weapon_Daggers_Bronze",
+                                                                    "Weapon_Daggers_Claw_Bone",
+                                                                    "Weapon_Daggers_Cobalt",
+                                                                    "Weapon_Daggers_Copper",
+                                                                    "Weapon_Daggers_Crude",
+                                                                    "Weapon_Daggers_Doomed",
+                                                                    "Weapon_Daggers_Fang_Doomed",
+                                                                    "Weapon_Daggers_Iron",
+                                                                    "Weapon_Daggers_Mithril",
+                                                                    "Weapon_Daggers_Onyxium",
+                                                                    "Weapon_Daggers_Stone_Trork",
+                                                                    "Weapon_Daggers_Thorium",
+
+                // Longsword
+                                                                    "Weapon_Longsword_Adamantite_Saurian",
+                                                                    "Weapon_Longsword_Adamantite",
+                                                                    "Weapon_Longsword_Cobalt",
+                                                                    "Weapon_Longsword_Copper",
+                                                                    "Weapon_Longsword_Crude",
+                                                                    "Weapon_Longsword_Flame",
+                                                                    "Weapon_Longsword_Iron",
+                                                                    "Weapon_Longsword_Katana",
+                                                                    "Weapon_Longsword_Mithril",
+                                                                    "Weapon_Longsword_Onyxium",
+                                                                    "Weapon_Longsword_Praetorian",
+                                                                    "Weapon_Longsword_Scarab",
+                                                                    "Weapon_Longsword_Spectral",
+                                                                    "Weapon_Longsword_Stone_Trork",
+                                                                    "Weapon_Longsword_Thorium",
+                                                                    "Weapon_Longsword_Tribal",
+                                                                    "Weapon_Longsword_Void",
+
+                // Mace
+                                                                    "Weapon_Mace_Adamantite",
+                                                                    "Weapon_Mace_Cobalt",
+                                                                    "Weapon_Mace_Copper",
+                                                                    "Weapon_Mace_Crude",
+                                                                    "Weapon_Mace_Iron",
+                                                                    "Weapon_Mace_Mithril",
+                                                                    "Weapon_Mace_Onyxium",
+                                                                    "Weapon_Mace_Prisma",
+                                                                    "Weapon_Mace_Scrap",
+                                                                    "Weapon_Mace_Stone_Trork",
+                                                                    "Weapon_Mace_Thorium",
+
+                // Shield
+                                                                    "Weapon_Shield_Adamantite",
+                                                                    "Weapon_Shield_Cobalt",
+                                                                    "Weapon_Shield_Copper",
+                                                                    "Weapon_Shield_Doomed",
+                                                                    "Weapon_Shield_Iron",
+                                                                    "Weapon_Shield_Mithril",
+                                                                    "Weapon_Shield_Onyxium",
+                                                                    "Weapon_Shield_Orbis_Incandescent",
+                                                                    "Weapon_Shield_Orbis_Knight",
+                                                                    "Weapon_Shield_Praetorian",
+                                                                    "Weapon_Shield_Rusty",
+                                                                    "Weapon_Shield_Scrap_Spiked",
+                                                                    "Weapon_Shield_Scrap",
+                                                                    "Weapon_Shield_Thorium",
+                                                                    "Weapon_Shield_Wood",
+
+                // Shortbow
+                                                                    "Weapon_Shortbow_Adamantite",
+                                                                    "Weapon_Shortbow_Bomb",
+                                                                    "Weapon_Shortbow_Bronze",
+                                                                    "Weapon_Shortbow_Cobalt",
+                                                                    "Weapon_Shortbow_Combat",
+                                                                    "Weapon_Shortbow_Copper",
+                                                                    "Weapon_Shortbow_Crude",
+                                                                    "Weapon_Shortbow_Doomed",
+                                                                    "Weapon_Shortbow_Flame",
+                                                                    "Weapon_Shortbow_Frost",
+                                                                    "Weapon_Shortbow_Iron_Rusty",
+                                                                    "Weapon_Shortbow_Iron",
+                                                                    "Weapon_Shortbow_Mithril",
+                                                                    "Weapon_Shortbow_Onyxium",
+                                                                    "Weapon_Shortbow_Pull",
+                                                                    "Weapon_Shortbow_Ricochet",
+                                                                    "Weapon_Shortbow_Thorium",
+                                                                    "Weapon_Shortbow_Vampire",
+
+                // Spear
+                                                                    "Weapon_Spear_Adamantite_Saurian",
+                                                                    "Weapon_Spear_Adamantite",
+                                                                    "Weapon_Spear_Bone",
+                                                                    "Weapon_Spear_Bronze",
+                                                                    "Weapon_Spear_Cobalt",
+                                                                    "Weapon_Spear_Copper",
+                                                                    "Weapon_Spear_Crude",
+                                                                    "Weapon_Spear_Double_Incandescent",
+                                                                    "Weapon_Spear_Fishbone",
+                                                                    "Weapon_Spear_Iron",
+                                                                    "Weapon_Spear_Leaf",
+                                                                    "Weapon_Spear_Mithril",
+                                                                    "Weapon_Spear_Onyxium",
+                                                                    "Weapon_Spear_Scrap",
+                                                                    "Weapon_Spear_Stone_Trork",
+                                                                    "Weapon_Spear_Thorium",
+                                                                    "Weapon_Spear_Tribal",
+
+                // Staff
+                                                                    "Halloween_Broomstick",
+                                                                    "Weapon_Staff_Adamantite",
+                                                                    "Weapon_Staff_Bo_Bamboo",
+                                                                    "Weapon_Staff_Bo_Wood",
+                                                                    "Weapon_Staff_Bone",
+                                                                    "Weapon_Staff_Bronze",
+                                                                    "Weapon_Staff_Cane",
+                                                                    "Weapon_Staff_Cobalt",
+                                                                    "Weapon_Staff_Copper",
+                                                                    "Weapon_Staff_Crystal_Fire_Trork",
+                                                                    "Weapon_Staff_Crystal_Flame",
+                                                                    "Weapon_Staff_Crystal_Ice",
+                                                                    "Weapon_Staff_Crystal_Purple",
+                                                                    "Weapon_Staff_Crystal_Red",
+                                                                    "Weapon_Staff_Doomed",
+                                                                    "Weapon_Staff_Frost",
+                                                                    "Weapon_Staff_Iron",
+                                                                    "Weapon_Staff_Mithril",
+                                                                    "Weapon_Staff_Onion",
+                                                                    "Weapon_Staff_Onyxium",
+                                                                    "Weapon_Staff_Thorium",
+                                                                    "Weapon_Staff_Wizard",
+                                                                    "Weapon_Staff_Wood_Kweebec",
+                                                                    "Weapon_Staff_Wood_Rotten",
+                                                                    "Weapon_Staff_Wood",
+
+                // Sword
+                                                                    "Weapon_Sword_Adamantite",
+                                                                    "Weapon_Sword_Bone",
+                                                                    "Weapon_Sword_Bronze_Ancient",
+                                                                    "Weapon_Sword_Bronze",
+                                                                    "Weapon_Sword_Cobalt",
+                                                                    "Weapon_Sword_Copper",
+                                                                    "Weapon_Sword_Crude",
+                                                                    "Weapon_Sword_Cutlass",
+                                                                    "Weapon_Sword_Doomed",
+                                                                    "Weapon_Sword_Frost",
+                                                                    "Weapon_Sword_Iron",
+                                                                    "Weapon_Sword_Mithril",
+                                                                    "Weapon_Sword_Nexus",
+                                                                    "Weapon_Sword_Onyxium",
+                                                                    "Weapon_Sword_Runic",
+                                                                    "Weapon_Sword_Scrap",
+                                                                    "Weapon_Sword_Silversteel",
+                                                                    "Weapon_Sword_Steel_Incandescent",
+                                                                    "Weapon_Sword_Steel_Rusty",
+                                                                    "Weapon_Sword_Steel",
+                                                                    "Weapon_Sword_Stone_Trork",
+                                                                    "Weapon_Sword_Thorium",
+                                                                    "Weapon_Sword_Wood",
+
+                //Pickaxe
+                                                                    "Tool_Pickaxe_Adamantite",
+                                                                    "Tool_Pickaxe_Cobalt",
+                                                                    "Tool_Pickaxe_Copper",
+                                                                    "Tool_Pickaxe_Crude",
+                                                                    "Tool_Pickaxe_Iron",
+                                                                    "Tool_Pickaxe_Mithril",
+                                                                    "Tool_Pickaxe_Onyxium",
+                                                                    "Tool_Pickaxe_Scrap",
+                                                                    "Tool_Pickaxe_Thorium",
+                                                                    "Tool_Pickaxe_Wood",
+
+                //Bombs
+                                                                    "Weapon_Bomb",
+                                                                    "Weapon_Bomb_Stun",
+                                                                    "Weapon_Bomb_Potion_Poison",
+                                                                    "Weapon_Bomb_Continuous",
+
+                //Kunai
+                                                                    "Weapon_Kunai",
+
+                                                                    "Weapon_Gun_Blunderbuss",
+                                                                    "Weapon_Gun_Blunderbuss_Rusty",
+
+                                                                    "Weapon_Spellbook_Demon",
+                                                                    "Weapon_Spellbook_Fire",
+                                                                    "Weapon_Spellbook_Grimoire_Brown",
+                                                                    "Weapon_Spellbook_Grimoire_Purple",
+                                                                    "Weapon_Spellbook_Rekindle_Embers"
+        ));
+
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Armor material catalog (reference: folder names from the asset editor). Do not add '_Head'' here, I do this from code. Thanks.")
+        public List<String> armorMaterials = defaultArmorMaterials();
+
+        private static List<String> defaultArmorMaterials() {
+            return new ArrayList<>(List.of("Adamantite",
+                                           "Bronze",
+                                           "Bronze_Ornate",
+                                           "Cloth_Cindercloth",
+                                           "Cloth_Cotton",
+                                           "Cloth_Linen",
+                                           "Cloth_Silk",
+                                           "Cloth_Wool",
+                                           "Cobalt",
+                                           "Copper",
+                                           "Diving_Crude",
+                                           "Iron",
+                                           "Kweebec",
+                                           "Leather_Heavy",
+                                           "Leather_Light",
+                                           "Leather_Medium",
+                                           "Leather_Raven",
+                                           "Leather_Soft",
+                                           "Mithril",
+                                           "Onyxium",
+                                           "Prisma",
+                                           "Steel",
+                                           "Steel_Ancient",
+                                           "Thorium",
+                                           "Trork",
+                                           "Wood"
+            ));
+        }
+
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Amount of armor pieces to equip per tier. 4 means 4 slots of armor equipped on that tier")
+        public int[] armorPiecesToEquipPerTier = {0, 1, 2, 3, 4};
+
+        @Default
+        @FixedArraySize(TIERS_AMOUNT)
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Chance that something will be equipped in the utility-slot (shield, torch, ...) per tier.")
+        public double[] shieldUtilityChancePerTier = {0.0, 0.0, 0.20, 0.40, 0.60};
+
+        @Default
+        @Cfg(group = "Gear", file = "catalogs.yml", comment = "Weapon ID's that contain these words will be marked as a two-handed weapon -> no shield equipable.")
+        public List<String> twoHandedWeaponIds = new ArrayList<>(List.of("shortbow",
+                                                                         "crossbow",
+                                                                         "spear",
+                                                                         "staff",
+                                                                         "battleaxe",
+                                                                         "longsword",
+                                                                         "bomb"
+        ));
+    }
+
+    public static final class AbilitiesConfig {
+        @Cfg(file = "abilities.yml", comment = "Ability configuration lives here. Say hello.")
+        public Map<String, AbilityConfig> byId = defaultAbilities();
+    }
+
+    private static Map<String, AbilityConfig> defaultAbilities() {
+        Map<String, AbilityConfig> m = new LinkedHashMap<>();
+
+        AbilityConfig chargeLeap = new AbilityConfig();
+        chargeLeap.gate.weaponIdMustNotContain = DAMAGE_MELEE_ONLY_NOT_CONTAINS;
+        chargeLeap.gate.roleMustNotContain = DENY_ABILITY_CHARGE_LEAP_LIST;
+
+        chargeLeap.isEnabled = true;
+        chargeLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
+        chargeLeap.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 16f, 20f};
+
+        chargeLeap.minRange = 9.0f;
+        chargeLeap.maxRange = 30.0f;
+        chargeLeap.faceTarget = true;
+
+        chargeLeap.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
+                                 "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_ChargeLeap_Root.template.json"
+        );
+        chargeLeap.templates.add(AbilityConfig.TEMPLATE_ENTRY_INTERACTION,
+                                 "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_ChargeLeap_Entry.template.json"
+        );
+        chargeLeap.templates.add(AbilityConfig.TEMPLATE_DAMAGE_INTERACTION,
+                                 "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_ChargeLeap_Damage.template.json"
+        );
+
+        chargeLeap.slamRangePerTier = new float[]{0f, 0f, 0f, 3f, 4f};
+        chargeLeap.slamBaseDamagePerTier = new int[]{0, 0, 0, 20, 30};
+
+        chargeLeap.applyForcePerTier = new float[]{0f, 0f, 0f, 530f, 530f};
+        chargeLeap.knockbackLiftPerTier = new float[]{0f, 0f, 0f, 3f, 6f};
+        chargeLeap.knockbackPushAwayPerTier = new float[]{0f, 0f, 0f, -3f, -6f};
+        chargeLeap.knockbackForcePerTier = new float[]{0f, 0f, 0f, 20f, 26f};
+
+        m.put(ABILITY_CHARGE_LEAP, chargeLeap);
+
+        HealAbilityConfig healPotion = new HealAbilityConfig();
+        healPotion.isEnabled = true;
+        healPotion.isEnabledPerTier = new boolean[]{false, false, false, true, true};
+        healPotion.chancePerTier = new float[]{0f, 0f, 0f, 1.00f, 1.00f};
+        healPotion.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 15f, 15f};
+
+        healPotion.minHealthTriggerPercent = 0.50f;
+        healPotion.maxHealthTriggerPercent = 0.50f;
+        healPotion.instantHealChance = 1.00f;
+        healPotion.instantHealAmountPerTier = new float[]{0f, 0f, 0f, 0.25f, 0.25f};
+        healPotion.npcDrinkDurationSeconds = 3.0f;
+
+        healPotion.applyForcePerTier = new float[]{0f, 0f, 0f, 530f, 530f};
+
+        healPotion.templates.add(HealAbilityConfig.TEMPLATE_ROOT_INTERACTION_INSTANT,
+                                 "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_HealPotion_Instant_Root.template.json"
+        );
+        healPotion.templates.add(HealAbilityConfig.TEMPLATE_ENTRY_INTERACTION_INSTANT,
+                                 "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_HealPotion_Instant_Entry.template.json"
+        );
+        healPotion.templates.add(HealAbilityConfig.TEMPLATE_ROOT_INTERACTION_BREAK,
+                                 "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_HealPotion_Break_Root.template.json"
+        );
+        healPotion.templates.add(HealAbilityConfig.TEMPLATE_ENTRY_INTERACTION_BREAK,
+                                 "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_HealPotion_Break_Entry.template.json"
+        );
+        healPotion.templates.add(HealAbilityConfig.TEMPLATE_INSTANT_HEAL_EFFECT,
+                                 "Entity/Effects/EliteMobs/EliteMobs_Effect_InstantHeal.template.json"
+        );
+
+        m.put(ABILITY_HEAL_POTION_KEY, healPotion);
+
+        SummonAbilityConfig undeadSummon = new SummonAbilityConfig();
+        undeadSummon.isEnabled = true;
+        undeadSummon.isEnabledPerTier = new boolean[]{false, false, false, false, true};
+        undeadSummon.chancePerTier = new float[]{0f, 0f, 0f, 1.00f, 1.00f};
+        undeadSummon.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 15f, 15f};
+        undeadSummon.gate.roleMustContain = UNDEAD_ROLE_NAME_CONTAINS;
+
+        undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_ROOT_INTERACTION,
+                                   "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_RootInteraction.template.json"
+        );
+        undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_SUMMON_ENTRY_INTERACTION,
+                                   "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_EntryInteraction.template.json"
+        );
+        undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_SUMMON_MARKER,
+                                   "NPC/Spawn/Markers/EliteMobs/EliteMobs_UndeadBow_Summon_Marker.template.json"
+        );
+
+        m.put(ABILITY_UNDEAD_SUMMON_KEY, undeadSummon);
+        return m;
+    }
+
+    public static class AbilityConfig extends TieredAssetConfig {
+        public static final String TEMPLATE_ROOT_INTERACTION = "rootInteraction";
+        public static final String TEMPLATE_ENTRY_INTERACTION = "entryInteraction";
+        public static final String TEMPLATE_DAMAGE_INTERACTION = "damageInteraction";
+
+        public AbilityGate gate = new AbilityGate();
+        public float minRange = 0f;
+        public float maxRange = 0f;
+        public boolean faceTarget = false;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Chance per tier for this ability to be active on an elite (roll happens once on spawn).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] chancePerTier = {1f, 1f, 1f, 1f, 1f};
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Cooldown per tier (seconds).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] cooldownSecondsPerTier = {0f, 0f, 0f, 0f, 0f};
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] slamRangePerTier = {0f, 0f, 0f, 0f, 0f};
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public int[] slamBaseDamagePerTier = {0, 0, 0, 0, 0};
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] applyForcePerTier = {0f, 0f, 0f, 0f, 0f};
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] knockbackLiftPerTier = {0f, 0f, 0f, 0f, 0f};
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] knockbackPushAwayPerTier = {0f, 0f, 0f, 0f, 0f};
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] knockbackForcePerTier = {0f, 0f, 0f, 0f, 0f};
+
+        @Override
+        public AssetType namespace() {
+            return AssetType.ABILITIES;
+        }
+    }
+
+    public static final class HealAbilityConfig extends AbilityConfig {
+        public static final String TEMPLATE_ROOT_INTERACTION_INSTANT = "rootInteractionInstant";
+        public static final String TEMPLATE_ROOT_INTERACTION_INSTANT_SUMMON = "rootInteractionInstantSummon";
+        public static final String TEMPLATE_ENTRY_INTERACTION_INSTANT = "entryInteractionInstant";
+        public static final String TEMPLATE_ROOT_INTERACTION_BREAK = "rootInteractionBreak";
+        public static final String TEMPLATE_ENTRY_INTERACTION_BREAK = "entryInteractionBreak";
+        public static final String TEMPLATE_INSTANT_HEAL_EFFECT = "instantHealEffect";
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum health percent at which the heal can trigger (rolled once per elite on spawn).")
+        public float minHealthTriggerPercent = 0.1f;
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum health percent at which the heal can trigger (rolled once per elite on spawn).")
+        public float maxHealthTriggerPercent = 0.4f;
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Chance to use instant heal instead of regeneration.")
+        public float instantHealChance = 0.5f;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Instant heal amount per tier (percent of max health).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] instantHealAmountPerTier = {0f, 0f, 0f, 25f, 25f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "NPC potion drinking duration in seconds.")
+        public float npcDrinkDurationSeconds = 3.0f;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Item id shown in NPC hand while drinking.")
+        public String npcDrinkItemId = "Potion_Health_Greater";
+    }
+
+    public static final class SummonAbilityConfig extends AbilityConfig {
+        public static final String TEMPLATE_SUMMON_ENTRY_INTERACTION = "entryInteractionSummon";
+        public static final String TEMPLATE_SUMMON_MARKER = "summonMarker";
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Role identifiers used to pick which archers get summoned. First match (role name contains this text) wins. 'default' is used if none match.")
+        public List<String> roleIdentifiers = new ArrayList<>(List.of(
+                "Skeleton_Frost",
+                "Skeleton_Sand",
+                "Skeleton_Burnt",
+                "Skeleton"
+        ));
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum number of active summoned minions per summoner (0 disables summoning). Clamped to 0..50.")
+        public int maxAlive = DEFAULT_SUMMON_MAX_ALIVE;
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for role-matched skeleton archers in the summon pool.")
+        public double skeletonArcherWeight = 100;
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for zombies in the summon pool (low chance).")
+        public double zombieWeight = 8;
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for wraiths in the summon pool (very low chance).")
+        public double wraithWeight = 3;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Optional explicit spawn marker entries (advanced). If empty, EliteMobs builds this automatically from mob rules.")
+        public List<SummonMarkerEntry> spawnMarkerEntries = new ArrayList<>();
+        @YamlIgnore
+        public String spawnMarkerEntriesJson = "[]";
+
+        @YamlIgnore
+        public Map<String, List<SummonMarkerEntry>> spawnMarkerEntriesByRole = new LinkedHashMap<>();
+    }
+
+    public static final class SummonMarkerEntry {
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "NPC id to spawn.")
+        public String Name = "";
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight in the spawn marker pool.")
+        public double Weight = 100;
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Flock asset id used to pick the group size.")
+        public String Flock = "EliteMobs_Summon_3_7";
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Spawn timing for this entry (ISO-8601 duration, e.g. PT1S).")
+        public String SpawnAfterGameTime = "PT0S";
+    }
+
+    public static final class AbilityGate {
+        public List<String> roleMustContain = List.of();
+        public List<String> roleMustNotContain = List.of();
+        public List<String> weaponIdMustContain = List.of();
+        public List<String> weaponIdMustNotContain = List.of();
+        public List<AbilityRule> rules = List.of();
+    }
+
+    public static final class AbilityRule {
+        // If true => deny when this mobRule matches, else allow when it matches.
+        public boolean deny = true;
+
+        public boolean enabled = true;
+        public boolean[] enabledPerTier = {true, true, true, true, true};
+
+        public List<String> roleMustContain = List.of();
+        public List<String> roleMustNotContain = List.of();
+        public List<String> weaponIdMustContain = List.of();
+        public List<String> weaponIdMustNotContain = List.of();
+    }
+
+    public static final class MobsConfig {
+        @Cfg(group = "Spawning", file = "mobs.yml", comment = "Mob rules: decide what to do if our scan found a NPC Entity with this id. If the id of the mob is not on the list, it will get the fist (it won't be transformed into an EliteMob. First mobRule match wins btw.")
+        public Map<String, MobRule> rules = defaultMobRules();
+    }
+
+    private static Map<String, MobRule> defaultMobRules() {
+        Map<String, MobRule> m = new LinkedHashMap<>();
+
+        m.put("Goblin_Duke",
+              mobRule(true,
+                      List.of("Goblin_Duke"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_CLUBS_ONLY,
+                      List.of()
+
+              )
+        );
+
+        m.put("Goblin_Hermit",
+              mobRule(true,
+                      List.of("Goblin_Hermit"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Goblin_Lobber_Patrol",
+              mobRule(true,
+                      List.of("Goblin_Lobber_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.ONLY_IF_EMPTY,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Lobber",
+              mobRule(true,
+                      List.of("Goblin_Lobber"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.ONLY_IF_EMPTY,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Miner_Patrol",
+              mobRule(true,
+                      List.of("Goblin_Miner_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_PICKAXE_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Miner",
+              mobRule(true,
+                      List.of("Goblin_Miner"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_PICKAXE_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Ogre",
+              mobRule(true,
+                      List.of("Goblin_Ogre"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_DAGGERS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Scavenger_Battleaxe",
+              mobRule(true,
+                      List.of("Goblin_Scavenger_Battleaxe"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_AXES_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Scavenger_Sword",
+              mobRule(true,
+                      List.of("Goblin_Scavenger_Sword"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Scavenger",
+              mobRule(true,
+                      List.of("Goblin_Scavenger"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Goblin_Scrapper_Patrol",
+              mobRule(true,
+                      List.of("Goblin_Scrapper_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Scrapper",
+              mobRule(true,
+                      List.of("Goblin_Scrapper"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Thief_Patrol",
+              mobRule(true,
+                      List.of("Goblin_Thief_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Goblin_Thief",
+              mobRule(true,
+                      List.of("Goblin_Thief"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Outlander_Berserker",
+              mobRule(true,
+                      List.of("Outlander_Berserker"),
+                      List.of(),
+                      List.of(),
+                      List.of("wolf"),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Outlander_Brute",
+              mobRule(true,
+                      List.of("Outlander_Brute"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_AXES_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Outlander_Cultist",
+              mobRule(true,
+                      List.of("Outlander_Cultist"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of("kunai", "daggers"),
+                      List.of()
+              )
+        );
+
+        m.put("Outlander_Hunter",
+              mobRule(true,
+                      List.of("Outlander_Hunter"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Outlander_Marauder",
+              mobRule(true,
+                      List.of("Outlander_Marauder"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SHARP_WEAPONS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Outlander_Peon",
+              mobRule(true,
+                      List.of("Outlander_Peon"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_PICKAXE_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Outlander_Priest",
+              mobRule(true,
+                      List.of("Outlander_Priest"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Outlander_Sorcerer",
+              mobRule(true,
+                      List.of("Outlander_Sorcerer"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Outlander_Stalker",
+              mobRule(true,
+                      List.of("Outlander_Stalker"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of("shortbow", "crossbow", "dagger"),
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Brawler",
+              mobRule(true,
+                      List.of("Trork_Brawler"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_CLUBS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Chieftain",
+              mobRule(true,
+                      List.of("Trork_Chieftain"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_AXES_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Doctor_Witch",
+              mobRule(true,
+                      List.of("Trork_Doctor_Witch"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Guard",
+              mobRule(true,
+                      List.of("Trork_Guard"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(DAMAGE_MELEE_SPEARS_ONLY.getFirst(),DAMAGE_MELEE_DAGGERS_ONLY.getFirst()),
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Hunter",
+              mobRule(true,
+                      List.of("Trork_Hunter"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Mauler",
+              mobRule(true,
+                      List.of("Trork_Mauler"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_CLUBS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Sentry_Patrol",
+              mobRule(true,
+                      List.of("Trork_Sentry_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SPEARS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Sentry",
+              mobRule(true,
+                      List.of("Trork_Sentry"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SPEARS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Shaman",
+              mobRule(true,
+                      List.of("Trork_Shaman"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Unarmed",
+              mobRule(true,
+                      List.of("Trork_Unarmed"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Warrior_Patrol",
+              mobRule(true,
+                      List.of("Trork_Warrior_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_TWO_HANDED_SHARP_WEAPONS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Trork_Warrior",
+              mobRule(true,
+                      List.of("Trork_Warrior"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_TWO_HANDED_SHARP_WEAPONS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Archer_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Archer_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Archer_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Archer_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Archer",
+              mobRule(true,
+                      List.of("Skeleton_Archer"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Archmage_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Archmage_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Archmage_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Archmage_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Archmage",
+              mobRule(true,
+                      List.of("Skeleton_Archmage"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Fighter_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Fighter_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Fighter_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Fighter_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Fighter",
+              mobRule(true,
+                      List.of("Skeleton_Fighter"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Knight_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Knight_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Knight_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Knight_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Knight",
+              mobRule(true,
+                      List.of("Skeleton_Knight"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Mage_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Mage_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Mage_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Mage_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Mage",
+              mobRule(true,
+                      List.of("Skeleton_Mage"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Ranger_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Ranger_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Ranger_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Ranger_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Ranger",
+              mobRule(true,
+                      List.of("Skeleton_Ranger"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Scout_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Scout_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Scout_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Scout_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Scout",
+              mobRule(true,
+                      List.of("Skeleton_Scout"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Soldier_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Soldier_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Soldier_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Soldier_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Soldier",
+              mobRule(true,
+                      List.of("Skeleton_Soldier"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Alchemist_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Alchemist_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Alchemist_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Alchemist_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Alchemist",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Alchemist"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Archer_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Archer_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Archer_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Archer_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Archer",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Archer"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Gunner_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Gunner_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Gunner_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Gunner_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Gunner",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Gunner"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Knight_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Knight_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Knight_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Knight_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Knight",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Knight"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Lancer_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Lancer_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_AXES_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Lancer_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Lancer_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_AXES_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Lancer",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Lancer"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_AXES_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Praetorian_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Praetorian_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Praetorian_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Praetorian_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Praetorian",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Praetorian"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Soldier_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Soldier_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Soldier_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Soldier_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Soldier",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Soldier"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Burnt_Wizard_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Wizard_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Wizard_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Wizard_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Burnt_Wizard",
+              mobRule(true,
+                      List.of("Skeleton_Burnt_Wizard"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Archer_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Archer_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Archer_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Archer_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Archer",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Archer"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Archmage_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Archmage_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Archmage_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Archmage_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Archmage",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Archmage"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Fighter_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Fighter_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Frost_Fighter_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Fighter_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Frost_Fighter",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Fighter"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Frost_Knight_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Knight_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Frost_Knight_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Knight_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Frost_Knight",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Knight"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Frost_Mage_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Mage_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Mage_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Mage_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Mage",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Mage"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Ranger_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Ranger_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Ranger_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Ranger_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Ranger",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Ranger"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Scout_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Scout_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Scout_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Scout_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Scout",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Scout"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Frost_Soldier_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Soldier_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Frost_Soldier_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Soldier_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Frost_Soldier",
+              mobRule(true,
+                      List.of("Skeleton_Frost_Soldier"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Fighter_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Fighter_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Fighter_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Fighter_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Fighter",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Fighter"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Footman_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Footman_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SPEARS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Footman_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Footman_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SPEARS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Footman",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Footman"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SPEARS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Head",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Head"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Mage_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Mage_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Mage_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Mage_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Incandescent_Mage",
+              mobRule(true,
+                      List.of("Skeleton_Incandescent_Mage"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Captain_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Captain_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Captain_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Captain_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Captain",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Captain"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Gunner_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Gunner_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Gunner_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Gunner_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Gunner",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Gunner"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Striker_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Striker_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Striker_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Striker_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Pirate_Striker",
+              mobRule(true,
+                      List.of("Skeleton_Pirate_Striker"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Archer_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Archer_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Archer_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Archer_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Archer",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Archer"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Archmage_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Archmage_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Archmage_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Archmage_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Archmage",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Archmage"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_STAFFS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Assassin_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Assassin_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_DAGGERS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Assassin_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Assassin_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_DAGGERS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Assassin",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Assassin"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_DAGGERS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Guard_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Guard_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Guard_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Guard_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Guard",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Guard"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_SWORDS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Mage_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Mage_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Mage_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Mage_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Mage",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Mage"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_SPELLBOOK_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Ranger_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Ranger_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Ranger_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Ranger_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Ranger",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Ranger"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Scout_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Scout_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Scout_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Scout_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Scout",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Scout"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_RANGED_BOWS_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Skeleton_Sand_Soldier_Patrol",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Soldier_Patrol"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Sand_Soldier_Wander",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Soldier_Wander"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton_Sand_Soldier",
+              mobRule(true,
+                      List.of("Skeleton_Sand_Soldier"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Skeleton",
+              mobRule(true,
+                      List.of("Skeleton"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      List.of(),
+                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+              )
+        );
+
+        m.put("Zombie_Aberrant_Big",
+              mobRule(true,
+                      List.of("Zombie_Aberrant_Big"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Zombie_Aberrant_Small",
+              mobRule(true,
+                      List.of("Zombie_Aberrant_Small"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Zombie_Aberrant",
+              mobRule(true,
+                      List.of("Zombie_Aberrant"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Zombie_Burnt",
+              mobRule(true,
+                      List.of("Zombie_Burnt"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Zombie_Frost",
+              mobRule(true,
+                      List.of("Zombie_Frost"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Zombie_Sand",
+              mobRule(true,
+                      List.of("Zombie_Sand"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Zombie",
+              mobRule(true,
+                      List.of("Zombie"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Crawler_Void",
+              mobRule(true,
+                      List.of("Crawler_Void"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Eye_Void",
+              mobRule(true,
+                      List.of("Eye_Void"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        m.put("Spawn_Void",
+              mobRule(true,
+                      List.of("Spawn_Void"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{true, true, true, true, true},
+                      WeaponOverrideMode.ALWAYS,
+                      DAMAGE_MELEE_LONGSWORD_ONLY,
+                      List.of()
+              )
+        );
+
+        m.put("Spectre_Void",
+              mobRule(true,
+                      List.of("Spectre_Void"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of(),
+                      List.of()
+              )
+        );
+
+        return m;
+    }
+
+
+    public enum WeaponOverrideMode {
+        NONE,            // never replace in-hand
+        ONLY_IF_EMPTY,   // only replace if hand empty
+        ALWAYS,           // always replace
+    }
+
+    public static final class ExtraDropRule {
+        public String itemId = "";
+        public double chance = 0.0;
+        public int minTierInclusive = 0;
+        public int maxTierInclusive = 0;
+        public int minQty = 1;
+        public int maxQty = 1;
+    }
+
+    public static final class MobRule {
+        public boolean enabled = true;
+
+        public List<String> matchExact = List.of();
+        public List<String> matchStartsWith = List.of();
+        public List<String> matchContains = List.of();
+        public List<String> matchExcludes = List.of();
+
+        public boolean[] enableWeaponOverrideForTier = new boolean[]{true, true, true, true, true};
+        public WeaponOverrideMode weaponOverrideMode = WeaponOverrideMode.ALWAYS;
+
+        public List<String> weaponIdMustContain = List.of();
+        public List<String> weaponIdMustNotContain = List.of();
+
+        //public Map<String, AbilityRule> abilities = new LinkedHashMap<>();
+    }
+
+    private static MobRule mobRule(boolean enabled, List<String> matchExact, List<String> matchStartsWith,
+                                   List<String> contains, List<String> excludes, boolean[] enableWeaponOverrideForTier,
+                                   WeaponOverrideMode overrideMode, List<String> mustContain,
+                                   List<String> mustNotContain) {
+        MobRule r = new MobRule();
+        r.matchExact = matchExact;
+        r.matchStartsWith = matchStartsWith;
+        r.enabled = enabled;
+        r.matchContains = contains;
+        r.matchExcludes = excludes;
+        r.enableWeaponOverrideForTier = enableWeaponOverrideForTier;
+        r.weaponOverrideMode = overrideMode;
+        r.weaponIdMustContain = mustContain;
+        r.weaponIdMustNotContain = mustNotContain;
+        return r;
+    }
+
+    private static ExtraDropRule createExtraDropRule(String itemId, double chance, int minTier, int maxTier, int minQty,
+                                                     int maxQty) {
+        ExtraDropRule r = new ExtraDropRule();
+        r.itemId = itemId;
+        r.chance = chance;
+        r.minTierInclusive = minTier;
+        r.maxTierInclusive = maxTier;
+        r.minQty = minQty;
+        r.maxQty = maxQty;
+        return r;
+    }
+
+    private static Map<String, Double> mapOf(String k1, double v1) {
+        LinkedHashMap<String, Double> m = new LinkedHashMap<>();
+        m.put(k1, v1);
+        return m;
+    }
+
+    private static Map<String, Double> mapOf(String k1, double v1, String k2, double v2) {
+        LinkedHashMap<String, Double> m = new LinkedHashMap<>();
+        m.put(k1, v1);
+        m.put(k2, v2);
+        return m;
+    }
+
+    public void populateSummonMarkerEntriesIfEmpty() {
+        SummonAbilityConfig summonConfig = null;
+        if (abilities != null && abilities.byId != null) {
+            AbilityConfig abilityConfig = abilities.byId.get(ABILITY_UNDEAD_SUMMON_KEY);
+            if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
+        }
+        if (summonConfig == null) return;
+        if (summonConfig.spawnMarkerEntries != null && !summonConfig.spawnMarkerEntries.isEmpty()) {
+            summonConfig.spawnMarkerEntriesJson = toJson(summonConfig.spawnMarkerEntries);
+        }
+
+        populateSummonMarkerEntriesByRoleIfEmpty();
+        if (summonConfig.spawnMarkerEntries == null || summonConfig.spawnMarkerEntries.isEmpty()) {
+            List<SummonMarkerEntry> defaultEntries = summonConfig.spawnMarkerEntriesByRole.get("default");
+            if (defaultEntries != null) {
+                summonConfig.spawnMarkerEntries = defaultEntries;
+                summonConfig.spawnMarkerEntriesJson = toJson(defaultEntries);
+            }
+        }
+    }
+
+    public void populateSummonMarkerEntriesByRoleIfEmpty() {
+        SummonAbilityConfig summonConfig = null;
+        if (abilities != null && abilities.byId != null) {
+            AbilityConfig abilityConfig = abilities.byId.get(ABILITY_UNDEAD_SUMMON_KEY);
+            if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
+        }
+        if (summonConfig == null) return;
+        if (summonConfig.spawnMarkerEntriesByRole != null && !summonConfig.spawnMarkerEntriesByRole.isEmpty()) return;
+        if (mobs == null || mobs.rules == null || mobs.rules.isEmpty()) return;
+
+        LinkedHashSet<String> bowNpcIds = new LinkedHashSet<>();
+        LinkedHashSet<String> allNpcIds = new LinkedHashSet<>();
+        LinkedHashSet<String> zombieNpcIds = new LinkedHashSet<>();
+        LinkedHashSet<String> wraithNpcIds = new LinkedHashSet<>();
+
+        for (Map.Entry<String, MobRule> entry : mobs.rules.entrySet()) {
+            if (entry == null) continue;
+            MobRule rule = entry.getValue();
+            if (rule == null || !rule.enabled) continue;
+
+            List<String> ids = new ArrayList<>();
+            if (rule.matchExact != null && !rule.matchExact.isEmpty()) {
+                for (String id : rule.matchExact) {
+                    if (id == null || id.isBlank()) continue;
+                    String cleaned = stripSummonPrefix(id);
+                    if (cleaned.isBlank()) continue;
+                    ids.add(cleaned);
+                }
+            } else {
+                String key = entry.getKey();
+                if (key != null && !key.isBlank()) {
+                    String cleaned = stripSummonPrefix(key);
+                    if (!cleaned.isBlank()) ids.add(cleaned);
+                }
+            }
+
+            for (String id : ids) {
+                String lower = id.toLowerCase(Locale.ROOT);
+                allNpcIds.add(id);
+                if (lower.contains("zombie")) zombieNpcIds.add(id);
+                if (lower.contains("wraith")) wraithNpcIds.add(id);
+            }
+
+            if (!isTierEnabled(rule.enableWeaponOverrideForTier, 0)) continue;
+            if (!hasBowWeaponConstraint(rule.weaponIdMustContain)) continue;
+
+            bowNpcIds.addAll(ids);
+        }
+
+        if (bowNpcIds.isEmpty() && !allNpcIds.isEmpty()) {
+            for (String id : allNpcIds) {
+                String lower = id.toLowerCase(Locale.ROOT);
+                if (lower.contains("archer") || lower.contains("ranger") || lower.contains("scout") || lower.contains("bow")) {
+                    bowNpcIds.add(id);
+                }
+            }
+        }
+
+        if (bowNpcIds.isEmpty()) {
+            List<String> fallbackIds = List.of(
+                    "Skeleton_Archer",
+                    "Skeleton_Archer_Patrol",
+                    "Skeleton_Archer_Wander",
+                    "Skeleton_Ranger",
+                    "Skeleton_Ranger_Patrol",
+                    "Skeleton_Ranger_Wander",
+                    "Skeleton_Scout",
+                    "Skeleton_Scout_Patrol",
+                    "Skeleton_Scout_Wander",
+                    "Skeleton_Frost_Archer",
+                    "Skeleton_Frost_Archer_Patrol",
+                    "Skeleton_Frost_Archer_Wander",
+                    "Skeleton_Frost_Ranger",
+                    "Skeleton_Frost_Ranger_Patrol",
+                    "Skeleton_Frost_Ranger_Wander",
+                    "Skeleton_Frost_Scout",
+                    "Skeleton_Frost_Scout_Patrol",
+                    "Skeleton_Frost_Scout_Wander",
+                    "Skeleton_Burnt_Archer",
+                    "Skeleton_Burnt_Archer_Patrol",
+                    "Skeleton_Burnt_Archer_Wander",
+                    "Skeleton_Sand_Archer",
+                    "Skeleton_Sand_Archer_Patrol",
+                    "Skeleton_Sand_Archer_Wander",
+                    "Skeleton_Sand_Ranger",
+                    "Skeleton_Sand_Ranger_Patrol",
+                    "Skeleton_Sand_Ranger_Wander",
+                    "Skeleton_Sand_Scout",
+                    "Skeleton_Sand_Scout_Patrol",
+                    "Skeleton_Sand_Scout_Wander"
+            );
+            bowNpcIds.addAll(fallbackIds);
+        }
+
+        if (bowNpcIds.isEmpty()) return;
+
+        ArrayList<String> roleIdentifiers = new ArrayList<>();
+        if (summonConfig.roleIdentifiers != null) {
+            for (String identifier : summonConfig.roleIdentifiers) {
+                if (identifier == null || identifier.isBlank()) continue;
+                roleIdentifiers.add(identifier.trim());
+            }
+        }
+        roleIdentifiers.add("default");
+
+        summonConfig.spawnMarkerEntriesByRole = new LinkedHashMap<>();
+
+        for (String identifier : roleIdentifiers) {
+            String normalizedIdentifier = normalizeRoleIdentifier(identifier);
+            if (normalizedIdentifier.isBlank()) continue;
+
+            ArrayList<String> roleBowIds = new ArrayList<>();
+            ArrayList<String> roleNpcIds = new ArrayList<>();
+            if ("default".equalsIgnoreCase(identifier)) {
+                roleBowIds.addAll(bowNpcIds);
+                roleNpcIds.addAll(allNpcIds);
+            } else {
+                String identifierLower = identifier.toLowerCase(Locale.ROOT);
+                for (String id : allNpcIds) {
+                    if (id.toLowerCase(Locale.ROOT).contains(identifierLower)) {
+                        roleNpcIds.add(id);
+                    }
+                }
+                for (String id : bowNpcIds) {
+                    if (id.toLowerCase(Locale.ROOT).contains(identifierLower)) {
+                        roleBowIds.add(id);
+                    }
+                }
+                if (roleNpcIds.isEmpty()) roleNpcIds.addAll(allNpcIds);
+                if (roleBowIds.isEmpty()) roleBowIds.addAll(bowNpcIds);
+            }
+
+            ArrayList<SummonMarkerEntry> entries = new ArrayList<>();
+            double skeletonWeight = Math.max(0.0, summonConfig.skeletonArcherWeight);
+            ArrayList<String> skeletonRoleIds = roleNpcIds.isEmpty() ? roleBowIds : roleNpcIds;
+            for (String npcId : skeletonRoleIds) {
+                SummonMarkerEntry markerEntry = new SummonMarkerEntry();
+                markerEntry.Name = npcId;
+                markerEntry.Weight = skeletonWeight;
+                markerEntry.Flock = "EliteMobs_Summon_3_7";
+                markerEntry.SpawnAfterGameTime = "PT0S";
+                entries.add(markerEntry);
+            }
+
+            double zombieWeight = Math.max(0.0, summonConfig.zombieWeight);
+            if (!zombieNpcIds.isEmpty() && zombieWeight > 0.0) {
+                for (String npcId : zombieNpcIds) {
+                    if (!roleNpcIds.isEmpty()) {
+                        String lower = npcId.toLowerCase(Locale.ROOT);
+                        String identifierLower = identifier.toLowerCase(Locale.ROOT);
+                        if (!lower.contains(identifierLower)) continue;
+                    }
+                    SummonMarkerEntry markerEntry = new SummonMarkerEntry();
+                    markerEntry.Name = npcId;
+                    markerEntry.Weight = zombieWeight;
+                    markerEntry.Flock = "EliteMobs_Summon_3_7";
+                    markerEntry.SpawnAfterGameTime = "PT0S";
+                    entries.add(markerEntry);
+                }
+            }
+
+            double wraithWeight = Math.max(0.0, summonConfig.wraithWeight);
+            if (!wraithNpcIds.isEmpty() && wraithWeight > 0.0) {
+                for (String npcId : wraithNpcIds) {
+                    if (!roleNpcIds.isEmpty()) {
+                        String lower = npcId.toLowerCase(Locale.ROOT);
+                        String identifierLower = identifier.toLowerCase(Locale.ROOT);
+                        if (!lower.contains(identifierLower)) continue;
+                    }
+                    SummonMarkerEntry markerEntry = new SummonMarkerEntry();
+                    markerEntry.Name = npcId;
+                    markerEntry.Weight = wraithWeight;
+                    markerEntry.Flock = "EliteMobs_Summon_3_7";
+                    markerEntry.SpawnAfterGameTime = "PT0S";
+                    entries.add(markerEntry);
+                }
+            }
+
+            summonConfig.spawnMarkerEntriesByRole.put(normalizedIdentifier, entries);
+        }
+    }
+
+    public void upgradeSummonMarkerEntriesToVariantIds() {
+        SummonAbilityConfig summonConfig = null;
+        if (abilities != null && abilities.byId != null) {
+            AbilityConfig abilityConfig = abilities.byId.get(ABILITY_UNDEAD_SUMMON_KEY);
+            if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
+        }
+        if (summonConfig == null) return;
+        if (summonConfig.spawnMarkerEntriesByRole != null) {
+            for (List<SummonMarkerEntry> entries : summonConfig.spawnMarkerEntriesByRole.values()) {
+                upgradeSummonEntries(entries);
+            }
+        }
+        if (summonConfig.spawnMarkerEntries != null) {
+            upgradeSummonEntries(summonConfig.spawnMarkerEntries);
+        }
+    }
+
+    private static void upgradeSummonEntries(List<SummonMarkerEntry> entries) {
+        if (entries == null || entries.isEmpty()) return;
+        for (SummonMarkerEntry entry : entries) {
+            if (entry == null || entry.Name == null) continue;
+            String name = stripSummonPrefix(entry.Name);
+            if (name.isEmpty()) continue;
+            entry.Name = name;
+        }
+    }
+
+    private static boolean isSummonArcherRoleName(String roleName) {
+        if (roleName == null) return false;
+        String lower = roleName.toLowerCase(Locale.ROOT);
+        if (lower.contains("zombie") || lower.contains("wraith")) return false;
+        return lower.contains("archer")
+                || lower.contains("ranger")
+                || lower.contains("scout")
+                || lower.contains("bow");
+    }
+
+    public boolean isSummonMarkerEntriesEmpty() {
+        SummonAbilityConfig summonConfig = null;
+        if (abilities != null && abilities.byId != null) {
+            AbilityConfig abilityConfig = abilities.byId.get(ABILITY_UNDEAD_SUMMON_KEY);
+            if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
+        }
+        if (summonConfig == null) return true;
+        boolean emptyBase = summonConfig.spawnMarkerEntries == null || summonConfig.spawnMarkerEntries.isEmpty();
+        boolean emptyByRole = summonConfig.spawnMarkerEntriesByRole == null || summonConfig.spawnMarkerEntriesByRole.isEmpty();
+        return emptyBase && emptyByRole;
+    }
+
+    public static String normalizeRoleIdentifier(String identifier) {
+        if (identifier == null) return "";
+        String trimmed = identifier.trim();
+        if (trimmed.isEmpty()) return "";
+        if (trimmed.equalsIgnoreCase("default")) return "Default";
+        String normalized = trimmed.replaceAll("[^A-Za-z0-9_]+", "_");
+        normalized = normalized.replaceAll("_+", "_");
+        normalized = normalized.replaceAll("^_+", "").replaceAll("_+$", "");
+        return normalized;
+    }
+
+    private static String stripSummonPrefix(String id) {
+        if (id == null) return "";
+        String trimmed = id.trim();
+        if (trimmed.startsWith(SUMMON_ROLE_PREFIX)) {
+            return trimmed.substring(SUMMON_ROLE_PREFIX.length()).trim();
+        }
+        return trimmed;
+    }
+
+    public static String buildSummonVariantRoleId(String baseRoleId) {
+        if (baseRoleId == null || baseRoleId.isBlank()) return baseRoleId;
+        if (baseRoleId.startsWith(SUMMON_ROLE_PREFIX)) return baseRoleId;
+        return SUMMON_ROLE_PREFIX + baseRoleId;
+    }
+
+    private static String toJson(Object value) {
+        try {
+            return new Gson().toJson(value);
+        } catch (Throwable ignored) {
+            return "[]";
+        }
+    }
+
+    private static boolean isTierEnabled(boolean[] enabledPerTier, int tierIndex) {
+        if (enabledPerTier == null || tierIndex < 0 || tierIndex >= enabledPerTier.length) return false;
+        return enabledPerTier[tierIndex];
+    }
+
+    private static boolean hasBowWeaponConstraint(List<String> mustContain) {
+        if (mustContain == null || mustContain.isEmpty()) return false;
+        for (String fragment : mustContain) {
+            if (fragment == null) continue;
+            String lower = fragment.toLowerCase(Locale.ROOT);
+            if (lower.contains("shortbow") || lower.contains("crossbow")) return true;
+        }
+        return false;
+    }
+
+    public Map<String, ? extends AssetConfig> getAssetConfigForType(AssetType type) {
+        if (type == null) return null;
+        return switch (type) {
+            case ABILITIES -> abilities.byId;
+            case EFFECTS -> effects.byId;
+            case CONSUMABLES -> consumables.byId;
+        };
+    }
+
+    /**
+     * Migration logic for configuration updates.
+     * Use this to force-update old default values to new ones, but ONLY if the player hasn't changed them.
+     */
+    public void migrate(String fromVersion) {
+        if (fromVersion == null || fromVersion.equals(configVersion)) return;
+
+        if (isOlder(fromVersion, "1.1.0")) {
+            // Fix Heal Potion defaults from the first unversioned release
+            AbilityConfig heal = abilities.byId.get(ABILITY_HEAL_POTION_KEY);
+            if (heal instanceof HealAbilityConfig h) {
+                // 1. Fix the 25.0 -> 0.25 percent conversion bug
+                if (h.instantHealAmountPerTier != null) {
+                    for (int i = 0; i < h.instantHealAmountPerTier.length; i++) {
+                        if (h.instantHealAmountPerTier[i] >= 1.0f) {
+                            h.instantHealAmountPerTier[i] /= 100f;
+                        }
+                    }
+                }
+                // 2. Update trigger percents if they are still at the old 1.0.0 defaults
+                if (h.minHealthTriggerPercent == 0.1f) h.minHealthTriggerPercent = 0.50f;
+                if (h.maxHealthTriggerPercent == 0.4f) h.maxHealthTriggerPercent = 0.50f;
+                if (h.instantHealChance == 0.5f) h.instantHealChance = 1.00f;
+            }
+        }
+    }
+
+    private static boolean isOlder(String v1, String v2) {
+        try {
+            String[] parts1 = v1.split("\\.");
+            String[] parts2 = v2.split("\\.");
+            for (int i = 0; i < Math.min(parts1.length, parts2.length); i++) {
+                int n1 = Integer.parseInt(parts1[i]);
+                int n2 = Integer.parseInt(parts2[i]);
+                if (n1 < n2) return true;
+                if (n1 > n2) return false;
+            }
+            return parts1.length < parts2.length;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+}

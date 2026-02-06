@@ -1,0 +1,5 @@
+{
+  "Interactions": [
+    ${abilities.heal_potion.templates.entryInteractionInstant}
+  ]
+}
