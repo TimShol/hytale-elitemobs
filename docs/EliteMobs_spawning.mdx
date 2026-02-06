@@ -3,9 +3,11 @@ title: Spawning
 description: Configure where elites spawn and how tier chances are distributed.
 ---
 
-Spawning rules are defined in `main.yml` under `Spawning`.
+Spawning rules are defined in `main.yml` under `Spawning`. These settings control where elites appear and how tier probability is distributed.
 
 ## Base Tier Chances
+
+Each value is a weight, not a percentage. Higher values make that tier more likely.
 
 ```yaml
 Spawning:
@@ -35,8 +37,8 @@ Spawning:
 
 - If an environment is not listed, base `spawnChancePerTier` applies.
 - If `enabled: false`, elites never spawn in that environment.
+Use environment overrides to shape progression across zones without changing the global balance.
 
 ## Reconcile Window
 
 After a config reload, existing elites can be reconciled within a window of ticks. See [Core Settings](/EliteMobs_core_settings).
-

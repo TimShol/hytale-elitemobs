@@ -3,11 +3,11 @@ title: Gear Catalogs
 description: Configure weapon and armor catalogs and rarity rules.
 ---
 
-Catalogs are defined in `catalogs.yml` under `Gear`.
+Catalogs are defined in `catalogs.yml` under `Gear`. They control which items elites can roll and how rarity is assigned.
 
 ## Armor Catalog
 
-`armorMaterials` lists available armor material folders, and `armorPiecesToEquipPerTier` controls how many pieces elites equip by tier.
+`armorMaterials` lists available armor material folders, and `armorPiecesToEquipPerTier` controls how many pieces elites equip by tier. Higher tiers equip more armor by default.
 
 ```yaml
 Gear:
@@ -16,11 +16,11 @@ Gear:
 
 ## Weapon Catalog
 
-`weaponCatalog` lists allowed weapon IDs. Elite gear selection pulls from this list when equipping weapons.
+`weaponCatalog` lists allowed weapon IDs. Elite gear selection pulls from this list when equipping weapons. Remove items here to blacklist them from elite spawns.
 
 ## Rarity Rules
 
-Rarity is mapped by substring matching. First match wins.
+Rarity is mapped by substring matching. First match wins. Use specific substrings first, and broad substrings last.
 
 ```yaml
 Gear:
@@ -43,6 +43,8 @@ Gear:
     - ["epic", "legendary"]
 ```
 
+If a rarity is not allowed for a tier, it can never be rolled.
+
 ## Utility Slot And Two-Handed Weapons
 
 ```yaml
@@ -52,4 +54,3 @@ Gear:
 ```
 
 Two-handed weapon ids prevent shield equips.
-

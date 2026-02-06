@@ -4,6 +4,7 @@ description: Configure elite loot, vanilla multipliers, and extra drops.
 ---
 
 Loot rules are configured in `drops.yml` under `Loot`.
+Drops are rolled on elite death and can include equipped items and extra tables.
 
 ## Base Drop Chances
 
@@ -15,6 +16,7 @@ Loot:
 ```
 
 These chances control the drop of equipped items.
+Each equipped piece is rolled independently.
 
 ## Vanilla Drop Multipliers
 
@@ -24,10 +26,12 @@ Loot:
 ```
 
 This multiplies vanilla resource drops by tier.
+Lower tiers can be set to `0` to avoid extra resource drops.
 
 ## Extra Drops
 
 Extra drops are tier-bounded and can be tuned per item:
+These rolls are additive and do not replace normal drops.
 
 ```yaml
 Loot:
@@ -44,4 +48,3 @@ Loot:
 
 - Use narrower tier ranges for high-value items.
 - Keep higher tier loot rare to preserve progression.
-

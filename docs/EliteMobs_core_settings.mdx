@@ -35,8 +35,7 @@ Debug:
   debugMobRuleScanIntervalSeconds: 5
 ```
 
-- Enables extra logs for spawn scans and ability decisions.
-- The scan interval controls how often NPCs are evaluated against mob rules.
+Enables extra logs for spawn scans and ability decisions. The scan interval controls how often NPCs are evaluated against mob rules.
 
 ## Spawning
 
@@ -55,7 +54,7 @@ Damage:
   mobDamageRandomVariance: 0.05
 ```
 
-- `mobDamageRandomVariance` adds a random variance to the damage multiplier.
+`mobDamageRandomVariance` adds random variance to the damage multiplier to avoid uniform hits.
 
 ## Compatibility Messages
 
@@ -64,7 +63,7 @@ Compat:
   showCompatJoinMessages: true
 ```
 
-Shows compatibility messages when players join.
+Shows compatibility messages when players join, useful for identifying active integrations.
 
 ## Gear Durability
 
@@ -84,4 +83,3 @@ AssetGenerator:
 ```
 
 Tier suffixes control how tiered assets are generated under `Server/`.
-

@@ -4,6 +4,7 @@ description: Configure elite abilities, activation rules, and per-tier tuning.
 ---
 
 Abilities are defined in `abilities.yml` under `byId`.
+Each ability is rolled once on spawn per tier using `chancePerTier`.
 
 ## Common Fields
 
@@ -19,10 +20,12 @@ Ability gates can filter by:
 - `roleMustContain` / `roleMustNotContain`
 - `weaponIdMustContain` / `weaponIdMustNotContain`
 - `rules` for layered allow/deny logic
+Use gates to limit abilities to specific factions or weapon types.
 
 ## Charge Leap
 
 Charge leap is a tiered leap that slams and deals damage on impact.
+It is enabled for higher tiers by default.
 
 Key fields:
 - `slamRangePerTier`
@@ -33,6 +36,7 @@ Key fields:
 ## Heal Potion
 
 Heals trigger when health falls between configured thresholds.
+The heal can be instant or a breakable potion effect.
 
 Key fields:
 - `minHealthTriggerPercent` and `maxHealthTriggerPercent`
@@ -42,6 +46,7 @@ Key fields:
 ## Undead Summon
 
 Summons undead minions using weighted pools.
+Summons are capped by `maxAlive` to prevent runaway fights.
 
 Key fields:
 - `roleIdentifiers` to select the summon archetype
@@ -60,4 +65,3 @@ spawnMarkerEntries:
 ```
 
 `SpawnAfterGameTime` uses ISO-8601 duration format (e.g. `PT1S`).
-

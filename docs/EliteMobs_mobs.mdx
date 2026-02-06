@@ -4,6 +4,7 @@ description: Control which NPCs become elites and how weapons are overridden.
 ---
 
 Mob rules are configured in `mobs.yml` under `Spawning.rules`. The first matching rule wins.
+If a mob does not match any rule, it will not be transformed into an elite.
 
 ## Rule Matching
 
@@ -27,6 +28,7 @@ Goblin_Duke:
 ## Weapon Overrides
 
 Weapon overrides are optional and can be gated by tier and weapon ids.
+This is useful for forcing themed weapon sets per mob.
 
 ```yaml
 Goblin_Duke:
@@ -39,10 +41,10 @@ Goblin_Duke:
 - `ALWAYS` replace the weapon
 - `ONLY_IF_EMPTY` only if the NPC has no weapon
 - `NONE` disable overrides
+Override toggles per tier allow gradual scaling of loadouts.
 
 ## Tips
 
 - Use `matchExact` when possible for precision.
 - Use `matchContains` to cover multiple variants.
 - Keep overrides aligned with `catalogs.yml` so the weapon list stays valid.
-

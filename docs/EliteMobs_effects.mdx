@@ -4,6 +4,7 @@ description: Configure tier-based elite effects.
 ---
 
 Effects are defined in `effects.yml` under `byId`.
+Effects are applied per elite tier based on `isEnabledPerTier`.
 
 ## Common Fields
 
@@ -11,6 +12,7 @@ Effects are defined in `effects.yml` under `byId`.
 - `isEnabledPerTier` per-tier toggles
 - `amountMultiplierPerTier` for effect strength
 - `templates` for effect asset templates
+Templates control the underlying entity effect assets.
 
 ## Example: Projectile Resistance
 
@@ -21,4 +23,3 @@ byId:
     isEnabled: true
     isEnabledPerTier: [false, false, false, true, true]
 ```
-

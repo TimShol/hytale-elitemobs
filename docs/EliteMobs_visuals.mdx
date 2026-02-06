@@ -4,6 +4,7 @@ description: Configure model scaling and nameplate styling.
 ---
 
 Visual settings are defined in `visuals.yml`.
+They control how elites look and how clearly they are identified.
 
 ## Model Scaling
 
@@ -15,6 +16,7 @@ Model:
 ```
 
 Model scaling affects hitboxes. Keep changes small.
+Use scaling to communicate tier strength visually.
 
 ## Nameplates
 
@@ -30,6 +32,7 @@ Nameplates:
 ## Family Prefixes
 
 Tier prefixes can be customized per mob family:
+If a family key is missing, `default` is used.
 
 ```yaml
 Nameplates:
@@ -38,4 +41,3 @@ Nameplates:
     zombie: ["Rotting", "Ravenous", "Putrid", "Monstrous", "Evolved"]
     skeleton: ["Broken", "Reforged", "Grim", "Deathbound", "Ascendant"]
 ```
-

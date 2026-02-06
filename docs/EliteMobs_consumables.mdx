@@ -4,11 +4,13 @@ description: Configure elite consumable use time and movement slowdown.
 ---
 
 Consumable tuning is in `consumables.yml` under `Consumables.byId`.
+These settings affect how long elites spend consuming and how much they slow down.
 
 ## Fields
 
 - `horizontalSpeedMultiplier` slows movement while consuming
 - `consumeDuration` controls how long the consume takes
+Lower values increase risk during combat.
 
 Example:
 
@@ -22,4 +24,3 @@ Consumables:
       horizontalSpeedMultiplier: 0.7
       consumeDuration: 1.8
 ```
-
