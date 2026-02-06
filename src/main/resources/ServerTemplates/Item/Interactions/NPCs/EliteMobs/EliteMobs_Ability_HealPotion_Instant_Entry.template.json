@@ -3,26 +3,25 @@
   "Interactions": [
     {
       "Type": "Simple",
+      "$Comment": "Crouch/charge-up before leaping backward. No DisableAll here so ApplyForce can move the NPC.",
       "RunTime": 0.5,
       "Effects": {
-        "MovementEffects": {
-          "DisableAll": true
-        },
         "ItemPlayerAnimationsId": "Battleaxe",
         "ItemAnimationId": "DownstrikeCharging"
       }
     },
     {
       "Type": "ApplyForce",
+      "$Comment": "Leap backward away from target. Mirrors charge_leap but Z positive = backward.",
       "Effects": {
-        "ItemPlayerAnimationsId": "Item",
-        "ItemAnimationId": "DashBackward",
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "Fall",
         "ClearAnimationOnFinish": true
       },
       "Direction": {
         "X": 0,
-        "Y": 0.5,
-        "Z": 5.0
+        "Y": 0.4,
+        "Z": 4.5
       },
       "WaitForGround": true,
       "Force": ${abilities.heal_potion.applyForcePerTier},
@@ -38,6 +37,7 @@
     },
     {
       "Type": "Simple",
+      "$Comment": "Stand still and drink the potion. Interruptible by 3 hits.",
       "RunTime": ${abilities.heal_potion.npcDrinkDurationSeconds},
       "Effects": {
         "MovementEffects": {
