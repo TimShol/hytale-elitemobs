@@ -1,16 +1,15 @@
 ---
 title: Gear Catalogs
-description: Weapon and armor catalogs plus rarity rules.
+description: Configure weapon and armor catalogs and rarity rules.
 ---
 
 # Gear Catalogs
 
-Catalogs live in `catalogs.yml`.
+Catalogs are defined in `catalogs.yml` under `Gear`.
 
 ## Armor Catalog
 
-- `armorMaterials` lists available material folders
-- `armorPiecesToEquipPerTier` defines how many armor pieces elites equip per tier
+`armorMaterials` lists available armor material folders, and `armorPiecesToEquipPerTier` controls how many pieces elites equip by tier.
 
 ```yaml
 Gear:
@@ -24,11 +23,11 @@ Gear:
 
 ## Weapon Catalog
 
-`weaponCatalog` is the full list of allowed weapon IDs.
+`weaponCatalog` lists allowed weapon IDs. EliteMobs selects from this list when equipping weapons.
 
 ## Rarity Rules
 
-Weapon and armor rarity is derived from substring matching:
+Rarity is mapped by substring matching. First match wins.
 
 ```yaml
 Gear:
@@ -51,4 +50,4 @@ Gear:
     - ["epic", "legendary"]
 ```
 
-These lists determine which rarities are allowed per tier and how likely each is to appear.
+These rules define which rarities are allowed for each tier and how likely each is to appear.

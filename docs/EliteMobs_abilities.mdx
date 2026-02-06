@@ -1,19 +1,19 @@
 ---
 title: Abilities
-description: Elite ability tuning, gates, and tier-based cooldowns.
+description: Configure elite abilities, activation rules, and per-tier tuning.
 ---
 
 # Abilities
 
-Abilities are configured in `abilities.yml` under `byId`.
+Abilities are defined in `abilities.yml` under `byId`.
 
 ## Common Fields
 
-- `gate` rules for role and weapon requirements
+- `gate` rules based on NPC role or weapon
 - `minRange` and `maxRange` for activation
-- `chancePerTier` for per-tier activation chance
+- `chancePerTier` for per-tier activation chances
 - `cooldownSecondsPerTier` for per-tier cooldowns
-- `isEnabledPerTier` to toggle a tier
+- `isEnabledPerTier` to toggle specific tiers
 
 ## Example: Charge Leap
 
@@ -42,4 +42,4 @@ byId:
 
 ## Templates
 
-Abilities reference interaction templates for visuals and behavior. These are pre-generated in `Server/Item/Interactions` and `Server/Item/RootInteractions`.
+Abilities reference interaction templates in `Server/Item/Interactions` and `Server/Item/RootInteractions`. These are generated assets and usually do not require manual edits.
