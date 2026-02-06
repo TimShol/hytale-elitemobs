@@ -1,0 +1,43 @@
+{
+  "name": "EliteMobs",
+  "logo": {
+    "dark": "",
+    "light": ""
+  },
+  "favicon": "",
+  "colors": {
+    "primary": "#2a5e4e",
+    "light": "#5bb399",
+    "dark": "#1b3d33"
+  },
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "index",
+        "EliteMobs_intro",
+        "EliteMobs_overview"
+      ]
+    },
+    {
+      "group": "Configuration",
+      "pages": [
+        "EliteMobs_configuration",
+        "EliteMobs_spawning",
+        "EliteMobs_mobs",
+        "EliteMobs_abilities",
+        "EliteMobs_effects",
+        "EliteMobs_drops",
+        "EliteMobs_catalogs",
+        "EliteMobs_consumables",
+        "EliteMobs_visuals"
+      ]
+    },
+    {
+      "group": "Help",
+      "pages": [
+        "EliteMobs_faq"
+      ]
+    }
+  ]
+}
