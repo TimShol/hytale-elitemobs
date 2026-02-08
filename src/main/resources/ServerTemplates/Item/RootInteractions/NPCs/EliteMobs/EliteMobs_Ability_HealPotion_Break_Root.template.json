@@ -1,5 +1,0 @@
-{
-  "Interactions": [
-    ${abilities.heal_potion.templates.entryInteractionBreak}
-  ]
-}

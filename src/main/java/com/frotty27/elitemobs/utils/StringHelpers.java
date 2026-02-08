@@ -1,5 +1,7 @@
 package com.frotty27.elitemobs.utils;
 
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
+
 import java.util.Locale;
 
 public final class StringHelpers {
@@ -13,5 +15,11 @@ public final class StringHelpers {
 
     public static String normalizeLower(String value) {
         return (value == null) ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    public static String safeRoleName(NPCEntity npcEntity) {
+        if (npcEntity == null) return "";
+        String roleName = npcEntity.getRoleName();
+        return roleName == null ? "" : roleName;
     }
 }

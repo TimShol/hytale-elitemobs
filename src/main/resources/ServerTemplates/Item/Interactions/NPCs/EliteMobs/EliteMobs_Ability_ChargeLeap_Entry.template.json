@@ -51,7 +51,7 @@
           }
         ]
       },
-      "Force": ${abilities.charge_leap.applyForcePerTier},
+      "Force": ${features.ChargeLeap.config.applyForcePerTier},
       "Direction": {
         "X": 0,
         "Y": 0.4,
@@ -118,11 +118,11 @@
         "Offset": {
           "Z": -1.5
         },
-        "Range": ${abilities.charge_leap.slamRangePerTier}
+        "Range": ${features.ChargeLeap.config.slamRangePerTier}
       },
       "HitEntity": {
         "Interactions": [
-          ${abilities.charge_leap.templates.damageInteraction},
+          ${features.ChargeLeap.config.templates.damageInteraction},
             "Weapon_Mace_Signature_Groundslam_Explosion"
         ]
       }

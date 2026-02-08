@@ -1,6 +1,10 @@
 package com.frotty27.elitemobs.assets;
 
 import com.frotty27.elitemobs.config.EliteMobsConfig;
+import com.frotty27.elitemobs.exception.*;
+import com.frotty27.elitemobs.features.EliteMobsFeature;
+import com.frotty27.elitemobs.features.EliteMobsFeatureRegistry;
+import com.frotty27.elitemobs.features.EliteMobsUndeadSummonAbilityFeature;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -68,11 +72,18 @@ public final class EliteMobsAssetGenerator {
 
                     // Template: generate one (non-tiered) or 5 tier variants
                     if (lowercaseFileName.endsWith(TEMPLATE_SUFFIX)) {
-                        String templateText = Files.readString(sourcePath, StandardCharsets.UTF_8);
+                        String templateText;
+                        try {
+                            templateText = Files.readString(sourcePath, StandardCharsets.UTF_8);
+                        } catch (IOException e) {
+                            throw new TemplateSyntaxException("Failed to read template: " + sourcePath);
+                        }
 
-                        // Decide tiering:
-                        // 1) forced tiered if template belongs to a per-tier config
-                        // 2) OR if any placeholder resolves to array/list
+                        // Check for malformed placeholders
+                        if (templateText.contains("${") && !templateText.contains("}")) {
+                            throw new TemplateSyntaxException("Malformed placeholder in template: " + sourcePath);
+                        }
+
                         String baseTemplateId = TemplateNameGenerator.getBaseTemplateNameFromPath(fileName);
                         boolean isTieredTemplate =
                                 (baseTemplateId != null && modelIndex.forceTieredTemplateBaseIds.contains(baseTemplateId))
@@ -268,40 +279,60 @@ public final class EliteMobsAssetGenerator {
         List<PathSegment> pathSegments = PathSegment.parse(dotPath);
         if (pathSegments.isEmpty()) return null;
 
-        Object currentValue;
+        Object currentValue = null;
         int startSegmentIndex = 0;
 
-        // namespace.key shortcut first: abilities.charge_leap -> indexed object
-        if (pathSegments.size() >= 2) {
+        // 1. Try single segment match (e.g. "features")
+        Object singleSegmentRoot = modelIndex.byNamespaceAndKey.get(pathSegments.get(0).name);
+        if (singleSegmentRoot != null) {
+            currentValue = singleSegmentRoot;
+            startSegmentIndex = 1;
+        } 
+        // 2. Try namespace.key shortcut (e.g. "abilities.charge_leap")
+        else if (pathSegments.size() >= 2) {
             String namespaceAndKey = pathSegments.get(0).name + "." + pathSegments.get(1).name;
             Object namespacedRootObject = modelIndex.byNamespaceAndKey.get(namespaceAndKey);
 
             if (namespacedRootObject != null) {
                 currentValue = namespacedRootObject;
                 startSegmentIndex = 2;
-            } else {
-                currentValue = modelIndex.config;
             }
-        } else {
+        }
+
+        if (currentValue == null) {
             currentValue = modelIndex.config;
         }
 
         for (int segmentIndex = startSegmentIndex; segmentIndex < pathSegments.size(); segmentIndex++) {
             PathSegment pathSegment = pathSegments.get(segmentIndex);
 
-            currentValue = getPublicFieldOrMapValue(currentValue, pathSegment.name);
-            if (currentValue == null) return null;
+            if (currentValue instanceof EliteMobsFeature feature && "config".equals(pathSegment.name)) {
+                currentValue = feature.getConfig(modelIndex.config);
+                if (currentValue == null) {
+                    throw new FeatureConfigurationException("Feature '" + feature.getFeatureKey() + "' returned null config.");
+                }
+            } else {
+                currentValue = getPublicFieldOrMapValue(currentValue, pathSegment.name);
+            }
+            
+            if (currentValue == null) {
+                throw new TemplatePlaceholderException(dotPath, "segment '" + pathSegment.name + "' resolved to null");
+            }
 
             if (pathSegment.index == null) continue;
 
             int resolvedIndex = pathSegment.index;
             if (resolvedIndex == Integer.MIN_VALUE) { // [tier]
-                if (tierIndex < 0) return null;
+                if (tierIndex < 0) {
+                    throw new TemplatePlaceholderException(dotPath, "[tier] requested but no tier context available");
+                }
                 resolvedIndex = tierIndex;
             }
 
             currentValue = getIndexedElement(currentValue, resolvedIndex);
-            if (currentValue == null) return null;
+            if (currentValue == null) {
+                throw new TemplatePlaceholderException(dotPath, "index " + resolvedIndex + " out of bounds or null");
+            }
         }
 
         return currentValue;
@@ -324,8 +355,10 @@ public final class EliteMobsAssetGenerator {
         try {
             Field publicField = rootObject.getClass().getField(fieldOrKeyName);
             return publicField.get(rootObject);
-        } catch (Throwable ignored) {
+        } catch (NoSuchFieldException ignored) {
             return null;
+        } catch (Throwable e) {
+            throw new ReflectiveAccessException(fieldOrKeyName, e);
         }
     }
 
@@ -394,6 +427,7 @@ public final class EliteMobsAssetGenerator {
 
         static DotModelIndex build(EliteMobsConfig config) {
             DotModelIndex modelIndex = new DotModelIndex(config);
+            modelIndex.byNamespaceAndKey.put("features", EliteMobsFeatureRegistry.getInstance().getFeaturesByKey());
             IdentityHashMap<Object, Boolean> visitedObjectIdentities = new IdentityHashMap<>();
             scanModelGraph(config, visitedObjectIdentities, modelIndex);
             return modelIndex;
@@ -633,8 +667,8 @@ public final class EliteMobsAssetGenerator {
     }
 
     private static int generateSummonRoleAssets(Path outputRootDirectory, EliteMobsConfig config) throws IOException {
-        if (config == null || config.abilities == null || config.abilities.byId == null) return 0;
-        var abilityConfig = config.abilities.byId.get(EliteMobsConfig.ABILITY_UNDEAD_SUMMON_KEY);
+        if (config == null || config.abilitiesConfig == null || config.abilitiesConfig.defaultAbilities == null) return 0;
+        var abilityConfig = config.abilitiesConfig.defaultAbilities.get(EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
         if (!(abilityConfig instanceof EliteMobsConfig.SummonAbilityConfig summonConfig)) return 0;
         cleanupSummonRoleAssets(outputRootDirectory);
         if (summonConfig.spawnMarkerEntriesByRole == null || summonConfig.spawnMarkerEntriesByRole.isEmpty()) {
@@ -643,10 +677,10 @@ public final class EliteMobsAssetGenerator {
         if (summonConfig.spawnMarkerEntriesByRole == null || summonConfig.spawnMarkerEntriesByRole.isEmpty()) return 0;
 
         String rootTemplateText = readResourceText(
-                "ServerTemplates/Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_RootInteraction.template.json"
+                "ServerTemplates/Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_Root.template.json"
         );
         String entryTemplateText = readResourceText(
-                "ServerTemplates/Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_EntryInteraction.template.json"
+                "ServerTemplates/Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_Entry.template.json"
         );
         if (rootTemplateText == null || entryTemplateText == null) return 0;
 
@@ -669,7 +703,7 @@ public final class EliteMobsAssetGenerator {
                 String markerId = TemplateNameGenerator.appendTierSuffix(markerBaseId, config, tierIndex);
                 String entryId = TemplateNameGenerator.appendTierSuffix(entryBaseId, config, tierIndex);
                 String entryJson = entryTemplateText.replace(
-                        "${abilities.undead_summon.templates.summonMarker}",
+                        "${features.UndeadSummon.config.templates.summonMarker}",
                         "\"" + markerId + "\""
                 );
                 Path entryPath = outputRootDirectory.resolve(Paths.get(
@@ -681,7 +715,7 @@ public final class EliteMobsAssetGenerator {
 
                 String rootId = TemplateNameGenerator.appendTierSuffix(rootBaseId, config, tierIndex);
                 String rootJson = rootTemplateText.replace(
-                        "${abilities.undead_summon.templates.entryInteractionSummon}",
+                        "${features.UndeadSummon.config.templates.entryInteractionSummon}",
                         "\"" + entryId + "\""
                 );
                 Path rootPath = outputRootDirectory.resolve(Paths.get(
@@ -698,8 +732,8 @@ public final class EliteMobsAssetGenerator {
 
 
     private static int generateSummonRoleVariantAssets(Path outputRootDirectory, EliteMobsConfig config) throws IOException {
-        if (config == null || config.abilities == null || config.abilities.byId == null) return 0;
-        var abilityConfig = config.abilities.byId.get(EliteMobsConfig.ABILITY_UNDEAD_SUMMON_KEY);
+        if (config == null || config.abilitiesConfig == null || config.abilitiesConfig.defaultAbilities == null) return 0;
+        var abilityConfig = config.abilitiesConfig.defaultAbilities.get(EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
         if (!(abilityConfig instanceof EliteMobsConfig.SummonAbilityConfig summonConfig)) return 0;
         cleanupSummonMarkerAssets(outputRootDirectory);
         if (summonConfig.spawnMarkerEntriesByRole == null || summonConfig.spawnMarkerEntriesByRole.isEmpty()) {

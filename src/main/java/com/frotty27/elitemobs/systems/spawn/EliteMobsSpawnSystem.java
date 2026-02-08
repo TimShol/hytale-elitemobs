@@ -10,9 +10,12 @@ import com.frotty27.elitemobs.config.EliteMobsConfig.AbilityConfig;
 import com.frotty27.elitemobs.config.EliteMobsConfig.SummonAbilityConfig;
 import com.frotty27.elitemobs.config.EliteMobsConfig.SummonMarkerEntry;
 import com.frotty27.elitemobs.equipment.EliteMobsEquipmentService;
+import com.frotty27.elitemobs.exception.EliteMobsException;
+import com.frotty27.elitemobs.exception.EliteMobsSystemException;
+import com.frotty27.elitemobs.exception.EntityComponentException;
 import com.frotty27.elitemobs.features.EliteMobsFeatureRegistry;
-import com.frotty27.elitemobs.log.EliteMobsLogLevel;
-import com.frotty27.elitemobs.log.EliteMobsLogger;
+import com.frotty27.elitemobs.logs.EliteMobsLogLevel;
+import com.frotty27.elitemobs.logs.EliteMobsLogger;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
 import com.frotty27.elitemobs.rules.AbilityGateEvaluator;
 import com.frotty27.elitemobs.rules.MobRuleMatcher;
@@ -40,8 +43,8 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 
-import static com.frotty27.elitemobs.config.EliteMobsConfig.ABILITY_HEAL_POTION_KEY;
-import static com.frotty27.elitemobs.config.EliteMobsConfig.ABILITY_UNDEAD_SUMMON_KEY;
+import static com.frotty27.elitemobs.features.EliteMobsHealLeapAbilityFeature.ABILITY_HEAL_LEAP;
+import static com.frotty27.elitemobs.features.EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON;
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clamp01;
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clampTierIndex;
 
@@ -91,7 +94,17 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
     @Override
     public void tick(float deltaTimeSeconds, int entityIndex, @NonNull ArchetypeChunk<EntityStore> archetypeChunk,
                      @NonNull Store<EntityStore> entityStore, @NonNull CommandBuffer<EntityStore> commandBuffer) {
-        spawnTickHandler.handle(deltaTimeSeconds, entityIndex, archetypeChunk, entityStore, commandBuffer);
+        try {
+            NPCEntity npc = archetypeChunk.getComponent(entityIndex, NPCEntity.getComponentType());
+            if (npc == null) {
+                throw new EntityComponentException("NPCEntity", entityIndex);
+            }
+            spawnTickHandler.handle(deltaTimeSeconds, entityIndex, archetypeChunk, entityStore, commandBuffer);
+        } catch (EliteMobsException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new EliteMobsSystemException("Error in EliteMobsSpawnSystem tick", e);
+        }
     }
 
     void processTick(float deltaTimeSeconds, int entityIndex, @NonNull ArchetypeChunk<EntityStore> archetypeChunk,
@@ -205,7 +218,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
                                  roleName
         );
 
-        if (config.debug.isDebugModeEnabled) {
+        if (config.debugConfig.isDebugModeEnabled) {
             EliteMobsLogger.debug(LOGGER,
                                   "Elite applied: role=%s tier=%d ruleKey=%s matchKind=%s score=%d",
                                   EliteMobsLogLevel.INFO,
@@ -374,7 +387,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
                                  roleName
         );
 
-        if (config.debug.isDebugModeEnabled) {
+        if (config.debugConfig.isDebugModeEnabled) {
             EliteMobsLogger.debug(LOGGER,
                                   "Elite applied (command): role=%s tier=%d ruleKey=%s matchKind=%s score=%d",
                                   EliteMobsLogLevel.INFO,
@@ -453,7 +466,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
     private double[] resolveSpawnChancesForEnvironment(EliteMobsConfig config, NPCEntity npcEntity) {
         if (!config.spawning.enableEnvironmentTierSpawns) return config.spawning.spawnChancePerTier;
-        if (config.spawning.environmentTierSpawns == null || config.spawning.environmentTierSpawns.isEmpty())
+        if (config.spawning.defaultEnvironmentTierSpawns == null || config.spawning.defaultEnvironmentTierSpawns.isEmpty())
             return config.spawning.spawnChancePerTier;
 
         int envIndex = npcEntity.getEnvironment();
@@ -462,10 +475,10 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
         EliteMobsConfig.EnvironmentTierRule rule = null;
         if (envId != null) {
-            rule = config.spawning.environmentTierSpawns.get(envId);
+            rule = config.spawning.defaultEnvironmentTierSpawns.get(envId);
         }
         if (rule == null) {
-            rule = config.spawning.environmentTierSpawns.get("default");
+            rule = config.spawning.defaultEnvironmentTierSpawns.get("default");
         }
         if (rule == null) return config.spawning.spawnChancePerTier;
         if (!rule.enabled) return null;
@@ -543,7 +556,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
         List<SummonMarkerEntry> entries = resolveSummonEntries(summonConfig, roleIdentifier);
         if (entries.isEmpty()) {
-            if (config.debug.isDebugModeEnabled) {
+            if (config.debugConfig.isDebugModeEnabled) {
                 EliteMobsLogger.debug(LOGGER,
                                       "Pending summon skipped: no entries for role=%s",
                                       EliteMobsLogLevel.INFO,
@@ -556,7 +569,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
         int maxAlive = clampSummonMaxAlive(summonConfig.maxAlive);
         int remaining = Math.max(0, maxAlive - tierComponent.summonedAliveCount);
         if (remaining <= 0) {
-            if (config.debug.isDebugModeEnabled) {
+            if (config.debugConfig.isDebugModeEnabled) {
                 EliteMobsLogger.debug(LOGGER,
                                       "Pending summon skipped: cap reached alive=%d max=%d",
                                       EliteMobsLogLevel.INFO,
@@ -574,7 +587,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
         int spawnCount = clampSummonCount(pickFlockSize(entries));
         spawnCount = Math.min(spawnCount, remaining);
         if (spawnCount <= 0) {
-            if (config.debug.isDebugModeEnabled) {
+            if (config.debugConfig.isDebugModeEnabled) {
                 EliteMobsLogger.debug(LOGGER,
                                       "Pending summon skipped: spawnCount=0 remaining=%d",
                                       EliteMobsLogLevel.INFO,
@@ -584,7 +597,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
             return changed;
         }
 
-        if (config.debug.isDebugModeEnabled) {
+        if (config.debugConfig.isDebugModeEnabled) {
             EliteMobsLogger.debug(LOGGER,
                                   "Spawning minions: role=%s count=%d remaining=%d",
                                   EliteMobsLogLevel.INFO,
@@ -627,7 +640,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
                                                        new Vector3f(0f, 0f, 0f)
                 );
                 if (spawned == null || spawned.first() == null) {
-                    if (config.debug.isDebugModeEnabled) {
+                    if (config.debugConfig.isDebugModeEnabled) {
                         EliteMobsLogger.debug(LOGGER,
                                               "Spawn failed: role=%s flock=%s",
                                               EliteMobsLogLevel.INFO,
@@ -701,7 +714,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
     }
 
     private SummonAbilityConfig getSummonAbilityConfig(EliteMobsConfig config) {
-        AbilityConfig abilityConfig = getAbilityConfig(config, ABILITY_UNDEAD_SUMMON_KEY);
+        AbilityConfig abilityConfig = getAbilityConfig(config, ABILITY_UNDEAD_SUMMON);
         if (abilityConfig instanceof SummonAbilityConfig summonAbilityConfig) return summonAbilityConfig;
         return null;
     }
@@ -769,7 +782,12 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
         boolean changed = false;
 
-        AbilityConfig healConfig = getAbilityConfig(config, ABILITY_HEAL_POTION_KEY);
+        var registry = eliteMobsPlugin.getFeatureRegistry();
+
+        // Heal Leap initialization
+        var healFeature = registry.getFeatureByAssetId(ABILITY_HEAL_LEAP);
+        AbilityConfig healConfig = healFeature != null ? (AbilityConfig) healFeature.getConfig(config) : null;
+        
         if (healConfig != null && !tierComponent.healAbilityRollInitialized) {
             tierComponent.healAbilityEnabledRoll = rollAbilityEnabled(healConfig, roleName, tierIndex);
             tierComponent.healAbilityRollInitialized = true;
@@ -779,16 +797,19 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
         if (tierComponent.healAbilityEnabledRoll && !tierComponent.healThresholdInitialized) {
             float min = 0.1f;
             float max = 0.4f;
-            if (healConfig instanceof EliteMobsConfig.HealAbilityConfig healAbilityConfig) {
-                min = healAbilityConfig.minHealthTriggerPercent;
-                max = healAbilityConfig.maxHealthTriggerPercent;
+            if (healConfig instanceof EliteMobsConfig.HealLeapAbilityConfig healLeapAbilityConfig) {
+                min = healLeapAbilityConfig.minHealthTriggerPercent;
+                max = healLeapAbilityConfig.maxHealthTriggerPercent;
             }
             tierComponent.healTriggerPercent = AbilityHelpers.rollPercentInRange(random, min, max, 0.5f);
             tierComponent.healThresholdInitialized = true;
             changed = true;
         }
 
-        AbilityConfig summonConfig = getAbilityConfig(config, ABILITY_UNDEAD_SUMMON_KEY);
+        // Undead Summon initialization
+        var summonFeature = registry.getFeatureByAssetId(ABILITY_UNDEAD_SUMMON);
+        AbilityConfig summonConfig = summonFeature != null ? (AbilityConfig) summonFeature.getConfig(config) : null;
+        
         if (summonConfig != null && !tierComponent.summonAbilityRollInitialized) {
             tierComponent.summonAbilityEnabledRoll = rollAbilityEnabled(summonConfig, roleName, tierIndex);
             tierComponent.summonAbilityRollInitialized = true;
@@ -814,10 +835,10 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
     // ----------------- reporting -----------------
 
     private void logNpcScanSummaryIfDue(EliteMobsConfig config) {
-        if (!config.debug.isDebugModeEnabled) return;
+        if (!config.debugConfig.isDebugModeEnabled) return;
 
         long now = System.currentTimeMillis();
-        long everyMs = Math.max(1, config.debug.debugMobRuleScanIntervalSeconds) * 1000L;
+        long everyMs = Math.max(1, config.debugConfig.debugMobRuleScanIntervalSeconds) * 1000L;
         if (now - lastReportTimestampMs < everyMs) return;
 
         lastReportTimestampMs = now;

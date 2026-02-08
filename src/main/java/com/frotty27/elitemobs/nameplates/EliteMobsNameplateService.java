@@ -1,8 +1,8 @@
 package com.frotty27.elitemobs.nameplates;
 
 import com.frotty27.elitemobs.config.EliteMobsConfig;
-import com.frotty27.elitemobs.log.EliteMobsLogLevel;
-import com.frotty27.elitemobs.log.EliteMobsLogger;
+import com.frotty27.elitemobs.logs.EliteMobsLogLevel;
+import com.frotty27.elitemobs.logs.EliteMobsLogger;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
@@ -59,7 +59,7 @@ public final class EliteMobsNameplateService {
         ComponentType<EntityStore, Nameplate> nameplateComponentType = getNameplateComponentType();
         if (nameplateComponentType == null) return;
 
-        boolean enabled = config.nameplates.nameplatesEnabled 
+        boolean enabled = config.nameplatesConfig.nameplatesEnabled
                 && areNameplatesEnabledForTier(config, clampedTierIndex) 
                 && passesRoleFilters(config, roleName);
 
@@ -67,12 +67,12 @@ public final class EliteMobsNameplateService {
 
         if (!enabled) {
             if (existing != null) {
-                if (config.debug != null && config.debug.isDebugModeEnabled) {
+                if (config.debugConfig != null && config.debugConfig.isDebugModeEnabled) {
                     EliteMobsLogger.debug(
                             HytaleLogger.forEnclosingClass(),
                             "[Nameplate] remove: global=%s perTier=%s filtered=%s tier=%d role=%s",
                             EliteMobsLogLevel.INFO,
-                            String.valueOf(config.nameplates.nameplatesEnabled),
+                            String.valueOf(config.nameplatesConfig.nameplatesEnabled),
                             String.valueOf(areNameplatesEnabledForTier(config, clampedTierIndex)),
                             String.valueOf(passesRoleFilters(config, roleName)),
                             clampedTierIndex,
@@ -102,14 +102,14 @@ public final class EliteMobsNameplateService {
     }
 
     public String buildNameplateText(EliteMobsConfig config, String roleName, int clampedTierIndex) {
-        if (config == null || !config.nameplates.nameplatesEnabled) return "";
+        if (config == null || !config.nameplatesConfig.nameplatesEnabled) return "";
         if (!passesRoleFilters(config, roleName)) return "";
         if (!areNameplatesEnabledForTier(config, clampedTierIndex)) return "";
 
         String nameplatePrefix = getNameplatePrefixForTier(config, clampedTierIndex);
 
         EliteMobsConfig.NameplateMode nameplateMode =
-                (config.nameplates.nameplateMode != null) ? config.nameplates.nameplateMode : EliteMobsConfig.NameplateMode.RANKED_ROLE;
+                (config.nameplatesConfig.nameplateMode != null) ? config.nameplatesConfig.nameplateMode : EliteMobsConfig.NameplateMode.RANKED_ROLE;
 
         String nameplateBody = switch (nameplateMode) {
             case SIMPLE -> joinNonBlank(resolveTierPrefixForRole(config, roleName, clampedTierIndex),
@@ -129,15 +129,15 @@ public final class EliteMobsNameplateService {
     // ------------------------------------------------------------
 
     private static boolean areNameplatesEnabledForTier(EliteMobsConfig config, int clampedTierIndex) {
-        if (config.nameplates.nameplatesEnabledPerTier == null) return true;
-        if (config.nameplates.nameplatesEnabledPerTier.length <= clampedTierIndex) return true;
-        return config.nameplates.nameplatesEnabledPerTier[clampedTierIndex];
+        if (config.nameplatesConfig.nameplatesEnabledPerTier == null) return true;
+        if (config.nameplatesConfig.nameplatesEnabledPerTier.length <= clampedTierIndex) return true;
+        return config.nameplatesConfig.nameplatesEnabledPerTier[clampedTierIndex];
     }
 
     private static String getNameplatePrefixForTier(EliteMobsConfig config, int clampedTierIndex) {
-        if (config.nameplates.nameplatePrefixPerTier == null) return "";
-        if (config.nameplates.nameplatePrefixPerTier.length <= clampedTierIndex) return "";
-        return safe(config.nameplates.nameplatePrefixPerTier[clampedTierIndex]);
+        if (config.nameplatesConfig.nameplatePrefixPerTier == null) return "";
+        if (config.nameplatesConfig.nameplatePrefixPerTier.length <= clampedTierIndex) return "";
+        return safe(config.nameplatesConfig.nameplatePrefixPerTier[clampedTierIndex]);
     }
 
     // ------------------------------------------------------------
@@ -148,7 +148,7 @@ public final class EliteMobsNameplateService {
         String roleNameLowercase = (roleName == null) ? "" : roleName.toLowerCase(Locale.ROOT);
 
         // Deny first
-        List<String> denyList = config.nameplates.nameplateMustNotContainRoles;
+        List<String> denyList = config.nameplatesConfig.nameplateMustNotContainRoles;
         if (denyList != null) {
             for (String forbiddenFragment : denyList) {
                 if (forbiddenFragment == null || forbiddenFragment.isBlank()) continue;
@@ -157,7 +157,7 @@ public final class EliteMobsNameplateService {
         }
 
         // Allow any-of. If no allow rules => allow all.
-        List<String> allowList = config.nameplates.nameplateMustContainRoles;
+        List<String> allowList = config.nameplatesConfig.nameplateMustContainRoles;
         if (allowList == null || allowList.isEmpty()) return true;
 
         boolean hasAnyAllowRule = false;
@@ -283,7 +283,7 @@ public final class EliteMobsNameplateService {
     }
 
     private static String resolveTierPrefixForRole(EliteMobsConfig config, String roleName, int tierIndex) {
-        Map<String, List<String>> tierPrefixesByFamily = config.nameplates.tierPrefixesByFamily;
+        Map<String, List<String>> tierPrefixesByFamily = config.nameplatesConfig.defaultedTierPrefixesByFamily;
         if (tierPrefixesByFamily == null || tierPrefixesByFamily.isEmpty()) return "";
 
         String familyKey = classifyFamily(roleName);

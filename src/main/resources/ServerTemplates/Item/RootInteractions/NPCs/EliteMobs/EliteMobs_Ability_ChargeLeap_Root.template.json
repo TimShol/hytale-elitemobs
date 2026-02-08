@@ -1,6 +1,6 @@
 {
   "Interactions": [
-    ${abilities.charge_leap.templates.entryInteraction}
+    ${features.ChargeLeap.config.templates.entryInteraction}
   ],
   "Tags": {
     "Attack": ["Melee"]

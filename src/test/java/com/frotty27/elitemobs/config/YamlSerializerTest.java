@@ -43,13 +43,13 @@ public class YamlSerializerTest {
             assertTrue(chance >= 0.0);
         }
 
-        assertNotNull(cfg.model.modelScaleMultiplierPerTier);
-        assertTrue(cfg.model.modelScaleMultiplierPerTier.length == 5);
-        for (float scale : cfg.model.modelScaleMultiplierPerTier) {
+        assertNotNull(cfg.modelConfig.modelScaleMultiplierPerTier);
+        assertTrue(cfg.modelConfig.modelScaleMultiplierPerTier.length == 5);
+        for (float scale : cfg.modelConfig.modelScaleMultiplierPerTier) {
             assertTrue(scale >= 0.0f);
         }
 
-        assertTrue(cfg.gear.spawnGearDurabilityMin >= 0.0);
-        assertTrue(cfg.gear.spawnGearDurabilityMax >= 0.0);
+        assertTrue(cfg.gearConfig.spawnGearDurabilityMin >= 0.0);
+        assertTrue(cfg.gearConfig.spawnGearDurabilityMax >= 0.0);
     }
 }

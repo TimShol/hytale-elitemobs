@@ -22,7 +22,7 @@ public class MobRuleMatcherExcludeTest {
 
         Map<String, EliteMobsConfig.MobRule> rules = new LinkedHashMap<>();
         rules.put("goblin", rule);
-        cfg.mobs.rules = rules;
+        cfg.mobsConfig.defaultMobRules = rules;
 
         MobRuleMatcher.MatchResult allowed = new MobRuleMatcher().findBestMatch(cfg, "goblin_scout");
         MobRuleMatcher.MatchResult denied = new MobRuleMatcher().findBestMatch(cfg, "goblin_boss");

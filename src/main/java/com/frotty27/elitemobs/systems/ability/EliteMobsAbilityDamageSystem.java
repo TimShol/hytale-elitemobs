@@ -2,8 +2,10 @@ package com.frotty27.elitemobs.systems.ability;
 
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
 import com.frotty27.elitemobs.config.EliteMobsConfig;
-import com.frotty27.elitemobs.log.EliteMobsLogLevel;
-import com.frotty27.elitemobs.log.EliteMobsLogger;
+import com.frotty27.elitemobs.exception.EliteMobsException;
+import com.frotty27.elitemobs.exception.EliteMobsSystemException;
+import com.frotty27.elitemobs.logs.EliteMobsLogLevel;
+import com.frotty27.elitemobs.logs.EliteMobsLogger;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
@@ -13,13 +15,13 @@ import com.hypixel.hytale.component.dependency.Dependency;
 import com.hypixel.hytale.component.dependency.Order;
 import com.hypixel.hytale.component.dependency.SystemGroupDependency;
 import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageModule;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
-import com.hypixel.hytale.logger.HytaleLogger;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Set;
@@ -56,6 +58,22 @@ public final class EliteMobsAbilityDamageSystem extends DamageEventSystem {
             @NonNull CommandBuffer<EntityStore> commandBuffer,
             @NonNull Damage damage
     ) {
+        try {
+            processHandle(entityIndex, archetypeChunk, entityStore, commandBuffer, damage);
+        } catch (EliteMobsException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new EliteMobsSystemException("Error in EliteMobsAbilityDamageSystem", e);
+        }
+    }
+
+    private void processHandle(
+            int entityIndex,
+            @NonNull ArchetypeChunk<EntityStore> archetypeChunk,
+            @NonNull Store<EntityStore> entityStore,
+            @NonNull CommandBuffer<EntityStore> commandBuffer,
+            @NonNull Damage damage
+    ) {
         EliteMobsConfig config = plugin.getConfig();
         if (config == null) return;
 
@@ -75,7 +93,7 @@ public final class EliteMobsAbilityDamageSystem extends DamageEventSystem {
                 tierComponent.lastAggroRef = attackerRef;
                 tierComponent.lastAggroTick = currentTick;
                 commandBuffer.replaceComponent(victimRef, plugin.getEliteMobsComponent(), tierComponent);
-                if (config.debug.isDebugModeEnabled) {
+                if (config.debugConfig.isDebugModeEnabled) {
                     EliteMobsLogger.debug(
                             LOGGER,
                             "Aggro set: victimRole=%s attackerRef=%s tick=%d",

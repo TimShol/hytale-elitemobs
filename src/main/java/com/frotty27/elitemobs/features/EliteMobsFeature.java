@@ -7,13 +7,22 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.Nullable;
 
 public interface EliteMobsFeature {
 
-    String id();
+    @Nullable
+    default String getAssetId() {
+        return null;
+    }
+
+    String getFeatureKey();
+
+    @Nullable
+    default Object getConfig(EliteMobsConfig config) {
+        return null;
+    }
 
     void apply(
             EliteMobsPlugin plugin,
@@ -47,6 +56,6 @@ public interface EliteMobsFeature {
             @Nullable NPCEntity npcEntity,
             int tierIndex,
             long currentTick,
-            Damage damage
+            com.hypixel.hytale.server.core.modules.entity.damage.Damage damage
     ) {}
 }

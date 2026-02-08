@@ -2,7 +2,7 @@
   "Parent": "DamageEntityParent",
   "DamageCalculator": {
     "BaseDamage": {
-      "Physical": ${abilities.charge_leap.slamBaseDamagePerTier}
+      "Physical": ${features.ChargeLeap.config.slamBaseDamagePerTier}
     }
   },
   "DamageEffects": {
@@ -18,10 +18,10 @@
       },
       "Direction": {
         "X": 0,
-        "Y": ${abilities.charge_leap.knockbackLiftPerTier},
-        "Z": ${abilities.charge_leap.knockbackPushAwayPerTier}
+        "Y": ${features.ChargeLeap.config.knockbackLiftPerTier},
+        "Z": ${features.ChargeLeap.config.knockbackPushAwayPerTier}
       },
-      "Force": ${abilities.charge_leap.knockbackForcePerTier},
+      "Force": ${features.ChargeLeap.config.knockbackForcePerTier},
       "VelocityType": "Set"
     },
     "WorldParticles": [

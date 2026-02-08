@@ -2,7 +2,7 @@
   "Infinite": true,
   "DamageResistance": {
     "Projectile": [
-      { "Amount": ${effects.projectile_resistance.amountMultiplierPerTier}, "CalculationType": "Multiplicative" }
+      { "Amount": ${features.ProjectileResistance.config.amountMultiplierPerTier}, "CalculationType": "Multiplicative" }
     ]
   }
 }

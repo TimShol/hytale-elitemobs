@@ -14,7 +14,7 @@ public final class EliteMobsRootCommand extends AbstractCommand {
         super("elitemobs", "EliteMobs root command.");
 
         addSubCommand(new EliteMobsReloadCommand(plugin));
-        if (plugin.getConfig().debug.isDebugModeEnabled)
+        if (plugin.getConfig().debugConfig.isDebugModeEnabled)
             addSubCommand(new EliteMobsSpawnCommand(plugin));
         addAliases("em");
     }

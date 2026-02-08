@@ -29,14 +29,14 @@ public final class MobRuleMatcher {
     public MatchResult findBestMatch(EliteMobsConfig cfg, String roleName) {
         if (roleName == null || roleName.isBlank()) return null;
 
-        if (cfg == null || cfg.mobs.rules == null || cfg.mobs.rules.isEmpty()) return null;
+        if (cfg == null || cfg.mobsConfig.defaultMobRules == null || cfg.mobsConfig.defaultMobRules.isEmpty()) return null;
 
         final String lowerCaseRoleName = normalizeLower(roleName);
 
         MatchResult bestMatchResult = null;
         int bestScore = Integer.MIN_VALUE;
 
-        for (Map.Entry<String, EliteMobsConfig.MobRule> mobRuleEntry : cfg.mobs.rules.entrySet()) {
+        for (Map.Entry<String, EliteMobsConfig.MobRule> mobRuleEntry : cfg.mobsConfig.defaultMobRules.entrySet()) {
             EliteMobsConfig.MobRule rule = mobRuleEntry.getValue();
             if (rule == null || !rule.enabled) continue;
 

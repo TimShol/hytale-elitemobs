@@ -28,7 +28,7 @@ public class MobRuleMatcherTest {
         rules.put("exact", exact);
         rules.put("prefix", prefix);
         rules.put("contains", contains);
-        cfg.mobs.rules = rules;
+        cfg.mobsConfig.defaultMobRules = rules;
 
         MobRuleMatcher.MatchResult result = new MobRuleMatcher().findBestMatch(cfg, "Goblin_Duke");
         assertNotNull(result);
@@ -47,7 +47,7 @@ public class MobRuleMatcherTest {
         Map<String, EliteMobsConfig.MobRule> rules = new LinkedHashMap<>();
         rules.put("b_rule", r1);
         rules.put("a_rule", r2);
-        cfg.mobs.rules = rules;
+        cfg.mobsConfig.defaultMobRules = rules;
 
         MobRuleMatcher.MatchResult result = new MobRuleMatcher().findBestMatch(cfg, "goblin_scout");
         assertNotNull(result);

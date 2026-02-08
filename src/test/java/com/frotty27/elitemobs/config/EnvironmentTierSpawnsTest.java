@@ -10,7 +10,7 @@ public class EnvironmentTierSpawnsTest {
     @Test
     void zone1DefaultsUseTier1To3Only() {
         EliteMobsConfig cfg = new EliteMobsConfig();
-        EliteMobsConfig.EnvironmentTierRule rule = cfg.spawning.environmentTierSpawns.get("Env_Zone1_Forests");
+        EliteMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("Env_Zone1_Forests");
         assertNotNull(rule);
         assertTrue(rule.spawnChancePerTier.length >= 5);
         assertTrue(rule.spawnChancePerTier[3] <= 0.0001);
@@ -20,7 +20,7 @@ public class EnvironmentTierSpawnsTest {
     @Test
     void zone3DefaultsDisableTier1() {
         EliteMobsConfig cfg = new EliteMobsConfig();
-        EliteMobsConfig.EnvironmentTierRule rule = cfg.spawning.environmentTierSpawns.get("Env_Zone3_Tundra");
+        EliteMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("Env_Zone3_Tundra");
         assertNotNull(rule);
         assertTrue(rule.spawnChancePerTier.length >= 5);
         assertTrue(rule.spawnChancePerTier[0] <= 0.0001);
@@ -29,7 +29,7 @@ public class EnvironmentTierSpawnsTest {
     @Test
     void zone4DefaultsPreferTier3() {
         EliteMobsConfig cfg = new EliteMobsConfig();
-        EliteMobsConfig.EnvironmentTierRule rule = cfg.spawning.environmentTierSpawns.get("Env_Zone4_Wastes");
+        EliteMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("Env_Zone4_Wastes");
         assertNotNull(rule);
         assertTrue(rule.spawnChancePerTier.length >= 5);
         assertTrue(rule.spawnChancePerTier[0] <= 0.0001);

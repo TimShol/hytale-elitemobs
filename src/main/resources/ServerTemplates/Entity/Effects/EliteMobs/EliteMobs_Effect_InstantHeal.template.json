@@ -1,6 +1,6 @@
 {
   "StatModifiers": {
-    "Health": ${abilities.heal_potion.instantHealAmountPerTier[tier]}
+    "Health": ${features.HealLeap.config.instantHealAmountPerTier[tier]}
   },
   "ValueType": "Percent",
   "DamageCalculatorCooldown": 0,

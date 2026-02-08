@@ -1,8 +1,8 @@
 package com.frotty27.elitemobs.systems.death;
 
 import com.frotty27.elitemobs.config.EliteMobsConfig;
-import com.frotty27.elitemobs.log.EliteMobsLogLevel;
-import com.frotty27.elitemobs.log.EliteMobsLogger;
+import com.frotty27.elitemobs.logs.EliteMobsLogLevel;
+import com.frotty27.elitemobs.logs.EliteMobsLogger;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
@@ -77,7 +77,7 @@ public final class EliteMobsVanillaDropsCullSystem extends EntityTickingSystem<E
         if (!isWeaponOrArmorDrop) return;
 
         EliteMobsConfig config = eliteMobsPlugin.getConfig();
-        if (config != null && config.debug.isDebugModeEnabled) {
+        if (config != null && config.debugConfig.isDebugModeEnabled) {
             EliteMobsLogger.debug(
                     LOGGER,
                     "CULLING item=%s pos=%s",

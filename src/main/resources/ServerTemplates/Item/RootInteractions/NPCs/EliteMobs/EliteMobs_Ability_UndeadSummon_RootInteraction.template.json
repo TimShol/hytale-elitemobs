@@ -1,5 +1,0 @@
-{
-  "Interactions": [
-    ${abilities.undead_summon.templates.entryInteractionSummon}
-  ]
-}

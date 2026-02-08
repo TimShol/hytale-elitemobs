@@ -1,7 +1,7 @@
 package com.frotty27.elitemobs.plugin;
 
 import com.frotty27.elitemobs.assets.EliteMobsAssetGenerator;
-import com.frotty27.elitemobs.assets.EliteMobsAssetLoader;
+import com.frotty27.elitemobs.assets.EliteMobsAssetRetriever;
 import com.frotty27.elitemobs.commands.EliteMobsRootCommand;
 import com.frotty27.elitemobs.components.EliteMobsLeapAbilityStateComponent;
 import com.frotty27.elitemobs.components.EliteMobsSummonRiseComponent;
@@ -10,27 +10,22 @@ import com.frotty27.elitemobs.components.EliteMobsTierComponent;
 import com.frotty27.elitemobs.config.EliteMobsConfig;
 import com.frotty27.elitemobs.config.schema.YamlSerializer;
 import com.frotty27.elitemobs.features.EliteMobsFeatureRegistry;
-import com.frotty27.elitemobs.log.EliteMobsLogger;
+import com.frotty27.elitemobs.logs.EliteMobsLogger;
 import com.frotty27.elitemobs.nameplates.EliteMobsNameplateService;
-import com.frotty27.elitemobs.systems.ability.EliteMobsAbilityDamageSystem;
-import com.frotty27.elitemobs.systems.ability.EliteMobsLeapAbilitySystem;
 import com.frotty27.elitemobs.systems.ability.SummonRiseTracker;
-import com.frotty27.elitemobs.systems.combat.EliteMobsDamageDealtSystem;
-import com.frotty27.elitemobs.systems.death.EliteMobsDeathSystem;
-import com.frotty27.elitemobs.systems.death.EliteMobsVanillaDropsCullSystem;
-import com.frotty27.elitemobs.systems.death.EliteMobsVanillaDropsCullZoneManager;
-import com.frotty27.elitemobs.systems.drops.EliteMobsExtraDropsScheduler;
-import com.frotty27.elitemobs.systems.drops.EliteMobsExtraDropsSchedulerSystem;
 import com.frotty27.elitemobs.systems.spawn.EliteMobsSpawnSystem;
 import com.frotty27.elitemobs.utils.TickClock;
 import com.hypixel.hytale.assetstore.AssetPack;
 import com.hypixel.hytale.component.ComponentType;
+import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.asset.AssetModule;
 import com.hypixel.hytale.server.core.asset.AssetRegistryLoader;
 import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
+import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
+import com.hypixel.hytale.server.core.modules.entity.damage.DeathSystems;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -43,8 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class EliteMobsPlugin extends JavaPlugin {
 
-    //TODO: Cleanup null checks and add readability in every class
-    //TODO: Fix Nameplate SIMPLE mode to switch in-game
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final String ASSET_PACK_NAME = "EliteMobsGenerated";
     private EliteMobsConfig config;
@@ -55,13 +48,13 @@ public final class EliteMobsPlugin extends JavaPlugin {
     private ComponentType<EntityStore, EliteMobsSummonedMinionComponent> summonedMinionComponent;
 
     private final TickClock tickClock = new TickClock();
-    private final EliteMobsVanillaDropsCullZoneManager cullZoneManager = new EliteMobsVanillaDropsCullZoneManager(tickClock);
-    private final EliteMobsExtraDropsScheduler dropsScheduler = new EliteMobsExtraDropsScheduler(tickClock);
+    private final com.frotty27.elitemobs.systems.death.EliteMobsVanillaDropsCullZoneManager cullZoneManager = new com.frotty27.elitemobs.systems.death.EliteMobsVanillaDropsCullZoneManager(tickClock);
+    private final com.frotty27.elitemobs.systems.drops.EliteMobsExtraDropsScheduler dropsScheduler = new com.frotty27.elitemobs.systems.drops.EliteMobsExtraDropsScheduler(tickClock);
     private final EliteMobsNameplateService nameplateService = new EliteMobsNameplateService();
-    private final EliteMobsAssetLoader eliteMobsAssetLoader = new EliteMobsAssetLoader(this);
+    private final EliteMobsAssetRetriever eliteMobsAssetRetriever = new EliteMobsAssetRetriever(this);
     private final EliteMobsFeatureRegistry featureRegistry = new EliteMobsFeatureRegistry(this);
     private final SummonRiseTracker summonRiseTracker = new SummonRiseTracker();
-    private EliteMobsSpawnSystem spawnSystem;
+    
     private final AtomicBoolean reconcileRequested = new AtomicBoolean(false);
     private final AtomicInteger reconcileTicksRemaining = new AtomicInteger(0);
     private boolean reconcileActive = false;
@@ -122,7 +115,7 @@ public final class EliteMobsPlugin extends JavaPlugin {
         var player = event.getPlayerRef();
         if (player == null) return;
         EliteMobsConfig cfg = config;
-        if (cfg != null && cfg.compat != null && !cfg.compat.showCompatJoinMessages) return;
+        if (cfg != null && cfg.compatConfig != null && !cfg.compatConfig.showCompatJoinMessages) return;
         if (shouldWarnCompat()) {
             player.sendMessage(Message.raw("[EliteMobs] Compatibility notice: This server uses EliteMobs and RPGLevelingSystem without a compatibility plugin. Please inform the server owner to install the EliteMobsRPGLevelingCompat plugin.")
                                         .color("#FFD700"));
@@ -228,35 +221,24 @@ public final class EliteMobsPlugin extends JavaPlugin {
         LOGGER.atInfo().log("Registered EliteMobsSummonedMinionComponent.");
     }
 
-    public void registerSystem(com.hypixel.hytale.component.system.tick.EntityTickingSystem<EntityStore> system) {
-        getEntityStoreRegistry().registerSystem(system);
+    @SuppressWarnings("unchecked")
+    public void registerSystem(Object system) {
+        if (system instanceof EntityTickingSystem) {
+            getEntityStoreRegistry().registerSystem((EntityTickingSystem<EntityStore>) system);
+        } else if (system instanceof DamageEventSystem) {
+            getEntityStoreRegistry().registerSystem((DamageEventSystem) system);
+        } else if (system instanceof DeathSystems.OnDeathSystem) {
+            getEntityStoreRegistry().registerSystem((DeathSystems.OnDeathSystem) system);
+        } else if (system instanceof com.hypixel.hytale.component.system.System) {
+            getEntityStoreRegistry().registerSystem((com.hypixel.hytale.component.system.System<EntityStore>) system);
+        } else {
+            LOGGER.atWarning().log("Unknown system type: " + system.getClass().getName());
+        }
     }
 
     private void registerSystems() {
-        getEntityStoreRegistry().registerSystem(new EliteMobsVanillaDropsCullSystem(this));
-        LOGGER.atInfo().log("Registered EliteMobsVanillaDropsCullSystem.");
-
-        spawnSystem = new EliteMobsSpawnSystem(this);
-        getEntityStoreRegistry().registerSystem(spawnSystem);
-        LOGGER.atInfo().log("Registered EliteMobsSpawnSystem.");
-
-        getEntityStoreRegistry().registerSystem(new EliteMobsDeathSystem(this));
-        LOGGER.atInfo().log("Registered EliteMobsDeathSystem.");
-
-        getEntityStoreRegistry().registerSystem(new EliteMobsDamageDealtSystem(this));
-        LOGGER.atInfo().log("Registered EliteMobsDamageDealtSystem.");
-
         featureRegistry.registerSystems(this);
         LOGGER.atInfo().log("Registered Feature Systems.");
-
-        getEntityStoreRegistry().registerSystem(new EliteMobsLeapAbilitySystem(this));
-        LOGGER.atInfo().log("Registered EliteMobsLeapAbilitySystem.");
-
-        getEntityStoreRegistry().registerSystem(new EliteMobsAbilityDamageSystem(this));
-        LOGGER.atInfo().log("Registered EliteMobsAbilityDamageSystem.");
-
-        getEntityStoreRegistry().registerSystem(new EliteMobsExtraDropsSchedulerSystem(this));
-        LOGGER.atInfo().log("Registered EliteMobsExtraDropsSchedulerSystem.");
     }
 
     private void registerCommands() {
@@ -264,11 +246,11 @@ public final class EliteMobsPlugin extends JavaPlugin {
         LOGGER.atInfo().log("Registered EliteMobs commands.");
     }
 
-    public EliteMobsVanillaDropsCullZoneManager getMobDropsCleanupManager() {
+    public com.frotty27.elitemobs.systems.death.EliteMobsVanillaDropsCullZoneManager getMobDropsCleanupManager() {
         return cullZoneManager;
     }
 
-    public EliteMobsExtraDropsScheduler getExtraDropsScheduler() {
+    public com.frotty27.elitemobs.systems.drops.EliteMobsExtraDropsScheduler getExtraDropsScheduler() {
         return dropsScheduler;
     }
 
@@ -305,11 +287,12 @@ public final class EliteMobsPlugin extends JavaPlugin {
     }
 
     public EliteMobsSpawnSystem getSpawnSystem() {
-        return spawnSystem;
+        com.frotty27.elitemobs.features.EliteMobsSpawningFeature spawning = (com.frotty27.elitemobs.features.EliteMobsSpawningFeature) featureRegistry.getFeature("Spawning");
+        return spawning != null ? spawning.getSpawnSystem() : null;
     }
 
-    public EliteMobsAssetLoader getEliteMobsAssetLoader() {
-        return eliteMobsAssetLoader;
+    public EliteMobsAssetRetriever getEliteMobsAssetLoader() {
+        return eliteMobsAssetRetriever;
     }
 
     public EliteMobsFeatureRegistry getFeatureRegistry() {
@@ -329,10 +312,10 @@ public final class EliteMobsPlugin extends JavaPlugin {
         if (cfg == null) return;
 
         if (reconcileRequested.getAndSet(false)) {
-            int windowTicks = Math.max(0, cfg.reconcile.reconcileWindowTicks);
+            int windowTicks = Math.max(0, cfg.reconcileConfig.reconcileWindowTicks);
             reconcileTicksRemaining.set(windowTicks);
             reconcileActive = windowTicks > 0;
-            if (cfg.reconcile.announceReconcile) {
+            if (cfg.reconcileConfig.announceReconcile) {
                 if (windowTicks > 0) {
                     LOGGER.atInfo().log("[EliteMobs] Reconcile started (%d ticks).", windowTicks);
                 } else {
@@ -345,7 +328,7 @@ public final class EliteMobsPlugin extends JavaPlugin {
         int remaining = reconcileTicksRemaining.updateAndGet(value -> value > 0 ? value - 1 : 0);
         if (reconcileActive && remaining == 0) {
             reconcileActive = false;
-            if (cfg.reconcile.announceReconcile) {
+            if (cfg.reconcileConfig.announceReconcile) {
                 LOGGER.atInfo().log("[EliteMobs] Reconcile finished.");
             }
         }

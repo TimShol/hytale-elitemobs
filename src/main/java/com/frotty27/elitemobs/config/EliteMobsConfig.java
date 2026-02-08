@@ -2,25 +2,24 @@ package com.frotty27.elitemobs.config;
 
 import com.frotty27.elitemobs.assets.AssetConfig;
 import com.frotty27.elitemobs.assets.AssetType;
-import com.frotty27.elitemobs.assets.EliteMobsAssetCatalog;
 import com.frotty27.elitemobs.assets.TieredAssetConfig;
 import com.frotty27.elitemobs.config.schema.*;
+import com.frotty27.elitemobs.features.*;
 import com.google.gson.Gson;
 
 import java.util.*;
 
-import static com.frotty27.elitemobs.assets.EliteMobsAssetCatalog.ABILITY_CHARGE_LEAP;
-import static com.frotty27.elitemobs.assets.EliteMobsAssetCatalog.EFFECT_PROJECTILE_RESISTANCE;
 import static com.frotty27.elitemobs.utils.Constants.TIERS_AMOUNT;
 
 
 public final class EliteMobsConfig {
 
-    private static final List<String> DENY_ABILITY_CHARGE_LEAP_LIST =
-            List.of("Eye_Void", "Crawler_Void", "Skeleton_Burnt_Praetorian");
+    private static final List<String> DENY_ABILITY_CHARGE_LEAP_LIST = List.of("Eye_Void",
+                                                                              "Crawler_Void",
+                                                                              "Skeleton_Burnt_Praetorian"
+    );
 
-    private static final List<String> UNDEAD_ROLE_NAME_CONTAINS =
-            List.of("skeleton_", "zombie_", "wraith");
+    private static final List<String> UNDEAD_ROLE_NAME_CONTAINS = List.of("skeleton_", "zombie_", "wraith");
     private static final List<String> DAMAGE_MELEE_ONLY_NOT_CONTAINS = List.of("shortbow",
                                                                                "crossbow",
                                                                                "staff",
@@ -44,10 +43,6 @@ public final class EliteMobsConfig {
     private static final List<String> DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY = List.of("blunderbuss");
     private static final List<String> DAMAGE_RANGED_SPELLBOOK_ONLY = List.of("spellbook");
 
-
-    public static final String ABILITY_CHARGE_LEAP_KEY = "charge_leap";
-    public static final String ABILITY_HEAL_POTION_KEY = "heal_potion";
-    public static final String ABILITY_UNDEAD_SUMMON_KEY = "undead_summon";
     public static final String SUMMON_ROLE_PREFIX = "EliteMobs_Summon_";
     public static final int DEFAULT_SUMMON_MAX_ALIVE = 7;
     public static final int SUMMON_MAX_ALIVE_MIN = 0;
@@ -58,20 +53,20 @@ public final class EliteMobsConfig {
     public String configVersion = "0.0.0";
 
     public final SpawningConfig spawning = new SpawningConfig();
-    public final MobsConfig mobs = new MobsConfig();
-    public final HealthConfig health = new HealthConfig();
-    public final DamageConfig damage = new DamageConfig();
-    public final ModelConfig model = new ModelConfig();
-    public final GearConfig gear = new GearConfig();
-    public final LootConfig loot = new LootConfig();
-    public final NameplatesConfig nameplates = new NameplatesConfig();
+    public final MobsConfig mobsConfig = new MobsConfig();
+    public final HealthConfig healthConfig = new HealthConfig();
+    public final DamageConfig damageConfig = new DamageConfig();
+    public final ModelConfig modelConfig = new ModelConfig();
+    public final GearConfig gearConfig = new GearConfig();
+    public final LootConfig lootConfig = new LootConfig();
+    public final NameplatesConfig nameplatesConfig = new NameplatesConfig();
     public final AssetGeneratorConfig assetGenerator = new AssetGeneratorConfig();
-    public final AbilitiesConfig abilities = new AbilitiesConfig();
-    public final EffectsConfig effects = new EffectsConfig();
-    public final ConsumablesConfig consumables = new ConsumablesConfig();
-    public final DebugConfig debug = new DebugConfig();
-    public final CompatConfig compat = new CompatConfig();
-    public final ReconcileConfig reconcile = new ReconcileConfig();
+    public final AbilitiesConfig abilitiesConfig = new AbilitiesConfig();
+    public final EffectsConfig effectsConfig = new EffectsConfig();
+    public final ConsumablesConfig consumablesConfig = new ConsumablesConfig();
+    public final DebugConfig debugConfig = new DebugConfig();
+    public final CompatConfig compatConfig = new CompatConfig();
+    public final ReconcileConfig reconcileConfig = new ReconcileConfig();
 
     public enum ProgressionStyle {
         ENVIRONMENT,         // Tiers are based on the Hytale zone/environment.
@@ -79,7 +74,7 @@ public final class EliteMobsConfig {
         NONE                 // Any tier can spawn anywhere based on global weights.
     }
 
-    private static Map<String, List<String>> defaultTierPrefixes() {
+    private static Map<String, List<String>> defaultTierPrefixesByFamily() {
         Map<String, List<String>> m = new LinkedHashMap<>();
 
         m.put("zombie", List.of("Rotting", "Ravenous", "Putrid", "Monstrous", "Evolved"));
@@ -549,7 +544,7 @@ public final class EliteMobsConfig {
         public NameplateMode nameplateMode = NameplateMode.RANKED_ROLE;
 
         @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Tier-based name prefixes per family (Zombie, Skeleton, etc.). Each list must have 5 values.")
-        public Map<String, List<String>> tierPrefixesByFamily = defaultTierPrefixes();
+        public Map<String, List<String>> defaultedTierPrefixesByFamily = defaultTierPrefixesByFamily();
 
         @FixedArraySize(TIERS_AMOUNT)
         @Default
@@ -583,48 +578,45 @@ public final class EliteMobsConfig {
     }
 
     public static final class SpawningConfig {
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Global chance for a mob to become Elite (0.0 to 1.0).")
-        public float globalSpawnChance = 0.15f;
-
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Progression system: ENVIRONMENT (Zone-based), DISTANCE_FROM_SPAWN (Linear scaling), or NONE (Random).")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Progression system: ENVIRONMENT (Zone-based), DISTANCE_FROM_SPAWN (Linear scaling), or NONE (Random).")
         public ProgressionStyle progressionStyle = ProgressionStyle.ENVIRONMENT;
 
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Blocks required per tier transition (e.g. 1000m = Tier 1, 2000m = Tier 2).")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Blocks required per tier transition (e.g. 1000m = Tier 1, 2000m = Tier 2).")
         public double distancePerTier = 1000.0;
 
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Block interval for applying bonus stats (e.g. every 100 blocks).")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Block interval for applying bonus stats (e.g. every 100 blocks).")
         public double distanceBonusInterval = 100.0;
 
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Health multiplier bonus added per interval (0.01 = +1% health every 100m).")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Health multiplier bonus added per interval (0.01 = +1% health every 100m).")
         public float distanceHealthBonusPerInterval = 0.01f;
 
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Damage multiplier bonus added per interval (0.005 = +0.5% damage every 100m).")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Damage multiplier bonus added per interval (0.005 = +0.5% damage every 100m).")
         public float distanceDamageBonusPerInterval = 0.005f;
 
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Max bonus health multiplier added by distance progression (0.5 = +50% base health max).")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Max bonus health multiplier added by distance progression (0.5 = +50% base health max).")
         public float distanceHealthBonusCap = 0.5f;
 
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Max bonus damage multiplier added by distance progression (0.5 = +50% base damage max).")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Max bonus damage multiplier added by distance progression (0.5 = +50% base damage max).")
         public float distanceDamageBonusCap = 0.5f;
 
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Used if style is ENVIRONMENT. Enable zone-specific tier probabilities.")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Used if style is ENVIRONMENT. Enable zone-specific tier probabilities.")
         public boolean enableEnvironmentTierSpawns = true;
 
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Global tier weights used for NONE style or as fallback. Higher = more common.")
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Global tier weights used for NONE style or as fallback. Higher = more common.")
         public double[] spawnChancePerTier = {0.46, 0.28, 0.16, 0.08, 0.04};
 
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Zone-specific rules. Key is environment id (e.g. Env_Zone1_Forests).")
-        public Map<String, EnvironmentTierRule> environmentTierSpawns = defaultEnvironmentTierSpawns();
+        @Cfg(group = "Spawning", file = "core.yml", comment = "Zone-specific rules. Key is environment id (e.g. Env_Zone1_Forests).")
+        public Map<String, EnvironmentTierRule> defaultEnvironmentTierSpawns = defaultEnvironmentTierSpawns();
     }
 
     public static final class EnvironmentTierRule {
@@ -679,22 +671,22 @@ public final class EliteMobsConfig {
         ));
 
         @Cfg(group = "Gear", file = "gear.yml", comment = "Weapon rarity rules: maps ID fragments to rarities. First match wins.")
-        public Map<String, String> weaponRarityRulesContains = defaultWeaponRarityRulesContains();
+        public Map<String, String> defaultWeaponRarityRules = defaultWeaponRarityRules();
 
         @Cfg(group = "Gear", file = "gear.yml", comment = "Armor rarity rules: maps ID fragments to rarities. First match wins.")
-        public Map<String, String> armorRarityRulesContains = defaultArmorRarityRulesContains();
+        public Map<String, String> defaultArmorRarityRules = defaultArmorRarityRules();
 
         @Cfg(group = "Gear", file = "gear.yml", comment = "Allowed rarities per tier (Tier 1-5).")
-        public List<List<String>> tierAllowedRarities = defaultTierAllowedRarities();
+        public List<List<String>> defaultTierAllowedRarities = defaultTierAllowedRarities();
 
         @Cfg(group = "Gear", file = "gear.yml", comment = "Probability of equipping a rarity per tier.")
-        public List<Map<String, Double>> tierEquipmentRarityWeights = defaultTierRarityWeights();
+        public List<Map<String, Double>> defaultTierEquipmentRarityWeights = defaultTierEquipmentRarityWeights();
 
         @Cfg(group = "Gear", file = "gear.yml", comment = "Valid weapon IDs for Elite generation.")
-        public List<String> weaponCatalog = defaultWeaponCatalog();
+        public List<String> defaultWeaponCatalog = defaultWeaponCatalog();
 
         @Cfg(group = "Gear", file = "gear.yml", comment = "Valid armor materials for Elite generation.")
-        public List<String> armorMaterials = defaultArmorMaterials();
+        public List<String> defaultArmorMaterials = defaultArmorMaterials();
 
         @Default
         @FixedArraySize(TIERS_AMOUNT)
@@ -707,7 +699,7 @@ public final class EliteMobsConfig {
         public double[] shieldUtilityChancePerTier = {0.0, 0.0, 0.20, 0.40, 0.60};
     }
 
-    private static Map<String, String> defaultWeaponRarityRulesContains() {
+    private static Map<String, String> defaultWeaponRarityRules() {
         Map<String, String> m = new LinkedHashMap<>();
         m.put("scarab", "common");
         m.put("silversteel", "common");
@@ -748,7 +740,7 @@ public final class EliteMobsConfig {
         return m;
     }
 
-    private static Map<String, String> defaultArmorRarityRulesContains() {
+    private static Map<String, String> defaultArmorRarityRules() {
         Map<String, String> m = new LinkedHashMap<>();
         m.put("cotton", "common");
         m.put("linen", "common");
@@ -790,7 +782,7 @@ public final class EliteMobsConfig {
         );
     }
 
-    private static List<Map<String, Double>> defaultTierRarityWeights() {
+    private static List<Map<String, Double>> defaultTierEquipmentRarityWeights() {
         return List.of(mapOf("common", 1.0),                              // tier 0
                        mapOf("uncommon", 1.0),                            // tier 1
                        mapOf("rare", 0.70, "uncommon", 0.30),             // tier 2
@@ -814,7 +806,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Axe_Thorium",
                                        "Weapon_Axe_Tribal",
 
-                                       // Battleaxe
+                // Battleaxe
                                        "Weapon_Battleaxe_Adamantite",
                                        "Weapon_Battleaxe_Cobalt",
                                        "Weapon_Battleaxe_Copper",
@@ -831,7 +823,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Battleaxe_Tribal",
                                        "Weapon_Battleaxe_Wood_Fence",
 
-                                       // Club
+                // Club
                                        "Weapon_Club_Adamantite",
                                        "Weapon_Club_Cobalt",
                                        "Weapon_Club_Copper",
@@ -855,11 +847,11 @@ public final class EliteMobsConfig {
                                        "Weapon_Club_Zombie_Sand_Arm",
                                        "Weapon_Club_Zombie_Sand_Leg",
 
-                                       // Crossbow
+                // Crossbow
                                        "Weapon_Crossbow_Ancient_Steel",
                                        "Weapon_Crossbow_Iron",
 
-                                       // Daggers
+                // Daggers
                                        "Weapon_Daggers_Adamantite_Saurian",
                                        "Weapon_Daggers_Adamantite",
                                        "Weapon_Daggers_Bone",
@@ -877,7 +869,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Daggers_Stone_Trork",
                                        "Weapon_Daggers_Thorium",
 
-                                       // Longsword
+                // Longsword
                                        "Weapon_Longsword_Adamantite_Saurian",
                                        "Weapon_Longsword_Adamantite",
                                        "Weapon_Longsword_Cobalt",
@@ -896,7 +888,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Longsword_Tribal",
                                        "Weapon_Longsword_Void",
 
-                                       // Mace
+                // Mace
                                        "Weapon_Mace_Adamantite",
                                        "Weapon_Mace_Cobalt",
                                        "Weapon_Mace_Copper",
@@ -909,7 +901,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Mace_Stone_Trork",
                                        "Weapon_Mace_Thorium",
 
-                                       // Shield
+                // Shield
                                        "Weapon_Shield_Adamantite",
                                        "Weapon_Shield_Cobalt",
                                        "Weapon_Shield_Copper",
@@ -926,7 +918,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Shield_Thorium",
                                        "Weapon_Shield_Wood",
 
-                                       // Shortbow
+                // Shortbow
                                        "Weapon_Shortbow_Adamantite",
                                        "Weapon_Shortbow_Bomb",
                                        "Weapon_Shortbow_Bronze",
@@ -946,7 +938,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Shortbow_Thorium",
                                        "Weapon_Shortbow_Vampire",
 
-                                       // Spear
+                // Spear
                                        "Weapon_Spear_Adamantite_Saurian",
                                        "Weapon_Spear_Adamantite",
                                        "Weapon_Spear_Bone",
@@ -965,7 +957,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Spear_Thorium",
                                        "Weapon_Spear_Tribal",
 
-                                       // Staff
+                // Staff
                                        "Halloween_Broomstick",
                                        "Weapon_Staff_Adamantite",
                                        "Weapon_Staff_Bo_Bamboo",
@@ -992,7 +984,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Staff_Wood_Rotten",
                                        "Weapon_Staff_Wood",
 
-                                       // Sword
+                // Sword
                                        "Weapon_Sword_Adamantite",
                                        "Weapon_Sword_Bone",
                                        "Weapon_Sword_Bronze_Ancient",
@@ -1017,7 +1009,7 @@ public final class EliteMobsConfig {
                                        "Weapon_Sword_Thorium",
                                        "Weapon_Sword_Wood",
 
-                                       //Pickaxe
+                //Pickaxe
                                        "Tool_Pickaxe_Adamantite",
                                        "Tool_Pickaxe_Cobalt",
                                        "Tool_Pickaxe_Copper",
@@ -1029,13 +1021,13 @@ public final class EliteMobsConfig {
                                        "Tool_Pickaxe_Thorium",
                                        "Tool_Pickaxe_Wood",
 
-                                       //Bombs
+                //Bombs
                                        "Weapon_Bomb",
                                        "Weapon_Bomb_Stun",
                                        "Weapon_Bomb_Potion_Poison",
                                        "Weapon_Bomb_Continuous",
 
-                                       //Kunai
+                //Kunai
                                        "Weapon_Kunai",
 
                                        "Weapon_Gun_Blunderbuss",
@@ -1121,7 +1113,7 @@ public final class EliteMobsConfig {
         public int[] vanillaDroplistMultiplierPerTier = {0, 0, 2, 4, 6};
 
         @Cfg(group = "Loot", file = "loot.yml", comment = "Custom loot tables for specific tiers.")
-        public List<ExtraDropRule> extraDrops = defaultExtraDrops();
+        public List<ExtraDropRule> defaultExtraDrops = defaultExtraDrops();
     }
 
     public static final class DamageConfig {
@@ -1218,42 +1210,42 @@ public final class EliteMobsConfig {
     public static final class ConsumablesConfig {
         @Default
         @Cfg(group = "Consumables", file = "consumables.yml")
-        public Map<String, ConsumableConfig> byId = defaultConsumables();
+        public Map<String, ConsumableConfig> defaultConsumables = defaultConsumables();
     }
 
     private static Map<String, ConsumableConfig> defaultConsumables() {
-         Map<String, ConsumableConfig> m = new LinkedHashMap<>();
-         ConsumableConfig food_tier1 = new ConsumableConfig();
-         food_tier1.consumeDuration = 1.0f;
-         food_tier1.horizontalSpeedMultiplier = 0.7f;
-         m.put(EliteMobsAssetCatalog.CONSUMABLE_FOOD_TIER1, food_tier1);
+        Map<String, ConsumableConfig> m = new LinkedHashMap<>();
+        ConsumableConfig food_tier1 = new ConsumableConfig();
+        food_tier1.consumeDuration = 1.0f;
+        food_tier1.horizontalSpeedMultiplier = 0.7f;
+        m.put(EliteMobsConsumablesFeature.CONSUMABLE_FOOD_TIER1, food_tier1);
 
-         ConsumableConfig food_tier2 = new ConsumableConfig();
-         food_tier2.consumeDuration = 1.2f;
-         food_tier2.horizontalSpeedMultiplier = 0.7f;
-         m.put(EliteMobsAssetCatalog.CONSUMABLE_FOOD_TIER2, food_tier2);
+        ConsumableConfig food_tier2 = new ConsumableConfig();
+        food_tier2.consumeDuration = 1.2f;
+        food_tier2.horizontalSpeedMultiplier = 0.7f;
+        m.put(EliteMobsConsumablesFeature.CONSUMABLE_FOOD_TIER2, food_tier2);
 
-         ConsumableConfig food_tier3 = new ConsumableConfig();
-         food_tier3.consumeDuration = 1.4f;
-         food_tier3.horizontalSpeedMultiplier = 0.7f;
-         m.put(EliteMobsAssetCatalog.CONSUMABLE_FOOD_TIER3, food_tier3);
+        ConsumableConfig food_tier3 = new ConsumableConfig();
+        food_tier3.consumeDuration = 1.4f;
+        food_tier3.horizontalSpeedMultiplier = 0.7f;
+        m.put(EliteMobsConsumablesFeature.CONSUMABLE_FOOD_TIER3, food_tier3);
 
-         ConsumableConfig all_small_potions = new ConsumableConfig();
-         all_small_potions.consumeDuration = 1.2f;
-         all_small_potions.horizontalSpeedMultiplier = 0.7f;
-         m.put(EliteMobsAssetCatalog.CONSUMABLE_SMALL_POTIONS, all_small_potions);
+        ConsumableConfig all_small_potions = new ConsumableConfig();
+        all_small_potions.consumeDuration = 1.2f;
+        all_small_potions.horizontalSpeedMultiplier = 0.7f;
+        m.put(EliteMobsConsumablesFeature.CONSUMABLE_SMALL_POTIONS, all_small_potions);
 
-         ConsumableConfig all_big_potions = new ConsumableConfig();
-         all_big_potions.consumeDuration = 1.8f;
-         all_big_potions.horizontalSpeedMultiplier = 0.7f;
-         m.put(EliteMobsAssetCatalog.CONSUMABLE_BIG_POTIONS, all_big_potions);
-         return m;
+        ConsumableConfig all_big_potions = new ConsumableConfig();
+        all_big_potions.consumeDuration = 1.8f;
+        all_big_potions.horizontalSpeedMultiplier = 0.7f;
+        m.put(EliteMobsConsumablesFeature.CONSUMABLE_BIG_POTIONS, all_big_potions);
+        return m;
     }
 
     public static final class EffectsConfig {
         @Default
         @Cfg(group = "Effects", file = "effects.yml", comment = "Effects configuration lives here. Say hello.")
-        public Map<String, EntityEffectConfig> byId = defaultEntityEffects();
+        public Map<String, EntityEffectConfig> defaultEntityEffects = defaultEntityEffects();
     }
 
     private static Map<String, EntityEffectConfig> defaultEntityEffects() {
@@ -1263,10 +1255,10 @@ public final class EliteMobsConfig {
         projectileResistance.isEnabledPerTier = new boolean[]{false, false, false, true, true};
         projectileResistance.amountMultiplierPerTier = new float[]{0f, 0f, 0f, 0.7f, 0.85f};
         projectileResistance.infinite = true;
-        projectileResistance.templates.add(EFFECT_PROJECTILE_RESISTANCE,
+        projectileResistance.templates.add(EliteMobsProjectileResistanceEffectFeature.EFFECT_PROJECTILE_RESISTANCE,
                                            "Entity/Effects/EliteMobs/EliteMobs_Effect_ProjectileResistance.template.json"
         );
-        m.put(EFFECT_PROJECTILE_RESISTANCE, projectileResistance);
+        m.put(EliteMobsProjectileResistanceEffectFeature.EFFECT_PROJECTILE_RESISTANCE, projectileResistance);
 
         return m;
     }
@@ -1301,13 +1293,13 @@ public final class EliteMobsConfig {
 
     public static final class AbilitiesConfig {
         @Cfg(file = "abilities.yml", comment = "Ability configuration lives here. Say hello.")
-        public Map<String, AbilityConfig> byId = defaultAbilities();
+        public Map<String, AbilityConfig> defaultAbilities = defaultAbilities();
     }
 
     private static Map<String, AbilityConfig> defaultAbilities() {
         Map<String, AbilityConfig> m = new LinkedHashMap<>();
 
-        AbilityConfig chargeLeap = new AbilityConfig();
+        ChargeLeapAbilityConfig chargeLeap = new ChargeLeapAbilityConfig();
         chargeLeap.gate.weaponIdMustNotContain = DAMAGE_MELEE_ONLY_NOT_CONTAINS;
         chargeLeap.gate.roleMustNotContain = DENY_ABILITY_CHARGE_LEAP_LIST;
 
@@ -1322,10 +1314,10 @@ public final class EliteMobsConfig {
         chargeLeap.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
                                  "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_ChargeLeap_Root.template.json"
         );
-        chargeLeap.templates.add(AbilityConfig.TEMPLATE_ENTRY_INTERACTION,
+        chargeLeap.templates.add(ChargeLeapAbilityConfig.TEMPLATE_ENTRY_INTERACTION,
                                  "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_ChargeLeap_Entry.template.json"
         );
-        chargeLeap.templates.add(AbilityConfig.TEMPLATE_DAMAGE_INTERACTION,
+        chargeLeap.templates.add(ChargeLeapAbilityConfig.TEMPLATE_DAMAGE_INTERACTION,
                                  "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_ChargeLeap_Damage.template.json"
         );
 
@@ -1337,39 +1329,39 @@ public final class EliteMobsConfig {
         chargeLeap.knockbackPushAwayPerTier = new float[]{0f, 0f, 0f, -3f, -6f};
         chargeLeap.knockbackForcePerTier = new float[]{0f, 0f, 0f, 20f, 26f};
 
-        m.put(ABILITY_CHARGE_LEAP, chargeLeap);
+        m.put(EliteMobsChargeLeapAbilityFeature.ABILITY_CHARGE_LEAP, chargeLeap);
 
-        HealAbilityConfig healPotion = new HealAbilityConfig();
-        healPotion.isEnabled = true;
-        healPotion.isEnabledPerTier = new boolean[]{false, false, false, true, true};
-        healPotion.chancePerTier = new float[]{0f, 0f, 0f, 1.00f, 1.00f};
-        healPotion.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 15f, 15f};
+        HealLeapAbilityConfig healLeap = new HealLeapAbilityConfig();
+        healLeap.isEnabled = true;
+        healLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
+        healLeap.chancePerTier = new float[]{0f, 0f, 0f, 1.00f, 1.00f};
+        healLeap.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 15f, 15f};
 
-        healPotion.minHealthTriggerPercent = 0.50f;
-        healPotion.maxHealthTriggerPercent = 0.50f;
-        healPotion.instantHealChance = 1.00f;
-        healPotion.instantHealAmountPerTier = new float[]{0f, 0f, 0f, 0.25f, 0.25f};
-        healPotion.npcDrinkDurationSeconds = 3.0f;
+        healLeap.minHealthTriggerPercent = 0.50f;
+        healLeap.maxHealthTriggerPercent = 0.50f;
+        healLeap.instantHealChance = 1.00f;
+        healLeap.instantHealAmountPerTier = new float[]{0f, 0f, 0f, 0.25f, 0.25f};
+        healLeap.npcDrinkDurationSeconds = 3.0f;
 
-        healPotion.applyForcePerTier = new float[]{0f, 0f, 0f, 530f, 530f};
+        healLeap.applyForcePerTier = new float[]{0f, 0f, 0f, 530f, 530f};
 
-        healPotion.templates.add(HealAbilityConfig.TEMPLATE_ROOT_INTERACTION_INSTANT,
-                                 "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_HealPotion_Instant_Root.template.json"
+        healLeap.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
+                                 "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_HealLeap_Root.template.json"
         );
-        healPotion.templates.add(HealAbilityConfig.TEMPLATE_ENTRY_INTERACTION_INSTANT,
-                                 "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_HealPotion_Instant_Entry.template.json"
+        healLeap.templates.add(AbilityConfig.TEMPLATE_ENTRY_INTERACTION,
+                                 "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_HealLeap_Entry.template.json"
         );
-        healPotion.templates.add(HealAbilityConfig.TEMPLATE_ROOT_INTERACTION_BREAK,
-                                 "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_HealPotion_Break_Root.template.json"
+        healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_ROOT_INTERACTION_CANCEL,
+                               "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_HealLeap_Cancel_Root.template.json"
         );
-        healPotion.templates.add(HealAbilityConfig.TEMPLATE_ENTRY_INTERACTION_BREAK,
-                                 "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_HealPotion_Break_Entry.template.json"
+        healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_ENTRY_INTERACTION_CANCEL,
+                               "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_HealLeap_Cancel_Entry.template.json"
         );
-        healPotion.templates.add(HealAbilityConfig.TEMPLATE_INSTANT_HEAL_EFFECT,
-                                 "Entity/Effects/EliteMobs/EliteMobs_Effect_InstantHeal.template.json"
+        healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_EFFECT_INSTANT_HEAL,
+                               "Entity/Effects/EliteMobs/EliteMobs_Effect_InstantHeal.template.json"
         );
 
-        m.put(ABILITY_HEAL_POTION_KEY, healPotion);
+        m.put(EliteMobsHealLeapAbilityFeature.ABILITY_HEAL_LEAP, healLeap);
 
         SummonAbilityConfig undeadSummon = new SummonAbilityConfig();
         undeadSummon.isEnabled = true;
@@ -1378,36 +1370,46 @@ public final class EliteMobsConfig {
         undeadSummon.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 15f, 15f};
         undeadSummon.gate.roleMustContain = UNDEAD_ROLE_NAME_CONTAINS;
 
-        undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_ROOT_INTERACTION,
-                                   "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_RootInteraction.template.json"
+        undeadSummon.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
+                                   "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_Root.template.json"
         );
-        undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_SUMMON_ENTRY_INTERACTION,
-                                   "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_EntryInteraction.template.json"
+        undeadSummon.templates.add(AbilityConfig.TEMPLATE_ENTRY_INTERACTION,
+                                   "Item/Interactions/NPCs/EliteMobs/EliteMobs_Ability_UndeadSummon_Entry.template.json"
         );
         undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_SUMMON_MARKER,
                                    "NPC/Spawn/Markers/EliteMobs/EliteMobs_UndeadBow_Summon_Marker.template.json"
         );
 
-        m.put(ABILITY_UNDEAD_SUMMON_KEY, undeadSummon);
+        m.put(EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON, undeadSummon);
         return m;
     }
 
     public static class AbilityConfig extends TieredAssetConfig {
         public static final String TEMPLATE_ROOT_INTERACTION = "rootInteraction";
         public static final String TEMPLATE_ENTRY_INTERACTION = "entryInteraction";
-        public static final String TEMPLATE_DAMAGE_INTERACTION = "damageInteraction";
 
         public AbilityGate gate = new AbilityGate();
-        public float minRange = 0f;
-        public float maxRange = 0f;
-        public boolean faceTarget = false;
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Chance per tier for this ability to be active on an elite (roll happens once on spawn).")
         @FixedArraySize(value = TIERS_AMOUNT)
         public float[] chancePerTier = {1f, 1f, 1f, 1f, 1f};
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Cooldown per tier (seconds).")
         @FixedArraySize(value = TIERS_AMOUNT)
-        public float[] cooldownSecondsPerTier = {0f, 0f, 0f, 0f, 0f};
+        public float[] cooldownSecondsPerTier = {10f, 10f, 10f, 10f, 10f};
+
+        @Override
+        public AssetType namespace() {
+            return AssetType.ABILITIES;
+        }
+    }
+
+    public static final class ChargeLeapAbilityConfig extends AbilityConfig {
+        public static final String TEMPLATE_DAMAGE_INTERACTION = "damageInteraction";
+
+        public float minRange = 0f;
+        public float maxRange = 0f;
+        public boolean faceTarget = false;
+
         @FixedArraySize(value = TIERS_AMOUNT)
         public float[] slamRangePerTier = {0f, 0f, 0f, 0f, 0f};
         @FixedArraySize(value = TIERS_AMOUNT)
@@ -1420,20 +1422,15 @@ public final class EliteMobsConfig {
         public float[] knockbackPushAwayPerTier = {0f, 0f, 0f, 0f, 0f};
         @FixedArraySize(value = TIERS_AMOUNT)
         public float[] knockbackForcePerTier = {0f, 0f, 0f, 0f, 0f};
-
-        @Override
-        public AssetType namespace() {
-            return AssetType.ABILITIES;
-        }
     }
 
-    public static final class HealAbilityConfig extends AbilityConfig {
-        public static final String TEMPLATE_ROOT_INTERACTION_INSTANT = "rootInteractionInstant";
-        public static final String TEMPLATE_ROOT_INTERACTION_INSTANT_SUMMON = "rootInteractionInstantSummon";
-        public static final String TEMPLATE_ENTRY_INTERACTION_INSTANT = "entryInteractionInstant";
-        public static final String TEMPLATE_ROOT_INTERACTION_BREAK = "rootInteractionBreak";
-        public static final String TEMPLATE_ENTRY_INTERACTION_BREAK = "entryInteractionBreak";
-        public static final String TEMPLATE_INSTANT_HEAL_EFFECT = "instantHealEffect";
+    public static final class HealLeapAbilityConfig extends AbilityConfig {
+        public static final String TEMPLATE_ROOT_INTERACTION_CANCEL = "rootInteractionCancel";
+        public static final String TEMPLATE_ENTRY_INTERACTION_CANCEL = "entryInteractionCancel";
+        public static final String TEMPLATE_EFFECT_INSTANT_HEAL = "effectInstantHeal";
+
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] applyForcePerTier = {0f, 0f, 0f, 0f, 0f};
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum health percent at which the heal can trigger (rolled once per elite on spawn).")
         public float minHealthTriggerPercent = 0.1f;
@@ -1454,15 +1451,13 @@ public final class EliteMobsConfig {
     }
 
     public static final class SummonAbilityConfig extends AbilityConfig {
-        public static final String TEMPLATE_SUMMON_ENTRY_INTERACTION = "entryInteractionSummon";
         public static final String TEMPLATE_SUMMON_MARKER = "summonMarker";
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Role identifiers used to pick which archers get summoned. First match (role name contains this text) wins. 'default' is used if none match.")
-        public List<String> roleIdentifiers = new ArrayList<>(List.of(
-                "Skeleton_Frost",
-                "Skeleton_Sand",
-                "Skeleton_Burnt",
-                "Skeleton"
+        public List<String> roleIdentifiers = new ArrayList<>(List.of("Skeleton_Frost",
+                                                                      "Skeleton_Sand",
+                                                                      "Skeleton_Burnt",
+                                                                      "Skeleton"
         ));
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum number of active summoned minions per summoner (0 disables summoning). Clamped to 0..50.")
         public int maxAlive = DEFAULT_SUMMON_MAX_ALIVE;
@@ -1515,8 +1510,8 @@ public final class EliteMobsConfig {
     }
 
     public static final class MobsConfig {
-        @Cfg(group = "Mobs", file = "mobs.yml", comment = "Mob rules: decide what to do if our scan found a NPC Entity with this id. If the id of the mob is not on the list, it will get the fist (it won't be transformed into an EliteMob. First mobRule match wins btw.")
-        public Map<String, MobRule> rules = defaultMobRules();
+        @Cfg(group = "Spawning", file = "mobs.yml", comment = "Mob rules: decide what to do if our scan found a NPC Entity with this id. If the id of the mob is not on the list, it will get the fist (it won't be transformed into an EliteMob. First mobRule match wins btw.")
+        public Map<String, MobRule> defaultMobRules = defaultMobRules();
     }
 
     private static Map<String, MobRule> defaultMobRules() {
@@ -1869,7 +1864,7 @@ public final class EliteMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(DAMAGE_MELEE_SPEARS_ONLY.getFirst(),DAMAGE_MELEE_DAGGERS_ONLY.getFirst()),
+                      List.of(DAMAGE_MELEE_SPEARS_ONLY.getFirst(), DAMAGE_MELEE_DAGGERS_ONLY.getFirst()),
                       List.of()
               )
         );
@@ -3709,8 +3704,8 @@ public final class EliteMobsConfig {
 
     public void populateSummonMarkerEntriesIfEmpty() {
         SummonAbilityConfig summonConfig = null;
-        if (abilities != null && abilities.byId != null) {
-            AbilityConfig abilityConfig = abilities.byId.get(ABILITY_UNDEAD_SUMMON_KEY);
+        if (abilitiesConfig != null && abilitiesConfig.defaultAbilities != null) {
+            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return;
@@ -3730,20 +3725,20 @@ public final class EliteMobsConfig {
 
     public void populateSummonMarkerEntriesByRoleIfEmpty() {
         SummonAbilityConfig summonConfig = null;
-        if (abilities != null && abilities.byId != null) {
-            AbilityConfig abilityConfig = abilities.byId.get(ABILITY_UNDEAD_SUMMON_KEY);
+        if (abilitiesConfig != null && abilitiesConfig.defaultAbilities != null) {
+            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return;
         if (summonConfig.spawnMarkerEntriesByRole != null && !summonConfig.spawnMarkerEntriesByRole.isEmpty()) return;
-        if (mobs == null || mobs.rules == null || mobs.rules.isEmpty()) return;
+        if (mobsConfig == null || mobsConfig.defaultMobRules == null || mobsConfig.defaultMobRules.isEmpty()) return;
 
         LinkedHashSet<String> bowNpcIds = new LinkedHashSet<>();
         LinkedHashSet<String> allNpcIds = new LinkedHashSet<>();
         LinkedHashSet<String> zombieNpcIds = new LinkedHashSet<>();
         LinkedHashSet<String> wraithNpcIds = new LinkedHashSet<>();
 
-        for (Map.Entry<String, MobRule> entry : mobs.rules.entrySet()) {
+        for (Map.Entry<String, MobRule> entry : mobsConfig.defaultMobRules.entrySet()) {
             if (entry == null) continue;
             MobRule rule = entry.getValue();
             if (rule == null || !rule.enabled) continue;
@@ -3780,44 +3775,44 @@ public final class EliteMobsConfig {
         if (bowNpcIds.isEmpty() && !allNpcIds.isEmpty()) {
             for (String id : allNpcIds) {
                 String lower = id.toLowerCase(Locale.ROOT);
-                if (lower.contains("archer") || lower.contains("ranger") || lower.contains("scout") || lower.contains("bow")) {
+                if (lower.contains("archer") || lower.contains("ranger") || lower.contains("scout") || lower.contains(
+                        "bow")) {
                     bowNpcIds.add(id);
                 }
             }
         }
 
         if (bowNpcIds.isEmpty()) {
-            List<String> fallbackIds = List.of(
-                    "Skeleton_Archer",
-                    "Skeleton_Archer_Patrol",
-                    "Skeleton_Archer_Wander",
-                    "Skeleton_Ranger",
-                    "Skeleton_Ranger_Patrol",
-                    "Skeleton_Ranger_Wander",
-                    "Skeleton_Scout",
-                    "Skeleton_Scout_Patrol",
-                    "Skeleton_Scout_Wander",
-                    "Skeleton_Frost_Archer",
-                    "Skeleton_Frost_Archer_Patrol",
-                    "Skeleton_Frost_Archer_Wander",
-                    "Skeleton_Frost_Ranger",
-                    "Skeleton_Frost_Ranger_Patrol",
-                    "Skeleton_Frost_Ranger_Wander",
-                    "Skeleton_Frost_Scout",
-                    "Skeleton_Frost_Scout_Patrol",
-                    "Skeleton_Frost_Scout_Wander",
-                    "Skeleton_Burnt_Archer",
-                    "Skeleton_Burnt_Archer_Patrol",
-                    "Skeleton_Burnt_Archer_Wander",
-                    "Skeleton_Sand_Archer",
-                    "Skeleton_Sand_Archer_Patrol",
-                    "Skeleton_Sand_Archer_Wander",
-                    "Skeleton_Sand_Ranger",
-                    "Skeleton_Sand_Ranger_Patrol",
-                    "Skeleton_Sand_Ranger_Wander",
-                    "Skeleton_Sand_Scout",
-                    "Skeleton_Sand_Scout_Patrol",
-                    "Skeleton_Sand_Scout_Wander"
+            List<String> fallbackIds = List.of("Skeleton_Archer",
+                                               "Skeleton_Archer_Patrol",
+                                               "Skeleton_Archer_Wander",
+                                               "Skeleton_Ranger",
+                                               "Skeleton_Ranger_Patrol",
+                                               "Skeleton_Ranger_Wander",
+                                               "Skeleton_Scout",
+                                               "Skeleton_Scout_Patrol",
+                                               "Skeleton_Scout_Wander",
+                                               "Skeleton_Frost_Archer",
+                                               "Skeleton_Frost_Archer_Patrol",
+                                               "Skeleton_Frost_Archer_Wander",
+                                               "Skeleton_Frost_Ranger",
+                                               "Skeleton_Frost_Ranger_Patrol",
+                                               "Skeleton_Frost_Ranger_Wander",
+                                               "Skeleton_Frost_Scout",
+                                               "Skeleton_Frost_Scout_Patrol",
+                                               "Skeleton_Frost_Scout_Wander",
+                                               "Skeleton_Burnt_Archer",
+                                               "Skeleton_Burnt_Archer_Patrol",
+                                               "Skeleton_Burnt_Archer_Wander",
+                                               "Skeleton_Sand_Archer",
+                                               "Skeleton_Sand_Archer_Patrol",
+                                               "Skeleton_Sand_Archer_Wander",
+                                               "Skeleton_Sand_Ranger",
+                                               "Skeleton_Sand_Ranger_Patrol",
+                                               "Skeleton_Sand_Ranger_Wander",
+                                               "Skeleton_Sand_Scout",
+                                               "Skeleton_Sand_Scout_Patrol",
+                                               "Skeleton_Sand_Scout_Wander"
             );
             bowNpcIds.addAll(fallbackIds);
         }
@@ -3912,8 +3907,8 @@ public final class EliteMobsConfig {
 
     public void upgradeSummonMarkerEntriesToVariantIds() {
         SummonAbilityConfig summonConfig = null;
-        if (abilities != null && abilities.byId != null) {
-            AbilityConfig abilityConfig = abilities.byId.get(ABILITY_UNDEAD_SUMMON_KEY);
+        if (abilitiesConfig != null && abilitiesConfig.defaultAbilities != null) {
+            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return;
@@ -3941,16 +3936,13 @@ public final class EliteMobsConfig {
         if (roleName == null) return false;
         String lower = roleName.toLowerCase(Locale.ROOT);
         if (lower.contains("zombie") || lower.contains("wraith")) return false;
-        return lower.contains("archer")
-                || lower.contains("ranger")
-                || lower.contains("scout")
-                || lower.contains("bow");
+        return lower.contains("archer") || lower.contains("ranger") || lower.contains("scout") || lower.contains("bow");
     }
 
     public boolean isSummonMarkerEntriesEmpty() {
         SummonAbilityConfig summonConfig = null;
-        if (abilities != null && abilities.byId != null) {
-            AbilityConfig abilityConfig = abilities.byId.get(ABILITY_UNDEAD_SUMMON_KEY);
+        if (abilitiesConfig != null && abilitiesConfig.defaultAbilities != null) {
+            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return true;
@@ -4011,9 +4003,9 @@ public final class EliteMobsConfig {
     public Map<String, ? extends AssetConfig> getAssetConfigForType(AssetType type) {
         if (type == null) return null;
         return switch (type) {
-            case ABILITIES -> abilities.byId;
-            case EFFECTS -> effects.byId;
-            case CONSUMABLES -> consumables.byId;
+            case ABILITIES -> abilitiesConfig.defaultAbilities;
+            case EFFECTS -> effectsConfig.defaultEntityEffects;
+            case CONSUMABLES -> consumablesConfig.defaultConsumables;
         };
     }
 
@@ -4026,8 +4018,8 @@ public final class EliteMobsConfig {
 
         if (isOlder(fromVersion, "1.1.0")) {
             // Fix Heal Potion defaults from the first unversioned release
-            AbilityConfig heal = abilities.byId.get(ABILITY_HEAL_POTION_KEY);
-            if (heal instanceof HealAbilityConfig h) {
+            AbilityConfig heal = abilitiesConfig.defaultAbilities.get(EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
+            if (heal instanceof HealLeapAbilityConfig h) {
                 // 1. Fix the 25.0 -> 0.25 percent conversion bug
                 if (h.instantHealAmountPerTier != null) {
                     for (int i = 0; i < h.instantHealAmountPerTier.length; i++) {

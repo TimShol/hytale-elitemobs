@@ -1,6 +1,6 @@
 {
   "Model": "NPC_Spawn_Marker",
-  "NPCs": ${raw.abilities.undead_summon.spawnMarkerEntriesJson},
+  "NPCs": ${raw.features.UndeadSummon.config.spawnMarkerEntriesJson},
   "ManualTrigger": true,
   "ExclusionRadius": 0,
   "MaxDropHeight": 4

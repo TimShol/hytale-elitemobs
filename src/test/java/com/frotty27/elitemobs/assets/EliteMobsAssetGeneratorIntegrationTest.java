@@ -1,8 +1,11 @@
 package com.frotty27.elitemobs.assets;
 
 import com.frotty27.elitemobs.config.EliteMobsConfig;
+import com.frotty27.elitemobs.features.EliteMobsFeatureRegistry;
+import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +20,8 @@ public class EliteMobsAssetGeneratorIntegrationTest {
     @Test
     void generatesTieredAssetsAndCopiesJson(@TempDir Path tempDir) throws IOException {
         EliteMobsConfig cfg = new EliteMobsConfig();
+        
+        new EliteMobsFeatureRegistry(null); // Initializes the singleton instance
 
         EliteMobsAssetGenerator.generateAll(tempDir, cfg, true);
 

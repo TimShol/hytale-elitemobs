@@ -2,8 +2,10 @@ package com.frotty27.elitemobs.systems.combat;
 
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
 import com.frotty27.elitemobs.config.EliteMobsConfig;
-import com.frotty27.elitemobs.log.EliteMobsLogLevel;
-import com.frotty27.elitemobs.log.EliteMobsLogger;
+import com.frotty27.elitemobs.exception.EliteMobsException;
+import com.frotty27.elitemobs.exception.EliteMobsSystemException;
+import com.frotty27.elitemobs.logs.EliteMobsLogLevel;
+import com.frotty27.elitemobs.logs.EliteMobsLogger;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.dependency.Dependency;
@@ -20,13 +22,13 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Random;
 import java.util.Set;
 
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clampTierIndex;
 import static com.frotty27.elitemobs.utils.Constants.TIERS_AMOUNT;
+import static com.frotty27.elitemobs.utils.StringHelpers.safeRoleName;
 
 public final class EliteMobsDamageDealtSystem extends DamageEventSystem {
 
@@ -79,7 +81,13 @@ public final class EliteMobsDamageDealtSystem extends DamageEventSystem {
             @NonNull CommandBuffer<EntityStore> commandBuffer,
             @NonNull Damage damage
     ) {
-        damageScalingHandler.handle(entityIndex, archetypeChunk, entityStore, commandBuffer, damage);
+        try {
+            damageScalingHandler.handle(entityIndex, archetypeChunk, entityStore, commandBuffer, damage);
+        } catch (EliteMobsException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new EliteMobsSystemException("Error in EliteMobsDamageDealtSystem", e);
+        }
     }
 
     void processHandle(
@@ -91,11 +99,11 @@ public final class EliteMobsDamageDealtSystem extends DamageEventSystem {
     ) {
         EliteMobsConfig config = eliteMobsPlugin.getConfig();
         if (config == null) return;
-        if (!config.damage.enableMobDamageMultiplier) return;
+        if (!config.damageConfig.enableMobDamageMultiplier) return;
 
         damageEventsSeenCount++;
 
-        boolean debugEnabled = config.debug.isDebugModeEnabled;
+        boolean debugEnabled = config.debugConfig.isDebugModeEnabled;
         if (debugEnabled && (damageEventsSeenCount % DEBUG_EVERY_EVENTS == 0)) {
             EliteMobsLogger.debug(
                     LOGGER,
@@ -183,15 +191,15 @@ public final class EliteMobsDamageDealtSystem extends DamageEventSystem {
 
         // Base Multiplier per tier
         float baseMultiplier = DEFAULT_DAMAGE_MULTIPLIER;
-        if (config.damage.mobDamageMultiplierPerTier != null && config.damage.mobDamageMultiplierPerTier.length >= TIERS_AMOUNT) {
-            baseMultiplier = config.damage.mobDamageMultiplierPerTier[clampedTierIndex];
+        if (config.damageConfig.mobDamageMultiplierPerTier != null && config.damageConfig.mobDamageMultiplierPerTier.length >= TIERS_AMOUNT) {
+            baseMultiplier = config.damageConfig.mobDamageMultiplierPerTier[clampedTierIndex];
         }
 
         // Add Distance Bonus
         float totalMultiplier = baseMultiplier + attackerTierComponent.distanceDamageBonus;
 
         // Optional random variance (applied to the total multiplier)
-        float damageRandomVariance = config.damage.mobDamageRandomVariance;
+        float damageRandomVariance = config.damageConfig.mobDamageRandomVariance;
         if (damageRandomVariance > 0f) {
             totalMultiplier += (random.nextFloat() * 2f - 1f) * damageRandomVariance;
         }
@@ -230,15 +238,5 @@ public final class EliteMobsDamageDealtSystem extends DamageEventSystem {
         if (entityStore.getComponent(attackerEntityRef, PLAYER_REF_COMPONENT_TYPE) != null) return ATTACKER_KIND_PLAYER;
         if (entityStore.getComponent(attackerEntityRef, PROJECTILE_COMPONENT_TYPE) != null) return ATTACKER_KIND_PROJECTILE;
         return ATTACKER_KIND_OTHER;
-    }
-
-    private static @Nullable String safeRoleName(@Nullable NPCEntity npcEntity) {
-        if (npcEntity == null) return null;
-
-        try {
-            return npcEntity.getRoleName();
-        } catch (Throwable ignored) {
-            return null;
-        }
     }
 }

@@ -14,7 +14,7 @@ public class AssetConfigHelpersTest {
 
         EliteMobsConfig.AbilityConfig ability = new EliteMobsConfig.AbilityConfig();
         ability.templates.add(EliteMobsConfig.AbilityConfig.TEMPLATE_ROOT_INTERACTION,
-                "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_ChargeLeap_RootInteraction.template.json");
+                "Item/RootInteractions/NPCs/EliteMobs/EliteMobs_Ability_ChargeLeap_Root.template.json");
 
         String id = AssetConfigHelpers.getTieredAssetIdFromTemplateKey(
                 cfg,
@@ -24,7 +24,7 @@ public class AssetConfigHelpersTest {
         );
 
         assertTrue(id.startsWith("EliteMobs_Ability_ChargeLeap_"));
-        assertTrue(id.contains("RootInteraction"));
+        assertTrue(id.contains("Root"));
         assertTrue(id.endsWith("Tier_1"));
     }
 
