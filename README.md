@@ -4,6 +4,24 @@
 
 EliteMobs was built to transform standard NPCs into tiered elites with stronger stats, distinct visuals, and improved rewards. It is configurable, supports runtime reloads, and is built for both casual and hardcore servers.
 
+## Downloads
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="icons/EliteMobs-Icon-128.png" alt="EliteMobs Plugin" width="150"/><br/><br/>
+<strong>Server Plugin</strong><br/><br/>
+<a href="https://www.curseforge.com/hytale/mods/elitemobs">
+<img src="https://img.shields.io/badge/CurseForge-EliteMobs-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download EliteMobs"/>
+</td>
+</tr>
+</table>
+
+# 📖 Documentation
+
+You can find all the documentation, configuration guides, and developer references on the docs site:
+
+[![Docs](https://img.shields.io/badge/Documentation-2dc26b?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.elitemobs.frotty27.com/)
+
 ## Feature Highlights
 
 ### Combat
@@ -31,18 +49,6 @@ EliteMobs was built to transform standard NPCs into tiered elites with stronger 
 2. Start the server to generate config
 3. Edit YAML files and reload
 ```
-
-## Links
-
-[![CurseForge](https://img.shields.io/badge/CurseForge-EliteMobs-F16436?style=for-the-badge&logo=curseforge&logoColor=white)](https://www.curseforge.com/hytale/mods/elitemobs)
-[![Docs](https://img.shields.io/badge/Docs-eliteMobs-2E6E5E?style=for-the-badge&logo=readthedocs&logoColor=white)](https://docs.elitemobs.frotty27.com/)
-
-Compatibility Mods:
-- [EliteMobs RPG Leveling Compatibility](https://www.curseforge.com/hytale/mods/elitemobs-rpgleveling-compat)
-
-## Documentation
-
-Documentation is available at https://docs.elitemobs.frotty27.com/. The source lives in `docs/` and is versioned alongside the mod.
 
 ## Installation
 
