@@ -1,94 +1,29 @@
-plugins {
-    id 'java'
-    id 'com.gradleup.shadow' version '9.3.0'
-}
-
-group = property('group')
-version = property('version')
-base.archivesName = property('name')
-
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(property('java_version'))
-}
-
-repositories {
-    mavenCentral()
-}
-
-def hytaleJar = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/install/release/package/game/${property('game_build')}/Server/HytaleServer.jar")
-def userModsDir = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/UserData/Mods")
-def nameplateBuilderApiJar = file("${rootDir}/../NameplateBuilder/nameplate-api/build/libs/NameplateBuilder-API-1.0.0.jar")
-
-// Fallback for building inside WSL environment where user.home differs from Windows
-if (!hytaleJar.exists() && file('/mnt/c/Users/Tim-s').exists()) {
-    hytaleJar = file("/mnt/c/Users/Tim-s/AppData/Roaming/Hytale/install/release/package/game/${property('game_build')}/Server/HytaleServer.jar")
-    userModsDir = file('/mnt/c/Users/Tim-s/AppData/Roaming/Hytale/UserData/Mods')
-}
-
-dependencies {
-    implementation 'org.yaml:snakeyaml:2.2'
-    compileOnly 'org.jspecify:jspecify:0.3.0'
-    compileOnly files(hytaleJar)
-    compileOnly files(nameplateBuilderApiJar)
-
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
-    testImplementation 'org.mockito:mockito-core:5.11.0'
-    testImplementation files(hytaleJar)
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
-}
-
-tasks.processResources {
-    def expandProps = [
-            'name'          : 'Elite Mobs',
-            'version'       : project.version as String,
-            'group'         : project.group as String,
-            'description'   : findProperty('description') ?: '',
-            'website'       : findProperty('website') ?: '',
-            'server_version': findProperty('server_version') ?: '',
-            'entry_point'   : findProperty('entry_point') ?: '',
-    ]
-
-    filesMatching('manifest.json') {
-        expand(expandProps)
-    }
-    inputs.properties(expandProps)
-}
-
-tasks.shadowJar {
-    archiveClassifier = ''
-}
-
-tasks.test {
-    useJUnitPlatform()
-    systemProperty 'java.util.logging.manager', 'com.hypixel.hytale.logger.backend.HytaleLogManager'
-    testLogging {
-        events = ['passed', 'skipped', 'failed']
-        exceptionFormat = 'short'
-        showExceptions = true
-        showCauses = true
-        showStackTraces = true
+allprojects {
+    repositories {
+        mavenCentral()
     }
 }
 
-tasks.register('deploy') {
-    group = 'hytale'
-    description = 'Builds the shadow jar and copies it to the Hytale UserData Mods folder'
-    dependsOn tasks.shadowJar
+subprojects {
+    apply plugin: 'java'
 
-    doLast {
-        userModsDir.mkdirs()
-        def jarFile = tasks.shadowJar.archiveFile.get().asFile
+    java {
+        toolchain.languageVersion = JavaLanguageVersion.of(rootProject.property('java_version'))
+    }
 
-        copy {
-            from jarFile
-            into userModsDir
-        }
-
-        println "Deployed ${jarFile.name} to ${userModsDir}"
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
     }
 }
 
-tasks.build {
-    dependsOn tasks.shadowJar
-    finalizedBy tasks.deploy
+ext {
+    hytaleJar = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/install/release/package/game/${property('game_build')}/Server/HytaleServer.jar")
+    userModsDir = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/UserData/Mods")
+    nameplateBuilderApiJar = file("${rootDir}/../NameplateBuilder/nameplate-api/build/libs/NameplateBuilder-API-1.0.0.jar")
+
+    // Fallback for building inside WSL environment where user.home differs from Windows
+    if (!hytaleJar.exists() && file('/mnt/c/Users/Tim-s').exists()) {
+        hytaleJar = file("/mnt/c/Users/Tim-s/AppData/Roaming/Hytale/install/release/package/game/${property('game_build')}/Server/HytaleServer.jar")
+        userModsDir = file('/mnt/c/Users/Tim-s/AppData/Roaming/Hytale/UserData/Mods')
+    }
 }
