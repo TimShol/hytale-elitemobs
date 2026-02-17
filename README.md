@@ -135,8 +135,13 @@ Repeat until all remaining elite NPCs are removed. Do not kill them directly as 
 
 ## Compatibility
 
-EliteMobs works alongside other Hytale mods. If RPG Leveling is installed, the optional bridge plugin provides
-integrated nameplate and tier display.
+EliteMobs works alongside other Hytale mods. Nameplate rendering is handled by
+[NameplateBuilder](https://github.com/TimShol/hytale-nameplate-builder), which provides the tiered nameplate
+display used by EliteMobs. Mod developers looking to extend or interact with EliteMobs should use the
+`elitemobs-api` artifact — see the [API documentation](https://docs.elitemobs.frotty27.com/api/overview) for
+integration details.
+
+[![GitHub](https://img.shields.io/badge/GitHub-NameplateBuilder-7C3AED?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-nameplate-builder)
 
 ## License
 

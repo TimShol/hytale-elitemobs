@@ -25,6 +25,8 @@ dependencies {
 }
 ```
 
+The `-javadoc.jar` and `-sources.jar` are available as additional downloads. Place all three in your `libs/` folder for full IDE support (autocomplete, inline docs, click-to-source).
+
 ### Mod Manifest
 
 Declare EliteMobs as a dependency in your mod's `manifest.json` so Hytale loads it before your mod:
@@ -187,6 +189,76 @@ IEliteMobsQueryAPI query = EliteMobsAPI.query();
 | :--- | :--- | :--- |
 | `getSupportedTriggerTypes()` | `Set<String>` | All registered ability trigger type IDs |
 | `isTriggerTypeSupported(id)` | `boolean` | Whether a specific trigger type is registered |
+
+### Query Examples
+
+#### Check if an entity is an elite and read its tier
+
+```java
+IEliteMobsQueryAPI query = EliteMobsAPI.query();
+
+if (query.isEliteMob(entityRef)) {
+    int tier = query.getTier(entityRef).orElse(0);
+    System.out.println("Elite mob detected — Tier " + (tier + 1));
+}
+```
+
+#### Read scaling values for a HUD or tooltip
+
+```java
+IEliteMobsQueryAPI query = EliteMobsAPI.query();
+
+Optional<Float> health = query.getHealthMultiplier(entityRef);
+Optional<Float> damage = query.getDamageMultiplier(entityRef);
+Optional<Float> scale  = query.getModelScale(entityRef);
+
+health.ifPresent(h -> System.out.println("Health multiplier: " + h + "x"));
+damage.ifPresent(d -> System.out.println("Damage multiplier: " + d + "x"));
+scale.ifPresent(s ->  System.out.println("Model scale: " + s + "x"));
+```
+
+#### Check combat state and current target
+
+```java
+IEliteMobsQueryAPI query = EliteMobsAPI.query();
+
+if (query.isInCombat(entityRef)) {
+    query.getLastAggroTarget(entityRef).ifPresent(targetRef -> {
+        System.out.println("Currently fighting a target");
+    });
+    query.getLastAggroTick(entityRef).ifPresent(tick -> {
+        System.out.println("Aggro started at server tick " + tick);
+    });
+}
+```
+
+#### Read distance-based progression bonuses
+
+```java
+IEliteMobsQueryAPI query = EliteMobsAPI.query();
+
+query.getSpawnDistance(entityRef).ifPresent(distance -> {
+    System.out.println("Spawned " + distance + "m from world origin");
+});
+
+Optional<Float> healthBonus = query.getDistanceHealthBonus(entityRef);
+Optional<Float> damageBonus = query.getDistanceDamageBonus(entityRef);
+
+if (healthBonus.isPresent() && damageBonus.isPresent()) {
+    System.out.println("Distance bonuses — health: +" + healthBonus.get()
+        + "x, damage: +" + damageBonus.get() + "x");
+}
+```
+
+#### Monitor summoned minions
+
+```java
+IEliteMobsQueryAPI query = EliteMobsAPI.query();
+
+query.getSummonedMinionCount(entityRef).ifPresent(count -> {
+    System.out.println("Active minions: " + count);
+});
+```
 
 ## Ability Types
 

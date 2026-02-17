@@ -5,11 +5,17 @@ description: Mod interoperability and integration notes.
 
 EliteMobs is designed to work alongside other Hytale mods with minimal configuration.
 
-## RPG Leveling Mod
+## NameplateBuilder
 
-EliteMobs can align its tier system with the external level system for consistent nameplate display if the compatible bridge plugin (EliteMobsRPGLevelingCompat) is detected. Without the bridge, a warning is shown to players on join.
+EliteMobs uses [NameplateBuilder](https://github.com/TimShol/hytale-nameplate-builder) for nameplate rendering. NameplateBuilder provides the tiered nameplate display, rank indicators, and family prefixes shown above elite mobs. It is included automatically and requires no additional setup.
 
-You can toggle these join messages with `showCompatJoinMessages` in `core.yml`.
+If you are building a mod that displays custom nameplates alongside EliteMobs, refer to the NameplateBuilder documentation for integration details.
+
+## EliteMobs API
+
+Mod developers who want to react to elite events, query mob state, or modify loot and damage at runtime should use the `elitemobs-api` artifact. It ships as a lightweight compile-time dependency separate from the main plugin.
+
+See the [API Overview](/api/overview) for setup instructions, event types, and query methods.
 
 ## Custom Item Mods
 
