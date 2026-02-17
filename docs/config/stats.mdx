@@ -7,20 +7,25 @@ description: Tuning health and damage scaling for each Elite tier.
 
 ## Health Scaling
 
-Each tier has a health multiplier that is added to the mob's base health. A value of `1.0` means the mob gets +100% health (double its normal amount).
+Each tier has a health multiplier applied to the mob's base health. A value of `1.0` means vanilla health (no change), `2.0` means double, and `0.5` means half.
 
 ```yaml
 Health:
   enableHealthScaling: true
   healthMultiplierPerTier:
-    - 0.1   # Tier 1 — 10% of base health
-    - 0.5   # Tier 2 — 50% of base health
+    - 0.3   # Tier 1 — 30% of base health
+    - 0.6   # Tier 2 — 60% of base health
     - 1.1   # Tier 3 — 110% of base health
     - 1.8   # Tier 4 — 180% of base health
     - 2.6   # Tier 5 — 260% of base health
+  mobHealthRandomVariance: 0.05
 ```
 
-Set `enableHealthScaling` to `false` to give all elites their normal vanilla health regardless of tier.
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `enableHealthScaling` | Toggle health scaling on or off. Set to `false` to give all elites their normal vanilla health. | `true` |
+| `healthMultiplierPerTier` | Health multiplier for each tier. `1.0` = vanilla health, `2.0` = double, `0.5` = half. | See above |
+| `mobHealthRandomVariance` | Adds a random offset to each mob's health multiplier on spawn. `0.05` means health varies by +/-5%, so no two elites of the same tier have identical health. | `0.05` |
 
 **Tip:** If Tier 1 elites feel too similar to regular mobs, raise the first value to `0.3`. If Tier 5 elites are too spongy, lower the last value.
 

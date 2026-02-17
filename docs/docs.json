@@ -37,6 +37,12 @@
         ]
       },
       {
+        "group": "Developer API",
+        "pages": [
+          "api/overview"
+        ]
+      },
+      {
         "group": "Reference",
         "pages": [
           "reference/commands",
