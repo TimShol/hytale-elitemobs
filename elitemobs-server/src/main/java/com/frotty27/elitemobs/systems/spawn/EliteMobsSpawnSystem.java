@@ -3,14 +3,9 @@ package com.frotty27.elitemobs.systems.spawn;
 import com.frotty27.elitemobs.api.events.EliteMobSpawnedEvent;
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
 import com.frotty27.elitemobs.components.ability.ChargeLeapAbilityComponent;
-import com.frotty27.elitemobs.components.ability.EliteMobsAbilityLockComponent;
 import com.frotty27.elitemobs.components.ability.HealLeapAbilityComponent;
 import com.frotty27.elitemobs.components.ability.SummonUndeadAbilityComponent;
-import com.frotty27.elitemobs.components.combat.EliteMobsCombatTrackingComponent;
-import com.frotty27.elitemobs.components.effects.EliteMobsActiveEffectsComponent;
-import com.frotty27.elitemobs.components.lifecycle.EliteMobsHealthScalingComponent;
 import com.frotty27.elitemobs.components.lifecycle.EliteMobsMigrationComponent;
-import com.frotty27.elitemobs.components.lifecycle.EliteMobsModelScalingComponent;
 import com.frotty27.elitemobs.components.progression.EliteMobsProgressionComponent;
 import com.frotty27.elitemobs.components.summon.EliteMobsSummonMinionTrackingComponent;
 import com.frotty27.elitemobs.components.summon.EliteMobsSummonRiseComponent;
@@ -57,7 +52,10 @@ import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.NonNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 import static com.frotty27.elitemobs.features.EliteMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON;
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clampTierIndex;
@@ -89,7 +87,6 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
     private static final ComponentType<EntityStore, TransformComponent> TRANSFORM_COMPONENT_TYPE = TransformComponent.getComponentType();
     private final EliteMobsPlugin eliteMobsPlugin;
     private final Random random = new Random();
-    private final EliteMobsSpawnTickHandler spawnTickHandler = new EliteMobsSpawnTickHandler(this);
 
     private final MobRuleMatcher mobRuleMatcher = new MobRuleMatcher();
     private final EliteMobsEquipmentService equipmentService = new EliteMobsEquipmentService();
@@ -121,20 +118,18 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
     @Override
     public Query<EntityStore> getQuery() {
-        return Query.and(NPCEntity.getComponentType());
+        return Query.and(Constants.NPC_COMPONENT_TYPE);
     }
 
     @Override
     public void tick(float deltaTimeSeconds, int entityIndex, @NonNull ArchetypeChunk<EntityStore> archetypeChunk,
                      @NonNull Store<EntityStore> entityStore, @NonNull CommandBuffer<EntityStore> commandBuffer) {
         try {
-            NPCEntity npc = archetypeChunk.getComponent(entityIndex,
-                                                        Objects.requireNonNull(NPCEntity.getComponentType())
-            );
+            NPCEntity npc = archetypeChunk.getComponent(entityIndex, Constants.NPC_COMPONENT_TYPE);
             if (npc == null) {
                 throw new EntityComponentException("NPCEntity", entityIndex);
             }
-            spawnTickHandler.handle(deltaTimeSeconds, entityIndex, archetypeChunk, entityStore, commandBuffer);
+            processTick(entityIndex, archetypeChunk, entityStore, commandBuffer);
         } catch (EliteMobsException e) {
             throw e;
         } catch (Exception e) {
@@ -142,17 +137,16 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
         }
     }
 
-    void processTick(int entityIndex, @NonNull ArchetypeChunk<EntityStore> archetypeChunk,
-                     @NonNull Store<EntityStore> entityStore, @NonNull CommandBuffer<EntityStore> commandBuffer) {
+    private void processTick(int entityIndex, @NonNull ArchetypeChunk<EntityStore> archetypeChunk,
+                             @NonNull Store<EntityStore> entityStore,
+                             @NonNull CommandBuffer<EntityStore> commandBuffer) {
 
         EliteMobsConfig config = eliteMobsPlugin.getConfig();
         if (config == null) return;
 
         Ref<EntityStore> npcRef = archetypeChunk.getReferenceTo(entityIndex);
 
-        NPCEntity npcEntity = archetypeChunk.getComponent(entityIndex,
-                                                          Objects.requireNonNull(NPCEntity.getComponentType())
-        );
+        NPCEntity npcEntity = archetypeChunk.getComponent(entityIndex, Constants.NPC_COMPONENT_TYPE);
         if (npcEntity == null) {
             logNpcScanSummaryIfDue(config);
             return;
@@ -183,8 +177,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
             minionComponent.tierApplied = applyTierFromCommand(config,
                                                                npcRef,
                                                                entityStore,
-                                                               commandBuffer,
-                                                               npcEntity, tierIndex, true
+                                                               commandBuffer, npcEntity, tierIndex
             );
             commandBuffer.replaceComponent(npcRef, eliteMobsPlugin.getSummonedMinionComponentType(), minionComponent);
             logNpcScanSummaryIfDue(config);
@@ -244,7 +237,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
         commandBuffer.putComponent(npcRef, eliteMobsPlugin.getEliteMobsComponentType(), newTierComponent);
 
-        createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity, false);
+        createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity);
         featureRegistry.applyAll(eliteMobsPlugin,
                                  config,
                                  npcRef,
@@ -408,14 +401,8 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
         commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
     }
 
-    public void applyTierFromCommand(EliteMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
-                                     CommandBuffer<EntityStore> commandBuffer, NPCEntity npcEntity, int tierIndex) {
-        applyTierFromCommand(config, npcRef, entityStore, commandBuffer, npcEntity, tierIndex, false);
-    }
-
     public boolean applyTierFromCommand(EliteMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
-                                        CommandBuffer<EntityStore> commandBuffer, NPCEntity npcEntity, int tierIndex,
-                                        boolean disableDrops) {
+                                        CommandBuffer<EntityStore> commandBuffer, NPCEntity npcEntity, int tierIndex) {
         if (config == null || npcEntity == null) return false;
 
         String roleName = npcEntity.getRoleName();
@@ -434,7 +421,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
 
         commandBuffer.putComponent(npcRef, eliteMobsPlugin.getEliteMobsComponentType(), newTierComponent);
 
-        createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity, disableDrops);
+        createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity);
 
         featureRegistry.applyAll(eliteMobsPlugin,
                                  config,
@@ -445,22 +432,12 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
                                  roleName
         );
 
-        if (npcEntity.getWorld() != null) {
-            npcEntity.getWorld().execute(() -> {
-                if (!npcRef.isValid()) return;
-                EntityStore esp = npcEntity.getWorld().getEntityStore();
-                if (esp == null) return;
-                Store<EntityStore> es = esp.getStore();
-                StoreHelpers.withEntity(es, npcRef, (_, cb, _) -> {
-                    if (eliteMobsPlugin.getHealthScalingSystem() != null) {
-                        eliteMobsPlugin.getHealthScalingSystem().applyHealthScalingOnSpawn(npcRef, es, cb);
-                    }
-                    if (eliteMobsPlugin.getModelScalingSystem() != null) {
-                        eliteMobsPlugin.getModelScalingSystem().applyModelScalingOnSpawn(npcRef, es, cb);
-                    }
-                });
-            });
-        }
+        TransformComponent spawnTransform = entityStore.getComponent(npcRef, TransformComponent.getComponentType());
+        eliteMobsPlugin.getEventBus().fire(new EliteMobSpawnedEvent(npcRef,
+                                                                    clampedTierIndex,
+                                                                    roleName,
+                                                                    spawnTransform != null ? spawnTransform.getPosition().clone() : new Vector3d()
+        ));
 
         if (config.debugConfig.isDebugModeEnabled) {
             EliteMobsLogger.debug(LOGGER,
@@ -543,7 +520,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
         long currentTick = eliteMobsPlugin.getTickClock().getTick();
 
         String roleName = null;
-        NPCEntity npcEntity = entityStore.getComponent(npcRef, Objects.requireNonNull(NPCEntity.getComponentType()));
+        NPCEntity npcEntity = entityStore.getComponent(npcRef, Constants.NPC_COMPONENT_TYPE);
         if (npcEntity != null) roleName = npcEntity.getRoleName();
 
         decrementAbilityCooldowns(npcRef, entityStore, commandBuffer);
@@ -759,7 +736,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
                                                 EliteMobsSummonMinionTrackingComponent tracking = store.getComponent(npcRef,
                                                                                                                      eliteMobsPlugin.getSummonMinionTrackingComponentType()
                                                 );
-                                                if (tracking == null) tracking = EliteMobsSummonMinionTrackingComponent.forParent();
+                        if (tracking == null) tracking = new EliteMobsSummonMinionTrackingComponent();
                                                 if (tracking.summonedAliveCount < 0) tracking.summonedAliveCount = 0;
                                                 tracking.summonedAliveCount++;
                                                 cb.replaceComponent(npcRef, eliteMobsPlugin.getSummonMinionTrackingComponentType(), tracking);
@@ -901,9 +878,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
             // Get existing flock or create one for the summoner
             Ref<EntityStore> flockRef = FlockPlugin.getFlockReference(summonerRef, store);
             if (flockRef == null || !flockRef.isValid()) {
-                NPCEntity summonerNpc = store.getComponent(summonerRef,
-                                                           Objects.requireNonNull(NPCEntity.getComponentType())
-                );
+                NPCEntity summonerNpc = store.getComponent(summonerRef, Constants.NPC_COMPONENT_TYPE);
                 if (summonerNpc == null || summonerNpc.getRole() == null) return;
                 flockRef = FlockPlugin.createFlock(store, summonerNpc.getRole());
                 if (flockRef == null || !flockRef.isValid()) {
@@ -940,8 +915,7 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
     }
 
     private void createNewSchemaComponents(EliteMobsConfig config, Ref<EntityStore> npcRef,
-                                           CommandBuffer<EntityStore> commandBuffer, NPCEntity npcEntity,
-                                           boolean disableDrops) {
+                                           CommandBuffer<EntityStore> commandBuffer, NPCEntity npcEntity) {
 
         EliteMobsMigrationComponent migration = new EliteMobsMigrationComponent(2);
         commandBuffer.putComponent(npcRef, eliteMobsPlugin.getMigrationComponentType(), migration);
@@ -951,28 +925,6 @@ public final class EliteMobsSpawnSystem extends EntityTickingSystem<EntityStore>
             EliteMobsProgressionComponent progression = getProgressionComponent(config, dist);
             commandBuffer.putComponent(npcRef, eliteMobsPlugin.getProgressionComponentType(), progression);
         }
-
-        if (config.healthConfig.enableHealthScaling) {
-            EliteMobsHealthScalingComponent healthScaling = new EliteMobsHealthScalingComponent();
-            commandBuffer.putComponent(npcRef, eliteMobsPlugin.getHealthScalingComponentType(), healthScaling);
-        }
-
-        if (config.modelConfig.enableModelScaling) {
-            EliteMobsModelScalingComponent modelScaling = new EliteMobsModelScalingComponent();
-            commandBuffer.putComponent(npcRef, eliteMobsPlugin.getModelScalingComponentType(), modelScaling);
-        }
-
-        EliteMobsAbilityLockComponent abilityLock = new EliteMobsAbilityLockComponent();
-        commandBuffer.putComponent(npcRef, eliteMobsPlugin.getAbilityLockComponentType(), abilityLock);
-
-        EliteMobsActiveEffectsComponent effects = new EliteMobsActiveEffectsComponent();
-        commandBuffer.putComponent(npcRef, eliteMobsPlugin.getActiveEffectsComponentType(), effects);
-
-        EliteMobsSummonMinionTrackingComponent summonTracking = disableDrops ? EliteMobsSummonMinionTrackingComponent.forMinion() : EliteMobsSummonMinionTrackingComponent.forParent();
-        commandBuffer.putComponent(npcRef, eliteMobsPlugin.getSummonMinionTrackingComponentType(), summonTracking);
-
-        EliteMobsCombatTrackingComponent combatTracking = new EliteMobsCombatTrackingComponent();
-        commandBuffer.putComponent(npcRef, eliteMobsPlugin.getCombatTrackingComponentType(), combatTracking);
     }
 
     private static @NonNull EliteMobsProgressionComponent getProgressionComponent(EliteMobsConfig config, double dist) {

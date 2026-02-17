@@ -1,6 +1,8 @@
 package com.frotty27.elitemobs.systems.visual;
 
+import com.frotty27.elitemobs.api.IEliteMobsEventListener;
 import com.frotty27.elitemobs.api.events.EliteMobScalingAppliedEvent;
+import com.frotty27.elitemobs.api.events.EliteMobSpawnedEvent;
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
 import com.frotty27.elitemobs.components.lifecycle.EliteMobsHealthScalingComponent;
 import com.frotty27.elitemobs.components.lifecycle.EliteMobsModelScalingComponent;
@@ -8,6 +10,7 @@ import com.frotty27.elitemobs.components.progression.EliteMobsProgressionCompone
 import com.frotty27.elitemobs.config.EliteMobsConfig;
 import com.frotty27.elitemobs.features.EliteMobsHealthScalingFeature;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
+import com.frotty27.elitemobs.utils.StoreHelpers;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
@@ -23,7 +26,9 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.NonNull;
 
-public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
+import static com.frotty27.elitemobs.utils.Constants.NPC_COMPONENT_TYPE;
+
+public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implements IEliteMobsEventListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final float HEALTH_MAX_EPSILON = 0.05f;
@@ -39,7 +44,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
 
     @Override
     public Query<EntityStore> getQuery() {
-        return Query.and(NPCEntity.getComponentType(), plugin.getEliteMobsComponentType());
+        return Query.and(NPC_COMPONENT_TYPE, plugin.getEliteMobsComponentType());
     }
 
 
@@ -344,5 +349,30 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
 
             commandBuffer.replaceComponent(npcRef, plugin.getHealthScalingComponentType(), healthComp);
         }
+    }
+
+    @Override
+    public void onEliteMobSpawned(EliteMobSpawnedEvent event) {
+        if (event.isCancelled()) return;
+
+        Ref<EntityStore> npcRef = event.getEntityRef();
+        Store<EntityStore> store = npcRef.getStore();
+
+        NPCEntity npcEntity = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+        if (npcEntity == null || npcEntity.getWorld() == null) return;
+
+        npcEntity.getWorld().execute(() -> {
+            EntityStore entityStoreProvider = npcEntity.getWorld().getEntityStore();
+            if (entityStoreProvider == null) return;
+            Store<EntityStore> entityStore = entityStoreProvider.getStore();
+
+            StoreHelpers.withEntity(entityStore,
+                                    npcRef,
+                                    (_, commandBuffer, _) -> applyHealthScalingOnSpawn(npcRef,
+                                                                                       entityStore,
+                                                                                       commandBuffer
+                                    )
+            );
+        });
     }
 }

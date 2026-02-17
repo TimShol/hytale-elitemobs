@@ -24,8 +24,9 @@ import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import it.unimi.dsi.fastutil.Pair;
 import org.jspecify.annotations.NonNull;
 
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.frotty27.elitemobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 public final class EliteMobsSpawnCommand extends AbstractPlayerCommand {
 
@@ -96,7 +97,7 @@ public final class EliteMobsSpawnCommand extends AbstractPlayerCommand {
             return;
         }
 
-        NPCEntity npcEntity = entityStore.getComponent(npcRef, Objects.requireNonNull(NPCEntity.getComponentType()));
+        NPCEntity npcEntity = entityStore.getComponent(npcRef, NPC_COMPONENT_TYPE);
         if (npcEntity == null) {
             ctx.sendMessage(Message.raw("[EliteMobs] Spawned NPC, but entity data was not ready yet."));
             return;

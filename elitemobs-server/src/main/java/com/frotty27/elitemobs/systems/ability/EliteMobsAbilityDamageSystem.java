@@ -22,10 +22,10 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.NonNull;
 
-import java.util.Objects;
 import java.util.Set;
 
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clampTierIndex;
+import static com.frotty27.elitemobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 public final class EliteMobsAbilityDamageSystem extends DamageEventSystem {
 
@@ -79,9 +79,7 @@ public final class EliteMobsAbilityDamageSystem extends DamageEventSystem {
         EliteMobsTierComponent tierComponent = entityStore.getComponent(victimRef, plugin.getEliteMobsComponentType());
         if (tierComponent == null || tierComponent.tierIndex < 0) return;
 
-        NPCEntity npcEntity = archetypeChunk.getComponent(entityIndex,
-                                                          Objects.requireNonNull(NPCEntity.getComponentType())
-        );
+        NPCEntity npcEntity = archetypeChunk.getComponent(entityIndex, NPC_COMPONENT_TYPE);
         int tierIndex = clampTierIndex(tierComponent.tierIndex);
         long currentTick = plugin.getTickClock().getTick();
 

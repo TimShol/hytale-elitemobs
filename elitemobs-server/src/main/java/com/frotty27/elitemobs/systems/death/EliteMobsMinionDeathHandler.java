@@ -10,7 +10,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.NonNull;
 
-import java.util.Objects;
+import static com.frotty27.elitemobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 final class EliteMobsMinionDeathHandler {
 
@@ -26,7 +26,7 @@ final class EliteMobsMinionDeathHandler {
             @NonNull Store<EntityStore> store,
             @NonNull CommandBuffer<EntityStore> cb
     ) {
-        NPCEntity npc = store.getComponent(ref, Objects.requireNonNull(NPCEntity.getComponentType()));
+        NPCEntity npc = store.getComponent(ref, NPC_COMPONENT_TYPE);
         if (npc == null) return false;
 
         EliteMobsSummonedMinionComponent minion =

@@ -28,6 +28,7 @@ import java.util.Random;
 import java.util.Set;
 
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clampTierIndex;
+import static com.frotty27.elitemobs.utils.Constants.NPC_COMPONENT_TYPE;
 import static com.frotty27.elitemobs.utils.Constants.TIERS_AMOUNT;
 import static com.frotty27.elitemobs.utils.StringHelpers.safeRoleName;
 
@@ -42,7 +43,6 @@ public final class EliteMobsDamageDealtSystem extends DamageEventSystem {
     private static final String ATTACKER_KIND_PROJECTILE = "Projectile";
     private static final String ATTACKER_KIND_OTHER = "Other";
 
-    private static final ComponentType<EntityStore, NPCEntity> NPC_COMPONENT_TYPE = NPCEntity.getComponentType();
     private static final ComponentType<EntityStore, PlayerRef> PLAYER_REF_COMPONENT_TYPE = PlayerRef.getComponentType();
     private static final ComponentType<EntityStore, ProjectileComponent> PROJECTILE_COMPONENT_TYPE = ProjectileComponent.getComponentType();
 

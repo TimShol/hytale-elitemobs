@@ -1,10 +1,5 @@
 package com.frotty27.elitemobs.features;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
 import com.frotty27.elitemobs.config.EliteMobsConfig;
 import com.frotty27.elitemobs.exceptions.FeatureRegistrationException;
@@ -17,6 +12,11 @@ import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class EliteMobsFeatureRegistry {
 
@@ -33,6 +33,7 @@ public final class EliteMobsFeatureRegistry {
         register(new EliteMobsAbilityCoreFeature());
         register(new EliteMobsDropsFeature());
         register(new EliteMobsNameplateFeature());
+        register(new EliteMobsEffectsFeature());
         register(new EliteMobsProjectileResistanceEffectFeature(plugin));
         register(new EliteMobsChargeLeapAbilityFeature());
         register(new EliteMobsHealLeapAbilityFeature());

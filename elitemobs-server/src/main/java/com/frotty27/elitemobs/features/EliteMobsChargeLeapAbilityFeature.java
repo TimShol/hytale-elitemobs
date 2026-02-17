@@ -26,11 +26,6 @@ public final class EliteMobsChargeLeapAbilityFeature implements IEliteMobsAbilit
     }
 
     @Override
-    public String getFeatureKey() {
-        return "ChargeLeap";
-    }
-
-    @Override
     public void apply(
             EliteMobsPlugin plugin,
             EliteMobsConfig config,

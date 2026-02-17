@@ -2,9 +2,7 @@ package com.frotty27.elitemobs.plugin;
 
 import com.frotty27.elitemobs.api.EliteMobsAPI;
 import com.frotty27.elitemobs.api.EliteMobsEventBus;
-import com.frotty27.elitemobs.api.IEliteMobsEventListener;
 import com.frotty27.elitemobs.api.events.EliteMobReconcileEvent;
-import com.frotty27.elitemobs.api.events.EliteMobSpawnedEvent;
 import com.frotty27.elitemobs.api.query.EliteMobsQueryAPI;
 import com.frotty27.elitemobs.assets.EliteMobsAssetGenerator;
 import com.frotty27.elitemobs.assets.EliteMobsAssetRetriever;
@@ -29,21 +27,15 @@ import com.frotty27.elitemobs.features.EliteMobsFeatureRegistry;
 import com.frotty27.elitemobs.features.EliteMobsSpawningFeature;
 import com.frotty27.elitemobs.logs.EliteMobsLogger;
 import com.frotty27.elitemobs.nameplates.EliteMobsNameplateService;
-import com.frotty27.elitemobs.systems.ability.EliteMobsAbilityTriggerListener;
 import com.frotty27.elitemobs.systems.combat.EliteMobsAITargetPollingSystem;
 import com.frotty27.elitemobs.systems.combat.EliteMobsCombatStateSystem;
 import com.frotty27.elitemobs.systems.death.EliteMobsVanillaDropsCullZoneManager;
 import com.frotty27.elitemobs.systems.drops.EliteMobsExtraDropsScheduler;
 import com.frotty27.elitemobs.systems.migration.EliteMobsComponentMigrationSystem;
 import com.frotty27.elitemobs.systems.spawn.EliteMobsSpawnSystem;
-import com.frotty27.elitemobs.systems.visual.HealthScalingSystem;
-import com.frotty27.elitemobs.systems.visual.ModelScalingSystem;
-import com.frotty27.elitemobs.utils.StoreHelpers;
 import com.frotty27.elitemobs.utils.TickClock;
 import com.hypixel.hytale.assetstore.AssetPack;
 import com.hypixel.hytale.component.ComponentType;
-import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.AssetModule;
@@ -55,11 +47,9 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DeathSystems;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -93,10 +83,6 @@ public final class EliteMobsPlugin extends JavaPlugin {
     private final EliteMobsFeatureRegistry featureRegistry = new EliteMobsFeatureRegistry(this);
     private final EliteMobsEventBus eventBus = new EliteMobsEventBus();
 
-    private HealthScalingSystem healthScalingSystem;
-    private ModelScalingSystem modelScalingSystem;
-    private EliteMobsAbilityTriggerListener abilityTriggerListener;
-
     private final AtomicBoolean reconcileRequested = new AtomicBoolean(false);
     private final AtomicInteger reconcileTicksRemaining = new AtomicInteger(0);
     private boolean reconcileActive = false;
@@ -118,69 +104,10 @@ public final class EliteMobsPlugin extends JavaPlugin {
         nameplateService.describeSegments(this);
 
         registerComponents();
-
-        abilityTriggerListener = new EliteMobsAbilityTriggerListener(this);
-
         registerSystems();
         registerCommands();
-        registerEventListeners();
 
         LOGGER.atInfo().log("Setup complete!");
-    }
-
-    private void registerEventListeners() {
-        eventBus.registerListener(new IEliteMobsEventListener() {
-            @Override
-            public void onEliteMobSpawned(EliteMobSpawnedEvent event) {
-                if (event.isCancelled()) {
-                    LOGGER.atInfo().log("[SpawnEvent] Spawn event cancelled, skipping health scaling");
-                    return;
-                }
-
-                LOGGER.atInfo().log("[SpawnEvent] Received spawn event tier=%d healthSystem=%b modelSystem=%b",
-                        event.getTier(), healthScalingSystem != null, modelScalingSystem != null);
-
-                if (healthScalingSystem != null) {
-                    Ref<EntityStore> npcRef = event.getEntityRef();
-                    Store<EntityStore> store = npcRef.getStore();
-
-                    NPCEntity npcEntity = store.getComponent(npcRef,
-                                                             Objects.requireNonNull(NPCEntity.getComponentType())
-                    );
-                    LOGGER.atInfo().log("[SpawnEvent] npcEntity=%b world=%b",
-                            npcEntity != null, npcEntity != null && npcEntity.getWorld() != null);
-
-                    if (npcEntity != null && npcEntity.getWorld() != null) {
-                        npcEntity.getWorld().execute(() -> {
-                            LOGGER.atInfo().log("[SpawnEvent] Deferred callback executing");
-                            EntityStore entityStoreProvider = npcEntity.getWorld().getEntityStore();
-                            if (entityStoreProvider == null) {
-                                LOGGER.atInfo().log("[SpawnEvent] entityStoreProvider is null!");
-                                return;
-                            }
-                            Store<EntityStore> entityStore = entityStoreProvider.getStore();
-
-                            StoreHelpers.withEntity(entityStore, npcRef, (_, commandBuffer, _) -> {
-                                LOGGER.atInfo().log("[SpawnEvent] Inside withEntity - applying scaling");
-
-                                if (healthScalingSystem != null) {
-                                    healthScalingSystem.applyHealthScalingOnSpawn(npcRef, entityStore, commandBuffer);
-                                }
-
-                                if (modelScalingSystem != null) {
-                                    modelScalingSystem.applyModelScalingOnSpawn(npcRef, entityStore, commandBuffer);
-                                }
-                            });
-                        });
-                    }
-                }
-            }
-        });
-
-        LOGGER.atInfo().log("Registered event listeners for event-driven scaling.");
-
-        eventBus.registerListener(abilityTriggerListener);
-        LOGGER.atInfo().log("Registered EliteMobsAbilityTriggerListener for event-driven ability triggers.");
     }
 
     private void onLoadAssets(LoadAssetEvent event) {
@@ -262,7 +189,8 @@ public final class EliteMobsPlugin extends JavaPlugin {
             config.populateSummonMarkerEntriesByRoleIfEmpty();
             config.upgradeSummonMarkerEntriesToVariantIds();
             if (config.isSummonMarkerEntriesEmpty()) {
-                LOGGER.atWarning().log("[EliteMobs] Undead summon is enabled but no bow NPCs were found in mob rules.");
+                LOGGER.atWarning().log(
+                        "[EliteMobs] Undead summon is enabled but no archer NPCs were found in mob rules.");
             }
         }
 
@@ -318,14 +246,14 @@ public final class EliteMobsPlugin extends JavaPlugin {
                 "EliteMobsCombatTrackingComponent",
                 EliteMobsCombatTrackingComponent.CODEC
         );
-        LOGGER.atInfo().log("[6/14] Registered EliteMobsCombatTrackingComponent (with marker-based aggro)");
+        LOGGER.atInfo().log("[6/14] Registered EliteMobsCombatTrackingComponent");
 
         migrationComponentType = getEntityStoreRegistry().registerComponent(
                 EliteMobsMigrationComponent.class,
                 "EliteMobsMigrationComponent",
                 EliteMobsMigrationComponent.CODEC
         );
-        LOGGER.atInfo().log("[7/14] Registered EliteMobsMigrationComponent (temporary)");
+        LOGGER.atInfo().log("[7/14] Registered EliteMobsMigrationComponent (for pre 1.1.0)");
 
         summonedMinionComponentType = getEntityStoreRegistry().registerComponent(
                 EliteMobsSummonedMinionComponent.class,
@@ -352,19 +280,19 @@ public final class EliteMobsPlugin extends JavaPlugin {
                                                                                     "ChargeLeapAbilityComponent",
                                                                                     ChargeLeapAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[11/14] Registered ChargeLeapAbilityComponent (unified: enabled + cooldown)");
+        LOGGER.atInfo().log("[11/14] Registered ChargeLeapAbilityComponent");
 
         healLeapAbilityComponentType = getEntityStoreRegistry().registerComponent(HealLeapAbilityComponent.class,
                                                                                   "HealLeapAbilityComponent",
                                                                                   HealLeapAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[12/14] Registered HealLeapAbilityComponent (unified: replaces 5 components)");
+        LOGGER.atInfo().log("[12/14] Registered HealLeapAbilityComponent");
 
         summonUndeadAbilityComponentType = getEntityStoreRegistry().registerComponent(SummonUndeadAbilityComponent.class,
                                                                                       "SummonUndeadAbilityComponent",
                                                                                       SummonUndeadAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[13/14] Registered SummonUndeadAbilityComponent (unified: replaces 4 components)");
+        LOGGER.atInfo().log("[13/14] Registered SummonUndeadAbilityComponent");
 
         abilityLockComponentType = getEntityStoreRegistry().registerComponent(
                 EliteMobsAbilityLockComponent.class,
@@ -479,26 +407,6 @@ public final class EliteMobsPlugin extends JavaPlugin {
 
     public ComponentType<EntityStore, EliteMobsAbilityLockComponent> getAbilityLockComponentType() {
         return abilityLockComponentType;
-    }
-
-    public EliteMobsAbilityTriggerListener getAbilityTriggerListener() {
-        return abilityTriggerListener;
-    }
-
-    public HealthScalingSystem getHealthScalingSystem() {
-        return healthScalingSystem;
-    }
-
-    public void setHealthScalingSystem(HealthScalingSystem system) {
-        this.healthScalingSystem = system;
-    }
-
-    public ModelScalingSystem getModelScalingSystem() {
-        return modelScalingSystem;
-    }
-
-    public void setModelScalingSystem(ModelScalingSystem system) {
-        this.modelScalingSystem = system;
     }
 
     public EliteMobsNameplateService getNameplateService() {

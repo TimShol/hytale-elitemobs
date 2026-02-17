@@ -1,11 +1,14 @@
 package com.frotty27.elitemobs.systems.visual;
 
+import com.frotty27.elitemobs.api.IEliteMobsEventListener;
+import com.frotty27.elitemobs.api.events.EliteMobSpawnedEvent;
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
 import com.frotty27.elitemobs.components.lifecycle.EliteMobsModelScalingComponent;
 import com.frotty27.elitemobs.config.EliteMobsConfig;
 import com.frotty27.elitemobs.logs.EliteMobsLogLevel;
 import com.frotty27.elitemobs.logs.EliteMobsLogger;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
+import com.frotty27.elitemobs.utils.StoreHelpers;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
@@ -24,8 +27,9 @@ import org.jspecify.annotations.NonNull;
 import java.util.Random;
 
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clampFloat;
+import static com.frotty27.elitemobs.utils.Constants.NPC_COMPONENT_TYPE;
 
-public class ModelScalingSystem extends EntityTickingSystem<EntityStore> {
+public class ModelScalingSystem extends EntityTickingSystem<EntityStore> implements IEliteMobsEventListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final float MODEL_SCALE_MIN = 0.5f;
@@ -39,7 +43,7 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> {
 
     @Override
     public Query<EntityStore> getQuery() {
-        return Query.and(NPCEntity.getComponentType(), plugin.getEliteMobsComponentType());
+        return Query.and(NPC_COMPONENT_TYPE, plugin.getEliteMobsComponentType());
     }
 
     @Override
@@ -171,5 +175,30 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> {
             modelScalingComponent.appliedScale = scaleMultiplier;
             commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelScalingComponent);
         }
+    }
+
+    @Override
+    public void onEliteMobSpawned(EliteMobSpawnedEvent event) {
+        if (event.isCancelled()) return;
+
+        Ref<EntityStore> npcRef = event.getEntityRef();
+        Store<EntityStore> store = npcRef.getStore();
+
+        NPCEntity npcEntity = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+        if (npcEntity == null || npcEntity.getWorld() == null) return;
+
+        npcEntity.getWorld().execute(() -> {
+            EntityStore entityStoreProvider = npcEntity.getWorld().getEntityStore();
+            if (entityStoreProvider == null) return;
+            Store<EntityStore> entityStore = entityStoreProvider.getStore();
+
+            StoreHelpers.withEntity(entityStore,
+                                    npcRef,
+                                    (_, commandBuffer, _) -> applyModelScalingOnSpawn(npcRef,
+                                                                                      entityStore,
+                                                                                      commandBuffer
+                                    )
+            );
+        });
     }
 }

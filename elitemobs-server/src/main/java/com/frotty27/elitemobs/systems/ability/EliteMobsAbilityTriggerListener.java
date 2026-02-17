@@ -33,9 +33,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Locale;
-import java.util.Objects;
 
 import static com.frotty27.elitemobs.utils.ClampingHelpers.clampTierIndex;
+import static com.frotty27.elitemobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 public final class EliteMobsAbilityTriggerListener implements IEliteMobsEventListener {
 
@@ -412,7 +412,7 @@ public final class EliteMobsAbilityTriggerListener implements IEliteMobsEventLis
 
         LOGGER.atInfo().log("[HealLeap] INTERRUPTED by %d hits, cancelling chain", healLeap.hitsTaken);
 
-        NPCEntity npcEntity = store.getComponent(entityRef, Objects.requireNonNull(NPCEntity.getComponentType()));
+        NPCEntity npcEntity = store.getComponent(entityRef, NPC_COMPONENT_TYPE);
         if (npcEntity != null) {
             AbilityHelpers.restorePreviousItemIfNeeded(npcEntity, healLeap);
         }
@@ -495,7 +495,7 @@ public final class EliteMobsAbilityTriggerListener implements IEliteMobsEventLis
             return false;
         }
 
-        NPCEntity npcEntity = store.getComponent(entityRef, Objects.requireNonNull(NPCEntity.getComponentType()));
+        NPCEntity npcEntity = store.getComponent(entityRef, NPC_COMPONENT_TYPE);
         if (npcEntity == null || npcEntity.getWorld() == null) {
             EliteMobsLogger.debug(LOGGER,
                     "[AbilityTrigger] NPCEntity or World is null for abilityId=%s",
@@ -701,7 +701,7 @@ public final class EliteMobsAbilityTriggerListener implements IEliteMobsEventLis
 
     private @NonNull String resolveSummonRole(Ref<EntityStore> entityRef, Store<EntityStore> store,
                                               EliteMobsConfig config) {
-        NPCEntity npc = store.getComponent(entityRef, Objects.requireNonNull(NPCEntity.getComponentType()));
+        NPCEntity npc = store.getComponent(entityRef, NPC_COMPONENT_TYPE);
         if (npc == null) return "default";
 
         String roleName = npc.getRoleName();

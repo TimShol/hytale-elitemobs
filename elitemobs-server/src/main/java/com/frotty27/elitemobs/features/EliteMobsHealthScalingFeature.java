@@ -1,6 +1,7 @@
 package com.frotty27.elitemobs.features;
 
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
+import com.frotty27.elitemobs.components.lifecycle.EliteMobsHealthScalingComponent;
 import com.frotty27.elitemobs.config.EliteMobsConfig;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
 import com.frotty27.elitemobs.systems.visual.HealthScalingSystem;
@@ -32,12 +33,16 @@ public final class EliteMobsHealthScalingFeature implements IEliteMobsFeature {
             EliteMobsTierComponent tierComponent,
             @Nullable String roleName
     ) {
+        if (config.healthConfig.enableHealthScaling) {
+            EliteMobsHealthScalingComponent healthScaling = new EliteMobsHealthScalingComponent();
+            commandBuffer.putComponent(npcRef, plugin.getHealthScalingComponentType(), healthScaling);
+        }
     }
 
     @Override
     public void registerSystems(EliteMobsPlugin plugin) {
         HealthScalingSystem system = new HealthScalingSystem(plugin, this);
         plugin.registerSystem(system);
-        plugin.setHealthScalingSystem(system); 
+        plugin.getEventBus().registerListener(system);
     }
 }

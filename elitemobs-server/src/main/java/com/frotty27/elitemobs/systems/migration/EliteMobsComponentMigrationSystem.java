@@ -259,7 +259,7 @@ public final class EliteMobsComponentMigrationSystem extends EntityTickingSystem
         component.pendingSummonRole = null;
         commandBuffer.putComponent(entityRef, plugin.getSummonUndeadAbilityComponentType(), component);
 
-        EliteMobsSummonMinionTrackingComponent trackingComponent = EliteMobsSummonMinionTrackingComponent.forParent();
+        EliteMobsSummonMinionTrackingComponent trackingComponent = new EliteMobsSummonMinionTrackingComponent();
         commandBuffer.putComponent(entityRef, plugin.getSummonMinionTrackingComponentType(), trackingComponent);
     }
 }

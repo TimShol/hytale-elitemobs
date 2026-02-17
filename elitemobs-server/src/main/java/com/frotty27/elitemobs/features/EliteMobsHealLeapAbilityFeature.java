@@ -21,11 +21,6 @@ public final class EliteMobsHealLeapAbilityFeature implements IEliteMobsAbilityF
     private final Random random = new Random();
 
     @Override
-    public String getFeatureKey() {
-        return "HealLeap";
-    }
-
-    @Override
     public String id() {
         return ABILITY_HEAL_LEAP;
     }

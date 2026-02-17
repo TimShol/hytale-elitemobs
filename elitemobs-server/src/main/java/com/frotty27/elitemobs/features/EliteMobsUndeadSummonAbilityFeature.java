@@ -22,11 +22,6 @@ public final class EliteMobsUndeadSummonAbilityFeature implements IEliteMobsAbil
     private final Random random = new Random();
 
     @Override
-    public String getFeatureKey() {
-        return "UndeadSummon";
-    }
-
-    @Override
     public String id() {
         return ABILITY_UNDEAD_SUMMON;
     }
@@ -71,7 +66,7 @@ public final class EliteMobsUndeadSummonAbilityFeature implements IEliteMobsAbil
 
         commandBuffer.putComponent(npcRef, plugin.getSummonUndeadAbilityComponentType(), component);
 
-        EliteMobsSummonMinionTrackingComponent trackingComponent = EliteMobsSummonMinionTrackingComponent.forParent();
+        EliteMobsSummonMinionTrackingComponent trackingComponent = new EliteMobsSummonMinionTrackingComponent();
         commandBuffer.putComponent(npcRef, plugin.getSummonMinionTrackingComponentType(), trackingComponent);
 
     }

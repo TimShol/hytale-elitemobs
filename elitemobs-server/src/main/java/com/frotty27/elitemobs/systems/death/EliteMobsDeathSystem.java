@@ -32,7 +32,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 
@@ -62,7 +61,7 @@ public final class EliteMobsDeathSystem extends DeathSystems.OnDeathSystem {
 
     @Override
     public Query<EntityStore> getQuery() {
-        return Query.and(NPCEntity.getComponentType(), DeathComponent.getComponentType());
+        return Query.and(Constants.NPC_COMPONENT_TYPE, DeathComponent.getComponentType());
     }
 
     @Override
@@ -95,21 +94,20 @@ public final class EliteMobsDeathSystem extends DeathSystems.OnDeathSystem {
         EliteMobsConfig cfg = plugin.getConfig();
         if (cfg == null) return;
 
-        NPCEntity npc = store.getComponent(ref, Objects.requireNonNull(NPCEntity.getComponentType()));
+        NPCEntity npc = store.getComponent(ref, Constants.NPC_COMPONENT_TYPE);
         if (npc == null) return;
 
         EliteMobsTierComponent tier = store.getComponent(ref, plugin.getEliteMobsComponentType());
         if (tier == null || tier.tierIndex < 0) return;
 
 
-        EliteMobsSummonMinionTrackingComponent tracking = store.getComponent(ref,
-                                                                             plugin.getSummonMinionTrackingComponentType()
-        );
-        if (tracking != null && tracking.disableDrops) return;
-
         TransformComponent transformComponent = store.getComponent(ref, TransformComponent.getComponentType());
         HeadRotation headRotation = store.getComponent(ref, HeadRotation.getComponentType());
         if (transformComponent == null || headRotation == null) return;
+
+        EliteMobsSummonMinionTrackingComponent tracking = store.getComponent(ref,
+                                                                             plugin.getSummonMinionTrackingComponentType()
+        );
 
         var spawnSystem = plugin.getSpawnSystem();
         if (spawnSystem != null) {

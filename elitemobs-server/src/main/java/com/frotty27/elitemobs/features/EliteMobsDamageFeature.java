@@ -1,6 +1,7 @@
 package com.frotty27.elitemobs.features;
 
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
+import com.frotty27.elitemobs.components.combat.EliteMobsCombatTrackingComponent;
 import com.frotty27.elitemobs.config.EliteMobsConfig;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
 import com.frotty27.elitemobs.systems.combat.EliteMobsDamageDealtSystem;
@@ -34,6 +35,8 @@ public final class EliteMobsDamageFeature implements IEliteMobsFeature {
             EliteMobsTierComponent tierComponent,
             @Nullable String roleName
     ) {
+        EliteMobsCombatTrackingComponent combatTracking = new EliteMobsCombatTrackingComponent();
+        commandBuffer.putComponent(npcRef, plugin.getCombatTrackingComponentType(), combatTracking);
     }
 
     @Override

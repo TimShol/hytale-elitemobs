@@ -1,6 +1,7 @@
 package com.frotty27.elitemobs.features;
 
 import com.frotty27.elitemobs.components.EliteMobsTierComponent;
+import com.frotty27.elitemobs.components.lifecycle.EliteMobsModelScalingComponent;
 import com.frotty27.elitemobs.config.EliteMobsConfig;
 import com.frotty27.elitemobs.plugin.EliteMobsPlugin;
 import com.frotty27.elitemobs.systems.visual.ModelScalingSystem;
@@ -32,12 +33,16 @@ public final class EliteMobsModelScalingFeature implements IEliteMobsFeature {
             EliteMobsTierComponent tierComponent,
             @Nullable String roleName
     ) {
+        if (config.modelConfig.enableModelScaling) {
+            EliteMobsModelScalingComponent modelScaling = new EliteMobsModelScalingComponent();
+            commandBuffer.putComponent(npcRef, plugin.getModelScalingComponentType(), modelScaling);
+        }
     }
 
     @Override
     public void registerSystems(EliteMobsPlugin plugin) {
         ModelScalingSystem system = new ModelScalingSystem(plugin);
         plugin.registerSystem(system);
-        plugin.setModelScalingSystem(system); 
+        plugin.getEventBus().registerListener(system);
     }
 }

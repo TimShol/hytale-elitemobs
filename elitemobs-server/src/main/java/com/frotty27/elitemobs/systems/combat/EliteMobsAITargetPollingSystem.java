@@ -23,7 +23,7 @@ import com.hypixel.hytale.server.npc.role.support.MarkedEntitySupport;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Objects;
+import static com.frotty27.elitemobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 public final class EliteMobsAITargetPollingSystem extends EntityTickingSystem<EntityStore> {
 
@@ -58,7 +58,7 @@ public final class EliteMobsAITargetPollingSystem extends EntityTickingSystem<En
         if (currentTick - combat.lastTargetUpdateTick >= AI_POLL_INTERVAL_TICKS) {
             combat.lastTargetUpdateTick = currentTick;
 
-            NPCEntity npc = store.getComponent(mobRef, Objects.requireNonNull(NPCEntity.getComponentType()));
+            NPCEntity npc = store.getComponent(mobRef, NPC_COMPONENT_TYPE);
             if (npc != null) {
                 Ref<EntityStore> aiTarget = getAITarget(npc);
 

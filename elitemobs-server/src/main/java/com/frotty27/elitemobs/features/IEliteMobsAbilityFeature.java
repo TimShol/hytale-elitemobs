@@ -14,7 +14,18 @@ public interface IEliteMobsAbilityFeature extends IEliteMobsFeature {
 
     @Override
     default String getFeatureKey() {
-        return "EliteMobs.Ability." + id();
+        return snakeToPascal(id());
+    }
+
+    private static String snakeToPascal(String snakeCase) {
+        StringBuilder sb = new StringBuilder();
+        for (String part : snakeCase.split("_")) {
+            if (!part.isEmpty()) {
+                sb.append(Character.toUpperCase(part.charAt(0)));
+                sb.append(part.substring(1));
+            }
+        }
+        return sb.toString();
     }
 
     @Override
