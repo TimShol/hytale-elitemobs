@@ -1,9 +1,9 @@
-# EliteMobs
+# RPGMobs
 
 ### Adds tiered elite variants to every
 _configured_ NPC — with <span style="color:#3598db">scaling</span>, <span style="color:#2dc26b">abilities</span>, <span style="color:#f1c40f">loot</span> and <span style="color:#e67e23">equipment</span> to your world!
 
-![EliteMobs Ability](https://media.forgecdn.net/attachments/1495/784/eliteleapability-gif.gif)
+![RPGMobs Ability](https://media.forgecdn.net/attachments/1495/784/eliteleapability-gif.gif)
 
 Currently enhancing <span style="color:#2dc26b">165 NPC types</span> — and more to come!
 
@@ -11,9 +11,9 @@ Currently enhancing <span style="color:#2dc26b">165 NPC types</span> — and mor
 
 You can find all the documentation, configuration guides, and developer references on my docs site.
 
-[![Docs](https://img.shields.io/badge/Documentation-3da15b?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.elitemobs.frotty27.com/)
+[![Docs](https://img.shields.io/badge/Documentation-3da15b?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.rpgmobs.frotty27.com/)
 
-[![GitHub](https://img.shields.io/badge/GitHub-EliteMobs-3da15b?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-elitemobs)
+[![GitHub](https://img.shields.io/badge/GitHub-RPGMobs-3da15b?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-rpgmobs)
 
 ***
 
@@ -69,16 +69,16 @@ There are 3 progression styles currently:
 
 ## Configuration
 
-<span style="color:#2dc26b"><strong>Almost everything is configurable!</strong></span> EliteMobs generates 10 YAML
+<span style="color:#2dc26b"><strong>Almost everything is configurable!</strong></span> RPGMobs generates 10 YAML
 configuration files under:
 
 ```
-%APPDATA%\Hytale\UserData\Saves\<save name>\mods\EliteMobs
+%APPDATA%\Hytale\UserData\Saves\<save name>\mods\RPGMobs
 ```
 
 ![Config](https://media.forgecdn.net/attachments/1498/351/configdirectory-png.png)
 
-* Live reload via `/elitemobs reload` with automatic reconciliation of existing elites
+* Live reload via `/rpgmobs reload` with automatic reconciliation of existing elites
 * Every feature is independently toggleable
 * Config version tracking with automatic regeneration on major updates
 * Missing keys are regenerated automatically — no need to start fresh after an update
@@ -89,17 +89,17 @@ configuration files under:
 
 ## Permissions
 
-* **`elitemobs.reload`** — Allows the player to reload EliteMobs configuration at runtime
+* **`rpgmobs.reload`** — Allows the player to reload RPGMobs configuration at runtime
 
 ***
 
 ## Installation
 
-* Download the EliteMobs `.jar` from CurseForge
+* Download the RPGMobs `.jar` from CurseForge
 * Place it in your server's `mods` folder
 * Start the server to generate default configuration
-* Edit the YAML files under `%APPDATA%\Hytale\UserData\Saves&lt;save name&gt;\mods\EliteMobs`
-* Run `/elitemobs reload` to apply changes without restarting
+* Edit the YAML files under `%APPDATA%\Hytale\UserData\Saves&lt;save name&gt;\mods\RPGMobs`
+* Run `/rpgmobs reload` to apply changes without restarting
 
 ## Uninstalling
 
@@ -110,7 +110,7 @@ Instead, use `/npc clean --confirm` and repeat until all remaining elite NPCs ar
 
 ## Compatibility
 
-EliteMobs (should) work alongside other Hytale mods. Nameplate rendering is handled
+RPGMobs (should) work alongside other Hytale mods. Nameplate rendering is handled
 by [NameplateBuilder](https://www.curseforge.com/hytale/mods/nameplatebuilder).
 
 Custom weapons and armor from other mods can be added to the equipment catalogs in `gear.yml`.
@@ -127,7 +127,7 @@ difficulty scaling and stat-based progression.
 
 ## Development Status
 
-<span style="color:#2dc26b"><strong>EliteMobs is actively in development.</strong></span>
+<span style="color:#2dc26b"><strong>RPGMobs is actively in development.</strong></span>
 
 * Expect frequent updates and improvements
 * Feedback and suggestions are very welcome
@@ -145,12 +145,12 @@ Solo developer project — this mod is developed and maintained by one person (m
 
 <span style="color:#843fa1"><strong>Does this work on existing worlds?</strong></span>
 
-<span style="color:#2dc26b"><em>Yes. EliteMobs works on existing worlds and affects both current and newly spawned
+<span style="color:#2dc26b"><em>Yes. RPGMobs works on existing worlds and affects both current and newly spawned
 mobs.</em></span>
 
 <span style="color:#843fa1"><strong>Does upgrading from 1.0.0 require any manual steps?</strong></span>
 
-<span style="color:#2dc26b"><em>No. EliteMobs includes a migration system that automatically upgrades saved entities to
+<span style="color:#2dc26b"><em>No. RPGMobs includes a migration system that automatically upgrades saved entities to
 the latest format.</em></span>
 
 <span style="color:#843fa1"><strong>Can I configure what I don't like?</strong></span>
@@ -160,33 +160,33 @@ want.</em></span>
 
 <span style="color:#843fa1"><strong>Can I reload the config?</strong></span>
 
-<span style="color:#2dc26b"><em>Yes — use <code>/elitemobs reload</code>. Restart if changes don't fully
+<span style="color:#2dc26b"><em>Yes — use <code>/rpgmobs reload</code>. Restart if changes don't fully
 apply.</em></span>
 
 <span style="color:#843fa1"><strong>Is the source code available?</strong></span>
 
 <span style="color:#2dc26b"><em>Yes. The full source is available
-on <a href="https://github.com/TimShol/hytale-elitemobs" target="_blank" rel="nofollow">GitHub</a>. The mod is MIT
+on <a href="https://github.com/TimShol/hytale-rpgmobs" target="_blank" rel="nofollow">GitHub</a>. The mod is MIT
 licensed.</em></span>
 
 ***
 
 ## For Developers
 
-EliteMobs ships a separate `elitemobs-api` artifact for mod developers. Add it as a compile-time dependency to listen to
-events, query elite mob state, or modify loot and damage at runtime.
+RPGMobs ships a separate `rpgmobs-api` artifact for mod developers. Add it as a compile-time dependency to listen to
+events, query RPG mob state, or modify loot and damage at runtime.
 
 * Event-driven API with 12 event types (spawn, death, damage, abilities, aggro, loot)
-* Read-only Query API for inspecting any elite mob's tier, scaling, combat state, and more
+* Read-only Query API for inspecting any RPG mob's tier, scaling, combat state, and more
 * Cancellable events for spawn blocking, damage modification, and loot customization
 * Lightweight API artifact — no dependency on the full plugin
 
-See the [API documentation](https://docs.elitemobs.frotty27.com/api/overview) for setup instructions and integration
+See the [API documentation](https://docs.rpgmobs.frotty27.com/api/overview) for setup instructions and integration
 examples.
 
 ### Damage System Overview
 
-EliteMobs is compatible with other damage-modifying mods. Multipliers stack, so balance may need tuning — but as long as
+RPGMobs is compatible with other damage-modifying mods. Multipliers stack, so balance may need tuning — but as long as
 you know how to read and edit config files, you're in the clear.
 
 ![Damage Pipeline](https://media.forgecdn.net/attachments/description/1444529/description_2c56d0ab-f22e-4ae9-a7d0-b65e6134caab.png)

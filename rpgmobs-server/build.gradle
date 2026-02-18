@@ -1,0 +1,80 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.3.0'
+}
+
+group = rootProject.property('group')
+version = rootProject.property('version')
+base.archivesName = rootProject.property('name').toString()
+
+dependencies {
+    implementation project(':rpgmobs-api')
+    implementation 'org.yaml:snakeyaml:2.2'
+    compileOnly 'org.jspecify:jspecify:0.3.0'
+    compileOnly files(rootProject.ext.hytaleJar)
+    compileOnly files(rootProject.ext.nameplateBuilderApiJar)
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation files(rootProject.ext.hytaleJar)
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+}
+
+tasks.processResources {
+    def expandProps = [
+            'name'          : 'RPG Mobs',
+            'version'       : project.version as String,
+            'group'         : project.group as String,
+            'description'   : rootProject.findProperty('description') ?: '',
+            'website'       : rootProject.findProperty('website') ?: '',
+            'server_version': rootProject.findProperty('server_version') ?: '',
+            'entry_point'   : rootProject.findProperty('entry_point') ?: '',
+    ]
+
+    filesMatching('manifest.json') {
+        expand(expandProps)
+    }
+    inputs.properties(expandProps)
+}
+
+tasks.shadowJar {
+    archiveClassifier = ''
+    // Explicitly include rpgmobs-api classes — shadow may skip them due to
+    // split-package overlap (server has implementation classes in the api namespace).
+    from project(':rpgmobs-api').sourceSets.main.output
+}
+
+tasks.test {
+    useJUnitPlatform()
+    systemProperty 'java.util.logging.manager', 'com.hypixel.hytale.logger.backend.HytaleLogManager'
+    testLogging {
+        events = ['passed', 'skipped', 'failed']
+        exceptionFormat = 'short'
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+}
+
+tasks.register('deploy') {
+    group = 'hytale'
+    description = 'Builds the shadow jar and copies it to the Hytale UserData Mods folder'
+    dependsOn tasks.shadowJar
+
+    doLast {
+        rootProject.ext.userModsDir.mkdirs()
+        def jarFile = tasks.shadowJar.archiveFile.get().asFile
+
+        copy {
+            from jarFile
+            into rootProject.ext.userModsDir
+        }
+
+        println "Deployed ${jarFile.name} to ${rootProject.ext.userModsDir}"
+    }
+}
+
+tasks.build {
+    dependsOn tasks.shadowJar
+    finalizedBy tasks.deploy
+}

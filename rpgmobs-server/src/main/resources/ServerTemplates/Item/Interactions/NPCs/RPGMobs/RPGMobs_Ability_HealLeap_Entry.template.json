@@ -1,0 +1,86 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs HealPotion using Player Fall anims (no signature/cost/stat changes).",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Crouch/charge-up before leaping backward. No DisableAll here so ApplyForce can move the NPC.",
+      "RunTime": 0.5,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "DownstrikeCharging"
+      }
+    },
+    {
+      "Type": "ApplyForce",
+      "$Comment": "Leap backward away from target. Mirrors charge_leap but Z positive = backward.",
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "Fall",
+        "ClearAnimationOnFinish": true
+      },
+      "Force": $
+    {
+      features.HealLeap.config.applyForcePerTier
+    },
+    "Direction"
+    :
+    {
+      "X": 0,
+      "Y": 0.1,
+      "Z": 4.5
+    },
+    "WaitForGround"
+    :
+    true,
+    "ChangeVelocityType"
+    :
+    "Add",
+    "VelocityConfig"
+    :
+    {
+      "AirResistance": 0.97,
+      "AirResistanceMax": 0.96,
+      "GroundResistance": 0.94,
+      "GroundResistanceMax": 0.82,
+      "Threshold": 0.1,
+      "Style": "Exp"
+    }
+    }
+    ,
+    {
+    "Type": "Simple",
+    "$Comment": "Stand still and drink the potion. Interruptible by 3 hits.",
+    "RunTime": ${features.HealLeap.config.npcDrinkDurationSeconds},
+    "Effects": {
+    "MovementEffects": {
+    "DisableAll": true
+    },
+    "ItemPlayerAnimationsId": "Item",
+    "ItemAnimationId": "Consume",
+    "WorldSoundEventId": "SFX_Health_Potion_Low_Drink",
+    "Particles": [
+    {
+    "SystemId": "Potion_Health_Heal",
+    "TargetEntityPart": "Entity",
+    "TargetNodeName": "Pelvis"
+    },
+    {
+    "SystemId": "Potion_Health_Implosion",
+    "TargetEntityPart": "Entity",
+    "PositionOffset": {
+    "Y": 1.0
+    }
+    }
+    ],
+    "ClearAnimationOnFinish": true,
+    "ClearSoundEventOnFinish": true
+    }
+    }
+    ,
+    {
+    "Type": "ApplyEffect",
+    "EffectId": ${features.HealLeap.config.templates.effectInstantHeal}
+    }
+  ]
+}

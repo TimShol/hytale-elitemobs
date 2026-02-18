@@ -1,8 +1,8 @@
-# EliteMobs
+# RPGMobs
 
 ## Tiered elites that change combat, loot, and progression
 
-EliteMobs transforms standard Hytale NPCs into tiered elites with scaling stats, combat abilities, tiered loot, and
+RPGMobs transforms standard Hytale NPCs into tiered elites with scaling stats, combat abilities, tiered loot, and
 distinct visuals. Fully configurable with runtime reloads, event-driven modding API, and support for both casual and
 hardcore servers.
 
@@ -11,21 +11,21 @@ hardcore servers.
 <table>
 <tr>
 <td align="center" width="50%">
-<img src="icons/EliteMobs-Icon-128.png" alt="Plugin" width="128"/>
+<img src="icons/RPGMobs-Icon-128.png" alt="Plugin" width="128"/>
 <br/><br/>
 <strong>Plugin</strong>
 <br/><br/>
-<a href="https://www.curseforge.com/hytale/mods/elitemobs">
-<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download EliteMobs"/>
+<a href="https://www.curseforge.com/hytale/mods/RPGMobs">
+<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download RPGMobs"/>
 </a>
 </td>
 <td align="center" width="50%">
-<img src="icons/EliteMobs-Icon-128.png" alt="API" width="128"/>
+<img src="icons/RPGMobs-Icon-128.png" alt="API" width="128"/>
 <br/><br/>
 <strong>API</strong>
 <br/><br/>
-<a href="https://www.curseforge.com/hytale/mods/elitemobs">
-<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download EliteMobs API"/>
+<a href="https://www.curseforge.com/hytale/mods/RPGMobs">
+<img src="https://img.shields.io/badge/Download-F16436?style=for-the-badge&logo=curseforge&logoColor=white" alt="Download RPGMobs API"/>
 </a>
 </td>
 </tr>
@@ -35,7 +35,7 @@ hardcore servers.
 
 Full configuration guides, developer API reference, and troubleshooting:
 
-[![Docs](https://img.shields.io/badge/Documentation-2dc26b?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.elitemobs.frotty27.com/)
+[![Docs](https://img.shields.io/badge/Documentation-2dc26b?style=for-the-badge&logo=bookstack&logoColor=white)](https://docs.RPGMobs.frotty27.com/)
 
 ## Feature Highlights
 
@@ -68,28 +68,28 @@ Full configuration guides, developer API reference, and troubleshooting:
 ### For Developers
 
 - Event-driven API with 12 event types (spawn, death, damage, abilities, aggro, loot)
-- Read-only Query API for inspecting any elite mob's state
+- Read-only Query API for inspecting any RPG mob's state
 - Cancellable events for spawn blocking, damage modification, and loot customization
 - Separate API artifact for compile-time dependency
 
 ## Quick Start
 
 ```text
-1. Download EliteMobs and place the JAR in your server's mods folder
+1. Download RPGMobs and place the JAR in your server's mods folder
 2. Start the server to generate default configuration
-3. Edit the YAML files under your save's mods/EliteMobs directory
-4. Run /elitemobs reload to apply changes without restarting
+3. Edit the YAML files under your save's mods/RPGMobs directory
+4. Run /RPGMobs reload to apply changes without restarting
 ```
 
 ## Installation
 
-1. Download the EliteMobs `.jar` from CurseForge.
+1. Download the RPGMobs `.jar` from CurseForge.
 2. Place it in your server `mods` folder.
 3. Start the server to generate configuration files.
 4. Configuration files are created under:
 
 ```
-%APPDATA%\Hytale\UserData\Saves\<save name>\mods\EliteMobs
+%APPDATA%\Hytale\UserData\Saves\<save name>\mods\RPGMobs
 ```
 
 ## Configuration
@@ -110,7 +110,7 @@ Full configuration guides, developer API reference, and troubleshooting:
 ## Runtime Reload
 
 ```text
-/elitemobs reload
+/RPGMobs reload
 ```
 
 Reloads all YAML configuration from disk. Spawn logic updates immediately. Existing elites are reconciled over a
@@ -118,10 +118,10 @@ configurable tick window.
 
 ## API Overview
 
-EliteMobs ships a separate `elitemobs-api` artifact for mod developers. Add it as a compile-time dependency to listen to
-events, query elite mob state, or modify loot and damage.
+RPGMobs ships a separate `RPGMobs-api` artifact for mod developers. Add it as a compile-time dependency to listen to
+events, query RPG mob state, or modify loot and damage.
 
-See the [API documentation](https://docs.elitemobs.frotty27.com/api/overview) for integration details.
+See the [API documentation](https://docs.RPGMobs.frotty27.com/api/overview) for integration details.
 
 ## Uninstalling
 
@@ -135,10 +135,10 @@ Repeat until all remaining elite NPCs are removed. Do not kill them directly as 
 
 ## Compatibility
 
-EliteMobs works alongside other Hytale mods. Nameplate rendering is handled by
+RPGMobs works alongside other Hytale mods. Nameplate rendering is handled by
 [NameplateBuilder](https://github.com/TimShol/hytale-nameplate-builder), which provides the tiered nameplate
-display used by EliteMobs. Mod developers looking to extend or interact with EliteMobs should use the
-`elitemobs-api` artifact — see the [API documentation](https://docs.elitemobs.frotty27.com/api/overview) for
+display used by RPGMobs. Mod developers looking to extend or interact with RPGMobs should use the
+`RPGMobs-api` artifact — see the [API documentation](https://docs.RPGMobs.frotty27.com/api/overview) for
 integration details.
 
 [![GitHub](https://img.shields.io/badge/GitHub-NameplateBuilder-7C3AED?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-nameplate-builder)

@@ -1,5 +1,0 @@
-{
-  "Interactions": [
-    ${features.UndeadSummon.config.templates.entryInteraction}
-  ]
-}

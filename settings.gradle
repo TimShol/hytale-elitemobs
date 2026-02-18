@@ -1,2 +1,2 @@
-rootProject.name = 'EliteMobs'
-include 'elitemobs-api', 'elitemobs-server'
+rootProject.name = 'RPGMobs'
+include 'rpgmobs-api', 'rpgmobs-server'

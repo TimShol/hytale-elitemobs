@@ -1,9 +1,9 @@
 ---
 title: API Overview
-description: Integration guide for mod developers who want to hook into EliteMobs events and data.
+description: Integration guide for mod developers who want to hook into RPGMobs events and data.
 ---
 
-The EliteMobs API allows other Hytale mods to react to elite mob events, inspect mob state, and modify behavior at runtime. It ships as a separate `elitemobs-api` artifact so your mod only depends on the lightweight API interfaces, not the full plugin.
+The RPGMobs API allows other Hytale mods to react to RPG mob events, inspect mob state, and modify behavior at runtime. It ships as a separate `RPGMobs-api` artifact so your mod only depends on the lightweight API interfaces, not the full plugin.
 
 ## Setup
 
@@ -13,7 +13,7 @@ Add the API JAR as a compile-only dependency in your `build.gradle`:
 
 ```groovy
 dependencies {
-    compileOnly files('libs/EliteMobs-API-1.1.0.jar')
+    compileOnly files('libs/RPGMobs-API-1.1.0.jar')
 }
 ```
 
@@ -21,7 +21,7 @@ Or if published to a Maven repository:
 
 ```groovy
 dependencies {
-    compileOnly 'Frotty27:elitemobs-api:1.1.0'
+    compileOnly 'Frotty27:RPGMobs-api:1.1.0'
 }
 ```
 
@@ -29,60 +29,60 @@ The `-javadoc.jar` and `-sources.jar` are available as additional downloads. Pla
 
 ### Mod Manifest
 
-Declare EliteMobs as a dependency in your mod's `manifest.json` so Hytale loads it before your mod:
+Declare RPGMobs as a dependency in your mod's `manifest.json` so Hytale loads it before your mod:
 
 ```json
 {
   "Dependencies": {
-    "Frotty27:EliteMobs": "*"
+    "Frotty27:RPGMobs": "*"
   }
 }
 ```
 
 ## Entry Point
 
-All API access goes through the static `EliteMobsAPI` class:
+All API access goes through the static `RPGMobsAPI` class:
 
 ```java
-import com.frotty27.elitemobs.api.EliteMobsAPI;
+import com.frotty27.rpgmobs.api.RPGMobsAPI;
 
 // Register a listener
-EliteMobsAPI.registerListener(myListener);
+RPGMobsAPI.registerListener(myListener);
 
 // Query mob state
-EliteMobsAPI.query().getTier(entityRef);
+RPGMobsAPI.query().getTier(entityRef);
 
 // Unregister when your mod shuts down
-EliteMobsAPI.unregisterListener(myListener);
+RPGMobsAPI.unregisterListener(myListener);
 ```
 
-If EliteMobs has not initialized yet, calling these methods throws `EliteMobsNotInitializedException`.
+If RPGMobs has not initialized yet, calling these methods throws `RPGMobsNotInitializedException`.
 
 ## Event System
 
-Implement `IEliteMobsEventListener` and override the events you care about. All handler methods have default no-op implementations, so you only need to override what you use.
+Implement `IRPGMobsEventListener` and override the events you care about. All handler methods have default no-op implementations, so you only need to override what you use.
 
 ```java
-import com.frotty27.elitemobs.api.IEliteMobsEventListener;
-import com.frotty27.elitemobs.api.events.*;
+import com.frotty27.rpgmobs.api.IRPGMobsEventListener;
+import com.frotty27.rpgmobs.api.events.*;
 
-public class MyEliteListener implements IEliteMobsEventListener {
+public class MyEliteListener implements IRPGMobsEventListener {
 
     @Override
-    public void onEliteMobSpawned(EliteMobSpawnedEvent event) {
+    public void onRPGMobSpawned(RPGMobsSpawnedEvent event) {
         int tier = event.getTier();
         // Cancel the spawn if needed
         // event.setCancelled(true);
     }
 
     @Override
-    public void onEliteMobDrops(EliteMobDropsEvent event) {
+    public void onRPGMobDrops(RPGMobsDropsEvent event) {
         // Add custom items to the drop list
         event.getDrops().add(myCustomItem);
     }
 
     @Override
-    public void onEliteMobDamageDealt(EliteMobDamageDealtEvent event) {
+    public void onRPGMobDamageDealt(RPGMobsDamageDealtEvent event) {
         // Reduce elite damage by 20%
         event.setMultiplier(event.getMultiplier() * 0.8f);
     }
@@ -92,31 +92,31 @@ public class MyEliteListener implements IEliteMobsEventListener {
 Register it during your mod's initialization:
 
 ```java
-EliteMobsAPI.registerListener(new MyEliteListener());
+RPGMobsAPI.registerListener(new MyEliteListener());
 ```
 
 ### Available Events
 
 | Event | Fired when | Cancellable | Mutable fields |
 | :--- | :--- | :---: | :--- |
-| `EliteMobSpawnedEvent` | Elite enters the world | Yes | &mdash; |
-| `EliteMobDeathEvent` | Elite dies | No | &mdash; |
-| `EliteMobDropsEvent` | Loot is about to spawn | Yes | `getDrops()` (live list) |
-| `EliteMobDamageDealtEvent` | Elite deals outgoing damage | Yes | `setMultiplier(float)` |
-| `EliteMobDamageReceivedEvent` | Elite takes incoming damage | No | &mdash; |
-| `EliteMobAbilityStartedEvent` | Ability execution begins | Yes | &mdash; |
-| `EliteMobAbilityCompletedEvent` | Ability finishes normally | No | &mdash; |
-| `EliteMobAbilityInterruptedEvent` | Ability was interrupted | No | `getReason()` |
-| `EliteMobAggroEvent` | Elite targets an entity | No | `targetRef()` |
-| `EliteMobDeaggroEvent` | Elite loses its target | No | &mdash; |
-| `EliteMobScalingAppliedEvent` | Scaling parameters computed | No | All fields (read-only record) |
-| `EliteMobReconcileEvent` | Config reconciliation pass | No | &mdash; |
+| `RPGMobsSpawnedEvent` | Elite enters the world | Yes | &mdash; |
+| `RPGMobsDeathEvent` | Elite dies | No | &mdash; |
+| `RPGMobsDropsEvent` | Loot is about to spawn | Yes | `getDrops()` (live list) |
+| `RPGMobsDamageDealtEvent` | Elite deals outgoing damage | Yes | `setMultiplier(float)` |
+| `RPGMobsDamageReceivedEvent` | Elite takes incoming damage | No | &mdash; |
+| `RPGMobsAbilityStartedEvent` | Ability execution begins | Yes | &mdash; |
+| `RPGMobsAbilityCompletedEvent` | Ability finishes normally | No | &mdash; |
+| `RPGMobsAbilityInterruptedEvent` | Ability was interrupted | No | `getReason()` |
+| `RPGMobsAggroEvent` | Elite targets an entity | No | `targetRef()` |
+| `RPGMobsDeaggroEvent` | Elite loses its target | No | &mdash; |
+| `RPGMobsScalingAppliedEvent` | Scaling parameters computed | No | All fields (read-only record) |
+| `RPGMobsReconcileEvent` | Config reconciliation pass | No | &mdash; |
 
 ### Base Event Fields
 
-Every event extends `EliteMobEvent` which provides:
+Every event extends `RPGMobsEvent` which provides:
 
-*   `getEntityRef()` &mdash; the elite mob's `Ref<EntityStore>`
+*   `getEntityRef()` &mdash; the RPG mob's `Ref<EntityStore>`
 *   `getTier()` &mdash; zero-based tier index (0 = Tier 1, 4 = Tier 5)
 *   `getRoleName()` &mdash; the NPC role identifier (e.g. `"Skeleton_Frost_Knight"`)
 
@@ -126,30 +126,30 @@ Events that implement `ICancellable` can be cancelled to prevent the action:
 
 ```java
 @Override
-public void onEliteMobSpawned(EliteMobSpawnedEvent event) {
+public void onRPGMobSpawned(RPGMobsSpawnedEvent event) {
     if (event.getTier() >= 4) {
         event.setCancelled(true); // Block Tier 5 spawns
     }
 }
 ```
 
-Cancellable events: `EliteMobSpawnedEvent`, `EliteMobDropsEvent`, `EliteMobDamageDealtEvent`, `EliteMobAbilityStartedEvent`.
+Cancellable events: `RPGMobsSpawnedEvent`, `RPGMobsDropsEvent`, `RPGMobsDamageDealtEvent`, `RPGMobsAbilityStartedEvent`.
 
 ## Query API
 
-The Query API provides read-only access to any elite mob's current state. Access it via `EliteMobsAPI.query()`.
+The Query API provides read-only access to any RPG mob's current state. Access it via `RPGMobsAPI.query()`.
 
 ```java
-import com.frotty27.elitemobs.api.query.IEliteMobsQueryAPI;
+import com.frotty27.rpgmobs.api.query.IRPGMobsQueryAPI;
 
-IEliteMobsQueryAPI query = EliteMobsAPI.query();
+IRPGMobsQueryAPI query = RPGMobsAPI.query();
 ```
 
 ### Identity
 
 | Method | Returns | Description |
 | :--- | :--- | :--- |
-| `isEliteMob(ref)` | `boolean` | Whether the entity is an EliteMobs elite |
+| `isRPGMob(ref)` | `boolean` | Whether the entity is an RPGMobs elite |
 | `getTier(ref)` | `Optional<Integer>` | Zero-based tier index |
 
 ### Scaling
@@ -195,18 +195,18 @@ IEliteMobsQueryAPI query = EliteMobsAPI.query();
 #### Check if an entity is an elite and read its tier
 
 ```java
-IEliteMobsQueryAPI query = EliteMobsAPI.query();
+IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
-if (query.isEliteMob(entityRef)) {
+if (query.isRPGMob(entityRef)) {
     int tier = query.getTier(entityRef).orElse(0);
-    System.out.println("Elite mob detected — Tier " + (tier + 1));
+    System.out.println("RPG mob detected — Tier " + (tier + 1));
 }
 ```
 
 #### Read scaling values for a HUD or tooltip
 
 ```java
-IEliteMobsQueryAPI query = EliteMobsAPI.query();
+IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
 Optional<Float> health = query.getHealthMultiplier(entityRef);
 Optional<Float> damage = query.getDamageMultiplier(entityRef);
@@ -220,7 +220,7 @@ scale.ifPresent(s ->  System.out.println("Model scale: " + s + "x"));
 #### Check combat state and current target
 
 ```java
-IEliteMobsQueryAPI query = EliteMobsAPI.query();
+IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
 if (query.isInCombat(entityRef)) {
     query.getLastAggroTarget(entityRef).ifPresent(targetRef -> {
@@ -235,7 +235,7 @@ if (query.isInCombat(entityRef)) {
 #### Read distance-based progression bonuses
 
 ```java
-IEliteMobsQueryAPI query = EliteMobsAPI.query();
+IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
 query.getSpawnDistance(entityRef).ifPresent(distance -> {
     System.out.println("Spawned " + distance + "m from world origin");
@@ -253,7 +253,7 @@ if (healthBonus.isPresent() && damageBonus.isPresent()) {
 #### Monitor summoned minions
 
 ```java
-IEliteMobsQueryAPI query = EliteMobsAPI.query();
+IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
 query.getSummonedMinionCount(entityRef).ifPresent(count -> {
     System.out.println("Active minions: " + count);
@@ -273,29 +273,29 @@ The `AbilityType` enum defines the built-in abilities:
 ## Example: Full Integration
 
 ```java
-import com.frotty27.elitemobs.api.EliteMobsAPI;
-import com.frotty27.elitemobs.api.IEliteMobsEventListener;
-import com.frotty27.elitemobs.api.events.*;
+import com.frotty27.rpgmobs.api.RPGMobsAPI;
+import com.frotty27.rpgmobs.api.IRPGMobsEventListener;
+import com.frotty27.rpgmobs.api.events.*;
 
-public class MyMod implements IEliteMobsEventListener {
+public class MyMod implements IRPGMobsEventListener {
 
     public void onEnable() {
-        EliteMobsAPI.registerListener(this);
+        RPGMobsAPI.registerListener(this);
     }
 
     public void onDisable() {
-        EliteMobsAPI.unregisterListener(this);
+        RPGMobsAPI.unregisterListener(this);
     }
 
     @Override
-    public void onEliteMobSpawned(EliteMobSpawnedEvent event) {
+    public void onRPGMobSpawned(RPGMobsSpawnedEvent event) {
         // Log spawns for analytics
         System.out.println("Elite spawned: tier=" + event.getTier()
             + " role=" + event.getRoleName());
     }
 
     @Override
-    public void onEliteMobDrops(EliteMobDropsEvent event) {
+    public void onRPGMobDrops(RPGMobsDropsEvent event) {
         // Double drops for Tier 5 elites
         if (event.getTier() == 4) {
             var drops = event.getDrops();
@@ -304,9 +304,9 @@ public class MyMod implements IEliteMobsEventListener {
     }
 
     @Override
-    public void onEliteMobDamageDealt(EliteMobDamageDealtEvent event) {
+    public void onRPGMobDamageDealt(RPGMobsDamageDealtEvent event) {
         // Check if mob is far from spawn using query API
-        var distance = EliteMobsAPI.query()
+        var distance = RPGMobsAPI.query()
             .getSpawnDistance(event.getEntityRef());
 
         if (distance.isPresent() && distance.get() > 5000f) {

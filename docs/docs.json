@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "name": "EliteMobs",
+  "name": "RPGMobs",
   "theme": "willow",
   "logo": {
     "dark": "/images/logo-dark.svg",

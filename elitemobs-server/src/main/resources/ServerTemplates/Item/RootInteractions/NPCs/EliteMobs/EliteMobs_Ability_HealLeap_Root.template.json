@@ -1,5 +1,0 @@
-{
-  "Interactions": [
-    ${features.HealLeap.config.templates.entryInteraction}
-  ]
-}

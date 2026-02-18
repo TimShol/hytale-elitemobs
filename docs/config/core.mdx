@@ -3,7 +3,7 @@ title: Core Settings
 description: Global system settings for diagnostics, reconciliation, and compatibility.
 ---
 
-`core.yml` contains the global system settings that control how EliteMobs behaves behind the scenes. This includes debug logging, config reload behavior, and compatibility with other mods.
+`core.yml` contains the global system settings that control how RPGMobs behaves behind the scenes. This includes debug logging, config reload behavior, and compatibility with other mods.
 
 ## Config Version
 
@@ -16,7 +16,7 @@ This is managed automatically by the mod. Do not edit this value. It is used int
 
 ## Reconcile
 
-When you reload the configuration with `/elitemobs reload`, existing elites in the world need to be updated to match the new settings. The reconcile system handles this.
+When you reload the configuration with `/RPGMobs reload`, existing elites in the world need to be updated to match the new settings. The reconcile system handles this.
 
 ```yaml
 Reconcile:
@@ -49,4 +49,4 @@ Compat:
   showCompatJoinMessages: true
 ```
 
-When a player joins the server, EliteMobs can display a message if it detects compatible mods. Set this to `false` to silence those messages.
+When a player joins the server, RPGMobs can display a message if it detects compatible mods. Set this to `false` to silence those messages.

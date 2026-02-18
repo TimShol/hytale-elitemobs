@@ -1,0 +1,9 @@
+{
+  "Model": "NPC_Spawn_Marker",
+  "NPCs": ${
+  raw.features.UndeadSummon.config.spawnMarkerEntriesJson
+},
+"ManualTrigger": true,
+"ExclusionRadius": 0,
+"MaxDropHeight": 4
+}
