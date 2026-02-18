@@ -1,43 +1,52 @@
 ---
-title: FAQ
-description: Frequently asked questions and troubleshooting.
+title: "FAQ"
+description: "Frequently asked questions and troubleshooting."
 ---
 
 ## Troubleshooting
 
 ### Why aren't elites spawning?
-1.  Check `spawning.yml` -> `globalSpawnChance` (default is `0.15`, or 15%).
-2.  If using `ENVIRONMENT` progression, make sure you are in a supported zone (Zone 1-4).
-3.  Check `mobs.yml` to confirm the NPC type has a matching mob rule with `enabled: true`.
-4.  Check server logs for YAML parsing errors on startup.
+
+1. Check `spawning.yml` -\> `globalSpawnChance` (default is `0.15`, or 15%).
+2. If using `ENVIRONMENT` progression, make sure you are in a supported zone (Zone 1-4).
+3. Check `mobs.yml` to confirm the NPC type has a matching mob rule with `enabled: true`.
+4. Check server logs for YAML parsing errors on startup.
 
 ### Why are mobs one-shotting me?
-Check `stats.yml` -> `mobDamageMultiplierPerTier`. The default Tier 5 multiplier is `2.6`. For vanilla Hytale without armor mods, you might want to lower it to `2.0` or less.
+
+Check `stats.yml` -\> `mobDamageMultiplierPerTier`. The default Tier 5 multiplier is `2.6`. For vanilla Hytale without armor mods, you might want to lower it to `2.0` or less.
 
 ### Why do some mobs have abilities and others don't?
+
 Abilities are gated by tier and mob type. By default, only Tier 4 and 5 elites can use abilities. Additionally, each ability has a `gate` that restricts it to specific mob families (e.g., Undead Summon only works on skeletons/zombies/wraiths, and Charge Leap is disabled for ranged mobs).
 
 ### How do I remove the mod safely?
-1.  Run `/npc clean --confirm` to remove all existing Elite entities.
-2.  Stop the server.
-3.  Remove the JAR file from the `mods` folder.
-4.  Restart the server.
+
+1. Run `/npc clean --confirm` to remove all existing Elite entities.
+2. Stop the server.
+3. Remove the JAR file from the `mods` folder.
+4. Restart the server.
 
 If you skip step 1, you may have leftover entities with broken behavior until they are naturally killed or despawn.
 
 ## Configuration
 
 ### Can I make elites spawn everywhere?
+
 Yes. Set `progressionStyle: NONE` in `spawning.yml`. This randomizes tiers regardless of location using the global `spawnChancePerTier` weights.
 
 ### How do I disable abilities entirely?
+
 In `abilities.yml`, set `isEnabled: false` on each ability you want to disable. You can also disable abilities for specific tiers using the `isEnabledPerTier` array.
 
 ### How do I disable the particle effects?
+
 Particle effects come from the status effects system in `effects.yml`. Set `isEnabled: false` on the `EFFECT_PROJECTILE_RESISTANCE` entry to disable both the effect and its particles.
 
 ### How do I add modded weapons to the loot pool?
-Add the weapon's item ID to the `weaponCatalog` list in `gear.yml`, and add a keyword-to-rarity mapping in `weaponRarityRulesContains`. Then run `/RPGMobs reload`.
+
+Add the weapon's item ID to the `weaponCatalog` list in `gear.yml`, and add a keyword-to-rarity mapping in `weaponRarityRulesContains`. Then run `/rpgmobs reload`.
 
 ### Can I prevent elites from spawning in specific zones?
+
 Yes. In `spawning.yml`, find the `environmentTierSpawns` entry for that zone and set `enabled: false`.
