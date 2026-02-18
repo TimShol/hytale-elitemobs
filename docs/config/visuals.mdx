@@ -11,9 +11,9 @@ Nameplates are the overhead text labels that help players identify an elite's ti
 
 ```yaml
 Nameplates:
-  nameplatesEnabled: true
+  enableMobNameplates: true
   nameplateMode: RANKED_ROLE
-  nameplatePrefixPerTier:
+  monNameplatePrefixPerTier:
     - "[•]"
     - "[• •]"
     - "[• • •]"
@@ -23,10 +23,10 @@ Nameplates:
 
 | Setting | What it does | Default |
 | :--- | :--- | :--- |
-| `nameplatesEnabled` | Master toggle for all elite nameplates. | `true` |
+| `enableMobNameplates` | Master toggle for all elite nameplates. | `true` |
 | `nameplateMode` | `RANKED_ROLE` shows the tier prefix and a themed name (e.g., "[• •] Rotting Zombie"). `SIMPLE` shows just the tier prefix. | `RANKED_ROLE` |
-| `nameplatePrefixPerTier` | The visual indicator prepended to the mob's name for each tier. | See above |
-| `nameplatesEnabledPerTier` | Toggle nameplates per tier individually. | All `true` |
+| `monNameplatePrefixPerTier` | The visual indicator prepended to the mob's name for each tier. | See above |
+| `mobNameplatesEnabledPerTier` | Toggle nameplates per tier individually. | All `true` |
 
 ### Nameplate Filtering
 
@@ -34,11 +34,11 @@ You can control which mobs get nameplates using include/exclude lists.
 
 ```yaml
 Nameplates:
-  nameplateMustContainRoles: []
-  nameplateMustNotContainRoles: []
+  mobNameplateMustContainRoles: []
+  mobNameplateMustNotContainRoles: []
 ```
 
-Leave `nameplateMustContainRoles` empty to allow all mobs. Add role name fragments to restrict nameplates to specific mob types. Use `nameplateMustNotContainRoles` to exclude specific mobs.
+Leave `mobNameplateMustContainRoles` empty to allow all mobs. Add role name fragments to restrict nameplates to specific mob types. Use `mobNameplateMustNotContainRoles` to exclude specific mobs.
 
 ### Family Prefixes
 
@@ -46,7 +46,7 @@ Elites get themed name prefixes based on their mob family. A zombie might be cal
 
 ```yaml
 Nameplates:
-  tierPrefixesByFamily:
+  defaultedTierPrefixesByFamily:
     zombie: ["Rotting", "Ravenous", "Putrid", "Monstrous", "Evolved"]
     skeleton: ["Broken", "Reforged", "Grim", "Deathbound", "Ascendant"]
     goblin: ["Sneaky", "Cutthroat", "Brutal", "Overseer", "Overlord"]
@@ -62,18 +62,18 @@ Makes higher-tier mobs physically larger so players can judge threat level by si
 
 ```yaml
 Model:
-  enableModelScaling: true
-  modelScaleMultiplierPerTier:
+  enableMobModelScaling: true
+  mobModelScaleMultiplierPerTier:
     - 0.74  # Tier 1 — slightly smaller than normal
     - 0.85  # Tier 2
     - 0.96  # Tier 3 — near vanilla size
     - 1.07  # Tier 4 — slightly larger
     - 1.18  # Tier 5 — 18% larger than normal
-  modelScaleRandomVariance: 0.04
+  mobModelScaleRandomVariance: 0.04
 ```
 
 | Setting | What it does | Default |
 | :--- | :--- | :--- |
-| `enableModelScaling` | Toggle size scaling on or off. | `true` |
-| `modelScaleMultiplierPerTier` | Scale multiplier per tier. `1.0` is vanilla size. | See above |
-| `modelScaleRandomVariance` | Random size offset to prevent identical-looking elites. `0.04` means +/-4%. | `0.04` |
+| `enableMobModelScaling` | Toggle size scaling on or off. | `true` |
+| `mobModelScaleMultiplierPerTier` | Scale multiplier per tier. `1.0` is vanilla size. | See above |
+| `mobModelScaleRandomVariance` | Random size offset to prevent identical-looking elites. `0.04` means +/-4%. | `0.04` |

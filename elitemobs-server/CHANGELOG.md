@@ -2,6 +2,13 @@
 
 All notable changes to EliteMobs will be documented in this file.
 
+## [1.1.1] - 2026-02-18
+
+### Changed
+
+- Removed the combat overlay text as this can clash with other mods and is an addition that does not really belong to
+  EliteMobs.
+
 ## [1.1.0] - 2026-02-17
 
 ### Added
