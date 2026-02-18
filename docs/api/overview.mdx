@@ -1,6 +1,6 @@
 ---
-title: API Overview
-description: Integration guide for mod developers who want to hook into RPGMobs events and data.
+title: "API Overview"
+description: "Integration guide for mod developers who want to hook into RPGMobs events and data."
 ---
 
 The RPGMobs API allows other Hytale mods to react to RPG mob events, inspect mob state, and modify behavior at runtime. It ships as a separate `RPGMobs-api` artifact so your mod only depends on the lightweight API interfaces, not the full plugin.
@@ -13,7 +13,7 @@ Add the API JAR as a compile-only dependency in your `build.gradle`:
 
 ```groovy
 dependencies {
-    compileOnly files('libs/RPGMobs-API-1.1.0.jar')
+    compileOnly files('libs/RPGMobs-API-2.0.0.jar')
 }
 ```
 
@@ -21,7 +21,7 @@ Or if published to a Maven repository:
 
 ```groovy
 dependencies {
-    compileOnly 'Frotty27:RPGMobs-api:1.1.0'
+    compileOnly 'Frotty27:RPGMobs-api:2.0.0'
 }
 ```
 
@@ -97,28 +97,28 @@ RPGMobsAPI.registerListener(new MyEliteListener());
 
 ### Available Events
 
-| Event | Fired when | Cancellable | Mutable fields |
-| :--- | :--- | :---: | :--- |
-| `RPGMobsSpawnedEvent` | Elite enters the world | Yes | &mdash; |
-| `RPGMobsDeathEvent` | Elite dies | No | &mdash; |
-| `RPGMobsDropsEvent` | Loot is about to spawn | Yes | `getDrops()` (live list) |
-| `RPGMobsDamageDealtEvent` | Elite deals outgoing damage | Yes | `setMultiplier(float)` |
-| `RPGMobsDamageReceivedEvent` | Elite takes incoming damage | No | &mdash; |
-| `RPGMobsAbilityStartedEvent` | Ability execution begins | Yes | &mdash; |
-| `RPGMobsAbilityCompletedEvent` | Ability finishes normally | No | &mdash; |
-| `RPGMobsAbilityInterruptedEvent` | Ability was interrupted | No | `getReason()` |
-| `RPGMobsAggroEvent` | Elite targets an entity | No | `targetRef()` |
-| `RPGMobsDeaggroEvent` | Elite loses its target | No | &mdash; |
-| `RPGMobsScalingAppliedEvent` | Scaling parameters computed | No | All fields (read-only record) |
-| `RPGMobsReconcileEvent` | Config reconciliation pass | No | &mdash; |
+| Event                            | Fired when                  | Cancellable | Mutable fields                |
+| :------------------------------- | :-------------------------- | :---------: | :---------------------------- |
+| `RPGMobsSpawnedEvent`            | Elite enters the world      | Yes         | —                             |
+| `RPGMobsDeathEvent`              | Elite dies                  | No          | —                             |
+| `RPGMobsDropsEvent`              | Loot is about to spawn      | Yes         | `getDrops()` (live list)      |
+| `RPGMobsDamageDealtEvent`        | Elite deals outgoing damage | Yes         | `setMultiplier(float)`        |
+| `RPGMobsDamageReceivedEvent`     | Elite takes incoming damage | No          | —                             |
+| `RPGMobsAbilityStartedEvent`     | Ability execution begins    | Yes         | —                             |
+| `RPGMobsAbilityCompletedEvent`   | Ability finishes normally   | No          | —                             |
+| `RPGMobsAbilityInterruptedEvent` | Ability was interrupted     | No          | `getReason()`                 |
+| `RPGMobsAggroEvent`              | Elite targets an entity     | No          | `targetRef()`                 |
+| `RPGMobsDeaggroEvent`            | Elite loses its target      | No          | —                             |
+| `RPGMobsScalingAppliedEvent`     | Scaling parameters computed | No          | All fields (read-only record) |
+| `RPGMobsReconcileEvent`          | Config reconciliation pass  | No          | —                             |
 
 ### Base Event Fields
 
 Every event extends `RPGMobsEvent` which provides:
 
-*   `getEntityRef()` &mdash; the RPG mob's `Ref<EntityStore>`
-*   `getTier()` &mdash; zero-based tier index (0 = Tier 1, 4 = Tier 5)
-*   `getRoleName()` &mdash; the NPC role identifier (e.g. `"Skeleton_Frost_Knight"`)
+- `getEntityRef()` — the RPG mob's `Ref<EntityStore>`
+- `getTier()` — zero-based tier index (0 = Tier 1, 4 = Tier 5)
+- `getRoleName()` — the NPC role identifier (e.g. `"Skeleton_Frost_Knight"`)
 
 ### Cancelling Events
 
@@ -147,48 +147,48 @@ IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
 ### Identity
 
-| Method | Returns | Description |
-| :--- | :--- | :--- |
-| `isRPGMob(ref)` | `boolean` | Whether the entity is an RPGMobs elite |
-| `getTier(ref)` | `Optional<Integer>` | Zero-based tier index |
+| Method          | Returns             | Description                            |
+| :-------------- | :------------------ | :------------------------------------- |
+| `isRPGMob(ref)` | `boolean`           | Whether the entity is an RPGMobs elite |
+| `getTier(ref)`  | `Optional<Integer>` | Zero-based tier index                  |
 
 ### Scaling
 
-| Method | Returns | Description |
-| :--- | :--- | :--- |
-| `getHealthMultiplier(ref)` | `Optional<Float>` | Applied health multiplier |
-| `getDamageMultiplier(ref)` | `Optional<Float>` | Applied damage multiplier |
-| `getModelScale(ref)` | `Optional<Float>` | Visual size scale |
-| `isHealthFinalized(ref)` | `boolean` | Whether health scaling has been verified |
+| Method                     | Returns           | Description                              |
+| :------------------------- | :---------------- | :--------------------------------------- |
+| `getHealthMultiplier(ref)` | `Optional<Float>` | Applied health multiplier                |
+| `getDamageMultiplier(ref)` | `Optional<Float>` | Applied damage multiplier                |
+| `getModelScale(ref)`       | `Optional<Float>` | Visual size scale                        |
+| `isHealthFinalized(ref)`   | `boolean`         | Whether health scaling has been verified |
 
 ### Progression
 
-| Method | Returns | Description |
-| :--- | :--- | :--- |
-| `getSpawnDistance(ref)` | `Optional<Float>` | Distance from world origin at spawn |
-| `getDistanceHealthBonus(ref)` | `Optional<Float>` | Bonus health from distance |
-| `getDistanceDamageBonus(ref)` | `Optional<Float>` | Bonus damage from distance |
+| Method                        | Returns           | Description                         |
+| :---------------------------- | :---------------- | :---------------------------------- |
+| `getSpawnDistance(ref)`       | `Optional<Float>` | Distance from world origin at spawn |
+| `getDistanceHealthBonus(ref)` | `Optional<Float>` | Bonus health from distance          |
+| `getDistanceDamageBonus(ref)` | `Optional<Float>` | Bonus damage from distance          |
 
 ### Combat
 
-| Method | Returns | Description |
-| :--- | :--- | :--- |
-| `isInCombat(ref)` | `boolean` | Whether the mob has an active target |
-| `getLastAggroTarget(ref)` | `Optional<Ref<EntityStore>>` | Current or last aggro target |
-| `getLastAggroTick(ref)` | `Optional<Long>` | Server tick of last aggro event |
+| Method                    | Returns                      | Description                          |
+| :------------------------ | :--------------------------- | :----------------------------------- |
+| `isInCombat(ref)`         | `boolean`                    | Whether the mob has an active target |
+| `getLastAggroTarget(ref)` | `Optional<Ref<EntityStore>>` | Current or last aggro target         |
+| `getLastAggroTick(ref)`   | `Optional<Long>`             | Server tick of last aggro event      |
 
 ### Summons
 
-| Method | Returns | Description |
-| :--- | :--- | :--- |
+| Method                        | Returns             | Description                       |
+| :---------------------------- | :------------------ | :-------------------------------- |
 | `getSummonedMinionCount(ref)` | `Optional<Integer>` | Number of active summoned minions |
 
 ### Abilities
 
-| Method | Returns | Description |
-| :--- | :--- | :--- |
-| `getSupportedTriggerTypes()` | `Set<String>` | All registered ability trigger type IDs |
-| `isTriggerTypeSupported(id)` | `boolean` | Whether a specific trigger type is registered |
+| Method                       | Returns       | Description                                   |
+| :--------------------------- | :------------ | :-------------------------------------------- |
+| `getSupportedTriggerTypes()` | `Set<String>` | All registered ability trigger type IDs       |
+| `isTriggerTypeSupported(id)` | `boolean`     | Whether a specific trigger type is registered |
 
 ### Query Examples
 
@@ -264,11 +264,11 @@ query.getSummonedMinionCount(entityRef).ifPresent(count -> {
 
 The `AbilityType` enum defines the built-in abilities:
 
-| Enum | ID | Description |
-| :--- | :--- | :--- |
-| `HEAL_LEAP` | `"HEAL_LEAP"` | Jump to safety and self-heal |
-| `CHARGE_LEAP` | `"CHARGE_LEAP"` | Leap toward target with area damage |
-| `SUMMON_UNDEAD` | `"SUMMON_UNDEAD"` | Spawn undead reinforcements |
+| Enum            | ID                | Description                         |
+| :-------------- | :---------------- | :---------------------------------- |
+| `HEAL_LEAP`     | `"HEAL_LEAP"`     | Jump to safety and self-heal        |
+| `CHARGE_LEAP`   | `"CHARGE_LEAP"`   | Leap toward target with area damage |
+| `SUMMON_UNDEAD` | `"SUMMON_UNDEAD"` | Spawn undead reinforcements         |
 
 ## Example: Full Integration
 
