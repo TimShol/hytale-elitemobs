@@ -50,3 +50,17 @@ Compat:
 ```
 
 When a player joins the server, RPGMobs can display a message if it detects compatible mods. Set this to `false` to silence those messages.
+
+## Integrations
+
+```yaml
+Integrations:
+  RPGLeveling:
+    enabled: true
+```
+
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `RPGLeveling.enabled` | Enables the RPGLeveling integration for tier-scaled XP and minion XP reduction. Requires [RPGLeveling](https://www.curseforge.com/hytale/mods/rpgleveling) to be installed. When active, a separate `rpgleveling.yml` file is generated with XP balance settings. | `true` |
+
+See [Compatibility — RPGLeveling](/reference/compatibility#rpgleveling) for full configuration details.

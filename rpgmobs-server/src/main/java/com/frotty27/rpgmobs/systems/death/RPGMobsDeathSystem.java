@@ -151,7 +151,8 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         );
         Ref<EntityStore> killerRef = (combatTracking != null) ? combatTracking.getBestTarget() : null;
         if (killerRef != null && !killerRef.isValid()) killerRef = null;
-        plugin.getEventBus().fire(new RPGMobsDeathEvent(ref,
+        plugin.getEventBus().fire(new RPGMobsDeathEvent(npc.getWorld(),
+                                                        ref,
                                                         tierId,
                                                         roleName,
                                                         killerRef,
@@ -161,7 +162,7 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         if (drops.isEmpty()) return;
 
 
-        var dropsEvent = new RPGMobsDropsEvent(ref, tierId, roleName, drops, pos.clone());
+        var dropsEvent = new RPGMobsDropsEvent(npc.getWorld(), ref, tierId, roleName, drops, pos.clone());
         plugin.getEventBus().fire(dropsEvent);
         if (dropsEvent.isCancelled() || drops.isEmpty()) return;
 
@@ -239,6 +240,10 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         if (summonerTracking == null) return;
         summonerTracking.decrementCount();
         commandBuffer.replaceComponent(summonerRef, plugin.getSummonMinionTrackingComponentType(), summonerTracking);
+    }
+
+    RPGMobsPlugin getPlugin() {
+        return plugin;
     }
 
     ComponentType<EntityStore, RPGMobsSummonedMinionComponent> getSummonedMinionComponentType() {

@@ -144,7 +144,9 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
             configHealthMult = config.healthConfig.mobHealthMultiplierPerTier[tierIndex];
         }
 
-        if (Math.abs(configHealthMult - healthComp.appliedHealthMult) <= 0.001f) {
+        boolean healthMultChanged = Math.abs(configHealthMult - healthComp.appliedHealthMult) > 0.001f;
+
+        if (!healthMultChanged) {
             return;
         }
 
@@ -254,7 +256,6 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
         }
 
         float totalMultiplier = tierHealthMult + distanceHealthBonus;
-
 
         EntityStatMap entityStats = store.getComponent(npcRef, EntityStatMap.getComponentType());
         if (entityStats == null) return;

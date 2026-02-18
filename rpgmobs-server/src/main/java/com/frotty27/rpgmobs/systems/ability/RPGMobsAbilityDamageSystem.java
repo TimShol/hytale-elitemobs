@@ -80,7 +80,8 @@ public final class RPGMobsAbilityDamageSystem extends DamageEventSystem {
             dmgAttackerRef = src.getRef();
         }
         String victimRole = npcEntity != null && npcEntity.getRoleName() != null ? npcEntity.getRoleName() : "";
-        plugin.getEventBus().fire(new RPGMobsDamageReceivedEvent(victimRef,
+        plugin.getEventBus().fire(new RPGMobsDamageReceivedEvent(npcEntity != null ? npcEntity.getWorld() : null,
+                                                                 victimRef,
                                                                  tierIndex,
                                                                  victimRole,
                                                                  dmgAttackerRef,

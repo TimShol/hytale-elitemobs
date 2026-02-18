@@ -110,7 +110,7 @@ Custom weapons and armor from other mods can be added to the equipment catalogs 
 
 **[Perfect Parries](https://www.curseforge.com/hytale/mods/perfect-parries)** — Adds more depth and skill-based combat, especially against elite enemies.
 
-**[RPGLeveling](https://www.curseforge.com/hytale/mods/rpg-leveling-and-stats)** — Adds experience, levels, zones, (even more) difficulty scaling and stat-based progression.
+**[RPGLeveling](https://www.curseforge.com/hytale/mods/rpg-leveling-and-stats)** — Adds experience, levels, zones, (even more) difficulty scaling and stat-based progression. RPGMobs auto-generates a `rpgleveling.yml` config with tier-scaled XP multipliers, ability-based XP bonuses, and minion XP reduction.
 
 ***
 

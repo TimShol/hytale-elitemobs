@@ -37,11 +37,9 @@ import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.server.core.asset.type.environment.config.Environment;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
+import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
-import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
-import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
-import com.hypixel.hytale.server.core.modules.entitystats.modifier.Modifier;
-import com.hypixel.hytale.server.core.modules.entitystats.modifier.StaticModifier;
 import com.hypixel.hytale.server.core.modules.physics.component.Velocity;
 import com.hypixel.hytale.server.core.universe.world.ParticleUtil;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -74,10 +72,6 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
      * Ticks between each minion death in the chain reaction (~3 per second at 20 TPS).
      */
     private static final long CHAIN_DEATH_STAGGER_TICKS = Constants.TICKS_PER_SECOND / 3;
-    /**
-     * Modifier key used to zero out health for chain-death kills.
-     */
-    private static final String CHAIN_DEATH_HEALTH_MODIFIER_KEY = "RPGMobs_chain_death";
     /**
      * Particle system spawned as a one-shot burst when a minion chain-dies.
      */
@@ -229,7 +223,8 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         equipmentService.buildAndApply(npcEntity, config, tierIndex, matchResult.mobRule());
 
         TransformComponent spawnTransform = entityStore.getComponent(npcRef, TransformComponent.getComponentType());
-        var spawnedEvent = new RPGMobsSpawnedEvent(npcRef,
+        var spawnedEvent = new RPGMobsSpawnedEvent(npcEntity.getWorld(),
+                                                   npcRef,
                                                    tierIndex,
                                                    roleName,
                                                    spawnTransform != null ? spawnTransform.getPosition().clone() : new Vector3d()
@@ -333,7 +328,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                                     currentTick
                 );
                 spawnChainDeathExplosion(npcRef, store);
-                killMinionViaHealth(npcRef, store, commandBuffer);
+                killMinion(npcRef, commandBuffer);
                 minion.chainDeathAtTick = -1L;
                 commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getSummonedMinionComponentType(), minion);
             }
@@ -380,24 +375,14 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
     }
 
     /**
-     * Kills a minion by applying a -1.0 multiplicative modifier on MAX health,
-     * which triggers the engine's natural death system (animation + sound).
+     * Kills a minion via the engine's death system, triggering the proper death
+     * animation, sound, and loot suppression via
+     * {@link com.frotty27.rpgmobs.systems.death.RPGMobsMinionDeathHandler}.
+     * The chain-death explosion particle is spawned separately before calling this.
      */
-    private void killMinionViaHealth(Ref<EntityStore> npcRef, Store<EntityStore> store,
-                                     CommandBuffer<EntityStore> commandBuffer) {
-        EntityStatMap entityStats = store.getComponent(npcRef, EntityStatMap.getComponentType());
-        if (entityStats == null) return;
-
-        int healthStatId = DefaultEntityStatTypes.getHealth();
-        entityStats.putModifier(healthStatId,
-                                CHAIN_DEATH_HEALTH_MODIFIER_KEY,
-                                new StaticModifier(Modifier.ModifierTarget.MAX,
-                                                   StaticModifier.CalculationType.MULTIPLICATIVE,
-                                                   -1.0f
-                                )
-        );
-        entityStats.update();
-        commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
+    private void killMinion(Ref<EntityStore> npcRef, CommandBuffer<EntityStore> commandBuffer) {
+        Damage damage = new Damage(Damage.NULL_SOURCE, DamageCause.ENVIRONMENT, Float.MAX_VALUE);
+        DeathComponent.tryAddComponent(commandBuffer, npcRef, damage);
     }
 
     public boolean applyTierFromCommand(RPGMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
@@ -425,7 +410,8 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         featureRegistry.applyAll(RPGMobsPlugin, config, npcRef, entityStore, commandBuffer, newTierComponent, roleName);
 
         TransformComponent spawnTransform = entityStore.getComponent(npcRef, TransformComponent.getComponentType());
-        RPGMobsPlugin.getEventBus().fire(new RPGMobsSpawnedEvent(npcRef,
+        RPGMobsPlugin.getEventBus().fire(new RPGMobsSpawnedEvent(npcEntity.getWorld(),
+                                                                 npcRef,
                                                                  clampedTierIndex,
                                                                  roleName,
                                                                  spawnTransform != null ? spawnTransform.getPosition().clone() : new Vector3d()

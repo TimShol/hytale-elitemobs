@@ -17,6 +17,49 @@ Mod developers who want to react to elite events, query mob state, or modify loo
 
 See the [API Overview](/api/overview) for setup instructions, event types, and query methods.
 
+## RPGLeveling
+
+RPGMobs has built-in support for [RPGLeveling](https://www.curseforge.com/hytale/mods/rpgleveling). When both mods are installed, elite kills grant tier-scaled XP and summoned minion kills grant reduced XP. The integration activates automatically when RPGLeveling is detected.
+
+### XP Scaling
+
+- **Tier multiplier**: XP from elite kills is multiplied by a per-tier value (default: 1× / 1.5× / 2× / 3× / 5× for Tiers 1–5)
+- **Ability bonus**: Elites with active abilities (Charge Leap, Heal Potion, Undead Summon) grant bonus XP per ability
+- **Minion reduction**: Summoned minion kills grant only 5% of the base XP to prevent XP farming
+
+### Configuration
+
+RPGMobs generates a standalone `rpgleveling.yml` in the mod config directory when RPGLeveling is detected:
+
+```yaml
+# XP multiplier per tier. Applied to the base XP determined by RPGLeveling.
+# Example: Tier 3 with 2.0 means the player receives 2x the base XP.
+XP:
+  xpMultiplierPerTier:
+    - 1.0
+    - 1.5
+    - 2.0
+    - 3.0
+    - 5.0
+
+  # Bonus XP added for each active ability on the killed elite.
+  xpBonusPerAbility: 1000.0
+
+  # XP multiplier for summoned minion kills.
+  # 0.05 = 5% of the base XP. Set to 0.0 to grant no XP for minions.
+  minionXPMultiplier: 0.05
+```
+
+To enable or disable the integration, set `enabled` in `core.yml` under `Integrations.RPGLeveling`:
+
+```yaml
+Integrations:
+  RPGLeveling:
+    enabled: true
+```
+
+Set `enabled: false` to disable the integration entirely. The `rpgleveling.yml` file is only generated when RPGLeveling is present and the integration is enabled.
+
 ## Custom Item Mods
 
 If you have a mod that adds new weapons or armor (e.g., `SpartanWeaponry_Longsword_Iron`), you need to add those item IDs to the `weaponCatalog` or `armorMaterials` lists in `gear.yml`. Otherwise, elites will never equip them.

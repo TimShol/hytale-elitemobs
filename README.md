@@ -64,6 +64,11 @@ Full configuration guides, developer API reference, and troubleshooting:
 - Per-zone tier distribution with configurable weights
 - Distance-based stat bonuses for smooth difficulty curves
 
+### Integrations
+
+- Built-in RPGLeveling support with tier-scaled XP, ability-based XP bonuses, and minion XP reduction
+- Standalone `rpgleveling.yml` config auto-generated when RPGLeveling is detected
+
 ### For Developers
 
 - Event-driven API with 12 event types (spawn, death, damage, abilities, aggro, loot)
@@ -104,6 +109,7 @@ Full configuration guides, developer API reference, and troubleshooting:
 | `visuals.yml`     | Nameplates, model scaling                            |
 | `effects.yml`     | Status effects and particles                         |
 | `mobrules.yml`    | NPC rules, weapon overrides, family assignments      |
+| `rpgleveling.yml` | RPGLeveling XP scaling (auto-generated when detected)|
 
 ## Runtime Reload
 
