@@ -1,6 +1,7 @@
 package com.frotty27.rpgmobs.api.events;
 
 import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.Nullable;
 
@@ -21,6 +22,7 @@ public final class RPGMobsDamageReceivedEvent extends RPGMobsEvent {
     /**
      * Constructs a new damage received event.
      *
+     * @param world        the world in which the damage occurred
      * @param victimRef    the entity reference of the RPG mob that received damage
      * @param tier         the tier index of the RPG mob
      * @param roleName     the role name of the RPG mob
@@ -28,9 +30,9 @@ public final class RPGMobsDamageReceivedEvent extends RPGMobsEvent {
      *                     the damage was not caused by another entity
      * @param damageAmount the amount of damage received
      */
-    public RPGMobsDamageReceivedEvent(Ref<EntityStore> victimRef, int tier, String roleName,
+    public RPGMobsDamageReceivedEvent(World world, Ref<EntityStore> victimRef, int tier, String roleName,
                                       @Nullable Ref<EntityStore> attackerRef, float damageAmount) {
-        super(victimRef, tier, roleName);
+        super(world, victimRef, tier, roleName);
         this.attackerRef = attackerRef;
         this.damageAmount = damageAmount;
     }

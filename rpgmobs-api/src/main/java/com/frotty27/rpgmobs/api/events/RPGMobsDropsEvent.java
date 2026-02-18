@@ -3,6 +3,7 @@ package com.frotty27.rpgmobs.api.events;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.List;
@@ -25,15 +26,16 @@ public final class RPGMobsDropsEvent extends RPGMobsEvent implements ICancellabl
     /**
      * Constructs a new drops event.
      *
+     * @param world     the world in which the drops are being spawned
      * @param entityRef the entity reference of the RPG mob whose drops are being spawned
      * @param tier      the tier index of the RPG mob
      * @param roleName  the role name of the RPG mob
      * @param drops     the mutable list of item stacks to drop; listeners may modify this list
      * @param position  the world position where the drops will be spawned
      */
-    public RPGMobsDropsEvent(Ref<EntityStore> entityRef, int tier, String roleName, List<ItemStack> drops,
+    public RPGMobsDropsEvent(World world, Ref<EntityStore> entityRef, int tier, String roleName, List<ItemStack> drops,
                              Vector3d position) {
-        super(entityRef, tier, roleName);
+        super(world, entityRef, tier, roleName);
         this.drops = drops;
         this.position = position;
     }

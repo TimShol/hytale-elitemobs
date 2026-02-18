@@ -43,6 +43,12 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         return store.getComponent(entityRef, plugin.getRPGMobsComponentType()) != null;
     }
 
+    @Override
+    public boolean isMinion(Ref<EntityStore> entityRef) {
+        if (entityRef == null) return false;
+        Store<EntityStore> store = getStore(entityRef);
+        return store.getComponent(entityRef, plugin.getSummonedMinionComponentType()) != null;
+    }
 
     @Override
     public Optional<Float> getDistanceHealthBonus(Ref<EntityStore> entityRef) {

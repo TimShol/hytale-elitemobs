@@ -2,6 +2,16 @@
 
 All notable changes to RPGMobs API will be documented in this file.
 
+## [1.1.0] - 2026-02-18
+
+### Added
+
+- `RPGMobsEvent.getWorld()` — returns the `World` in which the event occurred, available on all event types
+- `RPGMobsEvent.getEntityUuid()` — returns the entity's `UUID`, eagerly resolved at event construction time
+- `RPGMobsDeathEvent.isMinion()` — distinguishes summoned minion deaths from regular RPG mob deaths
+- `IRPGMobsQueryAPI.isMinion(Ref<EntityStore>)` — checks whether an entity is a summoned minion
+- Death events now fire for summoned minions (with `isMinion()` returning `true`)
+
 ## [1.0.0] - 2026-02-18
 
 ### Added

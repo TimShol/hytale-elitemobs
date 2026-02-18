@@ -219,7 +219,8 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
 
         NPCEntity attackerNpc = entityStore.getComponent(attackerEntityRef, NPC_COMPONENT_TYPE);
         String attackerRole = safeRoleName(attackerNpc);
-        var damageEvent = new RPGMobsDamageDealtEvent(attackerEntityRef,
+        var damageEvent = new RPGMobsDamageDealtEvent(attackerNpc != null ? attackerNpc.getWorld() : null,
+                                                      attackerEntityRef,
                                                       clampedTierIndex,
                                                       attackerRole,
                                                       victimRef,

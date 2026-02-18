@@ -2,6 +2,19 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [2.0.2] - 2026-02-18
+
+### Added
+
+- RPGLeveling integration with standalone `rpgleveling.yml` configuration — tier-scaled XP multipliers, XP bonus per active ability, and minion XP reduction. Generated automatically when RPGLeveling is detected, configurable via `Integrations.RPGLeveling.enabled` in `core.yml`
+- API: `getWorld()` and `getEntityUuid()` on all RPGMobs events
+- API: `isMinion()` on death events and query API
+- Death events now fire for summoned minions
+
+### Fixed
+
+- Summoned minions no longer survive when their summoner is killed after re-log or server restart — chain death now properly kills minions instead of applying an unreliable health modifier
+
 ## [2.0.1] - 2026-02-18
 
 ### Removed

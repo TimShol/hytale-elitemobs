@@ -77,7 +77,8 @@ public final class RPGMobsAITargetPollingSystem extends EntityTickingSystem<Enti
                             commandBuffer.replaceComponent(mobRef, plugin.getCombatTrackingComponentType(), combat);
 
                             String roleName = npc.getRoleName();
-                            plugin.getEventBus().fire(new RPGMobsAggroEvent(mobRef,
+                            plugin.getEventBus().fire(new RPGMobsAggroEvent(npc.getWorld(),
+                                                                            mobRef,
                                                                             aiTarget,
                                                                             tier.tierIndex,
                                                                             roleName != null ? roleName : ""
@@ -102,7 +103,8 @@ public final class RPGMobsAITargetPollingSystem extends EntityTickingSystem<Enti
                     RPGMobsTierComponent deaggroTier = store.getComponent(mobRef, plugin.getRPGMobsComponentType());
                     int deaggroTierIndex = (deaggroTier != null) ? deaggroTier.tierIndex : 0;
                     String deaggroRole = npc.getRoleName();
-                    plugin.getEventBus().fire(new RPGMobsDeaggroEvent(mobRef,
+                    plugin.getEventBus().fire(new RPGMobsDeaggroEvent(npc.getWorld(),
+                                                                      mobRef,
                                                                       deaggroTierIndex,
                                                                       deaggroRole != null ? deaggroRole : ""
                     ));

@@ -37,6 +37,18 @@ public interface IRPGMobsQueryAPI {
     boolean isRPGMob(Ref<EntityStore> entityRef);
 
     /**
+     * Returns whether the specified entity is a summoned minion of an RPG mob.
+     *
+     * <p>A minion is a mob that was spawned by another RPG mob's summon ability,
+     * rather than through the normal spawn system.</p>
+     *
+     * @param entityRef the entity reference to query
+     * @return {@code true} if the entity is a summoned minion, {@code false} otherwise
+     * @since 2.0.2
+     */
+    boolean isMinion(Ref<EntityStore> entityRef);
+
+    /**
      * Returns the distance-based health bonus applied to the specified RPG mob.
      *
      * <p>This bonus is determined by how far the mob spawned from the world origin,

@@ -1,6 +1,7 @@
 package com.frotty27.rpgmobs.api.events;
 
 import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
@@ -24,6 +25,7 @@ public final class RPGMobsDamageDealtEvent extends RPGMobsEvent implements ICanc
     /**
      * Constructs a new damage dealt event.
      *
+     * @param world       the world in which the damage occurred
      * @param attackerRef the entity reference of the attacking RPG mob
      * @param tier        the tier index of the attacking RPG mob
      * @param roleName    the role name of the attacking RPG mob
@@ -31,9 +33,9 @@ public final class RPGMobsDamageDealtEvent extends RPGMobsEvent implements ICanc
      * @param baseDamage  the base (unscaled) damage amount
      * @param multiplier  the initial damage multiplier applied by the RPG mob's tier
      */
-    public RPGMobsDamageDealtEvent(Ref<EntityStore> attackerRef, int tier, String roleName, Ref<EntityStore> victimRef,
-                                   float baseDamage, float multiplier) {
-        super(attackerRef, tier, roleName);
+    public RPGMobsDamageDealtEvent(World world, Ref<EntityStore> attackerRef, int tier, String roleName,
+                                   Ref<EntityStore> victimRef, float baseDamage, float multiplier) {
+        super(world, attackerRef, tier, roleName);
         this.victimRef = victimRef;
         this.baseDamage = baseDamage;
         this.multiplier = multiplier;

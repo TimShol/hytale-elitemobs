@@ -100,7 +100,7 @@ RPGMobsAPI.registerListener(new MyEliteListener());
 | Event                            | Fired when                  | Cancellable | Mutable fields                |
 | :------------------------------- | :-------------------------- | :---------: | :---------------------------- |
 | `RPGMobsSpawnedEvent`            | Elite enters the world      | Yes         | —                             |
-| `RPGMobsDeathEvent`              | Elite dies                  | No          | —                             |
+| `RPGMobsDeathEvent`              | Elite or minion dies        | No          | `isMinion()`                  |
 | `RPGMobsDropsEvent`              | Loot is about to spawn      | Yes         | `getDrops()` (live list)      |
 | `RPGMobsDamageDealtEvent`        | Elite deals outgoing damage | Yes         | `setMultiplier(float)`        |
 | `RPGMobsDamageReceivedEvent`     | Elite takes incoming damage | No          | —                             |
@@ -116,7 +116,9 @@ RPGMobsAPI.registerListener(new MyEliteListener());
 
 Every event extends `RPGMobsEvent` which provides:
 
+- `getWorld()` — the `World` in which the event occurred *(since 1.1.0)*
 - `getEntityRef()` — the RPG mob's `Ref<EntityStore>`
+- `getEntityUuid()` — the entity's `UUID`, or `null` if unavailable *(since 1.1.0)*
 - `getTier()` — zero-based tier index (0 = Tier 1, 4 = Tier 5)
 - `getRoleName()` — the NPC role identifier (e.g. `"Skeleton_Frost_Knight"`)
 
@@ -147,10 +149,11 @@ IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
 ### Identity
 
-| Method          | Returns             | Description                            |
-| :-------------- | :------------------ | :------------------------------------- |
-| `isRPGMob(ref)` | `boolean`           | Whether the entity is an RPGMobs elite |
-| `getTier(ref)`  | `Optional<Integer>` | Zero-based tier index                  |
+| Method          | Returns             | Description                                    |
+| :-------------- | :------------------ | :--------------------------------------------- |
+| `isRPGMob(ref)` | `boolean`           | Whether the entity is an RPGMobs elite         |
+| `isMinion(ref)` | `boolean`           | Whether the entity is a summoned minion        |
+| `getTier(ref)`  | `Optional<Integer>` | Zero-based tier index                          |
 
 ### Scaling
 
@@ -255,9 +258,29 @@ if (healthBonus.isPresent() && damageBonus.isPresent()) {
 ```java
 IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
+if (query.isMinion(entityRef)) {
+    System.out.println("This entity is a summoned minion");
+}
+
 query.getSummonedMinionCount(entityRef).ifPresent(count -> {
     System.out.println("Active minions: " + count);
 });
+```
+
+#### Filter minion deaths
+
+```java
+@Override
+public void onRPGMobDeath(RPGMobsDeathEvent event) {
+    if (event.isMinion()) {
+        // Skip minion deaths — only reward XP for real elites
+        return;
+    }
+    int tier = event.getTier();
+    UUID uuid = event.getEntityUuid();
+    World world = event.getWorld();
+    System.out.println("Elite killed in " + world + " — tier " + (tier + 1));
+}
 ```
 
 ## Ability Types

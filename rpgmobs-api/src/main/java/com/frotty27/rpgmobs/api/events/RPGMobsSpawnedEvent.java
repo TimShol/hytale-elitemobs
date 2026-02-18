@@ -2,6 +2,7 @@ package com.frotty27.rpgmobs.api.events;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
@@ -20,13 +21,14 @@ public final class RPGMobsSpawnedEvent extends RPGMobsEvent implements ICancella
     /**
      * Constructs a new spawned event.
      *
+     * @param world     the world in which the RPG mob spawned
      * @param entityRef the entity reference of the spawned RPG mob
      * @param tier      the tier index of the RPG mob
      * @param roleName  the role name of the RPG mob
      * @param position  the world position where the RPG mob spawned
      */
-    public RPGMobsSpawnedEvent(Ref<EntityStore> entityRef, int tier, String roleName, Vector3d position) {
-        super(entityRef, tier, roleName);
+    public RPGMobsSpawnedEvent(World world, Ref<EntityStore> entityRef, int tier, String roleName, Vector3d position) {
+        super(world, entityRef, tier, roleName);
         this.position = position;
     }
 

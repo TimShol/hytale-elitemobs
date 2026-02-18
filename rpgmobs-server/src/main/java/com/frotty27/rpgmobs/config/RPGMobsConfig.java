@@ -66,6 +66,7 @@ public final class RPGMobsConfig {
     public final AssetGeneratorConfig assetGenerator = new AssetGeneratorConfig();
     public final AbilitiesConfig abilitiesConfig = new AbilitiesConfig();
     public final EffectsConfig effectsConfig = new EffectsConfig();
+    public final IntegrationsConfig integrationsConfig = new IntegrationsConfig();
     public final DebugConfig debugConfig = new DebugConfig();
     public final ReconcileConfig reconcileConfig = new ReconcileConfig();
 
@@ -570,6 +571,17 @@ public final class RPGMobsConfig {
         @Default
         @Cfg(group = "Reconcile", file = "core.yml", comment = "Announce when reconciliation starts and ends in the logs.")
         public boolean announceReconcile = true;
+    }
+
+    public static final class IntegrationsConfig {
+
+        public final RPGLevelingConfig rpgLeveling = new RPGLevelingConfig();
+
+        public static final class RPGLevelingConfig {
+            @Default
+            @Cfg(group = "Integrations.RPGLeveling", file = "core.yml", comment = "Enable RPGLeveling XP integration. Requires RPGLeveling to be installed.")
+            public boolean enabled = true;
+        }
     }
 
     public enum NameplateMode {

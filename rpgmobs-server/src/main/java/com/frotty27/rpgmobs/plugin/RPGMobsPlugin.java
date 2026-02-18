@@ -25,6 +25,7 @@ import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.config.schema.YamlSerializer;
 import com.frotty27.rpgmobs.features.RPGMobsFeatureRegistry;
 import com.frotty27.rpgmobs.features.RPGMobsSpawningFeature;
+import com.frotty27.rpgmobs.integrations.RPGLevelingIntegration;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.nameplates.RPGMobsNameplateService;
 import com.frotty27.rpgmobs.systems.combat.RPGMobsAITargetPollingSystem;
@@ -83,6 +84,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
     private final RPGMobsAssetRetriever RPGMobsAssetRetriever = new RPGMobsAssetRetriever(this);
     private final RPGMobsFeatureRegistry featureRegistry = new RPGMobsFeatureRegistry(this);
     private final RPGMobsEventBus eventBus = new RPGMobsEventBus();
+    private RPGLevelingIntegration rpgLevelingIntegration;
 
     private final AtomicBoolean reconcileRequested = new AtomicBoolean(false);
     private final AtomicInteger reconcileTicksRemaining = new AtomicInteger(0);
@@ -107,6 +109,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         registerComponents();
         registerSystems();
         registerCommands();
+        registerIntegrations();
 
         LOGGER.atInfo().log("Setup complete!");
     }
@@ -161,6 +164,10 @@ public final class RPGMobsPlugin extends JavaPlugin {
             assetModule.registerPack(ASSET_PACK_NAME, RPGMobsDir, getManifest(), true);
             LOGGER.atInfo().log("[RPGMobs] Reloaded config & regenerated assets successfully!");
             reloadNpcRoleAssetsIfPossible();
+
+            if (rpgLevelingIntegration != null) {
+                rpgLevelingIntegration.reloadBalanceConfig();
+            }
         } catch (Throwable error) {
             LOGGER.atWarning().log("[RPGMobs] Failed to reload: %s", error.toString());
             error.printStackTrace();
@@ -209,7 +216,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         LOGGER.atInfo().log("Config loaded/reloaded from: %s", modDirectory.toAbsolutePath());
     }
 
-    private Path getModDirectory() {
+    public Path getModDirectory() {
         return getDataDirectory().getParent().resolve("RPGMobs");
     }
 
@@ -349,6 +356,13 @@ public final class RPGMobsPlugin extends JavaPlugin {
         LOGGER.atInfo().log("Registered RPGMobs commands");
     }
 
+    private void registerIntegrations() {
+        RPGLevelingIntegration integration = new RPGLevelingIntegration(this);
+        if (integration.tryActivate()) {
+            rpgLevelingIntegration = integration;
+        }
+    }
+
     public RPGMobsVanillaDropsCullZoneManager getMobDropsCleanupManager() {
         return cullZoneManager;
     }
@@ -440,6 +454,10 @@ public final class RPGMobsPlugin extends JavaPlugin {
 
     public RPGMobsEventBus getEventBus() {
         return eventBus;
+    }
+
+    public RPGLevelingIntegration getRPGLevelingIntegration() {
+        return rpgLevelingIntegration;
     }
 
     public void requestReconcileOnNextWorldTick() {
