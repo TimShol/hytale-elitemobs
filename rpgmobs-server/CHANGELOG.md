@@ -2,6 +2,12 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [2.0.0] - 2026-02-18
+
+### Changed
+
+- Rebranded to RPGMobs.
+
 ## [1.1.1] - 2026-02-18
 
 ### Changed
