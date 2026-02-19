@@ -1,10 +1,13 @@
 package com.frotty27.rpgmobs.features;
 
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig.AbilityConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig.SummonAbilityConfig;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
+import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.utils.AbilityHelpers;
+import com.frotty27.rpgmobs.utils.Constants;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
@@ -17,6 +20,8 @@ import com.hypixel.hytale.server.core.entity.InteractionManager;
 import com.hypixel.hytale.server.core.modules.interaction.InteractionModule;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.RootInteraction;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import org.jspecify.annotations.Nullable;
 
 public final class RPGMobsAbilityFeatureHelpers {
 
@@ -24,6 +29,35 @@ public final class RPGMobsAbilityFeatureHelpers {
     private static final String DEFAULT_IDENTIFIER = "default";
 
     private RPGMobsAbilityFeatureHelpers() {
+    }
+
+    /**
+     * Resolves the InstanceRule for the NPC's world, or null if instances config is disabled.
+     */
+    public static InstancesConfig.@Nullable InstanceRule resolveInstanceRule(RPGMobsPlugin plugin,
+                                                                             Ref<EntityStore> npcRef,
+                                                                             Store<EntityStore> entityStore) {
+        InstancesConfig instancesConfig = plugin.getInstancesConfig();
+        if (instancesConfig == null || !instancesConfig.enabled) return null;
+
+        NPCEntity npc = entityStore.getComponent(npcRef, Constants.NPC_COMPONENT_TYPE);
+        if (npc == null || npc.getWorld() == null) return null;
+
+        return instancesConfig.resolveRule(npc.getWorld().getName());
+    }
+
+    /**
+     * Returns the item ID of the NPC's currently held weapon, or empty string if unavailable.
+     */
+    public static String resolveWeaponId(Ref<EntityStore> npcRef, Store<EntityStore> entityStore) {
+        NPCEntity npc = entityStore.getComponent(npcRef, Constants.NPC_COMPONENT_TYPE);
+        if (npc == null) return "";
+        var inventory = npc.getInventory();
+        if (inventory == null) return "";
+        var itemInHand = inventory.getItemInHand();
+        if (itemInHand == null || itemInHand.isEmpty()) return "";
+        String itemId = itemInHand.getItemId();
+        return itemId != null ? itemId : "";
     }
 
     public static String resolveSummonRoleIdentifier(AbilityConfig summonConfig, String roleName) {

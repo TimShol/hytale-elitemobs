@@ -7,6 +7,7 @@ import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsHealthScalingComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsModelScalingComponent;
 import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.features.RPGMobsHealthScalingFeature;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
@@ -139,10 +140,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
         if (tierComp == null) return;
 
         int tierIndex = tierComp.tierIndex;
-        float configHealthMult = 1.0f;
-        if (config.healthConfig.mobHealthMultiplierPerTier != null && config.healthConfig.mobHealthMultiplierPerTier.length > tierIndex) {
-            configHealthMult = config.healthConfig.mobHealthMultiplierPerTier[tierIndex];
-        }
+        float configHealthMult = resolveHealthMultiplier(config, npcRef, store, tierIndex);
 
         boolean healthMultChanged = Math.abs(configHealthMult - healthComp.appliedHealthMult) > 0.001f;
 
@@ -236,11 +234,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
 
 
         int tierIndex = tierComponent.tierIndex;
-        float tierHealthMult = 1.0f;
-        if (config.healthConfig.mobHealthMultiplierPerTier != null && config.healthConfig.mobHealthMultiplierPerTier.length > tierIndex) {
-            tierHealthMult = config.healthConfig.mobHealthMultiplierPerTier[tierIndex];
-        }
-
+        float tierHealthMult = resolveHealthMultiplier(config, npcRef, store, tierIndex);
 
         float distanceHealthBonus = 0f;
         RPGMobsProgressionComponent progressionComponent = store.getComponent(npcRef,
@@ -430,5 +424,28 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
                                     )
             );
         });
+    }
+
+    /**
+     * Resolves the health multiplier for the given tier, checking instance rules first.
+     * If instance rules provide a per-tier override, that takes priority over global config.
+     */
+    private float resolveHealthMultiplier(RPGMobsConfig config, Ref<EntityStore> npcRef,
+                                           Store<EntityStore> store, int tierIndex) {
+        InstancesConfig instancesConfig = plugin.getInstancesConfig();
+        if (instancesConfig != null && instancesConfig.enabled) {
+            NPCEntity npc = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+            if (npc != null && npc.getWorld() != null) {
+                String worldName = npc.getWorld().getName();
+                InstancesConfig.InstanceRule instanceRule = instancesConfig.resolveRule(worldName);
+                if (instanceRule != null && instanceRule.healthMultiplierPerTier != null && instanceRule.healthMultiplierPerTier.length > tierIndex) {
+                    return instanceRule.healthMultiplierPerTier[tierIndex];
+                }
+            }
+        }
+        if (config.healthConfig.mobHealthMultiplierPerTier != null && config.healthConfig.mobHealthMultiplierPerTier.length > tierIndex) {
+            return config.healthConfig.mobHealthMultiplierPerTier[tierIndex];
+        }
+        return 1.0f;
     }
 }

@@ -34,7 +34,7 @@ public final class RPGMobsEquipmentService {
 
         boolean inventoryChanged = false;
 
-        inventoryChanged |= equipArmor(inventory.getArmor(), config, clampedTierIndex);
+        inventoryChanged |= equipArmor(inventory.getArmor(), config, clampedTierIndex, mobRule.allowedArmorSlots);
 
 
         ItemStack chosenWeapon = maybePickWeapon(inventory, config, clampedTierIndex, mobRule);
@@ -56,7 +56,8 @@ public final class RPGMobsEquipmentService {
         if (inventoryChanged) inventory.markChanged();
     }
 
-    private boolean equipArmor(ItemContainer armorContainer, RPGMobsConfig config, int tierIndex) {
+    private boolean equipArmor(ItemContainer armorContainer, RPGMobsConfig config, int tierIndex,
+                               List<String> allowedArmorSlots) {
         if (armorContainer == null) return false;
 
         if (config.gearConfig.armorPiecesToEquipPerTier == null || config.gearConfig.armorPiecesToEquipPerTier.length <= tierIndex) {
@@ -88,6 +89,16 @@ public final class RPGMobsEquipmentService {
         }
 
         List<ArmorSlot> availableSlots = new ArrayList<>(List.of(ArmorSlot.values()));
+
+        if (allowedArmorSlots != null && !allowedArmorSlots.isEmpty()) {
+            Set<String> allowed = new HashSet<>();
+            for (String s : allowedArmorSlots) {
+                if (s != null) allowed.add(s.toUpperCase(Locale.ROOT));
+            }
+            availableSlots.removeIf(slot -> !allowed.contains(slot.name()));
+        }
+        if (availableSlots.isEmpty()) return false;
+
         Collections.shuffle(availableSlots, random);
 
         boolean changed = false;

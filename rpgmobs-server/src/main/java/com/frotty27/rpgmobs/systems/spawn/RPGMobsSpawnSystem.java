@@ -10,6 +10,7 @@ import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonRiseComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig.AbilityConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig.SummonAbilityConfig;
@@ -214,6 +215,20 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         int pickedTierIndex = WeightedIndexSelector.pickWeightedIndex(spawnChances, random);
         int tierIndex = clampTierIndex(pickedTierIndex);
+
+        // Per-mob-role forced tier override from instance config
+        boolean forcedByMobOverride = false;
+        int overrideTier = applyMobOverrideTier(npcEntity, roleName, tierIndex);
+        if (overrideTier != tierIndex) {
+            tierIndex = overrideTier;
+            forcedByMobOverride = true;
+        }
+
+        // Check if this tier is allowed by instance rule (skip when the tier was explicitly forced by a mobOverride)
+        if (!forcedByMobOverride && !isTierAllowedByInstance(npcEntity, tierIndex)) {
+            logNpcScanSummaryIfDue(config);
+            return;
+        }
 
         mobsAppliedCount++;
 
@@ -433,10 +448,88 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
     }
 
     private double[] resolveSpawnChances(RPGMobsConfig config, NPCEntity npcEntity) {
-        if (config.spawning.progressionStyle == RPGMobsConfig.ProgressionStyle.DISTANCE_FROM_SPAWN) {
+        // ── World rule override ─────────────────────────────────────────────────
+        InstancesConfig instancesConfig = RPGMobsPlugin.getInstancesConfig();
+        if (instancesConfig != null && instancesConfig.enabled) {
+            String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
+
+            RPGMobsConfig cfg = RPGMobsPlugin.getConfig();
+            if (cfg != null && cfg.debugConfig.isDebugModeEnabled) {
+                String template = InstancesConfig.resolveInstanceTemplate(worldName);
+                RPGMobsLogger.debug(LOGGER,
+                                    "[InstanceRule] worldName='%s' template='%s'",
+                                    RPGMobsLogLevel.INFO,
+                                    String.valueOf(worldName),
+                                    String.valueOf(template)
+                );
+            }
+
+            InstancesConfig.InstanceRule instanceRule = instancesConfig.resolveRule(worldName);
+
+            if (instanceRule != null) {
+                if (!instanceRule.enabled) return null; // RPGMobs disabled in this instance
+
+                if (instanceRule.spawnChancePerTier != null) return instanceRule.spawnChancePerTier;
+
+                // Override progression style if set, otherwise fall through to global
+                if (instanceRule.progressionStyle != null) {
+                    RPGMobsConfig.ProgressionStyle style;
+                    try {
+                        style = RPGMobsConfig.ProgressionStyle.valueOf(instanceRule.progressionStyle.toUpperCase(java.util.Locale.ROOT));
+                    } catch (IllegalArgumentException e) {
+                        LOGGER.atWarning().log("[RPGMobs] Unknown progressionStyle '%s' in instance rule for '%s', falling through to global.",
+                                               instanceRule.progressionStyle, worldName);
+                        style = null;
+                    }
+                    if (style != null) {
+                        return resolveSpawnChancesForStyle(config, npcEntity, style);
+                    }
+                }
+            }
+        }
+
+        // ── Global progression ──────────────────────────────────────────────────
+        return resolveSpawnChancesForStyle(config, npcEntity, config.spawning.progressionStyle);
+    }
+
+    private int applyMobOverrideTier(NPCEntity npcEntity, String roleName, int tierIndex) {
+        InstancesConfig instancesConfig = RPGMobsPlugin.getInstancesConfig();
+        if (instancesConfig == null || !instancesConfig.enabled) return tierIndex;
+
+        String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
+        InstancesConfig.InstanceRule rule = instancesConfig.resolveRule(worldName);
+        if (rule == null) return tierIndex;
+        InstancesConfig.MobOverride mobOverride = InstancesConfig.resolveMobOverride(rule, roleName);
+        if (mobOverride != null && mobOverride.forcedTier >= 0) {
+            return clampTierIndex(mobOverride.forcedTier);
+        }
+        return tierIndex;
+    }
+
+    private InstancesConfig.@org.jspecify.annotations.Nullable InstanceRule resolveCurrentInstanceRule(NPCEntity npcEntity) {
+        InstancesConfig instancesConfig = RPGMobsPlugin.getInstancesConfig();
+        if (instancesConfig == null || !instancesConfig.enabled) return null;
+        String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
+        return instancesConfig.resolveRule(worldName);
+    }
+
+    private boolean isTierAllowedByInstance(NPCEntity npcEntity, int tierIndex) {
+        InstancesConfig instancesConfig = RPGMobsPlugin.getInstancesConfig();
+        if (instancesConfig == null || !instancesConfig.enabled) return true;
+
+        String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
+        InstancesConfig.InstanceRule rule = instancesConfig.resolveRule(worldName);
+        if (rule == null || rule.allowedTiersToSpawn == null) return true;
+        if (tierIndex < 0 || tierIndex >= rule.allowedTiersToSpawn.length) return false;
+        return rule.allowedTiersToSpawn[tierIndex];
+    }
+
+    private double[] resolveSpawnChancesForStyle(RPGMobsConfig config, NPCEntity npcEntity,
+                                                  RPGMobsConfig.ProgressionStyle style) {
+        if (style == RPGMobsConfig.ProgressionStyle.DISTANCE_FROM_SPAWN) {
             return resolveSpawnChancesByDistance(config, npcEntity);
         }
-        if (config.spawning.progressionStyle == RPGMobsConfig.ProgressionStyle.NONE) {
+        if (style == RPGMobsConfig.ProgressionStyle.NONE) {
             return config.spawning.spawnChancePerTier;
         }
         return resolveSpawnChancesForEnvironment(config, npcEntity);
@@ -444,8 +537,14 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
     private double[] resolveSpawnChancesByDistance(RPGMobsConfig config, NPCEntity npcEntity) {
         double dist = getXZDistance(npcEntity);
-        double distPerTier = Math.max(1.0, config.spawning.distancePerTier);
+        double distPerTier = config.spawning.distancePerTier;
 
+        InstancesConfig.InstanceRule rule = resolveCurrentInstanceRule(npcEntity);
+        if (rule != null && rule.distancePerTier != null) {
+            distPerTier = rule.distancePerTier;
+        }
+
+        distPerTier = Math.max(1.0, distPerTier);
         int tier = (int) (dist / distPerTier);
         tier = clampTierIndex(tier);
 
@@ -605,7 +704,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         );
         int summonedAliveCount = summonTracking != null ? summonTracking.summonedAliveCount : 0;
 
-        int maxAlive = clampSummonMaxAlive(summonConfig.maxAlive);
+        int maxAlive = clampSummonMaxAlive(summonConfig.maxAliveMinionsPerSummoner);
         int remaining = Math.max(0, maxAlive - summonedAliveCount);
         if (remaining == 0) {
             if (config.debugConfig.isDebugModeEnabled) {
@@ -895,33 +994,43 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         if (config.spawning.progressionStyle == RPGMobsConfig.ProgressionStyle.DISTANCE_FROM_SPAWN) {
             double dist = getXZDistance(npcEntity);
-            RPGMobsProgressionComponent progression = getProgressionComponent(config, dist);
+            InstancesConfig.InstanceRule rule = resolveCurrentInstanceRule(npcEntity);
+            RPGMobsProgressionComponent progression = getProgressionComponent(config, rule, dist);
             commandBuffer.putComponent(npcRef, RPGMobsPlugin.getProgressionComponentType(), progression);
         }
     }
 
-    private static @NonNull RPGMobsProgressionComponent getProgressionComponent(RPGMobsConfig config, double dist) {
-        double interval = Math.max(1.0, config.spawning.distanceBonusInterval);
+    private static @NonNull RPGMobsProgressionComponent getProgressionComponent(RPGMobsConfig config,
+                                                                                InstancesConfig.@org.jspecify.annotations.Nullable InstanceRule rule,
+                                                                                double dist) {
+        double interval = (rule != null && rule.distanceBonusInterval != null)
+                ? rule.distanceBonusInterval : config.spawning.distanceBonusInterval;
+        interval = Math.max(1.0, interval);
         int intervals = (int) (dist / interval);
+
+        float healthBonusPerInterval = (rule != null && rule.distanceHealthBonusPerInterval != null)
+                ? rule.distanceHealthBonusPerInterval : config.spawning.distanceHealthBonusPerInterval;
+        float damageBonusPerInterval = (rule != null && rule.distanceDamageBonusPerInterval != null)
+                ? rule.distanceDamageBonusPerInterval : config.spawning.distanceDamageBonusPerInterval;
+        float healthCap = (rule != null && rule.distanceHealthBonusCap != null)
+                ? rule.distanceHealthBonusCap : config.spawning.distanceHealthBonusCap;
+        float damageCap = (rule != null && rule.distanceDamageBonusCap != null)
+                ? rule.distanceDamageBonusCap : config.spawning.distanceDamageBonusCap;
 
         float healthBonus = 0f;
         float damageBonus = 0f;
         if (intervals > 0) {
-            healthBonus = intervals * config.spawning.distanceHealthBonusPerInterval;
-            damageBonus = intervals * config.spawning.distanceDamageBonusPerInterval;
+            healthBonus = intervals * healthBonusPerInterval;
+            damageBonus = intervals * damageBonusPerInterval;
 
-            if (healthBonus > config.spawning.distanceHealthBonusCap) {
-                healthBonus = config.spawning.distanceHealthBonusCap;
+            if (healthBonus > healthCap) {
+                healthBonus = healthCap;
             }
-            if (damageBonus > config.spawning.distanceDamageBonusCap) {
-                damageBonus = config.spawning.distanceDamageBonusCap;
+            if (damageBonus > damageCap) {
+                damageBonus = damageCap;
             }
         }
 
-        RPGMobsProgressionComponent progression = new RPGMobsProgressionComponent(healthBonus,
-                                                                                  damageBonus,
-                                                                                  (float) dist
-        );
-        return progression;
+        return new RPGMobsProgressionComponent(healthBonus, damageBonus, (float) dist);
     }
 }

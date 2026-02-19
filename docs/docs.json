@@ -32,7 +32,8 @@
           "config/visuals",
           "config/abilities",
           "config/mobs",
-          "config/effects"
+          "config/effects",
+          "config/instances"
         ]
       },
       {

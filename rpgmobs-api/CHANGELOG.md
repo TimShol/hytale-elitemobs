@@ -2,7 +2,7 @@
 
 All notable changes to RPGMobs API will be documented in this file.
 
-## [1.1.0] - 2026-02-18
+## [1.0.1] - 2026-02-18
 
 ### Added
 

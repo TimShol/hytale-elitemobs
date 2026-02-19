@@ -43,8 +43,10 @@ Full configuration guides, developer API reference, and troubleshooting:
 
 - 5 power tiers with independent health and damage scaling
 - Combat abilities: Charge Leap, Heal Potion, Undead Summon
+- Faction-based summoning — goblins summon goblins, trorks summon trorks, undead summon undead
 - Random damage and health variance for less predictable encounters
 - Ability gating by tier, mob family, and weapon type
+- Per-mob armor slot restrictions for mobs whose models don't support full armor
 
 ### Loot & Gear
 
@@ -63,6 +65,15 @@ Full configuration guides, developer API reference, and troubleshooting:
 - Three progression styles: Environment (zone-based), Distance from Spawn, or Random
 - Per-zone tier distribution with configurable weights
 - Distance-based stat bonuses for smooth difficulty curves
+
+### Instances
+
+- Per-world and per-instance-template overrides via `instances.yml`
+- Override spawning, stats, loot, abilities, and elite behavior per instance
+- Per-mob-role overrides within instances (forced tiers, custom loot)
+- Elite friendly fire prevention and fall damage immunity options
+- All 25 vanilla Hytale instance templates pre-configured
+- Automatic instance template matching for `instance-{Template}-{UUID}` worlds
 
 ### Integrations
 
@@ -98,18 +109,19 @@ Full configuration guides, developer API reference, and troubleshooting:
 
 ## Configuration
 
-| File              | Purpose                                              |
-|:------------------|:-----------------------------------------------------|
-| `core.yml`        | Global systems, reconciliation, debug, compatibility |
-| `stats.yml`       | Health and damage multipliers per tier               |
-| `spawning.yml`    | Progression style, spawn chances, zone distributions |
-| `gear.yml`        | Equipment catalogs, rarity rules, armor materials    |
-| `loot.yml`        | Drop rates, loot multipliers, extra drops            |
-| `abilities.yml`   | Ability toggles, cooldowns, per-tier scaling, gating |
-| `visuals.yml`     | Nameplates, model scaling                            |
-| `effects.yml`     | Status effects and particles                         |
-| `mobrules.yml`    | NPC rules, weapon overrides, family assignments      |
-| `rpgleveling.yml` | RPGLeveling XP scaling (auto-generated when detected)|
+| File              | Purpose                                                |
+|:------------------|:-------------------------------------------------------|
+| `core.yml`        | Global systems, reconciliation, debug, compatibility   |
+| `stats.yml`       | Health and damage multipliers per tier                 |
+| `spawning.yml`    | Progression style, spawn chances, zone distributions   |
+| `gear.yml`        | Equipment catalogs, rarity rules, armor materials      |
+| `loot.yml`        | Drop rates, loot multipliers, extra drops              |
+| `abilities.yml`   | Ability toggles, cooldowns, per-tier scaling, gating   |
+| `visuals.yml`     | Nameplates, model scaling                              |
+| `effects.yml`     | Status effects and particles                           |
+| `mobrules.yml`    | NPC rules, weapon overrides, armor slots, families     |
+| `instances.yml`   | Per-world/instance overrides for all of the above      |
+| `rpgleveling.yml` | RPGLeveling XP scaling (auto-generated when detected)  |
 
 ## Runtime Reload
 
