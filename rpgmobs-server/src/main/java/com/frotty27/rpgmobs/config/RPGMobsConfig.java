@@ -15,14 +15,26 @@ import static com.frotty27.rpgmobs.utils.Constants.TIERS_AMOUNT;
 
 public final class RPGMobsConfig {
 
-    private static final List<String> DENY_ABILITY_CHARGE_LEAP_LIST = List.of("Eye_Void",
-                                                                              "Crawler_Void",
-                                                                              "Skeleton_Burnt_Praetorian",
-                                                                              "_Gunner"
-
+    private static final List<String> DENY_ABILITY_CHARGE_LEAP_ROLE_LIST = List.of("Eye_Void",
+                                                                                   "Crawler_Void",
+                                                                                   "Skeleton_Burnt_Praetorian",
+                                                                                   "_Gunner",
+                                                                                   "Skeleton_Incandescent_Head"
     );
 
-    private static final List<String> UNDEAD_ROLE_NAME_CONTAINS = List.of("skeleton", "zombie", "wraith");
+    private static final List<String> DENY_ABILITY_HEAL_LEAP_ROLE_LIST = List.of("Eye_Void",
+                                                                              "Crawler_Void",
+                                                                              "Skeleton_Burnt_Praetorian",
+                                                                              "_Gunner",
+                                                                              "Skeleton_Incandescent_Head"
+    );
+
+    private static final List<String> DENY_ABILITY_SUMMON_UNDEAD_ROLE_LIST = List.of("Eye_Void",
+                                                                              "Crawler_Void",
+                                                                              "Skeleton_Incandescent_Head"
+    );
+
+    private static final List<String> ALLOW_ABILITY_SUMMON_UNDEAD_ROLE_LIST = List.of("skeleton", "zombie", "wraith", "Goblin_Duke", "Trork_Shaman");
     private static final List<String> DAMAGE_MELEE_ONLY_NOT_CONTAINS = List.of("shortbow",
                                                                                "crossbow",
                                                                                "staff",
@@ -47,7 +59,7 @@ public final class RPGMobsConfig {
     private static final List<String> DAMAGE_RANGED_SPELLBOOK_ONLY = List.of("spellbook");
 
     public static final String SUMMON_ROLE_PREFIX = "RPGMobs_Summon_";
-    public static final int DEFAULT_SUMMON_MAX_ALIVE = 7;
+    public static final int DEFAULT_MAX_ALIVE_MINIONS_PER_SUMMONER = 7;
     public static final int SUMMON_MAX_ALIVE_MIN = 0;
     public static final int SUMMON_MAX_ALIVE_MAX = 50;
 
@@ -1108,8 +1120,8 @@ public final class RPGMobsConfig {
     public static final class LootConfig {
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Loot", file = "loot.yml", comment = "Multiplies vanilla loot amounts per tier.")
-        public int[] vanillaDroplistMultiplierPerTier = {0, 0, 2, 4, 6};
+        @Cfg(group = "Loot", file = "loot.yml", comment = "Extra rolls of the mob's vanilla drop table per tier. 0 = no extra drops.")
+        public int[] vanillaDroplistExtraRollsPerTier = {0, 0, 2, 4, 6};
 
         @Min(0.0)
         @Max(1.0)
@@ -1267,7 +1279,7 @@ public final class RPGMobsConfig {
 
         ChargeLeapAbilityConfig chargeLeap = new ChargeLeapAbilityConfig();
         chargeLeap.gate.weaponIdMustNotContain = DAMAGE_MELEE_ONLY_NOT_CONTAINS;
-        chargeLeap.gate.roleMustNotContain = DENY_ABILITY_CHARGE_LEAP_LIST;
+        chargeLeap.gate.roleMustNotContain = DENY_ABILITY_CHARGE_LEAP_ROLE_LIST;
 
         chargeLeap.isEnabled = true;
         chargeLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
@@ -1299,6 +1311,7 @@ public final class RPGMobsConfig {
         m.put(AbilityIds.CHARGE_LEAP, chargeLeap);
 
         HealLeapAbilityConfig healLeap = new HealLeapAbilityConfig();
+        healLeap.gate.roleMustNotContain = DENY_ABILITY_HEAL_LEAP_ROLE_LIST;
         healLeap.isEnabled = true;
         healLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
         healLeap.chancePerTier = new float[]{0f, 0f, 0f, 1.00f, 1.00f};
@@ -1331,11 +1344,12 @@ public final class RPGMobsConfig {
         m.put(AbilityIds.HEAL_LEAP, healLeap);
 
         SummonAbilityConfig undeadSummon = new SummonAbilityConfig();
+        undeadSummon.gate.roleMustNotContain = DENY_ABILITY_SUMMON_UNDEAD_ROLE_LIST;
         undeadSummon.isEnabled = true;
         undeadSummon.isEnabledPerTier = new boolean[]{false, false, false, true, true};
         undeadSummon.chancePerTier = new float[]{0f, 0f, 0f, 0.50f, 1.00f};
         undeadSummon.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 25f, 25f};
-        undeadSummon.gate.roleMustContain = UNDEAD_ROLE_NAME_CONTAINS;
+        undeadSummon.gate.roleMustContain = ALLOW_ABILITY_SUMMON_UNDEAD_ROLE_LIST;
 
         undeadSummon.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
                                    "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_UndeadSummon_Root.template.json"
@@ -1421,7 +1435,7 @@ public final class RPGMobsConfig {
         public static final String TEMPLATE_SUMMON_MARKER = "summonMarker";
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum number of active summoned minions per summoner (0 disables summoning). Clamped to 0..50.")
-        public int maxAlive = DEFAULT_SUMMON_MAX_ALIVE;
+        public int maxAliveMinionsPerSummoner = DEFAULT_MAX_ALIVE_MINIONS_PER_SUMMONER;
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Role identifiers used to pick which minions get summoned. First match (role name contains this text) wins. 'default' is used if none match.")
         public List<String> roleIdentifiers = new ArrayList<>(List.of("Skeleton_Frost",
                                                                       "Skeleton_Sand",
@@ -1432,7 +1446,9 @@ public final class RPGMobsConfig {
                                                                       "Zombie_Burnt",
                                                                       "Zombie_Frost",
                                                                       "Zombie_Sand",
-                                                                      "Zombie"
+                                                                      "Zombie",
+                                                                      "Goblin_",
+                                                                      "Trork_"
         ));
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for role-matched skeleton archers in the summon pool.")
         public double skeletonArcherWeight = 100;
@@ -1442,6 +1458,9 @@ public final class RPGMobsConfig {
         public double wraithWeight = 25;
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for aberrant zombies in the zombie summon pool (~20% chance).")
         public double aberrantWeight = 25;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Roles excluded from the auto-generated summon pool (prevents summoners from summoning themselves).")
+        public List<String> excludeFromSummonPool = new ArrayList<>(List.of("Trork_Shaman"));
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Optional explicit spawn marker entries (advanced). If empty, RPGMobs builds this automatically from mob rules.")
         public List<SummonMarkerEntry> spawnMarkerEntries = new ArrayList<>();
@@ -2971,7 +2990,8 @@ public final class RPGMobsConfig {
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
                       List.of(),
-                      List.of()
+                      List.of(),
+                      List.of("HEAD")
               )
         );
 
@@ -3556,7 +3576,8 @@ public final class RPGMobsConfig {
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
                       List.of(),
-                      List.of()
+                      List.of(),
+                      List.of("HEAD", "CHEST")
               )
         );
 
@@ -3569,7 +3590,8 @@ public final class RPGMobsConfig {
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
                       List.of(),
-                      List.of()
+                      List.of(),
+                      List.of("NONE")
               )
         );
 
@@ -3594,6 +3616,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
+                      List.of(),
                       List.of(),
                       List.of()
               )
@@ -3643,6 +3666,7 @@ public final class RPGMobsConfig {
         public List<String> weaponIdMustContain = List.of();
         public List<String> weaponIdMustNotContain = List.of();
 
+        public List<String> allowedArmorSlots = List.of();
 
     }
 
@@ -3650,6 +3674,14 @@ public final class RPGMobsConfig {
                                    List<String> contains, List<String> excludes, boolean[] enableWeaponOverrideForTier,
                                    WeaponOverrideMode overrideMode, List<String> mustContain,
                                    List<String> mustNotContain) {
+        return mobRule(enabled, matchExact, matchStartsWith, contains, excludes, enableWeaponOverrideForTier,
+                       overrideMode, mustContain, mustNotContain, List.of());
+    }
+
+    private static MobRule mobRule(boolean enabled, List<String> matchExact, List<String> matchStartsWith,
+                                   List<String> contains, List<String> excludes, boolean[] enableWeaponOverrideForTier,
+                                   WeaponOverrideMode overrideMode, List<String> mustContain,
+                                   List<String> mustNotContain, List<String> allowedArmorSlots) {
         MobRule r = new MobRule();
         r.matchExact = matchExact;
         r.matchStartsWith = matchStartsWith;
@@ -3660,6 +3692,7 @@ public final class RPGMobsConfig {
         r.weaponOverrideMode = overrideMode;
         r.weaponIdMustContain = mustContain;
         r.weaponIdMustNotContain = mustNotContain;
+        r.allowedArmorSlots = allowedArmorSlots;
         return r;
     }
 
@@ -3690,7 +3723,7 @@ public final class RPGMobsConfig {
 
     public void populateSummonMarkerEntriesIfEmpty() {
         SummonAbilityConfig summonConfig = null;
-        if (abilitiesConfig != null && abilitiesConfig.defaultAbilities != null) {
+        if (abilitiesConfig.defaultAbilities != null) {
             AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
@@ -3698,6 +3731,15 @@ public final class RPGMobsConfig {
         if (summonConfig.spawnMarkerEntries != null && !summonConfig.spawnMarkerEntries.isEmpty()) {
             summonConfig.spawnMarkerEntriesJson = toJson(summonConfig.spawnMarkerEntries);
         }
+
+        // Ensure non-undead summoners pass the gate (may be missing from older YAML configs)
+        ensureGateRoleMustContain(summonConfig, "Goblin_Duke");
+        ensureGateRoleMustContain(summonConfig, "Trork_Shaman");
+
+        // Ensure non-undead role identifiers are present (may be missing from older YAML configs)
+        ensureRoleIdentifier(summonConfig, "Goblin_");
+        ensureRoleIdentifier(summonConfig, "Trork_");
+        ensureSummonPoolExclusion(summonConfig, "Trork_Shaman");
 
         populateSummonMarkerEntriesByRoleIfEmpty();
         if (summonConfig.spawnMarkerEntries == null || summonConfig.spawnMarkerEntries.isEmpty()) {
@@ -3711,13 +3753,13 @@ public final class RPGMobsConfig {
 
     public void populateSummonMarkerEntriesByRoleIfEmpty() {
         SummonAbilityConfig summonConfig = null;
-        if (abilitiesConfig != null && abilitiesConfig.defaultAbilities != null) {
+        if (abilitiesConfig.defaultAbilities != null) {
             AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return;
         if (summonConfig.spawnMarkerEntriesByRole != null && !summonConfig.spawnMarkerEntriesByRole.isEmpty()) return;
-        if (mobsConfig == null || mobsConfig.defaultMobRules == null || mobsConfig.defaultMobRules.isEmpty()) return;
+        if (mobsConfig.defaultMobRules == null || mobsConfig.defaultMobRules.isEmpty()) return;
 
         LinkedHashSet<String> archerNpcIds = new LinkedHashSet<>();
         LinkedHashSet<String> allNpcIds = new LinkedHashSet<>();
@@ -3852,6 +3894,13 @@ public final class RPGMobsConfig {
 
             moreSpecificIdentifiers.add(identifier.toLowerCase(Locale.ROOT));
 
+            // Remove excluded roles from the summon pool (e.g., Trork_Shaman to prevent summon loops)
+            List<String> excludeList = summonConfig.excludeFromSummonPool;
+            if (excludeList != null && !excludeList.isEmpty()) {
+                roleNpcIds.removeIf(id -> isExcludedFromSummonPool(id, excludeList));
+                roleBowIds.removeIf(id -> isExcludedFromSummonPool(id, excludeList));
+            }
+
             ArrayList<SummonMarkerEntry> entries = new ArrayList<>();
             double skeletonWeight = Math.max(0.0, summonConfig.skeletonArcherWeight);
             ArrayList<String> skeletonRoleIds = roleNpcIds.isEmpty() ? roleBowIds : roleNpcIds;
@@ -3927,9 +3976,52 @@ public final class RPGMobsConfig {
         return false;
     }
 
+    private static boolean isExcludedFromSummonPool(String npcId, List<String> excludeList) {
+        String npcIdLower = npcId.toLowerCase(Locale.ROOT);
+        for (String excluded : excludeList) {
+            if (excluded == null || excluded.isBlank()) continue;
+            if (npcIdLower.contains(excluded.toLowerCase(Locale.ROOT))) return true;
+        }
+        return false;
+    }
+
+    private static void ensureRoleIdentifier(SummonAbilityConfig summonConfig, String identifier) {
+        if (summonConfig.roleIdentifiers == null) {
+            summonConfig.roleIdentifiers = new ArrayList<>();
+        }
+        for (String existing : summonConfig.roleIdentifiers) {
+            if (existing != null && existing.equalsIgnoreCase(identifier)) return;
+        }
+        summonConfig.roleIdentifiers.add(identifier);
+    }
+
+    private static void ensureGateRoleMustContain(SummonAbilityConfig summonConfig, String role) {
+        if (summonConfig.gate == null) summonConfig.gate = new AbilityGate();
+        if (summonConfig.gate.roleMustContain == null || summonConfig.gate.roleMustContain.isEmpty()) {
+            summonConfig.gate.roleMustContain = new ArrayList<>();
+        }
+        if (!(summonConfig.gate.roleMustContain instanceof ArrayList)) {
+            summonConfig.gate.roleMustContain = new ArrayList<>(summonConfig.gate.roleMustContain);
+        }
+        for (String existing : summonConfig.gate.roleMustContain) {
+            if (existing != null && existing.equalsIgnoreCase(role)) return;
+        }
+        summonConfig.gate.roleMustContain.add(role);
+    }
+
+    private static void ensureSummonPoolExclusion(SummonAbilityConfig summonConfig, String excluded) {
+        if (summonConfig.excludeFromSummonPool == null) {
+            summonConfig.excludeFromSummonPool = new ArrayList<>();
+        }
+        for (String existing : summonConfig.excludeFromSummonPool) {
+            if (existing != null && existing.equalsIgnoreCase(excluded)) return;
+        }
+        summonConfig.excludeFromSummonPool.add(excluded);
+    }
+
     public void upgradeSummonMarkerEntriesToVariantIds() {
         SummonAbilityConfig summonConfig = null;
-        if (abilitiesConfig != null && abilitiesConfig.defaultAbilities != null) {
+        if (abilitiesConfig.defaultAbilities != null) {
             AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
@@ -3954,16 +4046,9 @@ public final class RPGMobsConfig {
         }
     }
 
-    private static boolean isSummonArcherRoleName(String roleName) {
-        if (roleName == null) return false;
-        String lower = roleName.toLowerCase(Locale.ROOT);
-        if (lower.contains("zombie") || lower.contains("wraith")) return false;
-        return lower.contains("archer") || lower.contains("ranger") || lower.contains("scout") || lower.contains("bow");
-    }
-
     public boolean isSummonMarkerEntriesEmpty() {
         SummonAbilityConfig summonConfig = null;
-        if (abilitiesConfig != null && abilitiesConfig.defaultAbilities != null) {
+        if (abilitiesConfig.defaultAbilities != null) {
             AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }

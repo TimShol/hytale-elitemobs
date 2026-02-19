@@ -24,21 +24,21 @@ Loot:
 
 **Tip:** If you want equipment drops to feel special and rare, keep these low. If you want a more generous loot experience, raise them to `0.15` or higher.
 
-## Vanilla Loot Multiplier
+## Vanilla Loot Extra Rolls
 
-Higher-tier elites drop more of their standard loot (bones, rotten flesh, etc.).
+Higher-tier elites roll the mob's vanilla drop table additional times, dropping more of their standard loot (bones, rotten flesh, etc.).
 
 ```yaml
 Loot:
-  vanillaDroplistMultiplierPerTier:
-    - 0  # Tier 1 — normal vanilla drops
-    - 0  # Tier 2 — normal vanilla drops
-    - 2  # Tier 3 — 2x vanilla drops
-    - 4  # Tier 4 — 4x vanilla drops
-    - 6  # Tier 5 — 6x vanilla drops
+  vanillaDroplistExtraRollsPerTier:
+    - 0  # Tier 1 — no extra drops
+    - 0  # Tier 2 — no extra drops
+    - 2  # Tier 3 — 2 extra rolls
+    - 4  # Tier 4 — 4 extra rolls
+    - 6  # Tier 5 — 6 extra rolls
 ```
 
-A value of `0` means the mob drops its normal vanilla amount. A value of `4` means it drops 4 times the normal amount.
+A value of `0` means the mob drops its normal vanilla amount (no extra rolls). A value of `4` means the vanilla drop table is rolled 4 additional times.
 
 ## Extra Drops
 

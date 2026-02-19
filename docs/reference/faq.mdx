@@ -18,7 +18,7 @@ Check `stats.yml` -\> `mobDamageMultiplierPerTier`. The default Tier 5 multiplie
 
 ### Why do some mobs have abilities and others don't?
 
-Abilities are gated by tier and mob type. By default, only Tier 4 and 5 elites can use abilities. Additionally, each ability has a `gate` that restricts it to specific mob families (e.g., Undead Summon only works on skeletons/zombies/wraiths, and Charge Leap is disabled for ranged mobs).
+Abilities are gated by tier and mob type. By default, only Tier 4 and 5 elites can use abilities. Additionally, each ability has a `gate` that restricts it to specific mob families and weapon types (e.g., Undead Summon works on skeletons, zombies, wraiths, Goblin_Duke, and Trork_Shaman; Charge Leap is disabled for mobs holding ranged weapons like staffs and bows).
 
 ### How do I remove the mod safely?
 
@@ -50,3 +50,11 @@ Add the weapon's item ID to the `weaponCatalog` list in `gear.yml`, and add a ke
 ### Can I prevent elites from spawning in specific zones?
 
 Yes. In `spawning.yml`, find the `environmentTierSpawns` entry for that zone and set `enabled: false`.
+
+### Can I customize RPGMobs behavior per world or dungeon instance?
+
+Yes. Enable the instance system in `instances.yml` and add a rule for each world or instance template. You can override spawning, stats, loot, abilities, and elite behavior per instance. Instance worlds (`instance-{Template}-{UUID}`) are automatically matched by template name. See [Instances](/config/instances) for details.
+
+### How do I disable elites in a lobby or hub world?
+
+In `instances.yml`, add a rule for the world with `enabled: false`. For example, `Lobby: { enabled: false }` prevents any elites from spawning in a world named "Lobby".

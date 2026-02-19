@@ -1,6 +1,8 @@
 package com.frotty27.rpgmobs.rules;
 
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -15,7 +17,24 @@ public final class AbilityGateEvaluator {
 
     public static boolean isAllowed(RPGMobsConfig.AbilityConfig abilityConfig, String roleName, String weaponId,
                                     int tierIndex) {
+        return isAllowed(abilityConfig, null, roleName, weaponId, tierIndex, null);
+    }
+
+    public static boolean isAllowed(RPGMobsConfig.AbilityConfig abilityConfig, @Nullable String abilityId,
+                                    String roleName, String weaponId, int tierIndex,
+                                    InstancesConfig.@Nullable InstanceRule instanceRule) {
         if (abilityConfig == null || !abilityConfig.isEnabled) return false;
+
+        // Instance-level master toggle
+        if (instanceRule != null && instanceRule.abilitiesEnabled != null && !instanceRule.abilitiesEnabled) return false;
+
+        // Instance-level per-ability per-tier override takes highest priority over blanket
+        boolean[] instanceTierOverride = resolveInstanceTierOverride(abilityId, instanceRule);
+        if (instanceTierOverride != null) {
+            if (!isEnabledForTier(instanceTierOverride, tierIndex)) return false;
+        }
+
+        // Global per-ability tier config
         if (!isEnabledForTier(abilityConfig.isEnabledPerTier, tierIndex)) return false;
 
         RPGMobsConfig.AbilityGate abilityGate = abilityConfig.gate;
@@ -53,6 +72,37 @@ public final class AbilityGateEvaluator {
         }
 
         return baseAllowed;
+    }
+
+    /**
+     * Resolves the instance-level per-tier override for a specific ability.
+     * Priority: abilityOverrides[abilityId] > abilitiesEnabledPerTier > null (no override).
+     */
+    @SuppressWarnings("unchecked")
+    private static boolean @Nullable [] resolveInstanceTierOverride(@Nullable String abilityId,
+                                                                     InstancesConfig.@Nullable InstanceRule instanceRule) {
+        if (instanceRule == null) return null;
+
+        // Per-ability override takes priority
+        if (abilityId != null && instanceRule.abilityOverrides != null) {
+            Object raw = instanceRule.abilityOverrides.get(abilityId);
+            if (raw instanceof boolean[] arr) {
+                return arr;
+            } else if (raw instanceof List<?> list) {
+                // YAML deserializer may produce List<Boolean> instead of boolean[]
+                boolean[] converted = new boolean[list.size()];
+                for (int i = 0; i < list.size(); i++) {
+                    Object elem = list.get(i);
+                    converted[i] = elem instanceof Boolean b && b;
+                }
+                // Replace in map so conversion only happens once
+                instanceRule.abilityOverrides.put(abilityId, converted);
+                return converted;
+            }
+        }
+
+        // Blanket per-tier fallback
+        return instanceRule.abilitiesEnabledPerTier;
     }
 
     private static boolean isEnabledForTier(boolean[] enabledPerTier, int tierIndex) {

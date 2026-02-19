@@ -31,7 +31,7 @@ Elites use an event-driven ability system — abilities trigger contextually bas
 
 *   **Charge Leap** — Gap-closing attack. Triggers when a target is within range.
 *   **Heal Leap** — Defensive retreat with self-heal. Triggers when health drops below a threshold.
-*   **Undead Summon** — Spawns reinforcements. Triggers periodically during sustained combat.
+*   **Undead Summon** — Spawns faction-appropriate reinforcements (goblins summon goblins, trorks summon trorks, undead summon undead). Triggers periodically during sustained combat.
 
 More abilities and new AI behaviours are actively in development, including conditional combos, environmental awareness, and tier-exclusive mechanics that will make each encounter feel distinct.
 
@@ -53,6 +53,17 @@ More abilities and new AI behaviours are actively in development, including cond
 *   Model scaling per tier for distinct visual presence
 *   Ability and status effects with particle systems
 
+## Instances
+
+RPGMobs supports per-world and per-instance-template overrides via `instances.yml`. Customize spawning, stats, loot, abilities, and elite behavior for each world or dungeon instance independently.
+
+*   Override spawning style, tier weights, health/damage multipliers, and loot per instance
+*   Force specific tiers and custom loot for individual mob roles within an instance
+*   Toggle abilities per-tier or per-ability within an instance
+*   Enable elite friendly fire prevention and fall damage immunity
+*   All 25 vanilla Hytale instance templates ship pre-configured
+*   Instance worlds (`instance-{Template}-{UUID}`) are automatically matched by template name
+
 ## Progression
 
 There are 3 progression styles currently:
@@ -63,7 +74,7 @@ There are 3 progression styles currently:
 
 ## Configuration
 
-<span style="color:#2dc26b"><strong>Almost everything is configurable!</strong></span> RPGMobs generates 10 YAML configuration files under:
+<span style="color:#2dc26b"><strong>Almost everything is configurable!</strong></span> RPGMobs generates 11 YAML configuration files under:
 
 ```
 %APPDATA%\Hytale\UserData\Saves\(your save name)\mods\RPGMobs

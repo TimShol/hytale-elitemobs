@@ -2,6 +2,7 @@ package com.frotty27.rpgmobs.systems.combat;
 
 import com.frotty27.rpgmobs.api.events.RPGMobsDamageDealtEvent;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.exceptions.RPGMobsException;
 import com.frotty27.rpgmobs.exceptions.RPGMobsSystemException;
@@ -188,10 +189,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
         int clampedTierIndex = clampTierIndex(attackerTierComponent.tierIndex);
 
 
-        float baseMultiplier = DEFAULT_DAMAGE_MULTIPLIER;
-        if (config.damageConfig.mobDamageMultiplierPerTier != null && config.damageConfig.mobDamageMultiplierPerTier.length >= TIERS_AMOUNT) {
-            baseMultiplier = config.damageConfig.mobDamageMultiplierPerTier[clampedTierIndex];
-        }
+        float baseMultiplier = resolveDamageMultiplier(config, entityStore, attackerEntityRef, clampedTierIndex);
 
 
         float distanceDamageBonus = 0f;
@@ -255,6 +253,28 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
         }
     }
 
+
+    /**
+     * Resolves the damage multiplier for the given tier, checking instance rules first.
+     */
+    private float resolveDamageMultiplier(RPGMobsConfig config, Store<EntityStore> entityStore,
+                                           Ref<EntityStore> attackerRef, int clampedTierIndex) {
+        InstancesConfig instancesConfig = RPGMobsPlugin.getInstancesConfig();
+        if (instancesConfig != null && instancesConfig.enabled) {
+            NPCEntity npc = entityStore.getComponent(attackerRef, NPC_COMPONENT_TYPE);
+            if (npc != null && npc.getWorld() != null) {
+                String worldName = npc.getWorld().getName();
+                InstancesConfig.InstanceRule instanceRule = instancesConfig.resolveRule(worldName);
+                if (instanceRule != null && instanceRule.damageMultiplierPerTier != null && instanceRule.damageMultiplierPerTier.length >= TIERS_AMOUNT) {
+                    return instanceRule.damageMultiplierPerTier[clampedTierIndex];
+                }
+            }
+        }
+        if (config.damageConfig.mobDamageMultiplierPerTier != null && config.damageConfig.mobDamageMultiplierPerTier.length >= TIERS_AMOUNT) {
+            return config.damageConfig.mobDamageMultiplierPerTier[clampedTierIndex];
+        }
+        return DEFAULT_DAMAGE_MULTIPLIER;
+    }
 
     private static String classifyAttackerKind(Store<EntityStore> entityStore, Ref<EntityStore> attackerEntityRef) {
         assert NPC_COMPONENT_TYPE != null;

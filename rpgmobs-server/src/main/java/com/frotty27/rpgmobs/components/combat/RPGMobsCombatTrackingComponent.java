@@ -16,10 +16,10 @@ public final class RPGMobsCombatTrackingComponent implements Component<EntitySto
     public long stateChangedTick;
 
     @Nullable
-    public Ref<EntityStore> damageBasedTarget;
+    public transient Ref<EntityStore> damageBasedTarget;
 
     @Nullable
-    public Ref<EntityStore> aiTarget;
+    public transient Ref<EntityStore> aiTarget;
 
     public long lastTargetUpdateTick;
 
@@ -41,8 +41,8 @@ public final class RPGMobsCombatTrackingComponent implements Component<EntitySto
         RPGMobsCombatTrackingComponent c = new RPGMobsCombatTrackingComponent();
         c.state = this.state;
         c.stateChangedTick = this.stateChangedTick;
-        c.damageBasedTarget = this.damageBasedTarget;
-        c.aiTarget = this.aiTarget;
+        c.damageBasedTarget = null;
+        c.aiTarget = null;
         c.lastTargetUpdateTick = this.lastTargetUpdateTick;
         return c;
     }

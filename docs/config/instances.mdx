@@ -1,0 +1,133 @@
+---
+title: Instances
+description: Per-world and per-instance overrides for spawning, stats, loot, abilities, and elite behavior.
+---
+
+`instances.yml` lets you customize RPGMobs behavior on a per-world or per-instance-template basis. This is useful for dungeon instances, lobby worlds, arena maps, or any scenario where you need different settings than the global config.
+
+## How It Works
+
+When enabled, every world the server runs is resolved through the instance rules:
+
+1. **Exact match** — the world name is compared directly to a rule key (e.g., `"Persistent"` matches the persistent world).
+2. **Template match** — instance worlds named `instance-{Template}-{UUID}` are matched by the `{Template}` portion. For example, a rule keyed `"Dungeon_Goblin"` matches any `instance-Dungeon_Goblin-{UUID}` world.
+3. **No match** — worlds with no matching rule use the global config files as normal.
+
+## Master Switch
+
+```yaml
+Instances:
+  enabled: true
+```
+
+When `false`, the entire instance system is disabled and all worlds use global settings. Set to `true` to activate per-instance overrides.
+
+## Instance Rules
+
+Each rule key is a world name or instance template name. Every field inside a rule is optional — set it to `null` (or omit it) to inherit from the global config.
+
+```yaml
+Instances:
+  instanceRules:
+    Dungeon_Goblin:
+      enabled: true
+      progressionStyle: "NONE"
+      spawnChancePerTier: [0, 0, 0, 0, 1.0]
+      allowedTiersToSpawn: [false, false, false, false, true]
+      healthMultiplierPerTier: [1.0, 2.0, 3.0, 4.0, 5.0]
+      damageMultiplierPerTier: [1.0, 2.0, 2.5, 3.0, 3.5]
+      eliteFriendlyFireDisabled: true
+      eliteFallDamageDisabled: true
+```
+
+### General
+
+| Field | Type | What it does |
+| :--- | :--- | :--- |
+| `enabled` | boolean | Master switch. `false` = no elites spawn in this world. |
+
+### Spawning
+
+| Field | Type | What it does |
+| :--- | :--- | :--- |
+| `progressionStyle` | string | `"ENVIRONMENT"`, `"DISTANCE_FROM_SPAWN"`, or `"NONE"`. `null` = use global. |
+| `spawnChancePerTier` | double[5] | Weight per tier. Only used when `progressionStyle` is `"NONE"`. |
+| `allowedTiersToSpawn` | boolean[5] | Per-tier gate. `false` = that tier won't spawn. Forced tiers bypass this filter. |
+
+### Distance From Spawn
+
+These only apply when `progressionStyle` is `"DISTANCE_FROM_SPAWN"`. Set to `null` to use global values.
+
+| Field | Type | What it does |
+| :--- | :--- | :--- |
+| `distancePerTier` | double | Blocks per tier transition. |
+| `distanceBonusInterval` | double | Block interval for applying bonus stats. |
+| `distanceHealthBonusPerInterval` | float | HP bonus added per interval. |
+| `distanceDamageBonusPerInterval` | float | Damage bonus added per interval. |
+| `distanceHealthBonusCap` | float | Maximum health bonus from distance. |
+| `distanceDamageBonusCap` | float | Maximum damage bonus from distance. |
+
+### Stats
+
+| Field | Type | What it does |
+| :--- | :--- | :--- |
+| `healthMultiplierPerTier` | float[5] | HP multiplier per tier. `null` = use global `stats.yml`. |
+| `damageMultiplierPerTier` | float[5] | Damage multiplier per tier. `null` = use global `stats.yml`. |
+
+### Abilities
+
+| Field | Type | What it does |
+| :--- | :--- | :--- |
+| `abilitiesEnabled` | boolean | Master toggle for all abilities in this instance. |
+| `abilitiesEnabledPerTier` | boolean[5] | Per-tier ability gate. |
+| `abilityOverrides` | map | Per-ability per-tier toggle. Key = ability id (e.g., `"charge_leap"`), value = boolean[5]. Takes priority over `abilitiesEnabledPerTier`. |
+
+### Loot
+
+| Field | Type | What it does |
+| :--- | :--- | :--- |
+| `vanillaDroplistExtraRollsPerTier` | int[5] | Extra rolls on the vanilla drop table per tier. `null` = use global. |
+| `dropWeaponChance` | double | Chance to drop equipped weapon. `null` = use global. |
+| `dropArmorPieceChance` | double | Chance to drop each armor piece. `null` = use global. |
+| `dropOffhandItemChance` | double | Chance to drop offhand item. `null` = use global. |
+| `extraDrops` | list | Instance-wide extra drop rules. Overridden by per-mob drops in `mobOverrides`. |
+
+### Elite Behavior
+
+| Field | Type | What it does |
+| :--- | :--- | :--- |
+| `eliteFriendlyFireDisabled` | boolean | When `true`, elites cannot damage or aggro-target other elites. |
+| `eliteFallDamageDisabled` | boolean | When `true`, elites take no fall/environment damage. |
+
+## Mob Overrides
+
+Per-mob-role overrides within an instance. Each key is matched against the mob's role name using case-insensitive contains matching (longer key = higher priority). The mob must also have a matching rule in global `mobrules.yml`.
+
+```yaml
+Instances:
+  instanceRules:
+    Dungeon_Goblin:
+      mobOverrides:
+        Goblin_Hermit:
+          forcedTier: 0
+          drops:
+            - { itemId: "Ore_Copper", chance: 0.3, minTierInclusive: 0, maxTierInclusive: 0, minQty: 1, maxQty: 3 }
+        Goblin_Duke:
+          forcedTier: 4
+          drops:
+            - { itemId: "Ore_Mithril", chance: 0.25, minTierInclusive: 4, maxTierInclusive: 4, minQty: 1, maxQty: 5 }
+            - { itemId: "Rock_Gem_Diamond", chance: 0.05, minTierInclusive: 4, maxTierInclusive: 4, minQty: 1, maxQty: 1 }
+```
+
+| Field | Type | What it does |
+| :--- | :--- | :--- |
+| `forcedTier` | int | Force this mob to a specific tier (0-4 for T1-T5). `-1` = use normal spawn logic. Bypasses `allowedTiersToSpawn`. |
+| `drops` | list | Per-mob extra drops. When present, these **replace** the instance-wide `extraDrops` for this mob. |
+
+## Default Rules
+
+The generated config ships with all 25 vanilla Hytale instance templates pre-configured as `enabled: false`. This means no instance overrides apply by default — all worlds use the global config. Admins can flip `enabled: true` on any rule and customize it.
+
+The `Dungeon_Goblin` entry ships as a fully worked example with per-mob tier assignments, custom loot, and ability overrides.
+
+**Tip:** To disable RPGMobs in a specific world entirely (e.g., a lobby), add a rule with `enabled: false`. To use RPGMobs with global settings in an instance, simply don't add a rule for it — unmatched worlds always fall through to the global config.

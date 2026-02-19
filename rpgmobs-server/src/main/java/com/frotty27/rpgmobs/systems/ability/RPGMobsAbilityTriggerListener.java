@@ -278,7 +278,7 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
                                                                            plugin.getSummonMinionTrackingComponentType()
         );
         if (tracking != null) {
-            int maxAlive = Math.max(0, Math.min(50, abilityConfig.maxAlive));
+            int maxAlive = Math.max(0, Math.min(50, abilityConfig.maxAliveMinionsPerSummoner));
             if (!tracking.canSummonMore(maxAlive)) {
                 RPGMobsLogger.debug(LOGGER,
                                     "[SummonUndead] BLOCKED: cap reached alive=%d max=%d",

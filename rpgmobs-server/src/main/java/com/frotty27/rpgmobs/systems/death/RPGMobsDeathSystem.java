@@ -6,6 +6,7 @@ import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.combat.RPGMobsCombatTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.exceptions.RPGMobsException;
 import com.frotty27.rpgmobs.exceptions.RPGMobsSystemException;
@@ -28,10 +29,12 @@ import com.hypixel.hytale.server.core.modules.entity.component.HeadRotation;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathSystems;
+import com.hypixel.hytale.server.core.modules.item.ItemModule;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Random;
@@ -131,19 +134,34 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
                                                        CULL_WINDOW_TICKS
         );
 
+        // Resolve instance rule for loot overrides
+        InstancesConfig.InstanceRule instanceRule = resolveInstanceLootRule(npc);
+
         ObjectArrayList<ItemStack> drops = new ObjectArrayList<>();
         Inventory inv = npc.getInventory();
         if (inv != null) {
-            addWeaponDrop(cfg, inv, drops);
-            addArmorDrops(cfg, inv, drops);
-            addUtilityDrop(cfg, inv, drops);
+            addWeaponDrop(cfg, instanceRule, inv, drops);
+            addArmorDrops(cfg, instanceRule, inv, drops);
+            addUtilityDrop(cfg, instanceRule, inv, drops);
         }
 
-        addExtraDrops(cfg, tierId, drops);
+        addExtraVanillaDroplistRolls(cfg, tierId, npc, drops, instanceRule);
+
+        // Per-role drops > instance-wide extraDrops > global defaultExtraDrops
+        String roleName = npc.getRoleName() != null ? npc.getRoleName() : "";
+        InstancesConfig.MobOverride mobOverride = (instanceRule != null)
+                ? InstancesConfig.resolveMobOverride(instanceRule, roleName) : null;
+
+        if (mobOverride != null && mobOverride.drops != null) {
+            addExtraDropsFromList(mobOverride.drops, tierId, drops);
+        } else if (instanceRule != null && instanceRule.extraDrops != null) {
+            addExtraDropsFromList(instanceRule.extraDrops, tierId, drops);
+        } else {
+            addExtraDropsFromList(cfg.lootConfig.defaultExtraDrops, tierId, drops);
+        }
 
         var pos = transformComponent.getPosition().clone().add(0.0, DROP_SPAWN_Y_OFFSET, 0.0);
         var rot = headRotation.getRotation().clone();
-        String roleName = npc.getRoleName() != null ? npc.getRoleName() : "";
 
 
         RPGMobsCombatTrackingComponent combatTracking = store.getComponent(ref,
@@ -177,8 +195,10 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         plugin.getExtraDropsScheduler().enqueueDrops(delayTicks, pos, rot, drops, null);
     }
 
-    private void addWeaponDrop(RPGMobsConfig cfg, Inventory inv, List<ItemStack> drops) {
-        double chance = cfg.lootConfig.dropWeaponChance;
+    private void addWeaponDrop(RPGMobsConfig cfg, InstancesConfig.@Nullable InstanceRule instanceRule,
+                               Inventory inv, List<ItemStack> drops) {
+        double chance = (instanceRule != null && instanceRule.dropWeaponChance != null)
+                ? instanceRule.dropWeaponChance : cfg.lootConfig.dropWeaponChance;
         if (random.nextDouble() > chance) return;
         byte slot = inv.getActiveHotbarSlot();
         if (slot == Inventory.INACTIVE_SLOT_INDEX) slot = 0;
@@ -188,8 +208,10 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         }
     }
 
-    private void addArmorDrops(RPGMobsConfig cfg, Inventory inv, List<ItemStack> drops) {
-        double chance = cfg.lootConfig.dropArmorPieceChance;
+    private void addArmorDrops(RPGMobsConfig cfg, InstancesConfig.@Nullable InstanceRule instanceRule,
+                               Inventory inv, List<ItemStack> drops) {
+        double chance = (instanceRule != null && instanceRule.dropArmorPieceChance != null)
+                ? instanceRule.dropArmorPieceChance : cfg.lootConfig.dropArmorPieceChance;
         for (ItemArmorSlot slot : ItemArmorSlot.values()) {
             if (random.nextDouble() > chance) continue;
             ItemStack item = inv.getArmor().getItemStack((short) slot.ordinal());
@@ -199,8 +221,10 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         }
     }
 
-    private void addUtilityDrop(RPGMobsConfig cfg, Inventory inv, List<ItemStack> drops) {
-        double chance = cfg.lootConfig.dropOffhandItemChance;
+    private void addUtilityDrop(RPGMobsConfig cfg, InstancesConfig.@Nullable InstanceRule instanceRule,
+                                Inventory inv, List<ItemStack> drops) {
+        double chance = (instanceRule != null && instanceRule.dropOffhandItemChance != null)
+                ? instanceRule.dropOffhandItemChance : cfg.lootConfig.dropOffhandItemChance;
         if (random.nextDouble() > chance) return;
         ItemStack utility = inv.getHotbar().getItemStack((short) UTILITY_SLOT_INDEX);
         if (utility != null && !utility.isEmpty()) {
@@ -209,7 +233,47 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
     }
 
     private void addExtraDrops(RPGMobsConfig cfg, int tierId, List<ItemStack> drops) {
-        List<RPGMobsConfig.ExtraDropRule> rules = cfg.lootConfig.defaultExtraDrops;
+        addExtraDropsFromList(cfg.lootConfig.defaultExtraDrops, tierId, drops);
+    }
+
+    private void addExtraVanillaDroplistRolls(RPGMobsConfig cfg, int tierId, NPCEntity npc,
+                                               ObjectArrayList<ItemStack> drops,
+                                               InstancesConfig.@Nullable InstanceRule instanceRule) {
+        // Instance override takes priority over global
+        int[] extraRollsPerTier = (instanceRule != null && instanceRule.vanillaDroplistExtraRollsPerTier != null)
+                ? instanceRule.vanillaDroplistExtraRollsPerTier
+                : cfg.lootConfig.vanillaDroplistExtraRollsPerTier;
+        if (extraRollsPerTier == null || extraRollsPerTier.length < Constants.TIERS_AMOUNT) return;
+
+        int extraRolls = Math.max(0, extraRollsPerTier[tierId]);
+        if (extraRolls == 0) return;
+
+        var role = npc.getRole();
+        if (role == null) return;
+
+        String dropListId = role.getDropListId();
+        if (dropListId == null) return;
+
+        ItemModule itemModule = ItemModule.get();
+        if (itemModule == null || !itemModule.isEnabled()) return;
+
+        for (int i = 0; i < extraRolls; i++) {
+            List<ItemStack> rolled = itemModule.getRandomItemDrops(dropListId);
+            if (rolled != null && !rolled.isEmpty()) {
+                drops.addAll(rolled);
+            }
+        }
+    }
+
+    private InstancesConfig.InstanceRule resolveInstanceLootRule(NPCEntity npc) {
+        InstancesConfig instancesConfig = plugin.getInstancesConfig();
+        if (instancesConfig == null || !instancesConfig.enabled) return null;
+        if (npc.getWorld() == null) return null;
+        return instancesConfig.resolveRule(npc.getWorld().getName());
+    }
+
+    private void addExtraDropsFromList(List<RPGMobsConfig.ExtraDropRule> rules, int tierId,
+                                        List<ItemStack> drops) {
         if (rules == null || rules.isEmpty()) return;
 
         for (RPGMobsConfig.ExtraDropRule rule : rules) {

@@ -2,6 +2,7 @@ package com.frotty27.rpgmobs.features;
 
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.ChargeLeapAbilityComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.rules.AbilityGateEvaluator;
@@ -35,8 +36,10 @@ public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFea
         if (abilityConfig == null) return;
 
         int tierIndex = tierComponent.tierIndex;
+        InstancesConfig.InstanceRule instanceRule = RPGMobsAbilityFeatureHelpers.resolveInstanceRule(plugin, npcRef, entityStore);
+        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
 
-        if (!AbilityGateEvaluator.isAllowed(abilityConfig, roleName, "", tierIndex)) return;
+        if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.CHARGE_LEAP, roleName, weaponId, tierIndex, instanceRule)) return;
 
         float spawnChance = tierIndex < abilityConfig.chancePerTier.length ? abilityConfig.chancePerTier[tierIndex] : 0f;
 

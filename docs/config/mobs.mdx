@@ -64,4 +64,31 @@ The `enableWeaponOverrideForTier` array lets you toggle weapon overrides per tie
 enableWeaponOverrideForTier: [true, true, true, true, true]
 ```
 
+## Armor Slot Restrictions
+
+Some mob models don't support all armor slots (e.g., floating heads, bodiless creatures). Use `allowedArmorSlots` to control which armor pieces the mob can equip.
+
+```yaml
+Eye_Void:
+  enabled: true
+  matchExact: ["Eye_Void_Fire", "Eye_Void_Frost", "Eye_Void_Lightning"]
+  weaponOverrideMode: NONE
+  allowedArmorSlots: ["HEAD"]
+
+Skeleton_Incandescent_Head:
+  enabled: true
+  matchExact: ["Skeleton_Incandescent_Head"]
+  weaponOverrideMode: NONE
+  allowedArmorSlots: ["HEAD", "CHEST"]
+```
+
+| Value | What it does |
+| :--- | :--- |
+| `[]` (empty) | All armor slots are available (default behavior). |
+| `["HEAD"]` | Only the head slot gets armor. |
+| `["HEAD", "CHEST"]` | Only head and chest slots get armor. |
+| `["NONE"]` | No armor slots are available — the mob gets no armor at all. |
+
+Valid slot names: `HEAD`, `CHEST`, `HANDS`, `LEGS` (case-insensitive).
+
 **Tip:** The default configuration includes rules for **most** standard Hytale hostile NPCs. If you add custom NPCs from another mod, add a matching rule here so they can become elites.

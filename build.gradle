@@ -1,3 +1,9 @@
+// Compute version from server_version date + hytale_update + mod_build
+// e.g. server_version=2026.02.18-f3b8fff95, mod_build=0 → 3.260218.0
+String[] dateParts = ((String) property('server_version')).split('-')[0].split('\\.')
+def yy = dateParts[0].substring(2) // 2026 -> 26
+ext.computeVersion = { int modBuild -> "${property('hytale_update')}.${yy}${dateParts[1]}${dateParts[2]}.${modBuild}" }
+
 allprojects {
     repositories {
         mavenCentral()
@@ -8,7 +14,7 @@ subprojects {
     apply plugin: 'java'
 
     java {
-        toolchain.languageVersion = JavaLanguageVersion.of(rootProject.property('java_version'))
+        toolchain.languageVersion = JavaLanguageVersion.of((String) rootProject.property('java_version'))
     }
 
     tasks.withType(JavaCompile).configureEach {
@@ -21,10 +27,4 @@ ext {
     userModsDir = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/UserData/Mods")
     nameplateBuilderApiJar = file("${rootDir}/../NameplateBuilder/nameplate-api/build/libs/NameplateBuilder-API-1.0.0.jar")
     rpgLevelingJar = file("${rootDir}/libs/RPGLeveling-0.2.9.jar")
-
-    // Fallback for building inside WSL environment where user.home differs from Windows
-    if (!hytaleJar.exists() && file('/mnt/c/Users/Tim-s').exists()) {
-        hytaleJar = file("/mnt/c/Users/Tim-s/AppData/Roaming/Hytale/install/release/package/game/${property('game_build')}/Server/HytaleServer.jar")
-        userModsDir = file('/mnt/c/Users/Tim-s/AppData/Roaming/Hytale/UserData/Mods')
-    }
 }

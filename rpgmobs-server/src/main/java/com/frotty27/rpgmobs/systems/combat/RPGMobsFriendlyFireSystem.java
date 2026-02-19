@@ -1,8 +1,11 @@
 package com.frotty27.rpgmobs.systems.combat;
 
+import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
+import com.frotty27.rpgmobs.utils.Constants;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
@@ -17,7 +20,9 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageModule;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 import java.util.UUID;
@@ -46,15 +51,41 @@ public final class RPGMobsFriendlyFireSystem extends DamageEventSystem {
     public void handle(int entityIndex, @NonNull ArchetypeChunk<EntityStore> archetypeChunk,
                        @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer,
                        @NonNull Damage damage) {
+        Ref<EntityStore> victimRef = archetypeChunk.getReferenceTo(entityIndex);
+        if (victimRef == null || !victimRef.isValid()) return;
+
+        // Check if victim is an elite — needed for both fall damage and friendly fire
+        RPGMobsTierComponent victimTier = store.getComponent(victimRef, plugin.getRPGMobsComponentType());
+
         Damage.Source damageSource = damage.getSource();
-        if (!(damageSource instanceof Damage.EntitySource attackerEntitySource)) return;
+
+        // Handle non-entity damage (fall damage, fire, etc.) for elites
+        if (!(damageSource instanceof Damage.EntitySource attackerEntitySource)) {
+            if (victimTier != null) {
+                InstancesConfig.InstanceRule rule = resolveInstanceRule(store, victimRef);
+                if (rule != null && Boolean.TRUE.equals(rule.eliteFallDamageDisabled)) {
+                    damage.setAmount(0f);
+                }
+            }
+            return;
+        }
 
         Ref<EntityStore> attackerRef = attackerEntitySource.getRef();
         if (!attackerRef.isValid()) return;
 
-        Ref<EntityStore> victimRef = archetypeChunk.getReferenceTo(entityIndex);
-        if (victimRef == null || !victimRef.isValid()) return;
+        // Elite-vs-elite friendly fire prevention
+        if (victimTier != null) {
+            RPGMobsTierComponent attackerTier = store.getComponent(attackerRef, plugin.getRPGMobsComponentType());
+            if (attackerTier != null) {
+                InstancesConfig.InstanceRule rule = resolveInstanceRule(store, victimRef);
+                if (rule != null && Boolean.TRUE.equals(rule.eliteFriendlyFireDisabled)) {
+                    damage.setAmount(0f);
+                    return;
+                }
+            }
+        }
 
+        // Summoner/minion friendly fire prevention
         RPGMobsSummonedMinionComponent attackerMinion = store.getComponent(attackerRef,
                                                                            plugin.getSummonedMinionComponentType()
         );
@@ -104,6 +135,17 @@ public final class RPGMobsFriendlyFireSystem extends DamageEventSystem {
                 damage.setAmount(0f);
             }
         }
+    }
+
+    private InstancesConfig.@Nullable InstanceRule resolveInstanceRule(Store<EntityStore> store,
+                                                                       Ref<EntityStore> entityRef) {
+        InstancesConfig instancesConfig = plugin.getInstancesConfig();
+        if (instancesConfig == null || !instancesConfig.enabled) return null;
+
+        NPCEntity npc = store.getComponent(entityRef, Constants.NPC_COMPONENT_TYPE);
+        if (npc == null || npc.getWorld() == null) return null;
+
+        return instancesConfig.resolveRule(npc.getWorld().getName());
     }
 
     private static UUID getEntityUuid(Store<EntityStore> store, Ref<EntityStore> ref) {

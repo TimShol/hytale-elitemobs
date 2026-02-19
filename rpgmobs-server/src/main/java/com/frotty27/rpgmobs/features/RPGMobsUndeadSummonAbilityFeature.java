@@ -3,6 +3,7 @@ package com.frotty27.rpgmobs.features;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.SummonUndeadAbilityComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.rules.AbilityGateEvaluator;
@@ -40,8 +41,10 @@ public final class RPGMobsUndeadSummonAbilityFeature implements IRPGMobsAbilityF
         }
 
         int tierIndex = tierComponent.tierIndex;
+        InstancesConfig.InstanceRule instanceRule = RPGMobsAbilityFeatureHelpers.resolveInstanceRule(plugin, npcRef, entityStore);
+        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
 
-        if (!AbilityGateEvaluator.isAllowed(abilityConfig, roleName, "", tierIndex)) {
+        if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.SUMMON_UNDEAD, roleName, weaponId, tierIndex, instanceRule)) {
             return;
         }
 

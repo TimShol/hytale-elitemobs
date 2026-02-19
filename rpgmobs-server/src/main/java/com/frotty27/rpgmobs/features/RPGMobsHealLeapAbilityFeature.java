@@ -2,6 +2,7 @@ package com.frotty27.rpgmobs.features;
 
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.rules.AbilityGateEvaluator;
@@ -38,8 +39,10 @@ public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeatu
         }
 
         int tierIndex = tierComponent.tierIndex;
+        InstancesConfig.InstanceRule instanceRule = RPGMobsAbilityFeatureHelpers.resolveInstanceRule(plugin, npcRef, entityStore);
+        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
 
-        if (!AbilityGateEvaluator.isAllowed(abilityConfig, roleName, "", tierIndex)) {
+        if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.HEAL_LEAP, roleName, weaponId, tierIndex, instanceRule)) {
             return;
         }
 

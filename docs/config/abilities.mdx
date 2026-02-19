@@ -89,31 +89,51 @@ heal_potion:
 
 ## Undead Summon
 
-Allows undead type elites to summon reinforcement minions (skeleton archers, zombies, wraiths) during combat. When the summoner dies, all its minions despawn.
+Allows elites to summon reinforcement minions during combat. By default, undead elites summon undead minions (skeleton archers, zombies, wraiths), Goblin_Duke summons goblins, and Trork_Shaman summons trorks. When the summoner dies, all its minions despawn.
 
 ```yaml
 undead_summon:
   isEnabled: true
-  isEnabledPerTier: [false, false, false, false, true]
-  chancePerTier: [0, 0, 0, 1.0, 1.0]
-  cooldownSecondsPerTier: [0, 0, 0, 15, 15]
-  maxAlive: 7
+  isEnabledPerTier: [false, false, false, true, true]
+  chancePerTier: [0, 0, 0, 0.5, 1.0]
+  cooldownSecondsPerTier: [0, 0, 0, 25, 25]
+  maxAliveMinionsPerSummoner: 7
   skeletonArcherWeight: 100
-  zombieWeight: 8
-  wraithWeight: 3
+  zombieWeight: 0
+  wraithWeight: 25
+  aberrantWeight: 25
+  excludeFromSummonPool: ["Trork_Shaman"]
   roleIdentifiers:
     - "Skeleton_Frost"
     - "Skeleton_Sand"
     - "Skeleton_Burnt"
+    - "Skeleton_Incandescent"
+    - "Skeleton_Pirate"
     - "Skeleton"
+    - "Zombie_Burnt"
+    - "Zombie_Frost"
+    - "Zombie_Sand"
+    - "Zombie"
+    - "Goblin_"
+    - "Trork_"
 ```
 
 | Setting | What it does |
 | :--- | :--- |
-| `maxAlive` | Maximum number of summoned minions alive at once per summoner. Capped at 0-50. |
+| `maxAliveMinionsPerSummoner` | Maximum number of summoned minions alive at once per summoner. Capped at 0-50. |
 | `skeletonArcherWeight` | Weight for skeleton archers in the summon pool. Higher = more likely. |
 | `zombieWeight` | Weight for zombie minions. |
 | `wraithWeight` | Weight for wraith minions. |
-| `roleIdentifiers` | List of role name fragments used to pick which variant of minion gets summoned. The summoner's own role is checked against this list to pick a matching variant. |
+| `aberrantWeight` | Weight for aberrant zombies in the zombie summon pool. |
+| `excludeFromSummonPool` | Roles excluded from the auto-generated summon pool. Prevents summoners from summoning themselves (e.g., Trork_Shaman won't summon other Shamans). |
+| `roleIdentifiers` | List of role name fragments used to pick which variant of minion gets summoned. The summoner's own role is checked against this list to pick a matching variant. For example, a Goblin_Duke matches `"Goblin_"` and will summon other goblin NPCs. |
 
-**Tip:** The summon ability is gated to undead mobs by default (`roleMustContain: ["skeleton_", "zombie_", "wraith"]`). If you want other mob types to summon, modify the gate settings.
+### Faction-Based Summoning
+
+The summon system automatically builds per-faction summon pools from the mob rules. When a summoner's role matches a `roleIdentifier`, only NPCs matching that same identifier are added to its summon pool:
+
+- **Undead summoners** (skeletons, zombies, wraiths) summon other undead variants
+- **Goblin_Duke** summons other goblins (matching `"Goblin_"`)
+- **Trork_Shaman** summons other trorks (matching `"Trork_"`), excluding itself via `excludeFromSummonPool`
+
+**Tip:** The summon ability is gated by default to undead mobs plus Goblin_Duke and Trork_Shaman (`roleMustContain: ["skeleton", "zombie", "wraith", "Goblin_Duke", "Trork_Shaman"]`). To allow other mob types to summon, add them to both `roleMustContain` in the gate and add an appropriate prefix to `roleIdentifiers`.

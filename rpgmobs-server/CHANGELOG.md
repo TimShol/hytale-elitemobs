@@ -2,6 +2,29 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [3.260218.0] - 2026-02-19
+
+### Added
+
+- **Per-instance configuration** (`instances.yml`) — customize RPGMobs behavior for each world or dungeon instance independently. Override spawning style, tier weights, health/damage multipliers, loot, abilities, and elite behavior on a per-world basis. Instance worlds are automatically matched by their template name. Ships with all 25 vanilla instance templates and a fully worked Goblin Dungeon example
+- **Per-mob armor slot restrictions** (`allowedArmorSlots` in mob rules) — control which armor slots a mob can equip, so mobs whose models don't support full armor no longer look broken (e.g., void eyes get no armor)
+- **Faction-based summoning** — Goblin_Duke now summons goblins and Trork_Shaman now summons trorks, instead of only undead mobs being able to summon
+- **Summon pool exclusion** (`excludeFromSummonPool`) — configurable list to prevent specific roles from being summoned (e.g., Trork_Shaman can't summon other Shamans)
+- **Weapon-aware ability gating** — ability gates now check the mob's actual equipped weapon, so weapon-based restrictions work correctly (e.g., staff-wielding mobs can no longer use Charge Leap)
+
+### Changed
+
+- Adopted new versioning scheme: `{hytale_update}.{YYMMDD}.{mod_build}`
+- Updated server version
+- Renamed `vanillaDroplistMultiplierPerTier` to `vanillaDroplistExtraRollsPerTier` for clarity
+- Renamed `maxAlive` to `maxAliveMinionsPerSummoner` for clarity
+- All three abilities now have proper role exclusion gates
+
+### Fixed
+
+- Crash when switching between world instances (stale entity references during chunk unloading)
+- Ability gate weapon restrictions being silently ignored for all mobs
+
 ## [2.0.2] - 2026-02-18
 
 ### Added

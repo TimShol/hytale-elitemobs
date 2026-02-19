@@ -21,6 +21,7 @@ import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonRiseComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
+import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.config.schema.YamlSerializer;
 import com.frotty27.rpgmobs.features.RPGMobsFeatureRegistry;
@@ -61,6 +62,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final String ASSET_PACK_NAME = "RPGMobsGenerated";
     private RPGMobsConfig config;
+    private InstancesConfig instancesConfig;
 
     private ComponentType<EntityStore, RPGMobsTierComponent> RPGMobsComponentType;
     private ComponentType<EntityStore, RPGMobsProgressionComponent> progressionComponentType;
@@ -198,6 +200,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         }
 
         config = YamlSerializer.loadOrCreate(modDirectory, defaults);
+        instancesConfig = YamlSerializer.loadOrCreate(modDirectory, new InstancesConfig());
 
         if (config != null) {
             config.migrate(oldVersion);
@@ -373,6 +376,10 @@ public final class RPGMobsPlugin extends JavaPlugin {
 
     public RPGMobsConfig getConfig() {
         return config;
+    }
+
+    public InstancesConfig getInstancesConfig() {
+        return instancesConfig;
     }
 
     public TickClock getTickClock() {

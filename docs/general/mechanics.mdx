@@ -41,9 +41,9 @@ Any tier can spawn anywhere based on global weights. Good for hardcore survival 
 Elites aren't just stat sponges. Depending on their tier and type, they can:
 *   **Charge Leap:** Launch themselves at a player with a physics-based slam attack.
 *   **Heal:** Drink potions during combat. Players can interrupt the heal by dealing damage.
-*   **Summon:** Call reinforcement minions (e.g., Skeleton Archers) to overwhelm players.
+*   **Summon:** Call faction-appropriate reinforcements — undead summon undead, goblins summon goblins, trorks summon trorks.
 
-Abilities are only available to Tier 4 and 5 elites by default. See [Abilities](/config/abilities) for full configuration.
+Abilities are only available to Tier 4 and 5 elites by default. Ability gates check the mob's actual equipped weapon, so weapon-based restrictions work correctly (e.g., staff-wielding mobs cannot use Charge Leap). See [Abilities](/config/abilities) for full configuration.
 
 ### Scaling
 *   **Health:** Multiplied per tier (e.g., Tier 5 has +260% base health).
@@ -54,9 +54,15 @@ See [Stats](/config/stats) for tuning these values.
 
 ## Equipment
 
-Elites spawn with tier-appropriate gear. Higher tiers get rarer weapons and more armor pieces. A Tier 1 common goblin might have a crude wooden weapon, while a Tier 5 legendary skeleton could wield an adamantite longsword with full armor.
+Elites spawn with tier-appropriate gear. Higher tiers get rarer weapons and more armor pieces. A Tier 1 common goblin might have a crude wooden weapon, while a Tier 5 legendary skeleton could wield an adamantite longsword with full armor. Per-mob armor slot restrictions prevent mobs whose models don't support full armor from looking broken (e.g., void eyes get no armor).
 
-See [Gear](/config/gear) for equipment catalogs and rarity rules.
+See [Gear](/config/gear) for equipment catalogs and rarity rules, and [Mobs](/config/mobs) for per-mob armor slot restrictions.
+
+## Instance Overrides
+
+Servers running custom dungeons and temporary instances can customize RPGMobs behavior per-world via `instances.yml`. Each instance can override spawning, stats, loot, abilities, and elite behavior independently. Instance worlds are automatically matched by their template name.
+
+See [Instances](/config/instances) for the full configuration reference.
 
 ## Loot System
 
