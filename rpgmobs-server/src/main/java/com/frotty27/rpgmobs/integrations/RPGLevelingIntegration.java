@@ -1,8 +1,7 @@
 package com.frotty27.rpgmobs.integrations;
 
 import com.frotty27.rpgmobs.api.IRPGMobsEventListener;
-import com.frotty27.rpgmobs.api.RPGMobsAPI;
-import com.frotty27.rpgmobs.api.events.RPGMobsSpawnedEvent;
+import com.frotty27.rpgmobs.api.events.RPGMobsDeathEvent;
 import com.frotty27.rpgmobs.components.ability.ChargeLeapAbilityComponent;
 import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
 import com.frotty27.rpgmobs.components.ability.SummonUndeadAbilityComponent;
@@ -13,19 +12,25 @@ import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class RPGLevelingIntegration implements IRPGMobsEventListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
+    private static final int MAX_CACHE_SIZE = 256;
+
     private final RPGMobsPlugin plugin;
-    private volatile World world;
     private volatile RPGLevelingBalanceConfig balanceConfig;
+    private final Map<UUID, DeathXPData> deathCache = new ConcurrentHashMap<>();
+
+    private record DeathXPData(int tier, int abilityCount, String worldName, boolean minion) {
+    }
 
     public RPGLevelingIntegration(RPGMobsPlugin plugin) {
         this.plugin = plugin;
@@ -68,28 +73,38 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
     }
 
     @Override
-    public void onRPGMobSpawned(RPGMobsSpawnedEvent event) {
-        if (world != null) return;
-        World w = event.getWorld();
-        if (w != null) {
-            world = w;
+    public void onRPGMobDeath(RPGMobsDeathEvent event) {
+        UUID entityUuid = event.getEntityUuid();
+        if (entityUuid == null) return;
+
+        Ref<EntityStore> ref = event.getEntityRef();
+        Store<EntityStore> store = ref.getStore();
+
+        int abilityCount = 0;
+        if (store != null) {
+            abilityCount = countActiveAbilities(ref, store);
         }
+
+        String worldName = event.getWorld() != null ? event.getWorld().getName() : null;
+
+        if (deathCache.size() >= MAX_CACHE_SIZE) {
+            deathCache.clear();
+        }
+
+        deathCache.put(entityUuid, new DeathXPData(event.getTier(), abilityCount, worldName, event.isMinion()));
     }
 
     private void onXPGained(Object event, UUID killedEntityUuid) {
-        World w = world;
-        if (w == null) return;
+        DeathXPData data = deathCache.remove(killedEntityUuid);
+        if (data == null) return;
 
-        Ref<EntityStore> ref = w.getEntityRef(killedEntityUuid);
-        if (ref == null || !ref.isValid()) return;
-
-        ResolvedConfig resolved = plugin.getResolvedConfig(w.getName());
+        ResolvedConfig resolved = plugin.getResolvedConfig(data.worldName);
         if (!resolved.rpgLevelingEnabled) return;
 
         var xpEvent = (org.zuxaw.plugin.api.ExperienceGainedEvent) event;
         double baseXP = xpEvent.getXpAmount();
 
-        if (RPGMobsAPI.query().isMinion(ref)) {
+        if (data.minion) {
             double minionXP = baseXP * resolved.minionXPMultiplier;
             xpEvent.setXpAmount(minionXP);
 
@@ -101,21 +116,17 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
             return;
         }
 
-        RPGMobsAPI.query().getTier(ref).ifPresent(tier -> {
-            int clampedTier = Math.min(tier, resolved.xpMultiplierPerTier.length - 1);
-            float tierMult = resolved.xpMultiplierPerTier[clampedTier];
+        int clampedTier = Math.min(data.tier, resolved.xpMultiplierPerTier.length - 1);
+        float tierMult = resolved.xpMultiplierPerTier[clampedTier];
 
-            Store<EntityStore> store = ref.getStore();
-            int abilityCount = countActiveAbilities(ref, store);
+        double scaledXP = baseXP * tierMult + resolved.xpBonusPerAbility * data.abilityCount;
+        xpEvent.setXpAmount(scaledXP);
 
-            double scaledXP = baseXP * tierMult + resolved.xpBonusPerAbility * abilityCount;
-            xpEvent.setXpAmount(scaledXP);
-
-            if (plugin.getConfig().debugConfig.isDebugModeEnabled) {
-                LOGGER.atInfo().log("[RPGMobs] Elite kill — tier=%d baseXP=%.0f tierMult=%.1f abilities=%d → XP=%.0f",
-                                    tier, baseXP, tierMult, abilityCount, scaledXP);
-            }
-        });
+        RPGMobsConfig debugCfg = plugin.getConfig();
+        if (debugCfg != null && debugCfg.debugConfig.isDebugModeEnabled) {
+            LOGGER.atInfo().log("[RPGMobs] Elite kill — tier=%d baseXP=%.0f tierMult=%.1f abilities=%d bonusPerAbility=%.0f → XP=%.0f (world=%s)",
+                                data.tier, baseXP, tierMult, data.abilityCount, resolved.xpBonusPerAbility, scaledXP, data.worldName);
+        }
     }
 
     private int countActiveAbilities(Ref<EntityStore> ref, Store<EntityStore> store) {
