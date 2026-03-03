@@ -1,0 +1,47 @@
+---
+title: "Mob Rules Tab"
+description: "Managing per-world mob rules through the Admin UI."
+---
+
+The Mob Rules tab provides a tree explorer for managing per-world mob rules.
+
+![Mob Rules Tab](/images/ui-mob-rules.png)
+
+## Tree Explorer
+
+- **Categories** shown in blue — click to navigate into. Prefixed with `[>]`
+- **Items** shown in green — click to expand the detail panel below
+- **Search filter** — type to search all mob rules across all categories (flattens the tree)
+- **Back/Forward** navigation history for browsing categories
+- **Breadcrumb** bar showing current location in the tree
+
+## Mob Rule Detail Panel
+
+Clicking a mob rule item expands a detail panel below it:
+
+![Mob Rule Detail](/images/ui-mob-rule-detail.png)
+
+- **Enabled** toggle
+- **Match patterns** — exact, prefix, contains, and excludes lists
+- **Weapon Override Mode** — cycle between ALWAYS, ONLY_IF_EMPTY, NONE
+- **Per-tier weapon override** toggles (T1–T5)
+- **Weapon category** links — click `[>]` to peek at category contents
+- **Armor category** links
+- **Armor slot restrictions** — control which armor slots the mob can equip
+- **Change NPC** button — opens the NPC picker to rebind the rule to a different NPC
+
+## Adding Mob Rules
+
+Click **[+ Add Mob Rule]** to open the NPC picker. NPCs that already have mob rules are automatically excluded from the list. You can also enter a custom ID for non-standard NPCs.
+
+## Adding Categories
+
+Click **[+ Add Category]** to create a new sub-category within the current category. Categories help organize mob rules into logical groups (e.g., Goblins, Skeletons, Undead).
+
+## Rename & Move
+
+Each tree row has **Rename** and **Move** buttons:
+- **Rename** opens a text popup to change the item or category name
+- **Move** opens a category browser to relocate the item to a different category
+
+**YAML reference:** See [Mobs](/config/mobs) for the underlying `mobrules.yml` fields.

@@ -1,0 +1,40 @@
+---
+title: "Spawning Tab"
+description: "Configuring progression style and spawn chances through the Admin UI."
+---
+
+The Spawning tab controls how and where elites appear in the current world.
+
+![Spawning Tab](/images/ui-spawning.png)
+
+## Progression Style
+
+Cycle button to select the progression style:
+- **ENVIRONMENT** — tiers tied to Hytale zone difficulty
+- **DISTANCE_FROM_SPAWN** — tiers scale with distance from world origin
+- **NONE** — random tier assignment
+
+## Spawn Chances
+
+5 weight fields (T1–T5) controlling the probability of each tier. Higher values mean that tier appears more often. Set a tier to `0` to prevent it from spawning.
+
+## Environment Tier Rules
+
+When using `ENVIRONMENT` progression, a list of zone rules appears. Each zone entry has:
+- **Zone name** (e.g., Env_Zone1, Env_Zone2)
+- **Enabled** toggle — set to OFF to prevent elites in that zone
+- **Per-tier spawn weights** — 5 fields controlling tier distribution for that zone
+
+## Distance Bonuses
+
+When using `DISTANCE_FROM_SPAWN` progression:
+- **Distance per Tier** — blocks of distance before the next tier unlocks
+- **Bonus Interval** — block interval for applying stat bonuses
+- **Health / Damage Bonus per Interval** — bonus added each interval
+- **Health / Damage Bonus Cap** — maximum bonus from distance
+
+## Tier Restrictions
+
+Per-mob tier restriction rows from the Overrides system are also shown here, allowing you to restrict which tiers specific mobs can spawn as.
+
+**YAML reference:** See [Spawning](/config/spawning) for the underlying `spawning.yml` fields.

@@ -1,0 +1,41 @@
+---
+title: "General Tab"
+description: "Master switches, XP integration, elite behavior, and presets."
+---
+
+The General tab controls the master switches and presets for the current overlay.
+
+![General Tab](/images/ui-general.png)
+
+## Enabled
+
+Master switch for RPGMobs in this world. When off, no elites spawn.
+
+## RPGLeveling / XP
+
+Requires [RPGLeveling](https://www.curseforge.com/hytale/mods/rpgleveling) to be installed.
+
+- **RPGLeveling Enabled** — toggle XP integration for this world
+- **XP Multiplier per Tier** — 5 fields (T1–T5) controlling how much XP each tier awards
+- **XP Bonus per Ability** — bonus XP for elites that had an active ability
+- **Minion XP Multiplier** — XP multiplier for summoned minion kills (set low to prevent farming)
+
+## Elite Behavior
+
+Three toggles that control elite-vs-elite interactions:
+
+- **Friendly Fire Disabled** — elites cannot damage each other
+- **Fall Damage Disabled** — elites take no fall or environment damage
+- **No Aggro on Elite** — elites will not target other elites
+
+## Presets
+
+Apply a built-in preset or save/restore a custom preset.
+
+| Preset | What it does |
+| :--- | :--- |
+| **Full** | Enables RPGMobs with all base config values inherited. Only sets `enabled: true`. |
+| **Empty** | Enables RPGMobs but zeroes everything — no spawning, no abilities, no loot, no scaling. A blank slate for building from scratch. |
+| **Custom** | Save the current overlay as a custom preset. Restore it later to return to your saved configuration. |
+
+**YAML reference:** See [Core Settings](/config/core) for the underlying `core.yml` fields, and [Overlays](/config/instances) for the full overlay field reference.
