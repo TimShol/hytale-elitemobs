@@ -1,0 +1,33 @@
+---
+title: "Overrides Tab"
+description: "Per-mob tier restrictions and loot template assignments through the Admin UI."
+---
+
+The Overrides tab provides fine-grained per-mob control over tier spawning and loot assignment.
+
+![Overrides Tab](/images/ui-overrides.png)
+
+## Tier Overrides
+
+Force specific tiers for certain mob rules. Each entry has:
+
+- **Key** — a mob rule key (e.g., `Goblin_Duke`) or category key (e.g., `category:Goblins`)
+- **5 tier toggles** — which tiers are allowed for this mob (ON = can spawn as that tier)
+- **Expandable spawn chance weights** — click to expand and set per-tier spawn weights
+
+### Adding Tier Overrides
+
+Click **+ Add Override** to add a new entry. Type the mob rule key or category key.
+
+## Loot Overrides
+
+Force a specific loot template for a mob rule. Each entry maps a mob rule key to a loot template name.
+
+- **Key** — the mob rule key
+- **Value** — the loot template name to use for this mob
+
+### Adding Loot Overrides
+
+Click **+ Add Override** to add a new entry. Enter the mob rule key and the loot template name.
+
+**YAML reference:** See [Overlays](/config/instances) for the underlying overlay fields (`tierOverrides`, `lootOverrides`).

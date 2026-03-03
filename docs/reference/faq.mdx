@@ -46,9 +46,9 @@ Yes. Set `progressionStyle: NONE` in `spawning.yml`. This randomizes tiers regar
 
 In `abilities.yml`, set `isEnabled: false` on each ability you want to disable. You can also remove specific mob rules from an ability's `linkedMobRuleKeys` to disable it for certain mobs. The [Admin UI](/config/admin-ui) Abilities tab makes this easy with per-entry ON/OFF toggles.
 
-### How do I disable the particle effects?
+### How do I disable entity effects?
 
-Particle effects come from the entity effects system in `effects.yml`. Set `isEnabled: false` on the `projectile_resistance` entry to disable both the effect and its particles.
+Entity effects (like projectile resistance) are configured in `effects.yml`. Set `isEnabled: false` on any effect entry to disable it. You can also toggle individual tiers via `isEnabledPerTier`.
 
 ### How do I add modded weapons to the loot pool?
 

@@ -1,0 +1,29 @@
+---
+title: "Visuals Tab"
+description: "Configuring nameplates and model scaling through the Admin UI."
+---
+
+The Visuals tab controls how elites appear in the world — their nameplates and physical size.
+
+![Visuals Tab](/images/ui-visuals.png)
+
+## Nameplates
+
+- **Enable Nameplates** — master toggle
+- **Nameplate Mode** — cycle between SIMPLE and RANKED_ROLE
+- **Per-tier Enabled** — 5 ON/OFF toggles controlling which tiers show nameplates
+- **Prefix per Tier** — 5 text fields for the tier indicator (e.g., `[•]`, `[• •]`)
+
+### Family Prefixes
+
+A list of mob families with per-tier name prefixes. Each family row shows the family name and 5 prefix fields (one per tier).
+
+For example, the `zombie` family might use: Rotting, Ravenous, Putrid, Monstrous, Evolved.
+
+## Model Scaling
+
+- **Enable Model Scaling** — master toggle
+- **Scale per Tier** — 5 fields (T1–T5). `1.0` = vanilla size, higher = larger
+- **Scale Variance** — random size offset to prevent identical-looking elites
+
+**YAML reference:** See [Visuals](/config/visuals) for the underlying `visuals.yml` fields.

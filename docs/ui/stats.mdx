@@ -1,0 +1,24 @@
+---
+title: "Stats Tab"
+description: "Adjusting health and damage scaling through the Admin UI."
+---
+
+The Stats tab lets you adjust per-tier health and damage multipliers for the current world overlay.
+
+![Stats Tab](/images/ui-stats.png)
+
+## Health Scaling
+
+- **Enable Health Scaling** — toggle health multipliers on or off
+- **Health Multiplier per Tier** — 5 fields (T1–T5). `1.0` = vanilla health, `2.0` = double
+- **Health Random Variance** — random offset applied to each elite's health (e.g., `0.05` = +/-5%)
+
+## Damage Scaling
+
+- **Enable Damage Scaling** — toggle damage multipliers on or off
+- **Damage Multiplier per Tier** — 5 fields (T1–T5). Values below `1.0` make mobs weaker than vanilla
+- **Damage Random Variance** — random offset applied to each hit
+
+Each field shows the current overlay value. If unset, the value is inherited from the base config.
+
+**YAML reference:** See [Stats](/config/stats) for the underlying `stats.yml` fields.
