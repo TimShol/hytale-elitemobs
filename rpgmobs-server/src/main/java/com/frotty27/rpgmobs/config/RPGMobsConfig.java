@@ -1154,12 +1154,10 @@ public final class RPGMobsConfig {
         public Map<String, AbilityConfig> defaultAbilities = defaultAbilities();
     }
 
-    private static List<String> buildDefaultLinkedKeysExcludingVoid(MobRuleCategory defaultTree) {
+    private static List<String> buildDefaultLinkedKeysAllCategories(MobRuleCategory defaultTree) {
         List<String> keys = new ArrayList<>();
         for (MobRuleCategory child : defaultTree.children) {
-            if (!"Void".equals(child.name)) {
-                keys.add(MobRuleCategoryHelpers.toCategoryKey(child.name));
-            }
+            keys.add(MobRuleCategoryHelpers.toCategoryKey(child.name));
         }
         return keys;
     }
@@ -1167,7 +1165,8 @@ public final class RPGMobsConfig {
     private static List<String> buildDefaultSummonLinkedKeys(MobRuleCategory defaultTree) {
         List<String> keys = new ArrayList<>();
         for (MobRuleCategory child : defaultTree.children) {
-            if ("Skeletons".equals(child.name) || "Zombies".equals(child.name) || "Wraiths".equals(child.name)) {
+            if ("Skeletons".equals(child.name) || "Zombies".equals(child.name)
+                    || "Wraiths".equals(child.name) || "Void".equals(child.name)) {
                 keys.add(MobRuleCategoryHelpers.toCategoryKey(child.name));
             }
         }
@@ -1183,8 +1182,10 @@ public final class RPGMobsConfig {
 
         ChargeLeapAbilityConfig chargeLeap = new ChargeLeapAbilityConfig();
         chargeLeap.gate.allowedWeaponCategories = WEAPON_CATS_MELEE;
-        chargeLeap.linkedMobRuleKeys = buildDefaultLinkedKeysExcludingVoid(defaultTree);
-        chargeLeap.excludeLinkedMobRuleKeys = new ArrayList<>(List.of("Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void"));
+        chargeLeap.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        chargeLeap.excludeLinkedMobRuleKeys = new ArrayList<>(List.of(
+                "Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void",
+                "Skeleton_Burnt_Alchemist", "Skeleton_Burnt_Alchemist_Patrol", "Skeleton_Burnt_Alchemist_Wander"));
 
         chargeLeap.isEnabled = true;
         chargeLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
@@ -1216,8 +1217,8 @@ public final class RPGMobsConfig {
         m.put(AbilityIds.CHARGE_LEAP, chargeLeap);
 
         HealLeapAbilityConfig healLeap = new HealLeapAbilityConfig();
-        healLeap.linkedMobRuleKeys = buildDefaultLinkedKeysExcludingVoid(defaultTree);
-        healLeap.excludeLinkedMobRuleKeys = new ArrayList<>(List.of("Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void"));
+        healLeap.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        healLeap.excludeLinkedMobRuleKeys = new ArrayList<>(List.of("Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void"));
         healLeap.isEnabled = true;
         healLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
         healLeap.chancePerTier = new float[]{0f, 0f, 0f, 1.00f, 1.00f};
@@ -1255,7 +1256,9 @@ public final class RPGMobsConfig {
         undeadSummon.chancePerTier = new float[]{0f, 0f, 0f, 0.50f, 1.00f};
         undeadSummon.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 25f, 25f};
         undeadSummon.linkedMobRuleKeys = buildDefaultSummonLinkedKeys(defaultTree);
-        undeadSummon.excludeLinkedMobRuleKeys = new ArrayList<>(List.of("Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void"));
+        undeadSummon.excludeLinkedMobRuleKeys = new ArrayList<>(List.of(
+                "Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void",
+                "Skeleton_Burnt_Alchemist", "Skeleton_Burnt_Alchemist_Patrol", "Skeleton_Burnt_Alchemist_Wander"));
 
         undeadSummon.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
                                    "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_UndeadSummon_Root.template.json"
