@@ -159,7 +159,7 @@ public final class RPGMobsConfig {
             @Cfg(group = "Integrations.RPGLeveling", file = "core.yml",
                  comment = "Bonus XP added for each active ability on the killed elite.\n"
                            + "Abilities: Charge Leap, Heal Potion, Undead Summon.")
-            public double xpBonusPerAbility = 1000.0;
+            public double xpBonusPerAbility = 2500.0;
 
             @Default
             @Min(0.0)

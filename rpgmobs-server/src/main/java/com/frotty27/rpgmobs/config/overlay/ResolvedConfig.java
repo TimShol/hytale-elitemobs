@@ -64,7 +64,7 @@ public final class ResolvedConfig {
 
     public boolean rpgLevelingEnabled = true;
     public float[] xpMultiplierPerTier = {1.0f, 1.5f, 2.0f, 3.0f, 5.0f};
-    public double xpBonusPerAbility = 1000.0;
+    public double xpBonusPerAbility = 2500.0;
     public double minionXPMultiplier = 0.05;
 
     public Map<String, ConfigOverlay.TierOverride> tierOverrides = new LinkedHashMap<>();

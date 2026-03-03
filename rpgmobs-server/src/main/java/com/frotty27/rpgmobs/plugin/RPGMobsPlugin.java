@@ -276,6 +276,11 @@ public final class RPGMobsPlugin extends JavaPlugin {
 
         generateDefaultInstanceOverlays(modDirectory);
 
+        if (config != null && globalConfig != null) {
+            config.debugConfig.isDebugModeEnabled = globalConfig.isDebugModeEnabled;
+            config.debugConfig.debugMobRuleScanIntervalSeconds = globalConfig.debugMobRuleScanIntervalSeconds;
+        }
+
         if (config != null) {
             configResolver.loadAll(modDirectory, globalConfig, config);
         }

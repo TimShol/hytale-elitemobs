@@ -2428,6 +2428,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
             RPGMobsConfig saveCfg = plugin.getConfig();
             if (saveCfg != null) {
+                saveCfg.debugConfig.isDebugModeEnabled = editDebugMode;
+                saveCfg.debugConfig.debugMobRuleScanIntervalSeconds = editDebugScanInterval;
                 for (var entry : editAbilityConfigs.entrySet()) {
                     saveCfg.abilitiesConfig.defaultAbilities.put(entry.getKey(), deepCopyAbilityConfig(entry.getValue()));
                 }
