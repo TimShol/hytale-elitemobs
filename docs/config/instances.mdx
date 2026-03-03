@@ -193,9 +193,13 @@ The [Admin UI](/config/admin-ui) provides two built-in presets that can be appli
 
 You can also save a **Custom** preset per overlay. This stores a snapshot of all current overlay settings that can be restored later.
 
-## Example
+## Example: Dungeon_Goblin Instance
 
-Below is an example `instances/Dungeon_Goblin.yml` overlay for a goblin dungeon instance:
+RPGMobs ships with a pre-configured example overlay for the `Dungeon_Goblin` instance template. This demonstrates how to tailor RPGMobs for a specific dungeon experience.
+
+![Dungeon_Goblin Instance Overlay](/images/admin-ui-instance-overlay.png)
+
+The overlay file at `instances/Dungeon_Goblin.yml` configures:
 
 ```yaml
 enabled: true
@@ -209,7 +213,13 @@ enableNameplates: true
 enableModelScaling: true
 ```
 
-This overlay sets progression to `NONE` (random tier assignment using the defined weights), increases health and damage scaling compared to the base config, disables friendly fire and fall damage for elites, and ensures nameplates and model scaling are active.
+- **Progression set to NONE** — tiers are assigned randomly using the defined weights, since dungeons don't use zone-based or distance-based progression
+- **No Tier 1 spawns** — the first weight is `0`, so all dungeon elites are at least Tier 2
+- **Higher scaling** — health and damage multipliers are increased compared to the base config, making dungeon encounters harder
+- **Elite behavior** — friendly fire and fall damage are disabled so elites don't accidentally kill each other in tight dungeon corridors
+- **Visuals active** — nameplates and model scaling remain enabled so players can identify threat levels
+
+You can use this as a starting point for your own dungeon or instance overlays. Open the Admin UI, select the instance in the sidebar, and adjust settings to match your desired difficulty.
 
 ## Tips
 
