@@ -26,7 +26,11 @@ public final class RPGMobsAbilityLockComponent implements Component<EntityStore>
 
     @Override
     public Component<EntityStore> clone() {
-        return new RPGMobsAbilityLockComponent();
+        RPGMobsAbilityLockComponent c = new RPGMobsAbilityLockComponent();
+        c.activeAbilityId = this.activeAbilityId;
+        c.chainStartPending = this.chainStartPending;
+        c.chainStartedAtTick = this.chainStartedAtTick;
+        return c;
     }
 
     public boolean isLocked() {

@@ -171,7 +171,16 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         ChargeLeapAbilityComponent chargeLeap = store.getComponent(entityRef,
                                                                    plugin.getChargeLeapAbilityComponentType()
         );
-        if (chargeLeap == null || !chargeLeap.abilityEnabled) return false;
+        if (chargeLeap == null || !chargeLeap.abilityEnabled) {
+            RPGMobsLogger.debug(LOGGER,
+                                "[ChargeLeap] SKIP: comp=%s enabled=%s tier=%d",
+                                RPGMobsLogLevel.INFO,
+                                chargeLeap != null ? "present" : "null",
+                                chargeLeap != null ? String.valueOf(chargeLeap.abilityEnabled) : "N/A",
+                                tierIndex
+            );
+            return false;
+        }
 
         if (chargeLeap.cooldownTicksRemaining > 0) {
             RPGMobsLogger.debug(LOGGER,
@@ -610,18 +619,22 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
                                                 commandBuffer.replaceComponent(entityRef, plugin.getAbilityLockComponentType(), lock);
                                             }
                                             if (AbilityIds.HEAL_LEAP.equals(abilityId)) {
-                                                AbilityHelpers.restorePreviousItemIfNeeded(npcEntity,
-                                                                                           worldStore.getComponent(entityRef,
-                                                                                                                   plugin.getHealLeapAbilityComponentType()
-                                                                                           )
-                                                );
+                                                HealLeapAbilityComponent healComp = worldStore.getComponent(entityRef,
+                                                        plugin.getHealLeapAbilityComponentType());
+                                                AbilityHelpers.restorePreviousItemIfNeeded(npcEntity, healComp);
+                                                if (healComp != null) {
+                                                    commandBuffer.replaceComponent(entityRef, plugin.getHealLeapAbilityComponentType(), healComp);
+                                                }
                                             }
                                             if (AbilityIds.SUMMON_UNDEAD.equals(abilityId)) {
-                                                AbilityHelpers.restoreSummonWeaponIfNeeded(npcEntity,
-                                                                                           worldStore.getComponent(entityRef,
-                                                                                                                   plugin.getSummonUndeadAbilityComponentType()
-                                                                                           )
-                                                );
+                                                SummonUndeadAbilityComponent summonComp = worldStore.getComponent(entityRef,
+                                                        plugin.getSummonUndeadAbilityComponentType());
+                                                AbilityHelpers.restoreSummonWeaponIfNeeded(npcEntity, summonComp);
+                                                if (summonComp != null) {
+                                                    summonComp.pendingSummonRole = null;
+                                                    summonComp.pendingSummonTicksRemaining = 0L;
+                                                    commandBuffer.replaceComponent(entityRef, plugin.getSummonUndeadAbilityComponentType(), summonComp);
+                                                }
                                             }
                                             RPGMobsLogger.debug(LOGGER,
                                                                 "[AbilityTrigger] Deferred chain start failed for rootId=%s",
@@ -632,6 +645,13 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
                                             if (lock != null) {
                                                 lock.markChainStarted(plugin.getTickClock().getTick());
                                                 commandBuffer.replaceComponent(entityRef, plugin.getAbilityLockComponentType(), lock);
+                                            }
+                                            if (AbilityIds.SUMMON_UNDEAD.equals(abilityId)) {
+                                                SummonUndeadAbilityComponent summonComp = worldStore.getComponent(entityRef,
+                                                        plugin.getSummonUndeadAbilityComponentType());
+                                                if (summonComp != null) {
+                                                    commandBuffer.replaceComponent(entityRef, plugin.getSummonUndeadAbilityComponentType(), summonComp);
+                                                }
                                             }
 
                                             RPGMobsLogger.debug(LOGGER,

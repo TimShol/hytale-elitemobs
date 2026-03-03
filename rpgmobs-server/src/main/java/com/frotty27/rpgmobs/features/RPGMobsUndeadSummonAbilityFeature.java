@@ -70,13 +70,12 @@ public final class RPGMobsUndeadSummonAbilityFeature implements IRPGMobsAbilityF
                           Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
                           RPGMobsTierComponent tierComponent, @Nullable String roleName) {
         SummonUndeadAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getSummonUndeadAbilityComponentType());
-        if (comp == null) return;
 
         RPGMobsConfig.SummonAbilityConfig abilityConfig = (RPGMobsConfig.SummonAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
                 AbilityIds.SUMMON_UNDEAD);
 
         if (abilityConfig == null) {
-            if (comp.abilityEnabled) {
+            if (comp != null && comp.abilityEnabled) {
                 comp.abilityEnabled = false;
                 comp.pendingSummonTicksRemaining = 0L;
                 comp.pendingSummonRole = null;
@@ -91,6 +90,13 @@ public final class RPGMobsUndeadSummonAbilityFeature implements IRPGMobsAbilityF
         String matchedRuleKey = tierComponent.matchedRuleKey;
 
         boolean allowed = AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.SUMMON_UNDEAD, weaponId, tierIndex, matchedRuleKey, resolved);
+
+        if (comp == null) {
+            if (allowed) {
+                apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
+            }
+            return;
+        }
 
         if (!allowed && comp.abilityEnabled) {
             comp.abilityEnabled = false;
