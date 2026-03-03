@@ -13,6 +13,8 @@ import org.jspecify.annotations.Nullable;
 
 public final class RPGMobsModelScalingFeature implements IRPGMobsFeature {
 
+    private ModelScalingSystem modelScalingSystem;
+
     @Override
     public String getFeatureKey() {
         return "ModelScaling";
@@ -35,8 +37,12 @@ public final class RPGMobsModelScalingFeature implements IRPGMobsFeature {
 
     @Override
     public void registerSystems(RPGMobsPlugin plugin) {
-        ModelScalingSystem system = new ModelScalingSystem(plugin);
-        plugin.registerSystem(system);
-        plugin.getEventBus().registerListener(system);
+        modelScalingSystem = new ModelScalingSystem(plugin);
+        plugin.registerSystem(modelScalingSystem);
+        plugin.getEventBus().registerListener(modelScalingSystem);
+    }
+
+    public ModelScalingSystem getModelScalingSystem() {
+        return modelScalingSystem;
     }
 }

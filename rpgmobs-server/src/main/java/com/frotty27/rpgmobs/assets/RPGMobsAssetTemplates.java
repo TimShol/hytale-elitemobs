@@ -17,14 +17,12 @@ public final class RPGMobsAssetTemplates extends LinkedHashMap<String, String> {
         return templatePath.trim();
     }
 
-
     public void add(String templateKey, String templatePath) {
         if (templateKey == null || templateKey.isBlank()) return;
         if (templatePath == null || templatePath.isBlank()) return;
 
         put(templateKey.trim(), templatePath.trim());
     }
-
 
     public void add(String templatePath) {
         if (templatePath == null || templatePath.isBlank()) return;

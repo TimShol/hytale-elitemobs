@@ -7,6 +7,7 @@ import com.frotty27.rpgmobs.components.ability.ChargeLeapAbilityComponent;
 import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
 import com.frotty27.rpgmobs.components.ability.SummonUndeadAbilityComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.config.schema.YamlSerializer;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.hypixel.hytale.component.Ref;
@@ -14,7 +15,6 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.UUID;
@@ -56,30 +56,16 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
         return true;
     }
 
-    // ── Config ──────────────────────────────────────────────────────────────────
-
     private void loadBalanceConfig() {
         Path modDirectory = plugin.getModDirectory();
         RPGLevelingBalanceConfig defaults = new RPGLevelingBalanceConfig();
         balanceConfig = YamlSerializer.loadOrCreate(modDirectory, defaults);
     }
 
-    /**
-     * Reloads the balance config from disk. Called by {@code /rpgmobs reload}.
-     */
     public void reloadBalanceConfig() {
         loadBalanceConfig();
         LOGGER.atInfo().log("[RPGMobs] RPGLeveling balance config reloaded.");
     }
-
-    /**
-     * Returns the active balance config, or {@code null} if not yet loaded.
-     */
-    public @Nullable RPGLevelingBalanceConfig getBalanceConfig() {
-        return balanceConfig;
-    }
-
-    // ── Events ──────────────────────────────────────────────────────────────────
 
     @Override
     public void onRPGMobSpawned(RPGMobsSpawnedEvent event) {
@@ -90,45 +76,39 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
         }
     }
 
-    // ── XP Scaling ──────────────────────────────────────────────────────────────
-
     private void onXPGained(Object event, UUID killedEntityUuid) {
         World w = world;
         if (w == null) return;
 
-        RPGMobsConfig cfg = plugin.getConfig();
-        if (cfg == null || !cfg.integrationsConfig.rpgLeveling.enabled) return;
-
-        RPGLevelingBalanceConfig bc = balanceConfig;
-        if (bc == null) return;
-
         Ref<EntityStore> ref = w.getEntityRef(killedEntityUuid);
         if (ref == null || !ref.isValid()) return;
+
+        ResolvedConfig resolved = plugin.getResolvedConfig(w.getName());
+        if (!resolved.rpgLevelingEnabled) return;
 
         var xpEvent = (org.zuxaw.plugin.api.ExperienceGainedEvent) event;
         double baseXP = xpEvent.getXpAmount();
 
-        // Minion XP reduction
         if (RPGMobsAPI.query().isMinion(ref)) {
-            double minionXP = baseXP * bc.minionXPMultiplier;
+            double minionXP = baseXP * resolved.minionXPMultiplier;
             xpEvent.setXpAmount(minionXP);
 
-            if (plugin.getConfig().debugConfig.isDebugModeEnabled) {
+            RPGMobsConfig debugCfg = plugin.getConfig();
+            if (debugCfg != null && debugCfg.debugConfig.isDebugModeEnabled) {
                 LOGGER.atInfo().log("[RPGMobs] Minion kill — XP: %.0f → %.0f (×%.2f)",
-                                    baseXP, minionXP, bc.minionXPMultiplier);
+                                    baseXP, minionXP, resolved.minionXPMultiplier);
             }
             return;
         }
 
-        // Elite XP scaling
         RPGMobsAPI.query().getTier(ref).ifPresent(tier -> {
-            int clampedTier = Math.min(tier, bc.xpMultiplierPerTier.length - 1);
-            float tierMult = bc.xpMultiplierPerTier[clampedTier];
+            int clampedTier = Math.min(tier, resolved.xpMultiplierPerTier.length - 1);
+            float tierMult = resolved.xpMultiplierPerTier[clampedTier];
 
             Store<EntityStore> store = ref.getStore();
             int abilityCount = countActiveAbilities(ref, store);
 
-            double scaledXP = baseXP * tierMult + bc.xpBonusPerAbility * abilityCount;
+            double scaledXP = baseXP * tierMult + resolved.xpBonusPerAbility * abilityCount;
             xpEvent.setXpAmount(scaledXP);
 
             if (plugin.getConfig().debugConfig.isDebugModeEnabled) {
@@ -137,8 +117,6 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
             }
         });
     }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────────
 
     private int countActiveAbilities(Ref<EntityStore> ref, Store<EntityStore> store) {
         int count = 0;

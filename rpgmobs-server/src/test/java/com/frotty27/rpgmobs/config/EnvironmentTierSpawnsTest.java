@@ -10,7 +10,7 @@ public class EnvironmentTierSpawnsTest {
     @Test
     void zone1DefaultsUseTier1To3Only() {
         RPGMobsConfig cfg = new RPGMobsConfig();
-        RPGMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("Env_Zone1_Forests");
+        RPGMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("zone1");
         assertNotNull(rule);
         assertTrue(rule.spawnChancePerTier.length >= 5);
         assertTrue(rule.spawnChancePerTier[3] <= 0.0001);
@@ -20,7 +20,7 @@ public class EnvironmentTierSpawnsTest {
     @Test
     void zone3DefaultsDisableTier1() {
         RPGMobsConfig cfg = new RPGMobsConfig();
-        RPGMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("Env_Zone3_Tundra");
+        RPGMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("zone3");
         assertNotNull(rule);
         assertTrue(rule.spawnChancePerTier.length >= 5);
         assertTrue(rule.spawnChancePerTier[0] <= 0.0001);
@@ -29,12 +29,25 @@ public class EnvironmentTierSpawnsTest {
     @Test
     void zone4DefaultsPreferTier3() {
         RPGMobsConfig cfg = new RPGMobsConfig();
-        RPGMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("Env_Zone4_Wastes");
+        RPGMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("zone4");
         assertNotNull(rule);
         assertTrue(rule.spawnChancePerTier.length >= 5);
         assertTrue(rule.spawnChancePerTier[0] <= 0.0001);
         assertTrue(rule.spawnChancePerTier[1] <= 0.0001);
         assertTrue(rule.spawnChancePerTier[2] >= rule.spawnChancePerTier[3]);
         assertTrue(rule.spawnChancePerTier[2] >= rule.spawnChancePerTier[4]);
+    }
+
+    @Test
+    void zone0DefaultsOnlyTier1() {
+        RPGMobsConfig cfg = new RPGMobsConfig();
+        RPGMobsConfig.EnvironmentTierRule rule = cfg.spawning.defaultEnvironmentTierSpawns.get("zone0");
+        assertNotNull(rule);
+        assertTrue(rule.spawnChancePerTier.length >= 5);
+        assertTrue(rule.spawnChancePerTier[0] > 0);
+        assertTrue(rule.spawnChancePerTier[1] <= 0.0001);
+        assertTrue(rule.spawnChancePerTier[2] <= 0.0001);
+        assertTrue(rule.spawnChancePerTier[3] <= 0.0001);
+        assertTrue(rule.spawnChancePerTier[4] <= 0.0001);
     }
 }

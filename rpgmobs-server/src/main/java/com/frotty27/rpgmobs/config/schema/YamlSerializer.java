@@ -1,5 +1,6 @@
 package com.frotty27.rpgmobs.config.schema;
 
+import com.hypixel.hytale.logger.HytaleLogger;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.Reader;
@@ -15,10 +16,9 @@ public final class YamlSerializer {
     private YamlSerializer() {
     }
 
-    private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(YamlSerializer.class.getName());
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
     private static final Yaml YAML = new Yaml();
-
 
     private static final Map<Class<?>, List<Field>> ALL_FIELDS_CACHE = new HashMap<>();
 
@@ -37,11 +37,9 @@ public final class YamlSerializer {
                 yamlRootByFileName.put(fileName, readYamlFileAsStringKeyMap(yamlFilePath));
             }
 
+            applyYamlOverrides(annotatedFieldsByFileName, yamlRootByFileName);
 
-            applyYamlOverrides(javaDefaultsInstance, annotatedFieldsByFileName, yamlRootByFileName);
-
-
-            writeYamlFiles(configDirectory, javaDefaultsInstance, annotatedFieldsByFileName, yamlRootByFileName);
+            writeYamlFiles(configDirectory, annotatedFieldsByFileName, yamlRootByFileName);
 
             return javaDefaultsInstance;
         } catch (Throwable throwable) {
@@ -50,14 +48,29 @@ public final class YamlSerializer {
         }
     }
 
+    public static <T> void writeOnly(Path configDirectory, T configInstance) {
+        try {
+            Files.createDirectories(configDirectory);
+
+            Map<String, List<FieldRef>> annotatedFieldsByFileName = groupAnnotatedFieldsByFileName(configInstance);
+
+            Map<String, Map<String, Object>> emptyYamlRoots = new LinkedHashMap<>();
+            for (String fileName : annotatedFieldsByFileName.keySet()) {
+                emptyYamlRoots.put(fileName, new LinkedHashMap<>());
+            }
+
+            writeYamlFiles(configDirectory, annotatedFieldsByFileName, emptyYamlRoots);
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+    }
+
     public static String readConfigVersion(Path configDirectory, String mainFileName, String versionKey) {
         Path path = configDirectory.resolve(mainFileName);
         Map<String, Object> yaml = readYamlFileAsStringKeyMap(path);
 
-
         Object ver = yaml.get(versionKey);
         if (ver != null) return String.valueOf(ver);
-
 
         for (Object value : yaml.values()) {
             if (value instanceof Map<?, ?> group) {
@@ -68,7 +81,6 @@ public final class YamlSerializer {
 
         return "0.0.0";
     }
-
 
     private static Map<String, List<FieldRef>> groupAnnotatedFieldsByFileName(Object configInstance) {
         Map<String, List<FieldRef>> out = new LinkedHashMap<>();
@@ -131,7 +143,6 @@ public final class YamlSerializer {
         return field.getAnnotation(YamlIgnore.class) != null;
     }
 
-
     private static Map<String, Object> readYamlFileAsStringKeyMap(Path yamlFilePath) {
         if (!Files.exists(yamlFilePath)) return new LinkedHashMap<>();
 
@@ -158,9 +169,8 @@ public final class YamlSerializer {
         return out;
     }
 
-
-    private static <T> void applyYamlOverrides(T configInstance, Map<String, List<FieldRef>> annotatedFieldsByFileName,
-                                               Map<String, Map<String, Object>> yamlRootByFileName) throws IllegalAccessException {
+    private static void applyYamlOverrides(Map<String, List<FieldRef>> annotatedFieldsByFileName,
+                                           Map<String, Map<String, Object>> yamlRootByFileName) throws IllegalAccessException {
 
         for (Map.Entry<String, List<FieldRef>> fileEntry : annotatedFieldsByFileName.entrySet()) {
             String fileName = fileEntry.getKey();
@@ -187,7 +197,6 @@ public final class YamlSerializer {
                 field.setAccessible(true);
                 Object currentValue = field.get(owner);
 
-
                 if (yamlValue == null) {
                     if (field.getType().isPrimitive()) continue;
                     if (currentValue != null) continue;
@@ -210,7 +219,6 @@ public final class YamlSerializer {
         Object section = rootYaml.get(group);
         if (!(section instanceof Map<?, ?> map)) return null;
 
-
         return toStringKeyMap(map);
     }
 
@@ -228,15 +236,12 @@ public final class YamlSerializer {
         return field.getName();
     }
 
-
     private static Object convertYamlValueToFieldType(Field field, Object yamlValue, Object currentValue) {
         if (yamlValue == null) return null;
 
         Class<?> fieldType = field.getType();
 
-
         if (fieldType.isEnum()) return parseEnum(fieldType, yamlValue);
-
 
         if (fieldType == String.class) return String.valueOf(yamlValue);
         if (fieldType == boolean.class || fieldType == Boolean.class) return toBoolean(yamlValue);
@@ -254,7 +259,6 @@ public final class YamlSerializer {
                                                                                        fieldType
         );
 
-
         if (fieldType.isArray()) {
             if (!(yamlValue instanceof List<?> yamlList)) return null;
 
@@ -264,7 +268,7 @@ public final class YamlSerializer {
             if (fixedArraySize != null && fixedArraySize.value() > 0) {
                 desiredLength = fixedArraySize.value();
                 if (yamlList.size() != desiredLength) {
-                    LOGGER.warning(String.format("Config array size mismatch for '%s': expected=%d, got=%d (will %s)",
+                    LOGGER.atWarning().log(String.format("Config array size mismatch for '%s': expected=%d, got=%d (will %s)",
                                                  field.getName(),
                                                  desiredLength,
                                                  yamlList.size(),
@@ -293,7 +297,6 @@ public final class YamlSerializer {
             return arrayValue;
         }
 
-
         if (List.class.isAssignableFrom(fieldType)) {
             if (!(yamlValue instanceof List<?> yamlList)) return null;
 
@@ -311,7 +314,6 @@ public final class YamlSerializer {
             return convertedList;
         }
 
-
         if (Map.class.isAssignableFrom(fieldType)) {
             if (!(yamlValue instanceof Map<?, ?> yamlMap)) return null;
 
@@ -319,7 +321,6 @@ public final class YamlSerializer {
             Class<?> valType = getMapValueType(field);
 
             LinkedHashMap<Object, Object> merged = new LinkedHashMap<>();
-
 
             if (currentValue instanceof Map<?, ?> curMap) {
                 merged.putAll(curMap);
@@ -330,7 +331,6 @@ public final class YamlSerializer {
                 if (k == null) continue;
 
                 Object rawV = e.getValue();
-
 
                 if (rawV == null) {
                     Object existing = merged.get(k);
@@ -360,7 +360,6 @@ public final class YamlSerializer {
 
             return merged;
         }
-
 
         if (yamlValue instanceof Map<?, ?> yamlMap && isPojoType(fieldType)) {
             if (fieldType.isInstance(currentValue)) {
@@ -432,9 +431,7 @@ public final class YamlSerializer {
         return clamped;
     }
 
-
-    private static void writeYamlFiles(Path configDirectory, Object configInstance,
-                                       Map<String, List<FieldRef>> annotatedFieldsByFileName,
+    private static void writeYamlFiles(Path configDirectory, Map<String, List<FieldRef>> annotatedFieldsByFileName,
                                        Map<String, Map<String, Object>> yamlRootByFileName) throws Exception {
 
         for (Map.Entry<String, List<FieldRef>> fileEntry : annotatedFieldsByFileName.entrySet()) {
@@ -444,7 +441,7 @@ public final class YamlSerializer {
             Path yamlFilePath = configDirectory.resolve(fileName);
             Map<String, Object> yamlRoot = yamlRootByFileName.get(fileName);
 
-            String yamlText = buildYamlText(configInstance, fields, yamlRoot);
+            String yamlText = buildYamlText(fields, yamlRoot);
 
             Files.writeString(yamlFilePath,
                               yamlText,
@@ -455,7 +452,7 @@ public final class YamlSerializer {
         }
     }
 
-    private static String buildYamlText(Object configInstance, List<FieldRef> fields,
+    private static String buildYamlText(List<FieldRef> fields,
                                         Map<String, Object> yamlRoot) throws Exception {
         StringBuilder out = new StringBuilder(8192);
 
@@ -479,7 +476,7 @@ public final class YamlSerializer {
 
         List<FieldRef> rootFields = byGroup.remove("");
         if (rootFields != null && !rootFields.isEmpty()) {
-            appendFieldBlock(out, configInstance, rootFields, yamlRoot, 0);
+            appendFieldBlock(out, rootFields, yamlRoot, 0);
             out.append("\n");
         }
 
@@ -488,14 +485,14 @@ public final class YamlSerializer {
             if (groupName == null || groupName.isBlank()) continue;
 
             out.append(groupName).append(":\n");
-            appendFieldBlock(out, configInstance, groupEntry.getValue(), yamlRoot, 2);
+            appendFieldBlock(out, groupEntry.getValue(), yamlRoot, 2);
             out.append("\n");
         }
 
         return out.toString();
     }
 
-    private static void appendFieldBlock(StringBuilder out, Object configInstance, List<FieldRef> fields,
+    private static void appendFieldBlock(StringBuilder out, List<FieldRef> fields,
                                          Map<String, Object> yamlRoot, int baseIndent) throws Exception {
 
         for (FieldRef fieldRef : fields) {
@@ -524,7 +521,6 @@ public final class YamlSerializer {
 
             if (yamlScope != null && yamlScope.containsKey(yamlKey) && field.getAnnotation(CfgVersion.class) == null) {
 
-
                 Object userValue = yamlScope.get(yamlKey);
 
                 if (userValue == null) {
@@ -552,12 +548,10 @@ public final class YamlSerializer {
 
         Class<?> t = field.getType();
 
-
         if (t.isArray()) return true;
         if (Map.class.isAssignableFrom(t)) return true;
         if (List.class.isAssignableFrom(t)) return true;
         if (isPojoType(t)) return true;
-
 
         if (userYamlValue instanceof Map<?, ?>) return true;
         return userYamlValue instanceof List<?>;
@@ -568,7 +562,6 @@ public final class YamlSerializer {
             out.append(" null");
             return;
         }
-
 
         if (value instanceof Enum<?> e) {
             out.append(" ").append(e.name());
@@ -600,7 +593,6 @@ public final class YamlSerializer {
                 return;
             }
 
-
             if (isScalarOnlyList(list)) {
                 appendFlowList(out, list);
                 return;
@@ -611,13 +603,11 @@ public final class YamlSerializer {
                 indent(out, indent + 2);
                 out.append("-");
 
-
                 if (element instanceof List<?> innerList && isScalarOnlyList(innerList)) {
                     appendFlowList(out, innerList);
                     out.append("\n");
                     continue;
                 }
-
 
                 if (element instanceof Map<?, ?> innerMap && !innerMap.isEmpty() && isScalarOnlyMap(innerMap)) {
                     appendFlowMap(out, innerMap);
@@ -707,7 +697,6 @@ public final class YamlSerializer {
         out.append(" ".repeat(Math.max(0, spaces)));
     }
 
-
     private static boolean isScalarOnlyMap(Map<?, ?> map) {
         for (Map.Entry<?, ?> e : map.entrySet()) {
             if (e.getKey() == null) return false;
@@ -768,7 +757,6 @@ public final class YamlSerializer {
         return null;
     }
 
-
     private static boolean isPojoType(Class<?> type) {
         if (type.isPrimitive()) return false;
         if (type == String.class) return false;
@@ -807,7 +795,6 @@ public final class YamlSerializer {
                 Object rawValue = map.get(key);
                 Object currentValue = field.get(targetPojo);
 
-
                 if (rawValue == null) {
                     if (field.getType().isPrimitive()) continue;
                     if (currentValue != null) continue;
@@ -824,7 +811,6 @@ public final class YamlSerializer {
             return targetPojo;
         }
     }
-
 
     private static Boolean toBoolean(Object value) {
         if (value instanceof Boolean b) return b;

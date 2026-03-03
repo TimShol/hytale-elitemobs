@@ -9,6 +9,75 @@ group = rootProject.property('group')
 version = rootProject.ext.computeVersion(mod_build)
 base.archivesName = rootProject.property('name').toString()
 
+def generatedDir = file("${projectDir}/src/generated/java")
+
+sourceSets {
+    main {
+        java.srcDirs += generatedDir
+    }
+}
+
+tasks.register('generateAssetIds') {
+    group = 'build'
+    description = 'Scans Hytale asset folders to generate NPC and Item ID lists'
+
+    def assetsDir = rootProject.file(rootProject.findProperty('hytale_assets_dir') ?: '../Hytale Assets (build-10)')
+    def npcRolesDir = new File(assetsDir, 'Server/NPC/Roles')
+    def itemsDir = new File(assetsDir, 'Common/Icons/ItemsGenerated')
+    def outputFile = new File(generatedDir, 'com/frotty27/rpgmobs/generated/HytaleAssetIds.java')
+
+    outputs.file(outputFile)
+
+    doLast {
+        def npcIds = [] as Set
+        def npcExcludePatterns = [~/^Component_.*/, ~/^Template_.*/, ~/^Test_.*/, ~/^Static\d*$/]
+        if (npcRolesDir.exists()) {
+            npcRolesDir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+                if (file.name.endsWith('.json')) {
+                    def id = file.name.replaceAll(/\.json$/, '')
+                    if (!npcExcludePatterns.any { id ==~ it }) {
+                        npcIds.add(id)
+                    }
+                }
+            }
+        }
+        def npcIdsSorted = npcIds.toList()
+        npcIdsSorted.sort(String.CASE_INSENSITIVE_ORDER)
+
+        def itemIds = []
+        if (itemsDir.exists()) {
+            itemsDir.eachFileMatch(~/.*\.png/) { file ->
+                itemIds.add(file.name.replaceAll(/\.png$/, ''))
+            }
+        }
+        itemIds.sort(String.CASE_INSENSITIVE_ORDER)
+
+        outputFile.parentFile.mkdirs()
+        def npcLiterals = npcIdsSorted.collect { '        "' + it + '"' }.join(',\n')
+        def itemLiterals = itemIds.collect { '        "' + it + '"' }.join(',\n')
+        outputFile.text = """\
+package com.frotty27.rpgmobs.generated;
+
+import java.util.List;
+
+public final class HytaleAssetIds {
+    private HytaleAssetIds() {}
+
+    public static final List<String> ALL_NPC_IDS = List.of(
+${npcLiterals}
+    );
+
+    public static final List<String> ALL_ITEM_ICON_IDS = List.of(
+${itemLiterals}
+    );
+}
+"""
+        println "Generated HytaleAssetIds: ${npcIdsSorted.size()} NPCs, ${itemIds.size()} item icons"
+    }
+}
+
+tasks.compileJava.dependsOn tasks.generateAssetIds
+
 dependencies {
     implementation project(':rpgmobs-api')
     implementation 'org.yaml:snakeyaml:2.2'
@@ -42,6 +111,7 @@ tasks.processResources {
 
 tasks.shadowJar {
     archiveClassifier = ''
+    relocate 'org.yaml.snakeyaml', 'com.frotty27.rpgmobs.shaded.snakeyaml'
     // Explicitly include rpgmobs-api classes — shadow may skip them due to
     // split-package overlap (server has implementation classes in the api namespace).
     from project(':rpgmobs-api').sourceSets.main.output

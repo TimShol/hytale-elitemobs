@@ -11,7 +11,6 @@ public final class TemplateNameGenerator {
     private TemplateNameGenerator() {
     }
 
-
     public static String getBaseTemplateNameFromPath(String templatePath) {
         if (templatePath == null) return null;
 
@@ -34,7 +33,6 @@ public final class TemplateNameGenerator {
         return fileName;
     }
 
-
     public static String getTierSuffix(RPGMobsConfig config, int tierIndex) {
         String fallbackSuffix = "T" + (tierIndex + 1);
 
@@ -48,12 +46,10 @@ public final class TemplateNameGenerator {
         return configuredSuffix.trim().replaceAll("[^A-Za-z0-9_\\-]", "_");
     }
 
-
     public static String appendTierSuffix(String baseTemplateId, RPGMobsConfig config, int tierIndex) {
         if (baseTemplateId == null || baseTemplateId.isBlank()) return null;
         return baseTemplateId + "_" + getTierSuffix(config, tierIndex);
     }
-
 
     public static String getTemplateNameWithTierFromPath(String templatePath, RPGMobsConfig config, int tierIndex) {
         String baseTemplateId = getBaseTemplateNameFromPath(templatePath);

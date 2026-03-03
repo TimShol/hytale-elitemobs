@@ -20,10 +20,10 @@ public final class MobRuleMatcher {
     public record MatchResult(String key, RPGMobsConfig.MobRule mobRule, MatchKind matchKind, int score) {
     }
 
-    public MatchResult findBestMatch(RPGMobsConfig cfg, String roleName) {
+    public MatchResult findBestMatch(Map<String, RPGMobsConfig.MobRule> mobRules, String roleName) {
         if (roleName == null || roleName.isBlank()) return null;
 
-        if (cfg == null || cfg.mobsConfig.defaultMobRules == null || cfg.mobsConfig.defaultMobRules.isEmpty())
+        if (mobRules == null || mobRules.isEmpty())
             return null;
 
         final String lowerCaseRoleName = normalizeLower(roleName);
@@ -31,7 +31,7 @@ public final class MobRuleMatcher {
         MatchResult bestMatchResult = null;
         int bestScore = Integer.MIN_VALUE;
 
-        for (Map.Entry<String, RPGMobsConfig.MobRule> mobRuleEntry : cfg.mobsConfig.defaultMobRules.entrySet()) {
+        for (Map.Entry<String, RPGMobsConfig.MobRule> mobRuleEntry : mobRules.entrySet()) {
             RPGMobsConfig.MobRule rule = mobRuleEntry.getValue();
             if (rule == null || !rule.enabled) continue;
 
@@ -63,10 +63,8 @@ public final class MobRuleMatcher {
         int exactMatchLength = longestExactMatchLength(roleLower, rule.matchExact);
         if (exactMatchLength > 0) return new ScoredMatch(MatchKind.EXACT, EXACT_BASE_SCORE + exactMatchLength);
 
-
         int prefixMatchLength = longestPrefixMatchLength(roleLower, rule.matchStartsWith);
         if (prefixMatchLength > 0) return new ScoredMatch(MatchKind.PREFIX, PREFIX_BASE_SCORE + prefixMatchLength);
-
 
         int containsMatchLength = longestContainsMatchLength(roleLower, rule.matchContains);
         if (containsMatchLength > 0) return new ScoredMatch(MatchKind.CONTAINS,

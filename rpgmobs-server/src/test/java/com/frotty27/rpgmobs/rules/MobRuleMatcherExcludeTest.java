@@ -24,8 +24,8 @@ public class MobRuleMatcherExcludeTest {
         rules.put("goblin", rule);
         cfg.mobsConfig.defaultMobRules = rules;
 
-        MobRuleMatcher.MatchResult allowed = new MobRuleMatcher().findBestMatch(cfg, "goblin_scout");
-        MobRuleMatcher.MatchResult denied = new MobRuleMatcher().findBestMatch(cfg, "goblin_boss");
+        MobRuleMatcher.MatchResult allowed = new MobRuleMatcher().findBestMatch(cfg.mobsConfig.defaultMobRules, "goblin_scout");
+        MobRuleMatcher.MatchResult denied = new MobRuleMatcher().findBestMatch(cfg.mobsConfig.defaultMobRules, "goblin_boss");
 
         assertNotNull(allowed);
         assertTrue(denied == null);

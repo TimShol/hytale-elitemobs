@@ -31,7 +31,6 @@ public final class AbilityHelpers {
         return RootInteraction.getAssetMap().getAsset(rootInteractionId);
     }
 
-
     public static boolean isInteractionTypeRunning(Store<EntityStore> entityStore, Ref<EntityStore> npcRef,
                                                    InteractionType interactionType) {
         ComponentType<EntityStore, InteractionManager> interactionManagerComponentType = InteractionModule.get().getInteractionManagerComponent();

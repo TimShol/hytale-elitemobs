@@ -17,9 +17,7 @@ public final class RPGMobsSummonedMinionComponent implements Component<EntitySto
     public int minTierIndex = 0;
     public int maxTierIndex = 1;
     public boolean tierApplied;
-    /**
-     * Tick at which this minion should die in a chain reaction. 0 = not scheduled.
-     */
+
     public long chainDeathAtTick = 0L;
 
     private static final KeyedCodec<UUID> K_SUMMONER = new KeyedCodec<>("SummonerId", new UUIDBinaryCodec());

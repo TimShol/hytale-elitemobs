@@ -2,8 +2,8 @@ package com.frotty27.rpgmobs.systems.combat;
 
 import com.frotty27.rpgmobs.api.events.RPGMobsDamageDealtEvent;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
-import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.exceptions.RPGMobsException;
 import com.frotty27.rpgmobs.exceptions.RPGMobsSystemException;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
@@ -92,7 +92,6 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
                        @NonNull Damage damage) {
         RPGMobsConfig config = RPGMobsPlugin.getConfig();
         if (config == null) return;
-        if (!config.damageConfig.enableMobDamageMultiplier) return;
 
         damageEventsSeenCount++;
 
@@ -169,6 +168,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
             return;
         }
 
+        if (!resolveDamageScalingEnabled(config, entityStore, attackerEntityRef)) return;
 
         Ref<EntityStore> victimRef = archetypeChunk.getReferenceTo(entityIndex);
         if (victimRef != null && victimRef.isValid()) {
@@ -188,9 +188,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
 
         int clampedTierIndex = clampTierIndex(attackerTierComponent.tierIndex);
 
-
         float baseMultiplier = resolveDamageMultiplier(config, entityStore, attackerEntityRef, clampedTierIndex);
-
 
         float distanceDamageBonus = 0f;
         com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent progressionComponent = entityStore.getComponent(
@@ -201,11 +199,9 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
             distanceDamageBonus = progressionComponent.distanceDamageBonus();
         }
 
-
         float totalMultiplier = baseMultiplier + distanceDamageBonus;
 
-
-        float damageRandomVariance = config.damageConfig.mobDamageRandomVariance;
+        float damageRandomVariance = resolveDamageVariance(config, entityStore, attackerEntityRef);
         if (damageRandomVariance > 0f) {
             totalMultiplier += (random.nextFloat() * 2f - 1f) * damageRandomVariance;
         }
@@ -213,7 +209,6 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
         if (totalMultiplier < 0f) totalMultiplier = 0f;
 
         float damageBeforeScaling = damage.getAmount();
-
 
         NPCEntity attackerNpc = entityStore.getComponent(attackerEntityRef, NPC_COMPONENT_TYPE);
         String attackerRole = safeRoleName(attackerNpc);
@@ -253,27 +248,40 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
         }
     }
 
+    private boolean resolveDamageScalingEnabled(RPGMobsConfig config, Store<EntityStore> entityStore,
+                                                Ref<EntityStore> attackerRef) {
+        NPCEntity npc = entityStore.getComponent(attackerRef, NPC_COMPONENT_TYPE);
+        if (npc != null && npc.getWorld() != null) {
+            ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(npc.getWorld().getName());
+            return resolved.enableDamageScaling;
+        }
+        return config.damageConfig.enableMobDamageMultiplier;
+    }
 
-    /**
-     * Resolves the damage multiplier for the given tier, checking instance rules first.
-     */
     private float resolveDamageMultiplier(RPGMobsConfig config, Store<EntityStore> entityStore,
                                            Ref<EntityStore> attackerRef, int clampedTierIndex) {
-        InstancesConfig instancesConfig = RPGMobsPlugin.getInstancesConfig();
-        if (instancesConfig != null && instancesConfig.enabled) {
-            NPCEntity npc = entityStore.getComponent(attackerRef, NPC_COMPONENT_TYPE);
-            if (npc != null && npc.getWorld() != null) {
-                String worldName = npc.getWorld().getName();
-                InstancesConfig.InstanceRule instanceRule = instancesConfig.resolveRule(worldName);
-                if (instanceRule != null && instanceRule.damageMultiplierPerTier != null && instanceRule.damageMultiplierPerTier.length >= TIERS_AMOUNT) {
-                    return instanceRule.damageMultiplierPerTier[clampedTierIndex];
-                }
+        NPCEntity npc = entityStore.getComponent(attackerRef, NPC_COMPONENT_TYPE);
+        if (npc != null && npc.getWorld() != null) {
+            String worldName = npc.getWorld().getName();
+            ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(worldName);
+            if (resolved.damageMultiplierPerTier != null && resolved.damageMultiplierPerTier.length >= TIERS_AMOUNT) {
+                return resolved.damageMultiplierPerTier[clampedTierIndex];
             }
         }
         if (config.damageConfig.mobDamageMultiplierPerTier != null && config.damageConfig.mobDamageMultiplierPerTier.length >= TIERS_AMOUNT) {
             return config.damageConfig.mobDamageMultiplierPerTier[clampedTierIndex];
         }
         return DEFAULT_DAMAGE_MULTIPLIER;
+    }
+
+    private float resolveDamageVariance(RPGMobsConfig config, Store<EntityStore> entityStore,
+                                         Ref<EntityStore> attackerRef) {
+        NPCEntity npc = entityStore.getComponent(attackerRef, NPC_COMPONENT_TYPE);
+        if (npc != null && npc.getWorld() != null) {
+            ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(npc.getWorld().getName());
+            return resolved.damageRandomVariance;
+        }
+        return config.damageConfig.mobDamageRandomVariance;
     }
 
     private static String classifyAttackerKind(Store<EntityStore> entityStore, Ref<EntityStore> attackerEntityRef) {

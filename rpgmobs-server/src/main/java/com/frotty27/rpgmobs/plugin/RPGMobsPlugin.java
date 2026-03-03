@@ -21,14 +21,19 @@ import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonRiseComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
-import com.frotty27.rpgmobs.config.InstancesConfig;
+import com.frotty27.rpgmobs.config.GlobalConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.migration.ConfigMigrationV2;
+import com.frotty27.rpgmobs.config.overlay.ConfigOverlay;
+import com.frotty27.rpgmobs.config.overlay.ConfigResolver;
+import com.frotty27.rpgmobs.config.overlay.ConfigWriter;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.config.schema.YamlSerializer;
 import com.frotty27.rpgmobs.features.RPGMobsFeatureRegistry;
 import com.frotty27.rpgmobs.features.RPGMobsSpawningFeature;
 import com.frotty27.rpgmobs.integrations.RPGLevelingIntegration;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
-import com.frotty27.rpgmobs.nameplates.RPGMobsNameplateService;
+import com.frotty27.rpgmobs.services.RPGMobsNameplateService;
 import com.frotty27.rpgmobs.systems.combat.RPGMobsAITargetPollingSystem;
 import com.frotty27.rpgmobs.systems.combat.RPGMobsCombatStateSystem;
 import com.frotty27.rpgmobs.systems.death.RPGMobsVanillaDropsCullZoneManager;
@@ -43,7 +48,6 @@ import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.AssetModule;
 import com.hypixel.hytale.server.core.asset.AssetRegistryLoader;
 import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
-import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathSystems;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
@@ -51,9 +55,11 @@ import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -62,7 +68,8 @@ public final class RPGMobsPlugin extends JavaPlugin {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final String ASSET_PACK_NAME = "RPGMobsGenerated";
     private RPGMobsConfig config;
-    private InstancesConfig instancesConfig;
+    private GlobalConfig globalConfig;
+    private final ConfigResolver configResolver = new ConfigResolver();
 
     private ComponentType<EntityStore, RPGMobsTierComponent> RPGMobsComponentType;
     private ComponentType<EntityStore, RPGMobsProgressionComponent> progressionComponentType;
@@ -88,9 +95,10 @@ public final class RPGMobsPlugin extends JavaPlugin {
     private final RPGMobsEventBus eventBus = new RPGMobsEventBus();
     private RPGLevelingIntegration rpgLevelingIntegration;
 
-    private final AtomicBoolean reconcileRequested = new AtomicBoolean(false);
-    private final AtomicInteger reconcileTicksRemaining = new AtomicInteger(0);
-    private boolean reconcileActive = false;
+    private final AtomicBoolean reconcileEventPending = new AtomicBoolean(false);
+    private boolean reconcileActiveThisTick = false;
+
+    private final AtomicInteger configReloadCount = new AtomicInteger(0);
 
     public RPGMobsPlugin(JavaPluginInit init) {
         super(init);
@@ -104,7 +112,6 @@ public final class RPGMobsPlugin extends JavaPlugin {
         loadOrCreateRPGMobsConfig();
 
         getEventRegistry().register(LoadAssetEvent.class, this::onLoadAssets);
-        getEventRegistry().register(PlayerConnectEvent.class, this::onPlayerConnect);
 
         nameplateService.describeSegments(this);
 
@@ -144,7 +151,31 @@ public final class RPGMobsPlugin extends JavaPlugin {
         }
     }
 
-    private void onPlayerConnect(PlayerConnectEvent event) {
+    public void discoverWorldsAndInstances() {
+
+        try {
+            var universeWorlds = com.hypixel.hytale.server.core.universe.Universe.get().getWorlds();
+            if (universeWorlds != null) {
+                for (String worldName : universeWorlds.keySet()) {
+                    configResolver.registerWorldIfAbsent(worldName);
+                }
+                LOGGER.atInfo().log("[RPGMobs] Discovered %d worlds from Universe.", universeWorlds.size());
+            }
+        } catch (Throwable t) {
+            LOGGER.atWarning().log("[RPGMobs] Universe.get().getWorlds() failed: %s", t.getMessage());
+        }
+
+        try {
+            var instanceAssets = com.hypixel.hytale.builtin.instances.InstancesPlugin.get().getInstanceAssets();
+            if (instanceAssets != null) {
+                for (String templateName : instanceAssets) {
+                    configResolver.registerInstanceIfAbsent(templateName);
+                }
+                LOGGER.atInfo().log("[RPGMobs] Discovered %d instance templates from InstancesPlugin.", instanceAssets.size());
+            }
+        } catch (Throwable t) {
+            LOGGER.atWarning().log("[RPGMobs] InstancesPlugin.get().getInstanceAssets() failed: %s", t.getMessage());
+        }
     }
 
     public void reloadConfigAndAssets() {
@@ -176,6 +207,23 @@ public final class RPGMobsPlugin extends JavaPlugin {
         }
     }
 
+    public void reloadConfigOnly() {
+        loadOrCreateRPGMobsConfig();
+        int count = configReloadCount.incrementAndGet();
+        LOGGER.atInfo().log("[RPGMobs] Reloaded config (no asset regeneration). configReloadCount=%d", count);
+
+        if (rpgLevelingIntegration != null) {
+            rpgLevelingIntegration.reloadBalanceConfig();
+        }
+    }
+
+    public void writeGlobalConfig() {
+        if (globalConfig == null) return;
+        Path modDirectory = getModDirectory();
+        YamlSerializer.writeOnly(modDirectory, globalConfig);
+        LOGGER.atInfo().log("[RPGMobs] GlobalConfig written to disk.");
+    }
+
     private void reloadNpcRoleAssetsIfPossible() {
     }
 
@@ -184,12 +232,34 @@ public final class RPGMobsPlugin extends JavaPlugin {
     public synchronized void loadOrCreateRPGMobsConfig() {
         Path modDirectory = getModDirectory();
 
-        String oldVersion = YamlSerializer.readConfigVersion(modDirectory, "core.yml", "configVersion");
+        ConfigMigrationV2.migrateIfNeeded(modDirectory);
 
-        if ("0.0.0".equals(oldVersion) && Files.exists(modDirectory.resolve("core.yml"))) {
+        Path baseDir = modDirectory.resolve("base");
+        try {
+            if (!Files.isDirectory(baseDir)) Files.createDirectories(baseDir);
+            Files.createDirectories(modDirectory.resolve("worlds"));
+            Files.createDirectories(modDirectory.resolve("instances"));
+        } catch (IOException e) {
+            LOGGER.atWarning().log("[RPGMobs] Failed to create config directories: %s", e.getMessage());
+        }
+
+        Path configRoot = Files.isDirectory(baseDir) ? baseDir : modDirectory;
+
+        int oldFormatVersion = readConfigFormatVersion(modDirectory);
+        if (oldFormatVersion < 3) {
+            LOGGER.atWarning().log(
+                    "[RPGMobs] Config format version %d → 3 — regenerating all config files.", oldFormatVersion);
+            deleteConfigFiles(configRoot);
+            deleteOverlayFiles(modDirectory.resolve("worlds"));
+            deleteOverlayFiles(modDirectory.resolve("instances"));
+        }
+
+        String oldVersion = YamlSerializer.readConfigVersion(configRoot, "core.yml", "configVersion");
+
+        if ("0.0.0".equals(oldVersion) && Files.exists(configRoot.resolve("core.yml"))) {
             LOGGER.atWarning().log(
                     "[RPGMobs] Config version missing (0.0.0) — wiping all config files to regenerate fresh defaults.");
-            deleteConfigFiles(modDirectory);
+            deleteConfigFiles(configRoot);
         }
 
         RPGMobsConfig defaults = new RPGMobsConfig();
@@ -199,8 +269,22 @@ public final class RPGMobsPlugin extends JavaPlugin {
         } catch (Throwable ignored) {
         }
 
-        config = YamlSerializer.loadOrCreate(modDirectory, defaults);
-        instancesConfig = YamlSerializer.loadOrCreate(modDirectory, new InstancesConfig());
+        config = YamlSerializer.loadOrCreate(configRoot, defaults);
+
+        globalConfig = YamlSerializer.loadOrCreate(modDirectory, new GlobalConfig());
+
+        if (globalConfig != null && globalConfig.configFormatVersion < 3) {
+            globalConfig.configFormatVersion = 3;
+            writeGlobalConfig();
+        }
+
+        generateDefaultInstanceOverlays(modDirectory);
+
+        if (config != null) {
+            configResolver.loadAll(modDirectory, globalConfig, config);
+        }
+
+        discoverWorldsAndInstances();
 
         if (config != null) {
             config.migrate(oldVersion);
@@ -223,6 +307,165 @@ public final class RPGMobsPlugin extends JavaPlugin {
         return getDataDirectory().getParent().resolve("RPGMobs");
     }
 
+    private void generateDefaultInstanceOverlays(Path modDirectory) {
+        Path instancesDir = modDirectory.resolve("instances");
+        Path goblinOverlay = instancesDir.resolve("Dungeon_Goblin.yml");
+
+        if (!Files.exists(goblinOverlay)) {
+            try {
+                ConfigOverlay overlay = buildDungeonGoblinOverlay();
+                ConfigWriter.writeOverlay(overlay, goblinOverlay);
+                LOGGER.atInfo().log("[RPGMobs] Generated default Dungeon_Goblin.yml overlay.");
+            } catch (Throwable e) {
+                LOGGER.atWarning().log("[RPGMobs] Failed to generate Dungeon_Goblin overlay: %s", e.getMessage());
+            }
+        }
+    }
+
+    private static final java.util.List<String> GOBLIN_MOB_RULE_KEYS = java.util.List.of(
+            "Goblin_Duke", "Goblin_Hermit", "Goblin_Ogre",
+            "Goblin_Lobber", "Goblin_Lobber_Patrol",
+            "Goblin_Miner", "Goblin_Miner_Patrol",
+            "Goblin_Scavenger", "Goblin_Scavenger_Battleaxe", "Goblin_Scavenger_Sword",
+            "Goblin_Scrapper", "Goblin_Scrapper_Patrol",
+            "Goblin_Thief", "Goblin_Thief_Patrol"
+    );
+
+    private static ConfigOverlay buildDungeonGoblinOverlay() {
+        ConfigOverlay o = new ConfigOverlay();
+        o.enabled = true;
+
+        o.progressionStyle = "NONE";
+        o.spawnChancePerTier = new double[]{0, 10, 25, 35, 30};
+
+        o.enableHealthScaling = true;
+        o.healthMultiplierPerTier = new float[]{0.5f, 1.0f, 2.0f, 3.5f, 5.0f};
+        o.enableDamageScaling = true;
+        o.damageMultiplierPerTier = new float[]{0.5f, 1.0f, 1.8f, 2.5f, 3.5f};
+        o.healthRandomVariance = 0.08f;
+        o.damageRandomVariance = 0.05f;
+
+        o.abilityOverlays = new LinkedHashMap<>();
+        for (String abilId : new String[]{"charge_leap", "heal_leap", "undead_summon"}) {
+            ConfigOverlay.AbilityOverlay ao = new ConfigOverlay.AbilityOverlay();
+            ao.enabled = true;
+            o.abilityOverlays.put(abilId, ao);
+        }
+
+        o.vanillaDroplistExtraRollsPerTier = new int[]{0, 1, 2, 4, 6};
+        o.dropWeaponChance = 0.12;
+        o.dropArmorPieceChance = 0.10;
+        o.dropOffhandItemChance = 0.06;
+        o.droppedGearDurabilityMin = 0.3;
+        o.droppedGearDurabilityMax = 0.8;
+
+        o.eliteFriendlyFireDisabled = true;
+        o.eliteFallDamageDisabled = true;
+        o.eliteNoAggroOnElite = false;
+
+        o.enableNameplates = true;
+        o.nameplateTierEnabled = new boolean[]{true, true, true, true, true};
+        o.tierPrefixesByFamily = new LinkedHashMap<>();
+        o.tierPrefixesByFamily.put("goblin", java.util.List.of("Sneaky", "Cutthroat", "Brutal", "Overseer", "Overlord"));
+        o.enableModelScaling = true;
+        o.modelScalePerTier = new float[]{1.0f, 1.05f, 1.1f, 1.15f, 1.25f};
+        o.modelScaleVariance = 0.04f;
+
+        o.tierOverrides = new LinkedHashMap<>();
+        addTierOverride(o, "category:Lobber", new boolean[]{false, false, true, false, false});
+        addTierOverride(o, "category:Miner", new boolean[]{true, true, false, false, false});
+        addTierOverride(o, "category:Scavenger", new boolean[]{false, false, true, false, false});
+        addTierOverride(o, "category:Scrapper", new boolean[]{false, false, true, false, false});
+        addTierOverride(o, "category:Thief", new boolean[]{true, true, false, false, false});
+        addTierOverride(o, "Goblin_Hermit", new boolean[]{false, true, true, false, false});
+        addTierOverride(o, "Goblin_Ogre", new boolean[]{false, false, false, true, false});
+        addTierOverride(o, "Goblin_Duke", new boolean[]{false, false, false, false, true});
+
+        o.mobRules = buildGoblinMobRules();
+        o.mobRuleCategoryTree = buildGoblinCategoryTree();
+
+        o.lootTemplates = buildGoblinLootTemplates();
+        o.lootTemplateCategoryTree = new RPGMobsConfig.LootTemplateCategory("All",
+                java.util.List.of("Goblin Dungeon Loot", "Goblin Boss Loot"));
+
+        o.distancePerTier = 0.0;
+        o.distanceBonusInterval = 0.0;
+        o.distanceHealthBonusPerInterval = 0f;
+        o.distanceDamageBonusPerInterval = 0f;
+        o.distanceHealthBonusCap = 0f;
+        o.distanceDamageBonusCap = 0f;
+
+        return o;
+    }
+
+    private static java.util.Map<String, RPGMobsConfig.MobRule> buildGoblinMobRules() {
+        java.util.Map<String, RPGMobsConfig.MobRule> base = RPGMobsConfig.defaultMobRules();
+        java.util.Map<String, RPGMobsConfig.MobRule> goblinRules = new LinkedHashMap<>();
+        for (String key : GOBLIN_MOB_RULE_KEYS) {
+            RPGMobsConfig.MobRule rule = base.get(key);
+            if (rule != null) goblinRules.put(key, rule);
+        }
+        return goblinRules;
+    }
+
+    private static RPGMobsConfig.MobRuleCategory buildGoblinCategoryTree() {
+        var lobber = new RPGMobsConfig.MobRuleCategory("Lobber", java.util.List.of(
+                "Goblin_Lobber", "Goblin_Lobber_Patrol"));
+        var miner = new RPGMobsConfig.MobRuleCategory("Miner", java.util.List.of(
+                "Goblin_Miner", "Goblin_Miner_Patrol"));
+        var scavenger = new RPGMobsConfig.MobRuleCategory("Scavenger", java.util.List.of(
+                "Goblin_Scavenger", "Goblin_Scavenger_Battleaxe", "Goblin_Scavenger_Sword"));
+        var scrapper = new RPGMobsConfig.MobRuleCategory("Scrapper", java.util.List.of(
+                "Goblin_Scrapper", "Goblin_Scrapper_Patrol"));
+        var thief = new RPGMobsConfig.MobRuleCategory("Thief", java.util.List.of(
+                "Goblin_Thief", "Goblin_Thief_Patrol"));
+        var goblins = new RPGMobsConfig.MobRuleCategory("Goblins", java.util.List.of(
+                "Goblin_Duke", "Goblin_Hermit", "Goblin_Ogre"),
+                lobber, miner, scavenger, scrapper, thief);
+        return new RPGMobsConfig.MobRuleCategory("All", java.util.List.of(), goblins);
+    }
+
+    private static java.util.Map<String, RPGMobsConfig.LootTemplate> buildGoblinLootTemplates() {
+        java.util.Map<String, RPGMobsConfig.LootTemplate> templates = new LinkedHashMap<>();
+
+        var generalDrops = new java.util.ArrayList<RPGMobsConfig.ExtraDropRule>();
+        generalDrops.add(makeDropRule("Ingredient_Life_Essence", 1.0, true, true, true, true, true, 2, 5));
+        generalDrops.add(makeDropRule("Ore_Copper", 0.15, true, true, true, true, true, 1, 3));
+        generalDrops.add(makeDropRule("Ingredient_Bar_Iron", 0.10, false, true, true, true, true, 1, 2));
+        generalDrops.add(makeDropRule("Ingredient_Leather_Light", 0.12, true, true, true, true, true, 1, 3));
+        templates.put("Goblin Dungeon Loot", new RPGMobsConfig.LootTemplate(
+                "Goblin Dungeon Loot", generalDrops,
+                java.util.List.of("category:Goblins")));
+
+        var bossDrops = new java.util.ArrayList<RPGMobsConfig.ExtraDropRule>();
+        bossDrops.add(makeDropRule("Ingredient_Life_Essence", 1.0, true, true, true, true, true, 5, 15));
+        bossDrops.add(makeDropRule("Ore_Gold", 0.20, false, false, false, true, true, 1, 3));
+        bossDrops.add(makeDropRule("Rock_Gem_Ruby", 0.05, false, false, false, true, true, 1, 1));
+        bossDrops.add(makeDropRule("Tool_Repair_Kit_Iron", 0.25, false, false, true, true, true, 1, 2));
+        templates.put("Goblin Boss Loot", new RPGMobsConfig.LootTemplate(
+                "Goblin Boss Loot", bossDrops,
+                java.util.List.of("Goblin_Duke", "Goblin_Ogre")));
+
+        return templates;
+    }
+
+    private static RPGMobsConfig.ExtraDropRule makeDropRule(String itemId, double chance,
+            boolean t1, boolean t2, boolean t3, boolean t4, boolean t5, int minQty, int maxQty) {
+        RPGMobsConfig.ExtraDropRule r = new RPGMobsConfig.ExtraDropRule();
+        r.itemId = itemId;
+        r.chance = chance;
+        r.enabledPerTier = new boolean[]{t1, t2, t3, t4, t5};
+        r.minQty = minQty;
+        r.maxQty = maxQty;
+        return r;
+    }
+
+    private static void addTierOverride(ConfigOverlay overlay, String key, boolean[] allowedTiers) {
+        var to = new ConfigOverlay.TierOverride();
+        System.arraycopy(allowedTiers, 0, to.allowedTiers, 0, allowedTiers.length);
+        overlay.tierOverrides.put(key, to);
+    }
+
     private void deleteConfigFiles(Path directory) {
         for (String fileName : CONFIG_FILES) {
             try {
@@ -233,6 +476,28 @@ public final class RPGMobsPlugin extends JavaPlugin {
             } catch (IOException e) {
                 LOGGER.atWarning().log("Failed to delete config file %s: %s", fileName, e.getMessage());
             }
+        }
+    }
+
+    private int readConfigFormatVersion(Path modDirectory) {
+        String raw = YamlSerializer.readConfigVersion(modDirectory, "core.yml", "configFormatVersion");
+        try {
+            return Integer.parseInt(raw);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private void deleteOverlayFiles(Path directory) {
+        if (!Files.isDirectory(directory)) return;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, "*.yml")) {
+            for (Path file : stream) {
+                if (Files.deleteIfExists(file)) {
+                    LOGGER.atInfo().log("Deleted outdated overlay: %s", file.getFileName());
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.atWarning().log("[RPGMobs] Failed to clean overlay directory %s: %s", directory, e.getMessage());
         }
     }
 
@@ -345,7 +610,6 @@ public final class RPGMobsPlugin extends JavaPlugin {
 
         registerSystem(new RPGMobsComponentMigrationSystem(this));
         LOGGER.atInfo().log("Registered Migration System");
-
         registerSystem(new RPGMobsCombatStateSystem(this));
         registerSystem(new RPGMobsAITargetPollingSystem(this));
         LOGGER.atInfo().log("Registered Combat State Systems");
@@ -378,8 +642,16 @@ public final class RPGMobsPlugin extends JavaPlugin {
         return config;
     }
 
-    public InstancesConfig getInstancesConfig() {
-        return instancesConfig;
+    public GlobalConfig getGlobalConfig() {
+        return globalConfig;
+    }
+
+    public ConfigResolver getConfigResolver() {
+        return configResolver;
+    }
+
+    public ResolvedConfig getResolvedConfig(String worldName) {
+        return configResolver.getResolvedConfig(worldName);
     }
 
     public TickClock getTickClock() {
@@ -463,45 +735,25 @@ public final class RPGMobsPlugin extends JavaPlugin {
         return eventBus;
     }
 
-    public RPGLevelingIntegration getRPGLevelingIntegration() {
-        return rpgLevelingIntegration;
+    public int getConfigReloadCount() {
+        return configReloadCount.get();
     }
 
     public void requestReconcileOnNextWorldTick() {
-        reconcileRequested.set(true);
+        reconcileEventPending.set(true);
     }
 
     public boolean shouldReconcileThisTick() {
-        return reconcileTicksRemaining.get() > 0;
+        return reconcileActiveThisTick;
     }
 
     public void onWorldTick() {
-        RPGMobsConfig cfg = config;
-        if (cfg == null) return;
-
-        if (reconcileRequested.getAndSet(false)) {
-            int windowTicks = Math.max(0, cfg.reconcileConfig.reconcileWindowTicks);
-            reconcileTicksRemaining.set(windowTicks);
-            reconcileActive = windowTicks > 0;
-            if (windowTicks > 0) {
-                eventBus.fire(new RPGMobsReconcileEvent());
-            }
-            if (cfg.reconcileConfig.announceReconcile) {
-                if (windowTicks > 0) {
-                    LOGGER.atInfo().log("[RPGMobs] Reconcile started (%d ticks).", windowTicks);
-                } else {
-                    LOGGER.atInfo().log("[RPGMobs] Reconcile skipped (window=0).");
-                }
-            }
-            return;
-        }
-
-        int remaining = reconcileTicksRemaining.updateAndGet(value -> value > 0 ? value - 1 : 0);
-        if (reconcileActive && remaining == 0) {
-            reconcileActive = false;
-            if (cfg.reconcileConfig.announceReconcile) {
-                LOGGER.atInfo().log("[RPGMobs] Reconcile finished.");
-            }
+        if (reconcileEventPending.getAndSet(false)) {
+            reconcileActiveThisTick = true;
+            eventBus.fire(new RPGMobsReconcileEvent());
+            LOGGER.atInfo().log("[RPGMobs] Config changed — reconciling loaded elites (configReloadCount=%d).", configReloadCount.get());
+        } else {
+            reconcileActiveThisTick = false;
         }
     }
 

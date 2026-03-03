@@ -9,7 +9,6 @@ public final class AssetConfigHelpers {
     private AssetConfigHelpers() {
     }
 
-
     public static AssetConfig getAssetConfig(RPGMobsConfig config, AssetType type, String key) {
         if (config == null || type == null || key == null || key.isBlank()) return null;
 
@@ -27,7 +26,6 @@ public final class AssetConfigHelpers {
         return tierIndex >= 0 && tierIndex < perTier.length && perTier[tierIndex];
     }
 
-
     public static String getTemplatePath(TieredAssetConfig cfg, String templateKey) {
         if (cfg == null) return null;
         if (templateKey == null || templateKey.isBlank()) return null;
@@ -44,7 +42,6 @@ public final class AssetConfigHelpers {
         }
         return null;
     }
-
 
     public static String getTieredAssetIdFromTemplateKey(RPGMobsConfig rootCfg, AssetConfig cfg, String templateKey,
                                                          int tierIndex) {

@@ -1,19 +1,16 @@
 package com.frotty27.rpgmobs.systems.visual;
 
-import com.frotty27.rpgmobs.api.IRPGMobsEventListener;
 import com.frotty27.rpgmobs.api.events.RPGMobsScalingAppliedEvent;
-import com.frotty27.rpgmobs.api.events.RPGMobsSpawnedEvent;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsHealthScalingComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsModelScalingComponent;
 import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
-import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.features.RPGMobsHealthScalingFeature;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
-import com.frotty27.rpgmobs.utils.StoreHelpers;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
@@ -33,7 +30,7 @@ import java.util.Random;
 
 import static com.frotty27.rpgmobs.utils.Constants.NPC_COMPONENT_TYPE;
 
-public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implements IRPGMobsEventListener {
+public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
     private static final float HEALTH_MAX_EPSILON = 0.05f;
@@ -53,7 +50,6 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
         return Query.and(NPC_COMPONENT_TYPE, plugin.getRPGMobsComponentType());
     }
 
-
     @Override
     public void tick(float deltaTime, int entityIndex, @NonNull ArchetypeChunk<EntityStore> chunk,
                      @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
@@ -63,14 +59,22 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
         Ref<EntityStore> npcRef = chunk.getReferenceTo(entityIndex);
 
         RPGMobsHealthScalingComponent healthComp = store.getComponent(npcRef, plugin.getHealthScalingComponentType());
-        if (healthComp == null || !config.healthConfig.enableMobHealthScaling || !healthComp.healthApplied) return;
+        if (healthComp == null || !resolveHealthScalingEnabled(config, npcRef, store)) return;
 
-        if (!healthComp.healthFinalized && healthComp.shouldRetryHealthFinalization()) {
-            verifyHealthScalingFreshSpawn(npcRef, store, commandBuffer, healthComp);
+        if (!healthComp.healthApplied) {
+            applyInitialHealthScaling(npcRef, store, commandBuffer, healthComp, config);
             return;
         }
 
-        if (!plugin.shouldReconcileThisTick()) return;
+        if (!healthComp.healthFinalized && healthComp.shouldRetryHealthFinalization()) {
+            verifyAndTopOffHealth(npcRef, store, commandBuffer, healthComp);
+            return;
+        }
+
+        RPGMobsTierComponent tierComp = store.getComponent(npcRef, plugin.getRPGMobsComponentType());
+        boolean needsReconcile = plugin.shouldReconcileThisTick()
+                || (tierComp != null && tierComp.lastReconciledAt < plugin.getConfigReloadCount());
+        if (!needsReconcile) return;
 
         if (healthComp.healthFinalized && !healthComp.resyncDone) {
             resyncAfterRestart(npcRef, store, commandBuffer, healthComp);
@@ -80,6 +84,158 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
         if (healthComp.healthFinalized) {
             reconcileConfigChange(npcRef, store, commandBuffer, healthComp, config);
         }
+    }
+
+    private void applyInitialHealthScaling(Ref<EntityStore> npcRef, Store<EntityStore> store,
+                                            CommandBuffer<EntityStore> commandBuffer,
+                                            RPGMobsHealthScalingComponent healthComp, RPGMobsConfig config) {
+        RPGMobsTierComponent tierComponent = store.getComponent(npcRef, plugin.getRPGMobsComponentType());
+        if (tierComponent == null) return;
+
+        int tierIndex = tierComponent.tierIndex;
+        float tierHealthMult = resolveHealthMultiplier(config, npcRef, store, tierIndex);
+
+        float distanceHealthBonus = 0f;
+        RPGMobsProgressionComponent progressionComponent = store.getComponent(npcRef,
+                                                                              plugin.getProgressionComponentType()
+        );
+        if (progressionComponent != null) {
+            distanceHealthBonus = progressionComponent.distanceHealthBonus();
+        }
+
+        float healthRandomVariance = resolveHealthVariance(config, npcRef, store);
+        if (healthRandomVariance > 0f) {
+            tierHealthMult += (random.nextFloat() * 2f - 1f) * healthRandomVariance;
+        }
+
+        float totalMultiplier = tierHealthMult + distanceHealthBonus;
+
+        EntityStatMap entityStats = store.getComponent(npcRef, EntityStatMap.getComponentType());
+        if (entityStats == null) return;
+
+        int healthStatId = DefaultEntityStatTypes.getHealth();
+        var healthStatValue = entityStats.get(healthStatId);
+        if (healthStatValue == null) return;
+
+        float baseHealthMax = healthStatValue.getMax();
+
+        RPGMobsLogger.debug(LOGGER,
+                            "[HealthScaling] Applying: baseMax=%.1f tierMult=%.2f distBonus=%.2f totalMult=%.2f tier=%d",
+                            RPGMobsLogLevel.INFO,
+                            baseHealthMax,
+                            tierHealthMult,
+                            distanceHealthBonus,
+                            totalMultiplier,
+                            tierIndex
+        );
+
+        entityStats.putModifier(healthStatId,
+                                feature.getFeatureKey(),
+                                new StaticModifier(Modifier.ModifierTarget.MAX,
+                                                   StaticModifier.CalculationType.MULTIPLICATIVE,
+                                                   Math.max(0.01f, totalMultiplier)
+                                )
+        );
+        commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
+
+        healthComp.healthApplied = true;
+        healthComp.appliedHealthMult = tierHealthMult;
+        healthComp.baseHealthMax = baseHealthMax;
+        healthComp.healthFinalized = false;
+        healthComp.healthFinalizeTries = 0;
+        healthComp.resyncDone = true;
+        commandBuffer.replaceComponent(npcRef, plugin.getHealthScalingComponentType(), healthComp);
+
+        RPGMobsLogger.debug(LOGGER,
+                            "[HealthScaling] Applied: healthApplied=true baseMax=%.1f appliedMult=%.2f",
+                            RPGMobsLogLevel.INFO,
+                            healthComp.baseHealthMax,
+                            healthComp.appliedHealthMult
+        );
+
+        float modelScale = 1.0f;
+        RPGMobsModelScalingComponent modelComp = store.getComponent(npcRef, plugin.getModelScalingComponentType());
+        if (modelComp != null && modelComp.scaledApplied) {
+            modelScale = modelComp.appliedScale;
+        }
+
+        float damageMultiplier = 1.0f + (tierIndex * 0.5f);
+        RPGMobsProgressionComponent prog = store.getComponent(npcRef, plugin.getProgressionComponentType());
+        if (prog != null) {
+            damageMultiplier += prog.distanceDamageBonus();
+        }
+
+        float finalHealth = baseHealthMax * totalMultiplier;
+        var finalHealthStat = store.getComponent(npcRef, EntityStatMap.getComponentType());
+        if (finalHealthStat != null) {
+            var hv = finalHealthStat.get(healthStatId);
+            if (hv != null) finalHealth = hv.getMax();
+        }
+
+        plugin.getEventBus().fire(new RPGMobsScalingAppliedEvent(npcRef,
+                                                                 tierIndex,
+                                                                 tierHealthMult,
+                                                                 damageMultiplier,
+                                                                 modelScale,
+                                                                 baseHealthMax,
+                                                                 finalHealth,
+                                                                 false
+        ));
+    }
+
+    private void verifyAndTopOffHealth(Ref<EntityStore> npcRef, Store<EntityStore> store,
+                                       CommandBuffer<EntityStore> commandBuffer,
+                                       RPGMobsHealthScalingComponent healthComp) {
+        EntityStatMap entityStats = store.getComponent(npcRef, EntityStatMap.getComponentType());
+        if (entityStats == null) return;
+
+        int healthStatId = DefaultEntityStatTypes.getHealth();
+        var healthStatValue = entityStats.get(healthStatId);
+        if (healthStatValue == null) return;
+
+        float actualMax = healthStatValue.getMax();
+        float actualCurrent = healthStatValue.get();
+        float baseMax = healthComp.baseHealthMax;
+
+        RPGMobsLogger.debug(LOGGER,
+                            "[HealthScaling] VERIFY tick: actualCurrent=%.1f actualMax=%.1f baseMax=%.1f tries=%d",
+                            RPGMobsLogLevel.INFO,
+                            actualCurrent,
+                            actualMax,
+                            baseMax,
+                            healthComp.healthFinalizeTries
+        );
+
+        if (actualCurrent < (actualMax - HEALTH_MAX_EPSILON)) {
+            entityStats.maximizeStatValue(healthStatId);
+            entityStats.update();
+            commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
+
+            RPGMobsLogger.debug(LOGGER,
+                                "[HealthScaling] VERIFY top-off: current was %.1f, maximized to max=%.1f",
+                                RPGMobsLogLevel.INFO,
+                                actualCurrent,
+                                actualMax
+            );
+        }
+
+        boolean modifierApplied = Math.abs(actualMax - baseMax) > 1.0f;
+        if (modifierApplied || healthComp.healthFinalizeTries >= HEALTH_FINALIZE_MAX_TRIES) {
+            healthComp.healthFinalized = true;
+            healthComp.healthFinalizeTries = HEALTH_FINALIZE_MAX_TRIES;
+
+            RPGMobsLogger.debug(LOGGER,
+                                "[HealthScaling] VERIFY finalized: actualMax=%.1f (base was %.1f)%s",
+                                RPGMobsLogLevel.INFO,
+                                actualMax,
+                                baseMax,
+                                modifierApplied ? "" : " (exhausted tries)"
+            );
+        } else {
+            healthComp.incrementFinalizeTries();
+        }
+
+        commandBuffer.replaceComponent(npcRef, plugin.getHealthScalingComponentType(), healthComp);
     }
 
     private void resyncAfterRestart(Ref<EntityStore> npcRef, Store<EntityStore> store,
@@ -141,19 +297,26 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
 
         int tierIndex = tierComp.tierIndex;
         float configHealthMult = resolveHealthMultiplier(config, npcRef, store, tierIndex);
+        float healthVariance = resolveHealthVariance(config, npcRef, store);
+        float currentMult = healthComp.appliedHealthMult;
 
-        boolean healthMultChanged = Math.abs(configHealthMult - healthComp.appliedHealthMult) > 0.001f;
+        float minValid = configHealthMult - healthVariance;
+        float maxValid = configHealthMult + healthVariance;
 
-        if (!healthMultChanged) {
+        if (currentMult >= minValid - 0.001f && currentMult <= maxValid + 0.001f) {
             return;
         }
 
+        float newMult = currentMult < minValid ? minValid : maxValid;
+
         RPGMobsLogger.debug(LOGGER,
-                            "[HealthScaling] Config reconcile: tier=%d oldMult=%.2f newMult=%.2f",
+                            "[HealthScaling] Config reconcile: tier=%d oldMult=%.2f newMult=%.2f (base=%.2f var=%.2f)",
                             RPGMobsLogLevel.INFO,
                             tierIndex,
-                            healthComp.appliedHealthMult,
-                            configHealthMult
+                            currentMult,
+                            newMult,
+                            configHealthMult,
+                            healthVariance
         );
 
         EntityStatMap entityStats = store.getComponent(npcRef, EntityStatMap.getComponentType());
@@ -167,7 +330,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
             distanceHealthBonus = prog.distanceHealthBonus();
         }
 
-        float totalMultiplier = configHealthMult + distanceHealthBonus;
+        float totalMultiplier = newMult + distanceHealthBonus;
 
         entityStats.putModifier(healthStatId,
                                 feature.getFeatureKey(),
@@ -179,7 +342,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
 
         commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
 
-        healthComp.appliedHealthMult = configHealthMult;
+        healthComp.appliedHealthMult = newMult;
         healthComp.healthFinalized = false;
         healthComp.healthFinalizeTries = 0;
         commandBuffer.replaceComponent(npcRef, plugin.getHealthScalingComponentType(), healthComp);
@@ -191,256 +354,32 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> implem
         );
     }
 
-
-    private void applyHealthModifier(Ref<EntityStore> npcRef, CommandBuffer<EntityStore> commandBuffer,
-                                     EntityStatMap entityStats, int healthStatId, float totalMultiplier) {
-        var before = entityStats.get(healthStatId);
-        if (before == null) return;
-
-        float maxHealthBefore = before.getMax();
-
-        entityStats.putModifier(healthStatId,
-                                feature.getFeatureKey(),
-                                new StaticModifier(Modifier.ModifierTarget.MAX,
-                                                   StaticModifier.CalculationType.MULTIPLICATIVE,
-                                                   Math.max(0.01f, totalMultiplier)
-                                )
-        );
-
-        RPGMobsLogger.debug(LOGGER,
-                            "[HealthScaling] Registered modifier: mult=%.2f beforeMax=%.1f",
-                            RPGMobsLogLevel.INFO,
-                            totalMultiplier,
-                            maxHealthBefore
-        );
-
-        commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
+    private boolean resolveHealthScalingEnabled(RPGMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> store) {
+        NPCEntity npc = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+        if (npc != null && npc.getWorld() != null) {
+            ResolvedConfig resolved = plugin.getResolvedConfig(npc.getWorld().getName());
+            return resolved.enableHealthScaling;
+        }
+        return config.healthConfig.enableMobHealthScaling;
     }
 
-
-    public void applyHealthScalingOnSpawn(Ref<EntityStore> npcRef, Store<EntityStore> store,
-                                          CommandBuffer<EntityStore> commandBuffer) {
-        RPGMobsConfig config = plugin.getConfig();
-        if (config == null || !config.healthConfig.enableMobHealthScaling) return;
-
-        RPGMobsTierComponent tierComponent = store.getComponent(npcRef, plugin.getRPGMobsComponentType());
-        RPGMobsHealthScalingComponent healthScalingComponent = store.getComponent(npcRef,
-                                                                                  plugin.getHealthScalingComponentType()
-        );
-
-        if (tierComponent == null) return;
-
-        if (healthScalingComponent != null && healthScalingComponent.healthApplied) return;
-
-
-        int tierIndex = tierComponent.tierIndex;
-        float tierHealthMult = resolveHealthMultiplier(config, npcRef, store, tierIndex);
-
-        float distanceHealthBonus = 0f;
-        RPGMobsProgressionComponent progressionComponent = store.getComponent(npcRef,
-                                                                              plugin.getProgressionComponentType()
-        );
-        if (progressionComponent != null) {
-            distanceHealthBonus = progressionComponent.distanceHealthBonus();
+    private float resolveHealthVariance(RPGMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> store) {
+        NPCEntity npc = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+        if (npc != null && npc.getWorld() != null) {
+            ResolvedConfig resolved = plugin.getResolvedConfig(npc.getWorld().getName());
+            return resolved.healthRandomVariance;
         }
-
-        float healthRandomVariance = config.healthConfig.mobHealthRandomVariance;
-        if (healthRandomVariance > 0f) {
-            tierHealthMult += (random.nextFloat() * 2f - 1f) * healthRandomVariance;
-        }
-
-        float totalMultiplier = tierHealthMult + distanceHealthBonus;
-
-        EntityStatMap entityStats = store.getComponent(npcRef, EntityStatMap.getComponentType());
-        if (entityStats == null) return;
-
-        int healthStatId = DefaultEntityStatTypes.getHealth();
-        var healthStatValue = entityStats.get(healthStatId);
-        if (healthStatValue == null) return;
-
-        float baseHealthMax = healthStatValue.getMax();
-
-        RPGMobsLogger.debug(LOGGER,
-                            "[HealthScaling] BEFORE spawn scaling: baseMax=%.1f tierMult=%.2f distBonus=%.2f totalMult=%.2f tier=%d",
-                            RPGMobsLogLevel.INFO,
-                            baseHealthMax,
-                            tierHealthMult,
-                            distanceHealthBonus,
-                            totalMultiplier,
-                            tierIndex
-        );
-
-        applyHealthModifier(npcRef, commandBuffer, entityStats, healthStatId, totalMultiplier);
-
-
-        if (healthScalingComponent != null) {
-            healthScalingComponent.healthApplied = true;
-            healthScalingComponent.appliedHealthMult = tierHealthMult;
-            healthScalingComponent.baseHealthMax = baseHealthMax;
-            healthScalingComponent.healthFinalized = false;
-            healthScalingComponent.healthFinalizeTries = 0;
-            healthScalingComponent.resyncDone = true;
-            commandBuffer.replaceComponent(npcRef, plugin.getHealthScalingComponentType(), healthScalingComponent);
-
-            RPGMobsLogger.debug(LOGGER,
-                                "[HealthScaling] Component stored: healthApplied=true baseMax=%.1f appliedMult=%.2f",
-                                RPGMobsLogLevel.INFO,
-                                healthScalingComponent.baseHealthMax,
-                                healthScalingComponent.appliedHealthMult
-            );
-        }
-
-        float modelScale = 1.0f;
-        RPGMobsModelScalingComponent modelComp = store.getComponent(npcRef, plugin.getModelScalingComponentType());
-        if (modelComp != null && modelComp.scaledApplied) {
-            modelScale = modelComp.appliedScale;
-        }
-
-        float damageMultiplier = 1.0f + (tierIndex * 0.5f);
-        RPGMobsProgressionComponent prog = store.getComponent(npcRef, plugin.getProgressionComponentType());
-        if (prog != null) {
-            damageMultiplier += prog.distanceDamageBonus();
-        }
-
-        var finalHealthStat = store.getComponent(npcRef, EntityStatMap.getComponentType());
-        float finalHealth = baseHealthMax * totalMultiplier;
-        if (finalHealthStat != null) {
-            var hv = finalHealthStat.get(healthStatId);
-            if (hv != null) finalHealth = hv.getMax();
-        }
-
-        plugin.getEventBus().fire(new RPGMobsScalingAppliedEvent(npcRef,
-                                                                 tierIndex,
-                                                                 tierHealthMult,
-                                                                 damageMultiplier,
-                                                                 modelScale,
-                                                                 baseHealthMax,
-                                                                 finalHealth,
-                                                                 false
-        ));
+        return config.healthConfig.mobHealthRandomVariance;
     }
 
-
-    private void verifyHealthScalingFreshSpawn(Ref<EntityStore> npcRef, Store<EntityStore> store,
-                                               CommandBuffer<EntityStore> commandBuffer,
-                                               RPGMobsHealthScalingComponent healthComp) {
-        EntityStatMap entityStats = store.getComponent(npcRef, EntityStatMap.getComponentType());
-        if (entityStats == null) return;
-
-        int healthStatId = DefaultEntityStatTypes.getHealth();
-        var healthStatValue = entityStats.get(healthStatId);
-        if (healthStatValue == null) return;
-
-        float actualMax = healthStatValue.getMax();
-        float actualCurrent = healthStatValue.get();
-        float baseMax = healthComp.baseHealthMax;
-
-        RPGMobsLogger.debug(LOGGER,
-                            "[HealthScaling] VERIFY tick: actualCurrent=%.1f actualMax=%.1f baseMax=%.1f tries=%d",
-                            RPGMobsLogLevel.INFO,
-                            actualCurrent,
-                            actualMax,
-                            baseMax,
-                            healthComp.healthFinalizeTries
-        );
-
-        boolean modifierApplied = Math.abs(actualMax - baseMax) > 1.0f;
-
-        if (modifierApplied) {
-            if (actualCurrent < (actualMax - HEALTH_MAX_EPSILON)) {
-                entityStats.maximizeStatValue(healthStatId);
-                entityStats.update();
-                commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
-
-                RPGMobsLogger.debug(LOGGER,
-                                    "[HealthScaling] VERIFY top-off: current was %.1f, maximized to max=%.1f",
-                                    RPGMobsLogLevel.INFO,
-                                    actualCurrent,
-                                    actualMax
-                );
-            }
-
-            healthComp.healthFinalized = true;
-            healthComp.healthFinalizeTries = HEALTH_FINALIZE_MAX_TRIES;
-            commandBuffer.replaceComponent(npcRef, plugin.getHealthScalingComponentType(), healthComp);
-
-            RPGMobsLogger.debug(LOGGER,
-                                "[HealthScaling] VERIFY finalized: actualMax=%.1f (base was %.1f)",
-                                RPGMobsLogLevel.INFO,
-                                actualMax,
-                                baseMax
-            );
-        } else {
-            healthComp.incrementFinalizeTries();
-
-            if (healthComp.healthFinalizeTries >= HEALTH_FINALIZE_MAX_TRIES) {
-                if (actualCurrent < (actualMax - HEALTH_MAX_EPSILON)) {
-                    entityStats.maximizeStatValue(healthStatId);
-                    entityStats.update();
-                    commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
-
-                    RPGMobsLogger.debug(LOGGER,
-                                        "[HealthScaling] VERIFY exhausted top-off: current was %.1f, maximized to max=%.1f",
-                                        RPGMobsLogLevel.INFO,
-                                        actualCurrent,
-                                        actualMax
-                    );
-                }
-
-                healthComp.healthFinalized = true;
-
-                RPGMobsLogger.debug(LOGGER,
-                                    "[HealthScaling] VERIFY exhausted: accepting actualMax=%.1f as final (base was %.1f). Modifier may not have applied.",
-                                    RPGMobsLogLevel.WARNING,
-                                    actualMax,
-                                    baseMax
-                );
-            }
-
-            commandBuffer.replaceComponent(npcRef, plugin.getHealthScalingComponentType(), healthComp);
-        }
-    }
-
-    @Override
-    public void onRPGMobSpawned(RPGMobsSpawnedEvent event) {
-        if (event.isCancelled()) return;
-
-        Ref<EntityStore> npcRef = event.getEntityRef();
-        Store<EntityStore> store = npcRef.getStore();
-
-        NPCEntity npcEntity = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
-        if (npcEntity == null || npcEntity.getWorld() == null) return;
-
-        npcEntity.getWorld().execute(() -> {
-            EntityStore entityStoreProvider = npcEntity.getWorld().getEntityStore();
-            if (entityStoreProvider == null) return;
-            Store<EntityStore> entityStore = entityStoreProvider.getStore();
-
-            StoreHelpers.withEntity(entityStore,
-                                    npcRef,
-                                    (_, commandBuffer, _) -> applyHealthScalingOnSpawn(npcRef,
-                                                                                       entityStore,
-                                                                                       commandBuffer
-                                    )
-            );
-        });
-    }
-
-    /**
-     * Resolves the health multiplier for the given tier, checking instance rules first.
-     * If instance rules provide a per-tier override, that takes priority over global config.
-     */
     private float resolveHealthMultiplier(RPGMobsConfig config, Ref<EntityStore> npcRef,
                                            Store<EntityStore> store, int tierIndex) {
-        InstancesConfig instancesConfig = plugin.getInstancesConfig();
-        if (instancesConfig != null && instancesConfig.enabled) {
-            NPCEntity npc = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
-            if (npc != null && npc.getWorld() != null) {
-                String worldName = npc.getWorld().getName();
-                InstancesConfig.InstanceRule instanceRule = instancesConfig.resolveRule(worldName);
-                if (instanceRule != null && instanceRule.healthMultiplierPerTier != null && instanceRule.healthMultiplierPerTier.length > tierIndex) {
-                    return instanceRule.healthMultiplierPerTier[tierIndex];
-                }
+        NPCEntity npc = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+        if (npc != null && npc.getWorld() != null) {
+            String worldName = npc.getWorld().getName();
+            ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
+            if (resolved.healthMultiplierPerTier != null && resolved.healthMultiplierPerTier.length > tierIndex) {
+                return resolved.healthMultiplierPerTier[tierIndex];
             }
         }
         if (config.healthConfig.mobHealthMultiplierPerTier != null && config.healthConfig.mobHealthMultiplierPerTier.length > tierIndex) {

@@ -38,12 +38,12 @@ Any tier can spawn anywhere based on global weights. Good for hardcore survival 
 ## Combat Mechanics
 
 ### Abilities
-Elites aren't just stat sponges. Depending on their tier and type, they can:
+Elites aren't just stat sponges. Depending on their type and tier, they can:
 *   **Charge Leap:** Launch themselves at a player with a physics-based slam attack.
 *   **Heal:** Drink potions during combat. Players can interrupt the heal by dealing damage.
 *   **Summon:** Call faction-appropriate reinforcements — undead summon undead, goblins summon goblins, trorks summon trorks.
 
-Abilities are only available to Tier 4 and 5 elites by default. Ability gates check the mob's actual equipped weapon, so weapon-based restrictions work correctly (e.g., staff-wielding mobs cannot use Charge Leap). See [Abilities](/config/abilities) for full configuration.
+Each ability is linked to specific mob rules with per-tier toggles. By default, most mob categories have abilities enabled for Tier 4 and 5. Ability gates also check the mob's equipped weapon category — for example, staff-wielding mobs cannot use Charge Leap. See [Abilities](/config/abilities) for full configuration.
 
 ### Scaling
 *   **Health:** Multiplied per tier (e.g., Tier 5 has +260% base health).
@@ -54,18 +54,26 @@ See [Stats](/config/stats) for tuning these values.
 
 ## Equipment
 
-Elites spawn with tier-appropriate gear. Higher tiers get rarer weapons and more armor pieces. A Tier 1 common goblin might have a crude wooden weapon, while a Tier 5 legendary skeleton could wield an adamantite longsword with full armor. Per-mob armor slot restrictions prevent mobs whose models don't support full armor from looking broken (e.g., void eyes get no armor).
+Elites spawn with tier-appropriate gear from categorized weapon and armor pools. Higher tiers get rarer weapons and more armor pieces. A Tier 1 common goblin might have a crude wooden weapon, while a Tier 5 legendary skeleton could wield an adamantite longsword with full armor.
 
-See [Gear](/config/gear) for equipment catalogs and rarity rules, and [Mobs](/config/mobs) for per-mob armor slot restrictions.
+Weapons and armor are organized into named categories (Swords, Axes, Staves, etc.). Mob rules reference these categories to control what equipment each mob type can receive. Per-mob armor slot restrictions prevent mobs whose models don't support full armor from looking broken (e.g., void eyes get no armor).
 
-## Instance Overrides
+See [Gear](/config/gear) for equipment categories and rarity rules, and [Mobs](/config/mobs) for per-mob restrictions.
 
-Servers running custom dungeons and temporary instances can customize RPGMobs behavior per-world via `instances.yml`. Each instance can override spawning, stats, loot, abilities, and elite behavior independently. Instance worlds are automatically matched by their template name.
+## Overlay System
 
-See [Instances](/config/instances) for the full configuration reference.
+Servers running custom dungeons and temporary instances can customize RPGMobs behavior per-world via the overlay system. Base config lives in `base/`, per-world overlays in `worlds/`, and per-instance-template overlays in `instances/`. Each overlay can override spawning, stats, loot, abilities, and elite behavior independently. Instance worlds are automatically matched by their template name (case-insensitive).
+
+See [Overlays](/config/instances) for the full configuration reference.
 
 ## Loot System
 
-Elites drop vanilla loot with multipliers (e.g., 6x drops from Tier 5) and have a chance to drop their equipped gear. Custom drop tables add crafting materials, potions, and gems that scale with tier difficulty.
+Elites drop vanilla loot with multipliers (e.g., 6x drops from Tier 5) and have a chance to drop their equipped gear. Loot templates provide targeted drop tables linked to specific mob rules — for example, a "Goblin Boss Loot" template can give better rewards for Goblin_Duke and Goblin_Ogre kills.
 
-See [Loot](/config/loot) for drop rates and custom drop tables.
+See [Loot](/config/loot) for drop rates, loot templates, and custom drop tables.
+
+## Admin UI
+
+All settings can be managed through the in-game Admin UI. Use `/rpgmobs config` to open the configuration panel with visual editors for every setting.
+
+See [Admin UI](/config/admin-ui) for a guide to the interface.

@@ -26,9 +26,10 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
 
     public void fire(RPGMobsSpawnedEvent event) {
         RPGMobsLogger.debug(LOGGER,
-                            "[EventBus] fire(RPGMobsSpawnedEvent) tier=%d listeners=%d",
+                            "[EventBus] fire(RPGMobsSpawnedEvent) tier=%d role=%s listeners=%d",
                             RPGMobsLogLevel.INFO,
                             event.getTier(),
+                            event.getRoleName(),
                             listeners.size()
         );
         for (var listener : listeners) {
@@ -41,6 +42,14 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsDeathEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsDeathEvent) tier=%d role=%s isMinion=%s listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getTier(),
+                            event.getRoleName(),
+                            event.isMinion(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobDeath(event);
@@ -51,6 +60,14 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsDropsEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsDropsEvent) tier=%d role=%s dropCount=%d listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getTier(),
+                            event.getRoleName(),
+                            event.getDrops().size(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobDrops(event);
@@ -61,6 +78,15 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsDamageDealtEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsDamageDealtEvent) tier=%d role=%s baseDamage=%.2f multiplier=%.2f listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getTier(),
+                            event.getRoleName(),
+                            event.getBaseDamage(),
+                            event.getMultiplier(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobDamageDealt(event);
@@ -71,6 +97,14 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsDamageReceivedEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsDamageReceivedEvent) tier=%d role=%s damageAmount=%.2f listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getTier(),
+                            event.getRoleName(),
+                            event.getDamageAmount(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobDamageReceived(event);
@@ -81,6 +115,11 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsReconcileEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsReconcileEvent) listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onReconcile(event);
@@ -91,6 +130,13 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsAggroEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsAggroEvent) tier=%d role=%s listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getTier(),
+                            event.getRoleName(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobAggro(event);
@@ -101,6 +147,13 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsDeaggroEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsDeaggroEvent) tier=%d role=%s listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getTier(),
+                            event.getRoleName(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobDeaggro(event);
@@ -111,6 +164,13 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsAbilityStartedEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsAbilityStartedEvent) abilityId=%s tierIndex=%d listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getAbilityId(),
+                            event.getTierIndex(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobAbilityStarted(event);
@@ -121,6 +181,13 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsAbilityCompletedEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsAbilityCompletedEvent) abilityId=%s tierIndex=%d listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getAbilityId(),
+                            event.getTierIndex(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobAbilityCompleted(event);
@@ -131,6 +198,14 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsAbilityInterruptedEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsAbilityInterruptedEvent) abilityId=%s tierIndex=%d reason=%s listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.getAbilityId(),
+                            event.getTierIndex(),
+                            event.getReason(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onRPGMobAbilityInterrupted(event);
@@ -141,6 +216,17 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     }
 
     public void fire(RPGMobsScalingAppliedEvent event) {
+        RPGMobsLogger.debug(LOGGER,
+                            "[EventBus] fire(RPGMobsScalingAppliedEvent) tier=%d healthMult=%.2f damageMult=%.2f modelScale=%.2f baseHealth=%.1f finalHealth=%.1f listeners=%d",
+                            RPGMobsLogLevel.INFO,
+                            event.tierIndex(),
+                            event.healthMultiplier(),
+                            event.damageMultiplier(),
+                            event.modelScale(),
+                            event.baseHealth(),
+                            event.finalHealth(),
+                            listeners.size()
+        );
         for (var listener : listeners) {
             try {
                 listener.onScalingApplied(event);

@@ -9,7 +9,8 @@ All commands require operator permissions by default.
 
 | Command | Description |
 | :--- | :--- |
-| `/rpgmobs reload` | Reloads all YAML configuration files from disk. Spawn logic updates immediately. Existing elites are reconciled based on `core.yml` reconcile settings. |
+| `/rpgmobs reload` | Reloads all YAML configuration files from disk. Spawn logic updates immediately. Existing elites are reconciled on their next tick. |
+| `/rpgmobs config` | Opens the in-game Admin UI for visual configuration. See the [Admin UI guide](/config/admin-ui) for details. |
 | `/rpgmobs spawn <role> <tier>` | Spawns an elite NPC with the specified role and tier at your location. Only available when debug mode is enabled. |
 | `/npc clean --confirm` | Removes all Elite entities from the world. This is a destructive action and requires the `--confirm` flag. Useful for debugging or when uninstalling the mod. |
 
@@ -18,6 +19,7 @@ All commands require operator permissions by default.
 | Permission | What it allows |
 | :--- | :--- |
 | `rpgmobs.reload` | Use the `/rpgmobs reload` command. |
+| `rpgmobs.config` | Use the `/rpgmobs config` command to open the Admin UI. |
 | `rpgmobs.spawn` | Use the `/rpgmobs spawn` command (debug mode only). |
 
 Currently, all commands default to OP-only. A full permission node system for mod-compatible permission managers is planned for a future update.

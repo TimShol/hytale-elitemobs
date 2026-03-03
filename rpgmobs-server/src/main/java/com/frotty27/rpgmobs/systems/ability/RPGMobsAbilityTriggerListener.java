@@ -85,7 +85,6 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         Store<EntityStore> store = entityRef.getStore();
         if (store == null) return;
 
-        // Dead mobs cannot use abilities
         DeathComponent death = store.getComponent(entityRef, DeathComponent.getComponentType());
         if (death != null) return;
 

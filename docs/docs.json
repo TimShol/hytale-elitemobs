@@ -33,7 +33,8 @@
           "config/abilities",
           "config/mobs",
           "config/effects",
-          "config/instances"
+          "config/instances",
+          "config/admin-ui"
         ]
       },
       {

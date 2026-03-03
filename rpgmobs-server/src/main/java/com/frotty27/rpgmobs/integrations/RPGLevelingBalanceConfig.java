@@ -5,13 +5,7 @@ import com.frotty27.rpgmobs.config.schema.Default;
 import com.frotty27.rpgmobs.config.schema.FixedArraySize;
 import com.frotty27.rpgmobs.config.schema.Min;
 
-/**
- * Balance configuration for RPGLeveling integration.
- * Only loaded when RPGLeveling is detected. Stored in {@code rpgleveling.yml}.
- */
 public final class RPGLevelingBalanceConfig {
-
-    // ── XP ──────────────────────────────────────────────────────────────────────
 
     @Default
     @FixedArraySize(5)

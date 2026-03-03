@@ -1,15 +1,17 @@
-package com.frotty27.rpgmobs.nameplates;
+package com.frotty27.rpgmobs.services;
 
 import com.frotty27.nameplatebuilder.api.NameplateAPI;
 import com.frotty27.nameplatebuilder.api.NameplateData;
 import com.frotty27.nameplatebuilder.api.SegmentTarget;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
@@ -33,7 +35,6 @@ public final class RPGMobsNameplateService {
                                                                "void"
     );
 
-
     public static final String SEGMENT_PREFIX = "elite-tier-prefix";
     public static final String SEGMENT_TIER = "elite-tier";
     public static final String SEGMENT_NAME = "elite-npc-type";
@@ -42,10 +43,9 @@ public final class RPGMobsNameplateService {
     public static final String DISPLAY_TIER = "Elite Tier";
     public static final String DISPLAY_NAME = "Elite Type";
 
-    public static final String EXAMPLE_PREFIX = "\u2022 \u2022 \u2022";
+    public static final String EXAMPLE_PREFIX = "• • •";
     public static final String EXAMPLE_TIER = "Common, ...";
     public static final String EXAMPLE_NAME = "Zombie, ...";
-
 
     public void describeSegments(JavaPlugin plugin) {
         NameplateAPI.describe(plugin, SEGMENT_PREFIX, DISPLAY_PREFIX, SegmentTarget.NPCS, EXAMPLE_PREFIX);
@@ -53,33 +53,53 @@ public final class RPGMobsNameplateService {
         NameplateAPI.describe(plugin, SEGMENT_NAME, DISPLAY_NAME, SegmentTarget.NPCS, EXAMPLE_NAME);
     }
 
-
-    public void applyOrUpdateNameplate(RPGMobsConfig config, Ref<EntityStore> entityRef, Store<EntityStore> entityStore,
+    public void applyOrUpdateNameplate(RPGMobsConfig config,
+                                       @Nullable ResolvedConfig resolved,
+                                       Ref<EntityStore> entityRef, Store<EntityStore> entityStore,
                                        CommandBuffer<EntityStore> commandBuffer, String roleName, int tierIndex) {
+
+        Map<String, List<String>> familyPrefixes = (resolved != null) ? resolved.tierPrefixesByFamily : null;
+        applyOrUpdateNameplate(config, resolved, familyPrefixes, entityRef, entityStore, commandBuffer, roleName, tierIndex);
+    }
+
+    private void applyOrUpdateNameplate(RPGMobsConfig config,
+                                        @Nullable ResolvedConfig resolved,
+                                        @Nullable Map<String, List<String>> resolvedFamilyPrefixes,
+                                        Ref<EntityStore> entityRef, Store<EntityStore> entityStore,
+                                        CommandBuffer<EntityStore> commandBuffer, String roleName, int tierIndex) {
         if (config == null) return;
         if (entityRef == null || entityStore == null || commandBuffer == null) return;
 
         int clampedTierIndex = clampTierIndex(tierIndex);
 
-        boolean enabled = config.nameplatesConfig.enableMobNameplates && areNameplatesEnabledForTier(config,
-                                                                                                     clampedTierIndex
-        ) && passesRoleFilters(config, roleName);
+        boolean enableNameplates = resolved != null ? resolved.enableNameplates : config.nameplatesConfig.enableMobNameplates;
+        boolean tierEnabled = resolved != null
+                ? (resolved.nameplateTierEnabled != null && clampedTierIndex < resolved.nameplateTierEnabled.length
+                   && resolved.nameplateTierEnabled[clampedTierIndex])
+                : areNameplatesEnabledForTier(config, clampedTierIndex);
+
+        boolean enabled = enableNameplates && tierEnabled;
 
         if (!enabled) {
             removeAllSegments(entityStore, entityRef);
             return;
         }
 
+        String prefixText = resolved != null && resolved.nameplatePrefixPerTier != null
+                && clampedTierIndex < resolved.nameplatePrefixPerTier.length
+                ? safe(resolved.nameplatePrefixPerTier[clampedTierIndex])
+                : getNameplatePrefixForTier(config, clampedTierIndex);
 
-        String prefixText = getNameplatePrefixForTier(config, clampedTierIndex);
-        String tierText = resolveTierPrefixForRole(config, roleName, clampedTierIndex);
-        String nameText = resolveNameText(config, roleName);
+        String tierText = resolveTierPrefixForRole(config, resolvedFamilyPrefixes, roleName, clampedTierIndex);
+
+        String nameText = resolved != null
+                ? resolveNameTextFromMode(resolved.nameplateMode, roleName)
+                : resolveNameText(config, roleName);
 
         if (prefixText.isBlank() && tierText.isBlank() && nameText.isBlank()) {
             removeAllSegments(entityStore, entityRef);
             return;
         }
-
 
         ComponentType<EntityStore, NameplateData> type = NameplateAPI.getComponentType();
         NameplateData data = entityStore.getComponent(entityRef, type);
@@ -88,14 +108,11 @@ public final class RPGMobsNameplateService {
             data = new NameplateData();
         }
 
-
         setOrRemove(data, SEGMENT_PREFIX, prefixText);
         setOrRemove(data, SEGMENT_TIER, tierText);
         setOrRemove(data, SEGMENT_NAME, nameText);
 
         if (isNew) {
-
-
             commandBuffer.putComponent(entityRef, type, data);
         }
     }
@@ -108,7 +125,7 @@ public final class RPGMobsNameplateService {
         }
     }
 
-    private static void removeAllSegments(Store<EntityStore> entityStore, Ref<EntityStore> entityRef) {
+    public static void removeAllSegments(Store<EntityStore> entityStore, Ref<EntityStore> entityRef) {
         ComponentType<EntityStore, NameplateData> type = NameplateAPI.getComponentType();
         NameplateData data = entityStore.getComponent(entityRef, type);
         if (data != null) {
@@ -118,6 +135,10 @@ public final class RPGMobsNameplateService {
         }
     }
 
+    private static String resolveNameTextFromMode(@Nullable String modeName, String roleName) {
+        if ("SIMPLE".equalsIgnoreCase(modeName)) return resolveRoleWithoutFamily(roleName);
+        return resolveDisplayRoleName(roleName);
+    }
 
     private static String resolveNameText(RPGMobsConfig config, String roleName) {
         RPGMobsConfig.NameplateMode nameplateMode = (config.nameplatesConfig.nameplateMode != null) ? config.nameplatesConfig.nameplateMode : RPGMobsConfig.NameplateMode.RANKED_ROLE;
@@ -140,46 +161,9 @@ public final class RPGMobsNameplateService {
         return safe(config.nameplatesConfig.monNameplatePrefixPerTier[clampedTierIndex]);
     }
 
-
-    private static boolean passesRoleFilters(RPGMobsConfig config, String roleName) {
-        String roleNameLowercase = (roleName == null) ? "" : roleName.toLowerCase(Locale.ROOT);
-
-        List<String> denyList = config.nameplatesConfig.mobNameplateMustNotContainRoles;
-        if (denyList != null) {
-            for (String forbiddenFragment : denyList) {
-                if (forbiddenFragment == null || forbiddenFragment.isBlank()) continue;
-                if (roleNameLowercase.contains(forbiddenFragment.toLowerCase(Locale.ROOT))) return false;
-            }
-        }
-
-        List<String> allowList = config.nameplatesConfig.mobNameplateMustContainRoles;
-        if (allowList == null || allowList.isEmpty()) return true;
-
-        boolean hasAnyAllowRule = false;
-        for (String requiredFragment : allowList) {
-            if (requiredFragment == null || requiredFragment.isBlank()) continue;
-            hasAnyAllowRule = true;
-            if (roleNameLowercase.contains(requiredFragment.toLowerCase(Locale.ROOT))) return true;
-        }
-
-        return !hasAnyAllowRule;
-    }
-
-
     private static String safe(String text) {
         return (text == null) ? "" : text.trim();
     }
-
-    private static String joinNonBlank(String left, String right) {
-        String leftText = safe(left);
-        String rightText = safe(right);
-
-        if (leftText.isEmpty()) return rightText;
-        if (rightText.isEmpty()) return leftText;
-
-        return leftText + " " + rightText;
-    }
-
 
     private static String resolveRoleWithoutFamily(String roleName) {
         if (roleName == null || roleName.isBlank()) return DEFAULT_MPC_NAME;
@@ -262,11 +246,15 @@ public final class RPGMobsNameplateService {
         return pretty.toString();
     }
 
-    private static String resolveTierPrefixForRole(RPGMobsConfig config, String roleName, int tierIndex) {
-        Map<String, List<String>> tierPrefixesByFamily = config.nameplatesConfig.defaultedTierPrefixesByFamily;
+    private static String resolveTierPrefixForRole(RPGMobsConfig config,
+                                                    @Nullable Map<String, List<String>> resolvedFamilyPrefixes,
+                                                    String roleName, int tierIndex) {
+        Map<String, List<String>> tierPrefixesByFamily = resolvedFamilyPrefixes != null
+                ? resolvedFamilyPrefixes
+                : config.nameplatesConfig.defaultedTierPrefixesByFamily;
         if (tierPrefixesByFamily == null || tierPrefixesByFamily.isEmpty()) return "";
 
-        String familyKey = classifyFamily(roleName);
+        String familyKey = classifyFamily(roleName, tierPrefixesByFamily);
 
         List<String> tierPrefixes = tierPrefixesByFamily.get(familyKey);
         if (tierPrefixes == null) tierPrefixes = tierPrefixesByFamily.get(DEFAULT_FAMILY_KEY);
@@ -278,37 +266,21 @@ public final class RPGMobsNameplateService {
         return safe(tierPrefixes.get(clampedTierIndex));
     }
 
-    private static String classifyFamily(String roleName) {
-        if (roleName == null) return DEFAULT_FAMILY_KEY;
-        String roleNameLowercase = roleName.toLowerCase(Locale.ROOT);
-
-        if (roleNameLowercase.contains("_void") || roleNameLowercase.startsWith("crawler_") || roleNameLowercase.startsWith(
-                "eye_") || roleNameLowercase.startsWith("spawn_") || roleNameLowercase.startsWith("spectre_") || roleNameLowercase.startsWith(
-                "scythe_")) {
-            return "void";
+    private static String classifyFamily(String roleName, Map<String, List<String>> tierPrefixesByFamily) {
+        if (roleName == null || tierPrefixesByFamily == null || tierPrefixesByFamily.isEmpty()) {
+            return DEFAULT_FAMILY_KEY;
         }
-
-        if (roleNameLowercase.startsWith("zombie")) {
-            if (roleNameLowercase.contains("_burnt")) return "zombie_burnt";
-            if (roleNameLowercase.contains("_frost")) return "zombie_frost";
-            if (roleNameLowercase.contains("_sand")) return "zombie_sand";
-            if (roleNameLowercase.contains("_aberrant")) return "zombie_aberrant";
-            return "zombie";
+        String roleNameLower = roleName.toLowerCase(Locale.ROOT);
+        String bestKey = DEFAULT_FAMILY_KEY;
+        int bestLen = -1;
+        for (String key : tierPrefixesByFamily.keySet()) {
+            if (key == null || key.isBlank() || key.equals(DEFAULT_FAMILY_KEY)) continue;
+            String keyLower = key.toLowerCase(Locale.ROOT);
+            if (roleNameLower.contains(keyLower) && keyLower.length() > bestLen) {
+                bestKey = key;
+                bestLen = keyLower.length();
+            }
         }
-
-        if (roleNameLowercase.startsWith("skeleton")) {
-            if (roleNameLowercase.contains("_burnt")) return "skeleton_burnt";
-            if (roleNameLowercase.contains("_frost")) return "skeleton_frost";
-            if (roleNameLowercase.contains("_sand")) return "skeleton_sand";
-            if (roleNameLowercase.contains("_pirate")) return "skeleton_pirate";
-            if (roleNameLowercase.contains("_incandescent")) return "skeleton_incandescent";
-            return "skeleton";
-        }
-
-        if (roleNameLowercase.startsWith("goblin")) return "goblin";
-        if (roleNameLowercase.startsWith("trork")) return "trork";
-        if (roleNameLowercase.startsWith("outlander")) return "outlander";
-
-        return DEFAULT_FAMILY_KEY;
+        return bestKey;
     }
 }

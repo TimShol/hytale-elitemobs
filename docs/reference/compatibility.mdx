@@ -23,7 +23,7 @@ RPGMobs has built-in support for [RPGLeveling](https://www.curseforge.com/hytale
 
 ### XP Scaling
 
-- **Tier multiplier**: XP from elite kills is multiplied by a per-tier value (default: 1× / 1.5× / 2× / 3× / 5× for Tiers 1–5)
+- **Tier multiplier**: XP from elite kills is multiplied by a per-tier value (default: 1x / 1.5x / 2x / 3x / 5x for Tiers 1-5)
 - **Ability bonus**: Elites with active abilities (Charge Leap, Heal Potion, Undead Summon) grant bonus XP per ability
 - **Minion reduction**: Summoned minion kills grant only 5% of the base XP to prevent XP farming
 
@@ -32,8 +32,6 @@ RPGMobs has built-in support for [RPGLeveling](https://www.curseforge.com/hytale
 RPGMobs generates a standalone `rpgleveling.yml` in the mod config directory when RPGLeveling is detected:
 
 ```yaml
-# XP multiplier per tier. Applied to the base XP determined by RPGLeveling.
-# Example: Tier 3 with 2.0 means the player receives 2x the base XP.
 XP:
   xpMultiplierPerTier:
     - 1.0
@@ -42,13 +40,12 @@ XP:
     - 3.0
     - 5.0
 
-  # Bonus XP added for each active ability on the killed elite.
   xpBonusPerAbility: 1000.0
 
-  # XP multiplier for summoned minion kills.
-  # 0.05 = 5% of the base XP. Set to 0.0 to grant no XP for minions.
   minionXPMultiplier: 0.05
 ```
+
+XP settings are also **overlayable per-world** — each world or instance can have its own XP multipliers, ability bonus, and minion XP values through the [overlay system](/config/instances).
 
 To enable or disable the integration, set `enabled` in `core.yml` under `Integrations.RPGLeveling`:
 
@@ -62,9 +59,12 @@ Set `enabled: false` to disable the integration entirely. The `rpgleveling.yml` 
 
 ## Custom Item Mods
 
-If you have a mod that adds new weapons or armor (e.g., `SpartanWeaponry_Longsword_Iron`), you need to add those item IDs to the `weaponCatalog` or `armorMaterials` lists in `gear.yml`. Otherwise, elites will never equip them.
+If you have a mod that adds new weapons or armor (e.g., `SpartanWeaponry_Longsword_Iron`), you should:
 
-You should also add keyword-to-rarity mappings in `weaponRarityRulesContains` and `armorRarityRulesContains` so the items are assigned the correct rarity tier.
+1. Add the item IDs to the appropriate **weapon or armor category** in `gear.yml` (or use the [Admin UI](/config/admin-ui) under Global Config to manage categories visually).
+2. Add keyword-to-rarity mappings in `weaponRarityRulesContains` and `armorRarityRulesContains` so the items are assigned the correct rarity tier.
+
+The `weaponCatalog` and `armorMaterials` flat lists also exist for backward compatibility, but the category trees are the primary system used by mob rules.
 
 ## World Generation Mods
 

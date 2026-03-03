@@ -1,8 +1,8 @@
 package com.frotty27.rpgmobs.features;
 
-import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig.AbilityConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig.SummonAbilityConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
@@ -21,7 +21,6 @@ import com.hypixel.hytale.server.core.modules.interaction.InteractionModule;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.RootInteraction;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
-import org.jspecify.annotations.Nullable;
 
 public final class RPGMobsAbilityFeatureHelpers {
 
@@ -31,24 +30,14 @@ public final class RPGMobsAbilityFeatureHelpers {
     private RPGMobsAbilityFeatureHelpers() {
     }
 
-    /**
-     * Resolves the InstanceRule for the NPC's world, or null if instances config is disabled.
-     */
-    public static InstancesConfig.@Nullable InstanceRule resolveInstanceRule(RPGMobsPlugin plugin,
-                                                                             Ref<EntityStore> npcRef,
-                                                                             Store<EntityStore> entityStore) {
-        InstancesConfig instancesConfig = plugin.getInstancesConfig();
-        if (instancesConfig == null || !instancesConfig.enabled) return null;
-
+    public static ResolvedConfig resolveConfig(RPGMobsPlugin plugin,
+                                               Ref<EntityStore> npcRef,
+                                               Store<EntityStore> entityStore) {
         NPCEntity npc = entityStore.getComponent(npcRef, Constants.NPC_COMPONENT_TYPE);
-        if (npc == null || npc.getWorld() == null) return null;
-
-        return instancesConfig.resolveRule(npc.getWorld().getName());
+        String worldName = (npc != null && npc.getWorld() != null) ? npc.getWorld().getName() : null;
+        return plugin.getResolvedConfig(worldName);
     }
 
-    /**
-     * Returns the item ID of the NPC's currently held weapon, or empty string if unavailable.
-     */
     public static String resolveWeaponId(Ref<EntityStore> npcRef, Store<EntityStore> entityStore) {
         NPCEntity npc = entityStore.getComponent(npcRef, Constants.NPC_COMPONENT_TYPE);
         if (npc == null) return "";
