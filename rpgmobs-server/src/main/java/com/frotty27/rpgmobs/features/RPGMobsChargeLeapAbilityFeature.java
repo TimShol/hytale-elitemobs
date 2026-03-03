@@ -10,12 +10,15 @@ import com.frotty27.rpgmobs.systems.ability.AbilityIds;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Random;
 
 public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFeature {
+
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
     public static final String ABILITY_CHARGE_LEAP = AbilityIds.CHARGE_LEAP;
 
@@ -30,15 +33,24 @@ public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFea
     public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
                       Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
                       RPGMobsTierComponent tierComponent, @Nullable String roleName) {
-        RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig = (RPGMobsConfig.ChargeLeapAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
-                AbilityIds.CHARGE_LEAP);
-
-        if (abilityConfig == null) return;
+        RPGMobsConfig.AbilityConfig rawConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.CHARGE_LEAP);
+        if (rawConfig == null) {
+            LOGGER.atInfo().log("[ChargeLeap] apply: abilityConfig is NULL — no entry for '%s' in defaultAbilities", AbilityIds.CHARGE_LEAP);
+            return;
+        }
+        if (!(rawConfig instanceof RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig)) {
+            LOGGER.atInfo().log("[ChargeLeap] apply: abilityConfig is WRONG TYPE — expected ChargeLeapAbilityConfig, got %s", rawConfig.getClass().getSimpleName());
+            return;
+        }
 
         int tierIndex = tierComponent.tierIndex;
         ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
         String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
         String matchedRuleKey = tierComponent.matchedRuleKey;
+
+        LOGGER.atInfo().log("[ChargeLeap] apply: tier=%d weapon='%s' matchedRuleKey='%s' enabled=%s resolved=%s",
+                tierIndex, weaponId, matchedRuleKey, abilityConfig.isEnabled,
+                resolved != null ? "present" : "null");
 
         if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.CHARGE_LEAP, weaponId, tierIndex, matchedRuleKey, resolved)) return;
 
@@ -59,8 +71,8 @@ public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFea
                           RPGMobsTierComponent tierComponent, @Nullable String roleName) {
         ChargeLeapAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getChargeLeapAbilityComponentType());
 
-        RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig = (RPGMobsConfig.ChargeLeapAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
-                AbilityIds.CHARGE_LEAP);
+        RPGMobsConfig.AbilityConfig rawConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.CHARGE_LEAP);
+        RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig = (rawConfig instanceof RPGMobsConfig.ChargeLeapAbilityConfig cl) ? cl : null;
 
         if (abilityConfig == null) {
             if (comp != null && comp.abilityEnabled) {
@@ -87,6 +99,8 @@ public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFea
         if (!allowed && comp.abilityEnabled) {
             comp.abilityEnabled = false;
             commandBuffer.replaceComponent(npcRef, plugin.getChargeLeapAbilityComponentType(), comp);
+        } else if (allowed && !comp.abilityEnabled) {
+            apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
         }
     }
 }

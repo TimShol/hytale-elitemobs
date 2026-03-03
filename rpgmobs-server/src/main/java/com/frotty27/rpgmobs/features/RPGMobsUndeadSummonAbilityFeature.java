@@ -32,8 +32,8 @@ public final class RPGMobsUndeadSummonAbilityFeature implements IRPGMobsAbilityF
                       Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
                       RPGMobsTierComponent tierComponent, @Nullable String roleName) {
 
-        RPGMobsConfig.SummonAbilityConfig abilityConfig = (RPGMobsConfig.SummonAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
-                AbilityIds.SUMMON_UNDEAD);
+        RPGMobsConfig.AbilityConfig rawSummonConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
+        RPGMobsConfig.SummonAbilityConfig abilityConfig = (rawSummonConfig instanceof RPGMobsConfig.SummonAbilityConfig sm) ? sm : null;
 
         if (abilityConfig == null) {
             return;
@@ -71,8 +71,8 @@ public final class RPGMobsUndeadSummonAbilityFeature implements IRPGMobsAbilityF
                           RPGMobsTierComponent tierComponent, @Nullable String roleName) {
         SummonUndeadAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getSummonUndeadAbilityComponentType());
 
-        RPGMobsConfig.SummonAbilityConfig abilityConfig = (RPGMobsConfig.SummonAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
-                AbilityIds.SUMMON_UNDEAD);
+        RPGMobsConfig.AbilityConfig rawSummonRecon = config.abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
+        RPGMobsConfig.SummonAbilityConfig abilityConfig = (rawSummonRecon instanceof RPGMobsConfig.SummonAbilityConfig sm) ? sm : null;
 
         if (abilityConfig == null) {
             if (comp != null && comp.abilityEnabled) {
@@ -103,6 +103,8 @@ public final class RPGMobsUndeadSummonAbilityFeature implements IRPGMobsAbilityF
             comp.pendingSummonTicksRemaining = 0L;
             comp.pendingSummonRole = null;
             commandBuffer.replaceComponent(npcRef, plugin.getSummonUndeadAbilityComponentType(), comp);
+        } else if (allowed && !comp.abilityEnabled) {
+            apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
         }
     }
 

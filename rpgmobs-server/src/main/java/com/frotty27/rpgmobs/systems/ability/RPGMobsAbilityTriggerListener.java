@@ -93,14 +93,6 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
 
         RPGMobsAbilityLockComponent lock = store.getComponent(entityRef, plugin.getAbilityLockComponentType());
         if (lock != null && (lock.isLocked() || lock.isChainStartPending())) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[AbilityEval] SKIP: lock active (locked=%b pending=%b ability=%s) source=%s",
-                                RPGMobsLogLevel.INFO,
-                                lock.isLocked(),
-                                lock.isChainStartPending(),
-                                lock.activeAbilityId,
-                                source.name()
-            );
             return;
         }
 
@@ -172,64 +164,24 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
                                                                    plugin.getChargeLeapAbilityComponentType()
         );
         if (chargeLeap == null || !chargeLeap.abilityEnabled) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[ChargeLeap] SKIP: comp=%s enabled=%s tier=%d",
-                                RPGMobsLogLevel.INFO,
-                                chargeLeap != null ? "present" : "null",
-                                chargeLeap != null ? String.valueOf(chargeLeap.abilityEnabled) : "N/A",
-                                tierIndex
-            );
             return false;
         }
 
-        if (chargeLeap.cooldownTicksRemaining > 0) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[ChargeLeap] BLOCKED by cooldown: remaining=%d ticks (%.1f sec)",
-                                RPGMobsLogLevel.INFO,
-                                chargeLeap.cooldownTicksRemaining,
-                                chargeLeap.cooldownTicksRemaining / (float) Constants.TICKS_PER_SECOND
-            );
-            return false;
-        }
+        if (chargeLeap.cooldownTicksRemaining > 0) return false;
 
         RPGMobsCombatTrackingComponent combat = store.getComponent(entityRef, plugin.getCombatTrackingComponentType());
-        if (combat == null || !combat.isInCombat()) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[ChargeLeap] BLOCKED: mob not in combat (state=%s)",
-                                RPGMobsLogLevel.INFO,
-                                combat != null ? combat.state.name() : "null"
-            );
-            return false;
-        }
+        if (combat == null || !combat.isInCombat()) return false;
 
         Ref<EntityStore> targetRef = combat.getBestTarget();
-        if (targetRef == null || !targetRef.isValid()) {
-            RPGMobsLogger.debug(LOGGER, "[ChargeLeap] BLOCKED: no valid target", RPGMobsLogLevel.INFO);
-            return false;
-        }
+        if (targetRef == null || !targetRef.isValid()) return false;
 
-        if (combat.aiTarget == null || !combat.aiTarget.isValid()) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[ChargeLeap] BLOCKED: no AI target (mob may be retreating, damage target still set)",
-                                RPGMobsLogLevel.INFO
-            );
-            return false;
-        }
+        if (combat.aiTarget == null || !combat.aiTarget.isValid()) return false;
 
         RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig = getChargeLeapConfig(config);
         if (abilityConfig == null) return false;
 
         float distance = calculateDistance(entityRef, targetRef, store);
-        if (distance < abilityConfig.minRange || distance > abilityConfig.maxRange) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[ChargeLeap] BLOCKED by distance: dist=%.1f (range=%.1f-%.1f)",
-                                RPGMobsLogLevel.INFO,
-                                distance,
-                                abilityConfig.minRange,
-                                abilityConfig.maxRange
-            );
-            return false;
-        }
+        if (distance < abilityConfig.minRange || distance > abilityConfig.maxRange) return false;
 
         RPGMobsAbilityStartedEvent startedEvent = new RPGMobsAbilityStartedEvent(entityRef,
                                                                                  AbilityIds.CHARGE_LEAP,
@@ -287,15 +239,7 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         );
         if (tracking != null) {
             int maxAlive = Math.max(0, Math.min(50, abilityConfig.maxAliveMinionsPerSummoner));
-            if (!tracking.canSummonMore(maxAlive)) {
-                RPGMobsLogger.debug(LOGGER,
-                                    "[SummonUndead] BLOCKED: cap reached alive=%d max=%d",
-                                    RPGMobsLogLevel.INFO,
-                                    tracking.summonedAliveCount,
-                                    maxAlive
-                );
-                return;
-            }
+            if (!tracking.canSummonMore(maxAlive)) return;
         }
 
         String roleIdentifier = resolveSummonRole(entityRef, store, config);
