@@ -66,13 +66,12 @@ public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeatu
                           Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
                           RPGMobsTierComponent tierComponent, @Nullable String roleName) {
         HealLeapAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getHealLeapAbilityComponentType());
-        if (comp == null) return;
 
         RPGMobsConfig.HealLeapAbilityConfig abilityConfig = (RPGMobsConfig.HealLeapAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
                 AbilityIds.HEAL_LEAP);
 
         if (abilityConfig == null) {
-            if (comp.abilityEnabled) {
+            if (comp != null && comp.abilityEnabled) {
                 comp.abilityEnabled = false;
                 commandBuffer.replaceComponent(npcRef, plugin.getHealLeapAbilityComponentType(), comp);
             }
@@ -85,6 +84,13 @@ public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeatu
         String matchedRuleKey = tierComponent.matchedRuleKey;
 
         boolean allowed = AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.HEAL_LEAP, weaponId, tierIndex, matchedRuleKey, resolved);
+
+        if (comp == null) {
+            if (allowed) {
+                apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
+            }
+            return;
+        }
 
         if (!allowed && comp.abilityEnabled) {
             comp.abilityEnabled = false;

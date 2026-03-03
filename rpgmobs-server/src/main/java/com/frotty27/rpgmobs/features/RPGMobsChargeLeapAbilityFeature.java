@@ -58,13 +58,12 @@ public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFea
                           Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
                           RPGMobsTierComponent tierComponent, @Nullable String roleName) {
         ChargeLeapAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getChargeLeapAbilityComponentType());
-        if (comp == null) return;
 
         RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig = (RPGMobsConfig.ChargeLeapAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
                 AbilityIds.CHARGE_LEAP);
 
         if (abilityConfig == null) {
-            if (comp.abilityEnabled) {
+            if (comp != null && comp.abilityEnabled) {
                 comp.abilityEnabled = false;
                 commandBuffer.replaceComponent(npcRef, plugin.getChargeLeapAbilityComponentType(), comp);
             }
@@ -77,6 +76,13 @@ public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFea
         String matchedRuleKey = tierComponent.matchedRuleKey;
 
         boolean allowed = AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.CHARGE_LEAP, weaponId, tierIndex, matchedRuleKey, resolved);
+
+        if (comp == null) {
+            if (allowed) {
+                apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
+            }
+            return;
+        }
 
         if (!allowed && comp.abilityEnabled) {
             comp.abilityEnabled = false;

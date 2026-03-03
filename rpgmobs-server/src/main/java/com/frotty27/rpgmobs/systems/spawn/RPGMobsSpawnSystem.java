@@ -71,7 +71,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
     private static final double SUMMON_SPAWN_RADIUS = 6.0;
     private static final int SUMMON_MIN_COUNT = 3;
     private static final int SUMMON_MAX_COUNT = 7;
-    private static final InteractionType HEAL_INTERACTION_TYPE = InteractionType.Ability2;
+    private static final InteractionType ABILITY_INTERACTION_TYPE = InteractionType.Ability2;
 
     private static final long CHAIN_DEATH_STAGGER_TICKS = Constants.TICKS_PER_SECOND / 3;
 
@@ -1021,7 +1021,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         );
         if (healLeapAbility == null || !healLeapAbility.swapActive) return false;
 
-        boolean healChainActive = AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, HEAL_INTERACTION_TYPE);
+        boolean healChainActive = AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, ABILITY_INTERACTION_TYPE);
 
         if (!healChainActive && healLeapAbility.swapActive) {
             AbilityHelpers.restorePreviousItemIfNeeded(npcEntity, healLeapAbility);
@@ -1045,7 +1045,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         );
         if (summonAbility == null || !summonAbility.swapActive) return;
 
-        boolean summonChainActive = AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, HEAL_INTERACTION_TYPE);
+        boolean summonChainActive = AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, ABILITY_INTERACTION_TYPE);
 
         if (!summonChainActive) {
             AbilityHelpers.restoreSummonWeaponIfNeeded(npcEntity, summonAbility);
@@ -1072,6 +1072,22 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
     private List<SummonMarkerEntry> resolveSummonEntries(SummonAbilityConfig config, String roleIdentifier) {
         if (config == null) return List.of();
         String normalized = roleIdentifier == null ? "" : RPGMobsConfig.normalizeRoleIdentifier(roleIdentifier);
+        RPGMobsLogger.debug(LOGGER,
+                            "[SummonResolve] role='%s' normalized='%s' mapNull=%b mapSize=%d flatSize=%d",
+                            RPGMobsLogLevel.INFO,
+                            String.valueOf(roleIdentifier),
+                            normalized,
+                            config.spawnMarkerEntriesByRole == null,
+                            config.spawnMarkerEntriesByRole != null ? config.spawnMarkerEntriesByRole.size() : -1,
+                            config.spawnMarkerEntries != null ? config.spawnMarkerEntries.size() : -1
+        );
+        if (config.spawnMarkerEntriesByRole != null && !config.spawnMarkerEntriesByRole.isEmpty()) {
+            RPGMobsLogger.debug(LOGGER,
+                                "[SummonResolve] mapKeys=%s",
+                                RPGMobsLogLevel.INFO,
+                                config.spawnMarkerEntriesByRole.keySet()
+            );
+        }
         if (config.spawnMarkerEntriesByRole != null && !normalized.isBlank()) {
             List<SummonMarkerEntry> byRole = config.spawnMarkerEntriesByRole.get(normalized);
             if (byRole != null && !byRole.isEmpty()) return byRole;

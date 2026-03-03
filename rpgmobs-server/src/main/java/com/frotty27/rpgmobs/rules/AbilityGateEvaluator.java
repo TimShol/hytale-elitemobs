@@ -95,7 +95,9 @@ public final class AbilityGateEvaluator {
         if (allowedCategories == null || allowedCategories.isEmpty()) return true;
         if (weaponTree == null) return true;
         for (String catName : allowedCategories) {
-            RPGMobsConfig.GearCategory cat = MobRuleCategoryHelpers.findGearCategoryByName(weaponTree, catName);
+            String plainName = MobRuleCategoryHelpers.isCategoryKey(catName)
+                    ? MobRuleCategoryHelpers.fromCategoryKey(catName) : catName;
+            RPGMobsConfig.GearCategory cat = MobRuleCategoryHelpers.findGearCategoryByName(weaponTree, plainName);
             if (cat != null && MobRuleCategoryHelpers.collectAllGearItemKeys(cat).contains(weaponId)) return true;
         }
         return false;

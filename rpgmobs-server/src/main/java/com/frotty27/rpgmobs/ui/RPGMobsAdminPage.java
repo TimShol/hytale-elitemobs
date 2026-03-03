@@ -1923,6 +1923,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             resolvedForSelected = resolver.getBaseResolved();
         }
 
+        if (raw == null && !resolvedForSelected.enabled) {
+            editOverlay.enabled = false;
+            savedOverlaySnapshot.enabled = false;
+        }
+
         resetFamilyRowKeys(editOverlay, resolvedForSelected);
 
         resetEnvRuleKeys(editOverlay, resolvedForSelected);
@@ -2459,6 +2464,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 reloadedCfg.gearConfig.twoHandedWeaponIds = new ArrayList<>(editTwoHandedKeywords);
                 reloadedCfg.gearConfig.defaultWeaponRarityRules = new LinkedHashMap<>(editWeaponRarityRules);
                 reloadedCfg.gearConfig.defaultArmorRarityRules = new LinkedHashMap<>(editArmorRarityRules);
+
+                reloadedCfg.populateSummonMarkerEntriesIfEmpty();
+                reloadedCfg.upgradeSummonMarkerEntriesToVariantIds();
             }
 
             RPGMobsConfig rpgCfg = plugin.getConfig();

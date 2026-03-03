@@ -1377,7 +1377,7 @@ public final class RPGMobsConfig {
         public double aberrantWeight = 25;
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Roles excluded from the auto-generated summon pool (prevents summoners from summoning themselves).")
-        public List<String> excludeFromSummonPool = new ArrayList<>(List.of("Trork_Shaman"));
+        public List<String> excludeFromSummonPool = new ArrayList<>(List.of("Trork_Shaman", "Goblin_Duke"));
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Optional explicit spawn marker entries (advanced). If empty, RPGMobs builds this automatically from mob rules.")
         public List<SummonMarkerEntry> spawnMarkerEntries = new ArrayList<>();
