@@ -3,24 +3,27 @@ title: Spawning
 description: Control how, where, and when RPG Mobs appear in your world.
 ---
 
-`spawning.yml` is where you decide how RPG Mobs enter your world. You can control the overall spawn rate, choose a progression style that fits your server, and fine-tune per-zone tier distributions.
+`spawning.yml` is where you decide how RPG Mobs enter your world. You can choose a progression style that fits your server, configure per-tier spawn weights, and fine-tune per-zone tier distributions.
 
-## Spawn Chance
+All spawning settings can be overridden per-world via the [overlay system](/config/instances).
 
-Every time a hostile NPC spawns in the world, RPGMobs rolls a dice to decide whether it becomes an Elite. This setting controls that chance.
+## Spawn Chances
+
+When a hostile NPC spawns, RPGMobs uses the `spawnChancePerTier` weights to decide which tier the elite becomes. These are weights (not percentages), so they don't need to add up to `1.0`.
 
 ```yaml
 Spawning:
-  globalSpawnChance: 0.15
+  spawnChancePerTier:
+    - 0.46  # Tier 1 — 46% weight
+    - 0.28  # Tier 2 — 28% weight
+    - 0.16  # Tier 3 — 16% weight
+    - 0.08  # Tier 4 — 8% weight
+    - 0.04  # Tier 5 — 4% weight
 ```
 
-| Value | Meaning |
-| :--- | :--- |
-| `0.0` | No elites spawn at all. |
-| `0.15` | 15% of hostile mobs become Elites (default). |
-| `1.0` | Every hostile mob becomes an Elite. |
+Higher values mean that tier will appear more often. Set a tier to `0` to prevent it from spawning.
 
-**Tip:** On a fresh server, start with the default `0.15`. If the world feels too quiet, bump it up to `0.25`. If players are overwhelmed, try `0.08`.
+**Tip:** On a fresh server, the defaults work well. If the world feels too quiet, increase the weights. If players are overwhelmed, decrease higher-tier weights.
 
 ## Progression Style
 
@@ -70,28 +73,12 @@ This style works well with custom world generation mods or maps that don't use H
 
 ### NONE
 
-Any tier can spawn anywhere. Tier distribution is completely random based on the global weights. Good for hardcore servers or arenas.
+Any tier can spawn anywhere. Tier distribution is completely random based on the `spawnChancePerTier` weights. Good for hardcore servers or arenas.
 
 ```yaml
 Spawning:
   progressionStyle: NONE
 ```
-
-## Tier Weights
-
-When using `NONE` or as a fallback, these weights control how likely each tier is to be chosen.
-
-```yaml
-Spawning:
-  spawnChancePerTier:
-    - 0.46  # Tier 1 — 46% chance
-    - 0.28  # Tier 2 — 28% chance
-    - 0.16  # Tier 3 — 16% chance
-    - 0.08  # Tier 4 — 8% chance
-    - 0.04  # Tier 5 — 4% chance
-```
-
-The values are `weights`. So no need to make it add up to `1.0`. Higher values mean that tier will appear more often.
 
 ## Environment Tier Rules
 
@@ -117,6 +104,6 @@ Spawning:
 
 Each key is a Hytale environment identifier. The mod ships with rules for every known sub-zone (caves, dungeons, forests, etc.). If a mob spawns in a zone that has no matching rule, the `default` entry is used.
 
-You can add your own rules for custom environments by adding a new key that matches the environment ID.
+**Important:** When a per-world overlay defines any environment tier rules, it **fully replaces** the base rules for that world (not additive). If you define one environment rule in an overlay, all base environment rules are removed for that world.
 
 **Tip:** Set `enabled: false` on any zone rule to prevent elites from spawning there entirely. This is useful for safe zones or player towns.

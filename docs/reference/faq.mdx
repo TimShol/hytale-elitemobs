@@ -7,18 +7,21 @@ description: "Frequently asked questions and troubleshooting."
 
 ### Why aren't elites spawning?
 
-1. Check `spawning.yml` -\> `globalSpawnChance` (default is `0.15`, or 15%).
-2. If using `ENVIRONMENT` progression, make sure you are in a supported zone (Zone 1-4).
-3. Check `mobs.yml` to confirm the NPC type has a matching mob rule with `enabled: true`.
-4. Check server logs for YAML parsing errors on startup.
+1. Check `core.yml` → `enabledByDefault`. If set to `false`, the world needs a specific overlay file in `worlds/` or `instances/` with `enabled: true`.
+2. Check `spawning.yml` → `spawnChancePerTier`. If all weights are `0`, no elites will spawn.
+3. If using `ENVIRONMENT` progression, make sure you are in a supported zone (Zone 1-4).
+4. Check `mobrules.yml` to confirm the NPC type has a matching mob rule with `enabled: true`.
+5. Check server logs for YAML parsing errors on startup.
 
 ### Why are mobs one-shotting me?
 
-Check `stats.yml` -\> `mobDamageMultiplierPerTier`. The default Tier 5 multiplier is `2.6`. For vanilla Hytale without armor mods, you might want to lower it to `2.0` or less.
+Check `stats.yml` → `mobDamageMultiplierPerTier`. The default Tier 5 multiplier is `2.6`. For vanilla Hytale without armor mods, you might want to lower it to `2.0` or less.
 
 ### Why do some mobs have abilities and others don't?
 
-Abilities are gated by tier and mob type. By default, only Tier 4 and 5 elites can use abilities. Additionally, each ability has a `gate` that restricts it to specific mob families and weapon types (e.g., Undead Summon works on skeletons, zombies, wraiths, Goblin_Duke, and Trork_Shaman; Charge Leap is disabled for mobs holding ranged weapons like staffs and bows).
+Abilities are linked to specific mob rules with per-tier toggles. By default, most mob categories (Skeletons, Zombies, Goblins, Trorks, Outlanders, Wraiths) have abilities enabled for Tier 4 and 5. Additionally, each ability has weapon category restrictions — for example, Charge Leap is disabled for mobs with ranged weapons (staves, bows). Void mobs are excluded by default.
+
+You can configure which mob rules are linked to each ability through the [Admin UI](/config/admin-ui) or in `abilities.yml`.
 
 ### How do I remove the mod safely?
 
@@ -31,21 +34,25 @@ If you skip step 1, you may have leftover entities with broken behavior until th
 
 ## Configuration
 
+### Is there an in-game configuration UI?
+
+Yes. Use `/rpgmobs config` to open the Admin UI. It requires the `rpgmobs.config` permission. The Admin UI provides visual editors for every setting — base config, per-world overlays, per-instance overlays, weapon/armor categories, and more. See the [Admin UI guide](/config/admin-ui).
+
 ### Can I make elites spawn everywhere?
 
-Yes. Set `progressionStyle: NONE` in `spawning.yml`. This randomizes tiers regardless of location using the global `spawnChancePerTier` weights.
+Yes. Set `progressionStyle: NONE` in `spawning.yml`. This randomizes tiers regardless of location using the `spawnChancePerTier` weights.
 
 ### How do I disable abilities entirely?
 
-In `abilities.yml`, set `isEnabled: false` on each ability you want to disable. You can also disable abilities for specific tiers using the `isEnabledPerTier` array.
+In `abilities.yml`, set `isEnabled: false` on each ability you want to disable. You can also remove specific mob rules from an ability's `linkedMobRuleKeys` to disable it for certain mobs. The [Admin UI](/config/admin-ui) Abilities tab makes this easy with per-entry ON/OFF toggles.
 
 ### How do I disable the particle effects?
 
-Particle effects come from the status effects system in `effects.yml`. Set `isEnabled: false` on the `EFFECT_PROJECTILE_RESISTANCE` entry to disable both the effect and its particles.
+Particle effects come from the entity effects system in `effects.yml`. Set `isEnabled: false` on the `projectile_resistance` entry to disable both the effect and its particles.
 
 ### How do I add modded weapons to the loot pool?
 
-Add the weapon's item ID to the `weaponCatalog` list in `gear.yml`, and add a keyword-to-rarity mapping in `weaponRarityRulesContains`. Then run `/rpgmobs reload`.
+Add the weapon's item ID to the appropriate **weapon category** in `gear.yml` (or use the Admin UI under Global Config → Weapon Categories). Then add a keyword-to-rarity mapping in `weaponRarityRulesContains`. Run `/rpgmobs reload` to apply.
 
 ### Can I prevent elites from spawning in specific zones?
 
@@ -53,8 +60,20 @@ Yes. In `spawning.yml`, find the `environmentTierSpawns` entry for that zone and
 
 ### Can I customize RPGMobs behavior per world or dungeon instance?
 
-Yes. Enable the instance system in `instances.yml` and add a rule for each world or instance template. You can override spawning, stats, loot, abilities, and elite behavior per instance. Instance worlds (`instance-{Template}-{UUID}`) are automatically matched by template name. See [Instances](/config/instances) for details.
+Yes. RPGMobs uses an overlay system with per-world files in `worlds/` and per-instance-template files in `instances/`. Each overlay can override spawning, stats, loot, abilities, visuals, and elite behavior independently. Instance worlds (`instance-{Template}-{UUID}`) are automatically matched by template name (case-insensitive). Use the [Admin UI](/config/admin-ui) or create YAML files manually. See [Overlays](/config/instances) for details.
 
 ### How do I disable elites in a lobby or hub world?
 
-In `instances.yml`, add a rule for the world with `enabled: false`. For example, `Lobby: { enabled: false }` prevents any elites from spawning in a world named "Lobby".
+Create an overlay file in `worlds/` with the world name (e.g., `worlds/Lobby.yml`) containing `enabled: false`. Or use the Admin UI to select the world and toggle Enabled off.
+
+### What are weapon and armor categories?
+
+Weapons and armor are organized into named categories in `gear.yml` (e.g., "Swords", "Axes", "Staves"). Mob rules reference these categories using `category:CategoryName` syntax to control what equipment each mob type can receive. This replaced the old substring-based `weaponIdMustContain` filtering. See [Gear](/config/gear) for details.
+
+### What happened to instances.yml?
+
+The flat `instances.yml` file was replaced by the overlay system in v3. Per-world settings now live in individual YAML files under `worlds/` and `instances/` directories. See [Overlays](/config/instances) for the new format.
+
+### What happened to minTierInclusive/maxTierInclusive on drops?
+
+These were replaced by `enabledPerTier` — a boolean array with one entry per tier (T1 through T5). This gives you finer control over which tiers can drop each item. For example, `enabledPerTier: [false, false, true, true, false]` means only Tier 3 and 4 elites can drop the item. See [Loot](/config/loot) for details.

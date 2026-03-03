@@ -3,8 +3,8 @@
 ## Tiered elites that change combat, loot, and progression
 
 RPGMobs transforms standard Hytale NPCs into tiered elites with scaling stats, combat abilities, tiered loot, and
-distinct visuals. Fully configurable with runtime reloads, event-driven modding API, and support for both casual and
-hardcore servers.
+distinct visuals. Fully configurable via YAML or the in-game Admin UI, with runtime reloads, per-world overlays,
+an event-driven modding API, and support for both casual and hardcore servers.
 
 ## Downloads
 
@@ -41,24 +41,30 @@ Full configuration guides, developer API reference, and troubleshooting:
 
 ### Combat
 
-- 5 power tiers with independent health and damage scaling
+- 5 power tiers (Common to Legendary) with independent health and damage scaling
 - Combat abilities: Charge Leap, Heal Potion, Undead Summon
 - Faction-based summoning — goblins summon goblins, trorks summon trorks, undead summon undead
 - Random damage and health variance for less predictable encounters
-- Ability gating by tier, mob family, and weapon type
+- Ability gating per mob rule with per-tier toggles and weapon category restrictions
 - Per-mob armor slot restrictions for mobs whose models don't support full armor
+- Elite-vs-elite aggro prevention toggle
+- In-game Admin UI for live configuration (`/rpgmobs config`)
 
 ### Loot & Gear
 
-- Tiered loot tables with configurable drop multipliers
-- Rarity-weighted equipment from curated weapon and armor catalogs
-- Chance to drop equipped items on death
+- Category-based weapon and armor organization with hierarchical category trees
+- Rarity-weighted equipment assigned by weapon and armor categories per mob rule
+- Tiered loot tables with configurable drop multipliers (up to 6x for Tier 5)
+- Per-tier drop enablement — control exactly which tiers can drop each item
+- Loot templates with linked mob rules for targeted drop tables (e.g., Goblin Boss loot)
+- Chance to drop equipped items on death with configurable durability range
+- Consumable drops including food, potions, gems, and materials
 
 ### Identity
 
-- Tiered nameplates with rank indicators and family prefixes
+- Tiered nameplates with rank indicators and family prefixes via [NameplateBuilder](https://github.com/TimShol/hytale-nameplate-builder)
 - Model scaling per tier for distinct visual presence
-- Status effects with particle systems
+- Entity effects system (projectile resistance and more)
 
 ### Progression
 
@@ -66,18 +72,35 @@ Full configuration guides, developer API reference, and troubleshooting:
 - Per-zone tier distribution with configurable weights
 - Distance-based stat bonuses for smooth difficulty curves
 
-### Instances
+### Per-World Overlays
 
-- Per-world and per-instance-template overrides via `instances.yml`
-- Override spawning, stats, loot, abilities, and elite behavior per instance
-- Per-mob-role overrides within instances (forced tiers, custom loot)
-- Elite friendly fire prevention and fall damage immunity options
-- All 25 vanilla Hytale instance templates pre-configured
-- Automatic instance template matching for `instance-{Template}-{UUID}` worlds
+- Per-world and per-instance-template overrides via the overlay system (`worlds/` and `instances/` directories)
+- Override spawning, stats, loot, abilities, visuals, and elite behavior per world or instance
+- Per-world mob rules and loot templates with category tree organization
+- Tier overrides and loot overrides for fine-grained per-mob control
+- Instance worlds (`instance-{Template}-{UUID}`) are automatically matched by template name (case-insensitive)
+- Two built-in presets (Full and Empty) plus custom preset save/restore
+- Manage overlays visually through the Admin UI or edit YAML files directly
+
+### Admin UI
+
+RPGMobs includes a full in-game configuration panel accessible via `/rpgmobs config`. Every setting can be managed visually without editing YAML files.
+
+- **Sidebar navigation** with sections for Global Core, Global Debug, Per-World overlays, and Per-Instance overlays
+- **9 sub-tabs** per world/instance: General, Mob Rules, Stats, Loot, Spawning, Entity Effects, Abilities, Visuals, Overrides
+- **Tree explorers** for mob rules, loot templates, abilities, and entity effects with search filtering
+- **NPC picker** and **Item picker** popups for adding mob rules and loot drops
+- **Global Config** tabs for managing weapon categories, armor categories, rarity rules, and tier equipment quality
+- **Save & Discard** with unsaved change indicators (yellow/green markers) across all tabs
+
+![Admin UI Overview](docs/images/admin-ui-overview.png)
+
+![Admin UI Mob Rules](docs/images/admin-ui-mob-rules.png)
 
 ### Integrations
 
 - Built-in RPGLeveling support with tier-scaled XP, ability-based XP bonuses, and minion XP reduction
+- XP settings are overlayable per-world — each world or instance can have its own XP multipliers
 - Standalone `rpgleveling.yml` config auto-generated when RPGLeveling is detected
 
 ### For Developers
@@ -92,8 +115,8 @@ Full configuration guides, developer API reference, and troubleshooting:
 ```text
 1. Download RPGMobs and place the JAR in your server's mods folder
 2. Start the server to generate default configuration
-3. Edit the YAML files under your save's mods/RPGMobs directory
-4. Run /RPGMobs reload to apply changes without restarting
+3. Use /rpgmobs config for the in-game Admin UI, or edit the YAML files directly
+4. Run /rpgmobs reload to apply YAML changes without restarting
 ```
 
 ## Installation
@@ -109,19 +132,22 @@ Full configuration guides, developer API reference, and troubleshooting:
 
 ## Configuration
 
-| File              | Purpose                                                |
-|:------------------|:-------------------------------------------------------|
-| `core.yml`        | Global systems, reconciliation, debug, compatibility   |
-| `stats.yml`       | Health and damage multipliers per tier                 |
-| `spawning.yml`    | Progression style, spawn chances, zone distributions   |
-| `gear.yml`        | Equipment catalogs, rarity rules, armor materials      |
-| `loot.yml`        | Drop rates, loot multipliers, extra drops              |
-| `abilities.yml`   | Ability toggles, cooldowns, per-tier scaling, gating   |
-| `visuals.yml`     | Nameplates, model scaling                              |
-| `effects.yml`     | Status effects and particles                           |
-| `mobrules.yml`    | NPC rules, weapon overrides, armor slots, families     |
-| `instances.yml`   | Per-world/instance overrides for all of the above      |
-| `rpgleveling.yml` | RPGLeveling XP scaling (auto-generated when detected)  |
+RPGMobs uses a layered configuration system with a base config directory, per-world overlays, and per-instance overlays.
+
+| Path | Purpose |
+|:---|:---|
+| `core.yml` | Global settings: enabled by default, debug mode, config format version |
+| `base/core.yml` | System config: reconciliation, integrations (RPGLeveling) |
+| `base/stats.yml` | Health and damage multipliers per tier |
+| `base/spawning.yml` | Progression style, spawn chances, zone distributions |
+| `base/gear.yml` | Equipment categories, rarity rules, armor materials |
+| `base/loot.yml` | Drop rates, loot templates, extra drops |
+| `base/abilities.yml` | Ability toggles, cooldowns, linked mob rules, per-tier scaling |
+| `base/visuals.yml` | Nameplates, model scaling, family prefixes |
+| `base/effects.yml` | Entity effects (projectile resistance, etc.) |
+| `base/mobrules.yml` | NPC rules, weapon categories, armor slots |
+| `worlds/` | Per-world overlay YAML files |
+| `instances/` | Per-instance-template overlay YAML files |
 
 ## Runtime Reload
 
@@ -129,8 +155,25 @@ Full configuration guides, developer API reference, and troubleshooting:
 /rpgmobs reload
 ```
 
-Reloads all YAML configuration from disk. Spawn logic updates immediately. Existing elites are reconciled over a
-configurable tick window.
+Reloads all YAML configuration from disk. Spawn logic updates immediately. Existing elites are reconciled on their
+next tick — mob rules are re-evaluated and equipment is re-applied as needed.
+
+## Commands
+
+| Command | Description |
+|:---|:---|
+| `/rpgmobs reload` | Reloads all YAML configuration files from disk |
+| `/rpgmobs config` | Opens the in-game Admin UI for visual configuration |
+| `/rpgmobs spawn <role> <tier>` | Spawns an elite NPC (debug mode only) |
+| `/npc clean --confirm` | Removes all Elite entities from the world |
+
+## Permissions
+
+| Permission | What it allows |
+|:---|:---|
+| `rpgmobs.reload` | Use the `/rpgmobs reload` command |
+| `rpgmobs.config` | Use the `/rpgmobs config` command to open the Admin UI |
+| `rpgmobs.spawn` | Use the `/rpgmobs spawn` command (debug mode only) |
 
 ## API Overview
 

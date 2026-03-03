@@ -4,9 +4,9 @@ import com.frotty27.rpgmobs.assets.AssetConfig;
 import com.frotty27.rpgmobs.assets.AssetType;
 import com.frotty27.rpgmobs.assets.TieredAssetConfig;
 import com.frotty27.rpgmobs.config.schema.*;
-import com.frotty27.rpgmobs.features.RPGMobsProjectileResistanceEffectFeature;
 import com.frotty27.rpgmobs.features.RPGMobsUndeadSummonAbilityFeature;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
+import com.frotty27.rpgmobs.utils.MobRuleCategoryHelpers;
 import com.google.gson.Gson;
 
 import java.util.*;
@@ -15,48 +15,22 @@ import static com.frotty27.rpgmobs.utils.Constants.TIERS_AMOUNT;
 
 public final class RPGMobsConfig {
 
-    private static final List<String> DENY_ABILITY_CHARGE_LEAP_ROLE_LIST = List.of("Eye_Void",
-                                                                                   "Crawler_Void",
-                                                                                   "Skeleton_Burnt_Praetorian",
-                                                                                   "_Gunner",
-                                                                                   "Skeleton_Incandescent_Head"
-    );
-
-    private static final List<String> DENY_ABILITY_HEAL_LEAP_ROLE_LIST = List.of("Eye_Void",
-                                                                              "Crawler_Void",
-                                                                              "Skeleton_Burnt_Praetorian",
-                                                                              "_Gunner",
-                                                                              "Skeleton_Incandescent_Head"
-    );
-
-    private static final List<String> DENY_ABILITY_SUMMON_UNDEAD_ROLE_LIST = List.of("Eye_Void",
-                                                                              "Crawler_Void",
-                                                                              "Skeleton_Incandescent_Head"
-    );
-
-    private static final List<String> ALLOW_ABILITY_SUMMON_UNDEAD_ROLE_LIST = List.of("skeleton", "zombie", "wraith", "Goblin_Duke", "Trork_Shaman");
-    private static final List<String> DAMAGE_MELEE_ONLY_NOT_CONTAINS = List.of("shortbow",
-                                                                               "crossbow",
-                                                                               "staff",
-                                                                               "pickaxe",
-                                                                               "bomb",
-                                                                               "kunai",
-                                                                               "blunderbuss",
-                                                                               "spellbook"
-    );
-    private static final List<String> DAMAGE_MELEE_SWORDS_ONLY = List.of("_sword");
-    private static final List<String> DAMAGE_MELEE_AXES_ONLY = List.of("axe");
-    private static final List<String> DAMAGE_MELEE_LONGSWORD_ONLY = List.of("longsword");
-    private static final List<String> DAMAGE_MELEE_CLUBS_ONLY = List.of("club");
-    private static final List<String> DAMAGE_MELEE_SPEARS_ONLY = List.of("spear");
-    private static final List<String> DAMAGE_MELEE_DAGGERS_ONLY = List.of("daggers");
-    private static final List<String> DAMAGE_MELEE_PICKAXE_ONLY = List.of("pickaxe");
-    private static final List<String> DAMAGE_MELEE_SHARP_WEAPONS_ONLY = List.of("sword", "axe");
-    private static final List<String> DAMAGE_MELEE_TWO_HANDED_SHARP_WEAPONS_ONLY = List.of("longsword", "battleaxe");
-    private static final List<String> DAMAGE_RANGED_BOWS_ONLY = List.of("shortbow", "crossbow");
-    private static final List<String> DAMAGE_RANGED_STAFFS_ONLY = List.of("staff");
-    private static final List<String> DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY = List.of("blunderbuss");
-    private static final List<String> DAMAGE_RANGED_SPELLBOOK_ONLY = List.of("spellbook");
+    private static final String CP = "category:";
+    private static final List<String> WEAPON_CATS_MELEE = List.of(CP+"Axes", CP+"Battleaxes", CP+"Clubs",
+            CP+"Daggers", CP+"Longswords", CP+"Maces", CP+"Spears", CP+"Swords");
+    private static final List<String> WEAPON_CATS_SWORDS = List.of(CP+"Swords");
+    private static final List<String> WEAPON_CATS_AXES = List.of(CP+"Axes");
+    private static final List<String> WEAPON_CATS_LONGSWORDS = List.of(CP+"Longswords");
+    private static final List<String> WEAPON_CATS_CLUBS = List.of(CP+"Clubs");
+    private static final List<String> WEAPON_CATS_SPEARS = List.of(CP+"Spears");
+    private static final List<String> WEAPON_CATS_DAGGERS = List.of(CP+"Daggers");
+    private static final List<String> WEAPON_CATS_PICKAXES = List.of(CP+"Pickaxes");
+    private static final List<String> WEAPON_CATS_SHARP = List.of(CP+"Swords", CP+"Axes", CP+"Longswords", CP+"Battleaxes");
+    private static final List<String> WEAPON_CATS_TWO_HANDED_SHARP = List.of(CP+"Longswords", CP+"Battleaxes");
+    private static final List<String> WEAPON_CATS_BOWS = List.of(CP+"Shortbows", CP+"Crossbows");
+    private static final List<String> WEAPON_CATS_STAVES = List.of(CP+"Staves");
+    private static final List<String> WEAPON_CATS_GUNS = List.of(CP+"Guns");
+    private static final List<String> WEAPON_CATS_SPELLBOOKS = List.of(CP+"Spellbooks");
 
     public static final String SUMMON_ROLE_PREFIX = "RPGMobs_Summon_";
     public static final int DEFAULT_MAX_ALIVE_MINIONS_PER_SUMMONER = 7;
@@ -80,7 +54,6 @@ public final class RPGMobsConfig {
     public final EffectsConfig effectsConfig = new EffectsConfig();
     public final IntegrationsConfig integrationsConfig = new IntegrationsConfig();
     public final DebugConfig debugConfig = new DebugConfig();
-    public final ReconcileConfig reconcileConfig = new ReconcileConfig();
 
     public enum ProgressionStyle {
         ENVIRONMENT, DISTANCE_FROM_SPAWN, NONE
@@ -108,6 +81,8 @@ public final class RPGMobsConfig {
 
         m.put("void", List.of("Faded", "Shaded", "Umbral", "Abyssal", "Voidborn"));
 
+        m.put("wraith", List.of("Dim", "Hollow", "Veiled", "Phantom", "Transcendent"));
+
         m.put("default", List.of("Common", "Uncommon", "Rare", "Epic", "Legendary"));
         return m;
     }
@@ -115,435 +90,30 @@ public final class RPGMobsConfig {
     private static Map<String, EnvironmentTierRule> defaultEnvironmentTierSpawns() {
         Map<String, EnvironmentTierRule> map = new LinkedHashMap<>();
 
-        EnvironmentTierRule defaultRule = new EnvironmentTierRule();
-        defaultRule.enabled = true;
-        defaultRule.spawnChancePerTier = new double[]{0.46, 0.28, 0.16, 0.08, 0.04};
-        map.put("default", defaultRule);
-
-        EnvironmentTierRule Env_Zone1 = new EnvironmentTierRule();
-        Env_Zone1.enabled = true;
-        Env_Zone1.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1", Env_Zone1);
-
-        EnvironmentTierRule Env_Zone1_Autumn = new EnvironmentTierRule();
-        Env_Zone1_Autumn.enabled = true;
-        Env_Zone1_Autumn.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Autumn", Env_Zone1_Autumn);
-
-        EnvironmentTierRule Env_Zone1_Azure = new EnvironmentTierRule();
-        Env_Zone1_Azure.enabled = true;
-        Env_Zone1_Azure.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Azure", Env_Zone1_Azure);
-
-        EnvironmentTierRule Env_Zone1_Caves = new EnvironmentTierRule();
-        Env_Zone1_Caves.enabled = true;
-        Env_Zone1_Caves.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves", Env_Zone1_Caves);
-
-        EnvironmentTierRule Env_Zone1_Caves_Forests = new EnvironmentTierRule();
-        Env_Zone1_Caves_Forests.enabled = true;
-        Env_Zone1_Caves_Forests.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Forests", Env_Zone1_Caves_Forests);
-
-        EnvironmentTierRule Env_Zone1_Caves_Goblins = new EnvironmentTierRule();
-        Env_Zone1_Caves_Goblins.enabled = true;
-        Env_Zone1_Caves_Goblins.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Goblins", Env_Zone1_Caves_Goblins);
-
-        EnvironmentTierRule Env_Zone1_Caves_Mountains = new EnvironmentTierRule();
-        Env_Zone1_Caves_Mountains.enabled = true;
-        Env_Zone1_Caves_Mountains.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Mountains", Env_Zone1_Caves_Mountains);
-
-        EnvironmentTierRule Env_Zone1_Caves_Plains = new EnvironmentTierRule();
-        Env_Zone1_Caves_Plains.enabled = true;
-        Env_Zone1_Caves_Plains.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Plains", Env_Zone1_Caves_Plains);
-
-        EnvironmentTierRule Env_Zone1_Caves_Rats = new EnvironmentTierRule();
-        Env_Zone1_Caves_Rats.enabled = true;
-        Env_Zone1_Caves_Rats.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Rats", Env_Zone1_Caves_Rats);
-
-        EnvironmentTierRule Env_Zone1_Caves_Spiders = new EnvironmentTierRule();
-        Env_Zone1_Caves_Spiders.enabled = true;
-        Env_Zone1_Caves_Spiders.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Spiders", Env_Zone1_Caves_Spiders);
-
-        EnvironmentTierRule Env_Zone1_Caves_Swamps = new EnvironmentTierRule();
-        Env_Zone1_Caves_Swamps.enabled = true;
-        Env_Zone1_Caves_Swamps.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Swamps", Env_Zone1_Caves_Swamps);
-
-        EnvironmentTierRule Env_Zone1_Caves_Volcanic_T1 = new EnvironmentTierRule();
-        Env_Zone1_Caves_Volcanic_T1.enabled = true;
-        Env_Zone1_Caves_Volcanic_T1.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Volcanic_T1", Env_Zone1_Caves_Volcanic_T1);
-
-        EnvironmentTierRule Env_Zone1_Caves_Volcanic_T2 = new EnvironmentTierRule();
-        Env_Zone1_Caves_Volcanic_T2.enabled = true;
-        Env_Zone1_Caves_Volcanic_T2.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Volcanic_T2", Env_Zone1_Caves_Volcanic_T2);
-
-        EnvironmentTierRule Env_Zone1_Caves_Volcanic_T3 = new EnvironmentTierRule();
-        Env_Zone1_Caves_Volcanic_T3.enabled = true;
-        Env_Zone1_Caves_Volcanic_T3.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Caves_Volcanic_T3", Env_Zone1_Caves_Volcanic_T3);
-
-        EnvironmentTierRule Env_Zone1_Dungeons = new EnvironmentTierRule();
-        Env_Zone1_Dungeons.enabled = true;
-        Env_Zone1_Dungeons.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Dungeons", Env_Zone1_Dungeons);
-
-        EnvironmentTierRule Env_Zone1_Encounters = new EnvironmentTierRule();
-        Env_Zone1_Encounters.enabled = true;
-        Env_Zone1_Encounters.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Encounters", Env_Zone1_Encounters);
-
-        EnvironmentTierRule Env_Zone1_Forests = new EnvironmentTierRule();
-        Env_Zone1_Forests.enabled = true;
-        Env_Zone1_Forests.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Forests", Env_Zone1_Forests);
-
-        EnvironmentTierRule Env_Zone1_Graveyard = new EnvironmentTierRule();
-        Env_Zone1_Graveyard.enabled = true;
-        Env_Zone1_Graveyard.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Graveyard", Env_Zone1_Graveyard);
-
-        EnvironmentTierRule Env_Zone1_Kweebec = new EnvironmentTierRule();
-        Env_Zone1_Kweebec.enabled = true;
-        Env_Zone1_Kweebec.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Kweebec", Env_Zone1_Kweebec);
-
-        EnvironmentTierRule Env_Zone1_Mage_Towers = new EnvironmentTierRule();
-        Env_Zone1_Mage_Towers.enabled = true;
-        Env_Zone1_Mage_Towers.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Mage_Towers", Env_Zone1_Mage_Towers);
-
-        EnvironmentTierRule Env_Zone1_Mineshafts = new EnvironmentTierRule();
-        Env_Zone1_Mineshafts.enabled = true;
-        Env_Zone1_Mineshafts.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Mineshafts", Env_Zone1_Mineshafts);
-
-        EnvironmentTierRule Env_Zone1_Mountains = new EnvironmentTierRule();
-        Env_Zone1_Mountains.enabled = true;
-        Env_Zone1_Mountains.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Mountains", Env_Zone1_Mountains);
-
-        EnvironmentTierRule Env_Zone1_Plains = new EnvironmentTierRule();
-        Env_Zone1_Plains.enabled = true;
-        Env_Zone1_Plains.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Plains", Env_Zone1_Plains);
-
-        EnvironmentTierRule Env_Zone1_Shores = new EnvironmentTierRule();
-        Env_Zone1_Shores.enabled = true;
-        Env_Zone1_Shores.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Shores", Env_Zone1_Shores);
-
-        EnvironmentTierRule Env_Zone1_Swamps = new EnvironmentTierRule();
-        Env_Zone1_Swamps.enabled = true;
-        Env_Zone1_Swamps.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Swamps", Env_Zone1_Swamps);
-
-        EnvironmentTierRule Env_Zone1_Trork = new EnvironmentTierRule();
-        Env_Zone1_Trork.enabled = true;
-        Env_Zone1_Trork.spawnChancePerTier = new double[]{0.60, 0.25, 0.15, 0.00, 0.00};
-        map.put("Env_Zone1_Trork", Env_Zone1_Trork);
-
-        EnvironmentTierRule Env_Zone2 = new EnvironmentTierRule();
-        Env_Zone2.enabled = true;
-        Env_Zone2.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2", Env_Zone2);
-
-        EnvironmentTierRule Env_Zone2_Caves = new EnvironmentTierRule();
-        Env_Zone2_Caves.enabled = true;
-        Env_Zone2_Caves.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves", Env_Zone2_Caves);
-
-        EnvironmentTierRule Env_Zone2_Caves_Deserts = new EnvironmentTierRule();
-        Env_Zone2_Caves_Deserts.enabled = true;
-        Env_Zone2_Caves_Deserts.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Deserts", Env_Zone2_Caves_Deserts);
-
-        EnvironmentTierRule Env_Zone2_Caves_Goblins = new EnvironmentTierRule();
-        Env_Zone2_Caves_Goblins.enabled = true;
-        Env_Zone2_Caves_Goblins.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Goblins", Env_Zone2_Caves_Goblins);
-
-        EnvironmentTierRule Env_Zone2_Caves_Plateaus = new EnvironmentTierRule();
-        Env_Zone2_Caves_Plateaus.enabled = true;
-        Env_Zone2_Caves_Plateaus.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Plateaus", Env_Zone2_Caves_Plateaus);
-
-        EnvironmentTierRule Env_Zone2_Caves_Rats = new EnvironmentTierRule();
-        Env_Zone2_Caves_Rats.enabled = true;
-        Env_Zone2_Caves_Rats.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Rats", Env_Zone2_Caves_Rats);
-
-        EnvironmentTierRule Env_Zone2_Caves_Savanna = new EnvironmentTierRule();
-        Env_Zone2_Caves_Savanna.enabled = true;
-        Env_Zone2_Caves_Savanna.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Savanna", Env_Zone2_Caves_Savanna);
-
-        EnvironmentTierRule Env_Zone2_Caves_Scarak = new EnvironmentTierRule();
-        Env_Zone2_Caves_Scarak.enabled = true;
-        Env_Zone2_Caves_Scarak.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Scarak", Env_Zone2_Caves_Scarak);
-
-        EnvironmentTierRule Env_Zone2_Caves_Scrub = new EnvironmentTierRule();
-        Env_Zone2_Caves_Scrub.enabled = true;
-        Env_Zone2_Caves_Scrub.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Scrub", Env_Zone2_Caves_Scrub);
-
-        EnvironmentTierRule Env_Zone2_Caves_Volcanic_T1 = new EnvironmentTierRule();
-        Env_Zone2_Caves_Volcanic_T1.enabled = true;
-        Env_Zone2_Caves_Volcanic_T1.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Volcanic_T1", Env_Zone2_Caves_Volcanic_T1);
-
-        EnvironmentTierRule Env_Zone2_Caves_Volcanic_T2 = new EnvironmentTierRule();
-        Env_Zone2_Caves_Volcanic_T2.enabled = true;
-        Env_Zone2_Caves_Volcanic_T2.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Volcanic_T2", Env_Zone2_Caves_Volcanic_T2);
-
-        EnvironmentTierRule Env_Zone2_Caves_Volcanic_T3 = new EnvironmentTierRule();
-        Env_Zone2_Caves_Volcanic_T3.enabled = true;
-        Env_Zone2_Caves_Volcanic_T3.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Caves_Volcanic_T3", Env_Zone2_Caves_Volcanic_T3);
-
-        EnvironmentTierRule Env_Zone2_Deserts = new EnvironmentTierRule();
-        Env_Zone2_Deserts.enabled = true;
-        Env_Zone2_Deserts.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Deserts", Env_Zone2_Deserts);
-
-        EnvironmentTierRule Env_Zone2_Dungeons = new EnvironmentTierRule();
-        Env_Zone2_Dungeons.enabled = true;
-        Env_Zone2_Dungeons.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Dungeons", Env_Zone2_Dungeons);
-
-        EnvironmentTierRule Env_Zone2_Encounters = new EnvironmentTierRule();
-        Env_Zone2_Encounters.enabled = true;
-        Env_Zone2_Encounters.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Encounters", Env_Zone2_Encounters);
-
-        EnvironmentTierRule Env_Zone2_Feran = new EnvironmentTierRule();
-        Env_Zone2_Feran.enabled = true;
-        Env_Zone2_Feran.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Feran", Env_Zone2_Feran);
-
-        EnvironmentTierRule Env_Zone2_Mage_Towers = new EnvironmentTierRule();
-        Env_Zone2_Mage_Towers.enabled = true;
-        Env_Zone2_Mage_Towers.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Mage_Towers", Env_Zone2_Mage_Towers);
-
-        EnvironmentTierRule Env_Zone2_Mineshafts = new EnvironmentTierRule();
-        Env_Zone2_Mineshafts.enabled = true;
-        Env_Zone2_Mineshafts.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Mineshafts", Env_Zone2_Mineshafts);
-
-        EnvironmentTierRule Env_Zone2_Oasis = new EnvironmentTierRule();
-        Env_Zone2_Oasis.enabled = true;
-        Env_Zone2_Oasis.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Oasis", Env_Zone2_Oasis);
-
-        EnvironmentTierRule Env_Zone2_Plateaus = new EnvironmentTierRule();
-        Env_Zone2_Plateaus.enabled = true;
-        Env_Zone2_Plateaus.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Plateaus", Env_Zone2_Plateaus);
-
-        EnvironmentTierRule Env_Zone2_Savanna = new EnvironmentTierRule();
-        Env_Zone2_Savanna.enabled = true;
-        Env_Zone2_Savanna.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Savanna", Env_Zone2_Savanna);
-
-        EnvironmentTierRule Env_Zone2_Scarak = new EnvironmentTierRule();
-        Env_Zone2_Scarak.enabled = true;
-        Env_Zone2_Scarak.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Scarak", Env_Zone2_Scarak);
-
-        EnvironmentTierRule Env_Zone2_Scrub = new EnvironmentTierRule();
-        Env_Zone2_Scrub.enabled = true;
-        Env_Zone2_Scrub.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Scrub", Env_Zone2_Scrub);
-
-        EnvironmentTierRule Env_Zone2_Shores = new EnvironmentTierRule();
-        Env_Zone2_Shores.enabled = true;
-        Env_Zone2_Shores.spawnChancePerTier = new double[]{0.50, 0.25, 0.18, 0.07, 0.00};
-        map.put("Env_Zone2_Shores", Env_Zone2_Shores);
-
-        EnvironmentTierRule Env_Zone3 = new EnvironmentTierRule();
-        Env_Zone3.enabled = true;
-        Env_Zone3.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3", Env_Zone3);
-
-        EnvironmentTierRule Env_Zone3_Caves = new EnvironmentTierRule();
-        Env_Zone3_Caves.enabled = true;
-        Env_Zone3_Caves.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves", Env_Zone3_Caves);
-
-        EnvironmentTierRule Env_Zone3_Caves_Forests = new EnvironmentTierRule();
-        Env_Zone3_Caves_Forests.enabled = true;
-        Env_Zone3_Caves_Forests.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves_Forests", Env_Zone3_Caves_Forests);
-
-        EnvironmentTierRule Env_Zone3_Caves_Glacial = new EnvironmentTierRule();
-        Env_Zone3_Caves_Glacial.enabled = true;
-        Env_Zone3_Caves_Glacial.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves_Glacial", Env_Zone3_Caves_Glacial);
-
-        EnvironmentTierRule Env_Zone3_Caves_Mountains = new EnvironmentTierRule();
-        Env_Zone3_Caves_Mountains.enabled = true;
-        Env_Zone3_Caves_Mountains.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves_Mountains", Env_Zone3_Caves_Mountains);
-
-        EnvironmentTierRule Env_Zone3_Caves_Spider = new EnvironmentTierRule();
-        Env_Zone3_Caves_Spider.enabled = true;
-        Env_Zone3_Caves_Spider.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves_Spider", Env_Zone3_Caves_Spider);
-
-        EnvironmentTierRule Env_Zone3_Caves_Tundra = new EnvironmentTierRule();
-        Env_Zone3_Caves_Tundra.enabled = true;
-        Env_Zone3_Caves_Tundra.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves_Tundra", Env_Zone3_Caves_Tundra);
-
-        EnvironmentTierRule Env_Zone3_Caves_Volcanic_T1 = new EnvironmentTierRule();
-        Env_Zone3_Caves_Volcanic_T1.enabled = true;
-        Env_Zone3_Caves_Volcanic_T1.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves_Volcanic_T1", Env_Zone3_Caves_Volcanic_T1);
-
-        EnvironmentTierRule Env_Zone3_Caves_Volcanic_T2 = new EnvironmentTierRule();
-        Env_Zone3_Caves_Volcanic_T2.enabled = true;
-        Env_Zone3_Caves_Volcanic_T2.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves_Volcanic_T2", Env_Zone3_Caves_Volcanic_T2);
-
-        EnvironmentTierRule Env_Zone3_Caves_Volcanic_T3 = new EnvironmentTierRule();
-        Env_Zone3_Caves_Volcanic_T3.enabled = true;
-        Env_Zone3_Caves_Volcanic_T3.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Caves_Volcanic_T3", Env_Zone3_Caves_Volcanic_T3);
-
-        EnvironmentTierRule Env_Zone3_Dungeons = new EnvironmentTierRule();
-        Env_Zone3_Dungeons.enabled = true;
-        Env_Zone3_Dungeons.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Dungeons", Env_Zone3_Dungeons);
-
-        EnvironmentTierRule Env_Zone3_Encounters = new EnvironmentTierRule();
-        Env_Zone3_Encounters.enabled = true;
-        Env_Zone3_Encounters.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Encounters", Env_Zone3_Encounters);
-
-        EnvironmentTierRule Env_Zone3_Forests = new EnvironmentTierRule();
-        Env_Zone3_Forests.enabled = true;
-        Env_Zone3_Forests.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Forests", Env_Zone3_Forests);
-
-        EnvironmentTierRule Env_Zone3_Glacial = new EnvironmentTierRule();
-        Env_Zone3_Glacial.enabled = true;
-        Env_Zone3_Glacial.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Glacial", Env_Zone3_Glacial);
-
-        EnvironmentTierRule Env_Zone3_Glacial_Henges = new EnvironmentTierRule();
-        Env_Zone3_Glacial_Henges.enabled = true;
-        Env_Zone3_Glacial_Henges.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Glacial_Henges", Env_Zone3_Glacial_Henges);
-
-        EnvironmentTierRule Env_Zone3_Hedera = new EnvironmentTierRule();
-        Env_Zone3_Hedera.enabled = true;
-        Env_Zone3_Hedera.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Hedera", Env_Zone3_Hedera);
-
-        EnvironmentTierRule Env_Zone3_Mage_Towers = new EnvironmentTierRule();
-        Env_Zone3_Mage_Towers.enabled = true;
-        Env_Zone3_Mage_Towers.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Mage_Towers", Env_Zone3_Mage_Towers);
-
-        EnvironmentTierRule Env_Zone3_Mineshafts = new EnvironmentTierRule();
-        Env_Zone3_Mineshafts.enabled = true;
-        Env_Zone3_Mineshafts.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Mineshafts", Env_Zone3_Mineshafts);
-
-        EnvironmentTierRule Env_Zone3_Mountains = new EnvironmentTierRule();
-        Env_Zone3_Mountains.enabled = true;
-        Env_Zone3_Mountains.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Mountains", Env_Zone3_Mountains);
-
-        EnvironmentTierRule Env_Zone3_Outlander = new EnvironmentTierRule();
-        Env_Zone3_Outlander.enabled = true;
-        Env_Zone3_Outlander.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Outlander", Env_Zone3_Outlander);
-
-        EnvironmentTierRule Env_Zone3_Shores = new EnvironmentTierRule();
-        Env_Zone3_Shores.enabled = true;
-        Env_Zone3_Shores.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Shores", Env_Zone3_Shores);
-
-        EnvironmentTierRule Env_Zone3_Tundra = new EnvironmentTierRule();
-        Env_Zone3_Tundra.enabled = true;
-        Env_Zone3_Tundra.spawnChancePerTier = new double[]{0.00, 0.32, 0.28, 0.22, 0.18};
-        map.put("Env_Zone3_Tundra", Env_Zone3_Tundra);
-
-        EnvironmentTierRule Env_Zone4 = new EnvironmentTierRule();
-        Env_Zone4.enabled = true;
-        Env_Zone4.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4", Env_Zone4);
-
-        EnvironmentTierRule Env_Zone4_Caves = new EnvironmentTierRule();
-        Env_Zone4_Caves.enabled = true;
-        Env_Zone4_Caves.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Caves", Env_Zone4_Caves);
-
-        EnvironmentTierRule Env_Zone4_Caves_Volcanic = new EnvironmentTierRule();
-        Env_Zone4_Caves_Volcanic.enabled = true;
-        Env_Zone4_Caves_Volcanic.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Caves_Volcanic", Env_Zone4_Caves_Volcanic);
-
-        EnvironmentTierRule Env_Zone4_Crucible = new EnvironmentTierRule();
-        Env_Zone4_Crucible.enabled = true;
-        Env_Zone4_Crucible.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Crucible", Env_Zone4_Crucible);
-
-        EnvironmentTierRule Env_Zone4_Dungeons = new EnvironmentTierRule();
-        Env_Zone4_Dungeons.enabled = true;
-        Env_Zone4_Dungeons.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Dungeons", Env_Zone4_Dungeons);
-
-        EnvironmentTierRule Env_Zone4_Encounters = new EnvironmentTierRule();
-        Env_Zone4_Encounters.enabled = true;
-        Env_Zone4_Encounters.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Encounters", Env_Zone4_Encounters);
-
-        EnvironmentTierRule Env_Zone4_Forests = new EnvironmentTierRule();
-        Env_Zone4_Forests.enabled = true;
-        Env_Zone4_Forests.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Forests", Env_Zone4_Forests);
-
-        EnvironmentTierRule Env_Zone4_Jungles = new EnvironmentTierRule();
-        Env_Zone4_Jungles.enabled = true;
-        Env_Zone4_Jungles.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Jungles", Env_Zone4_Jungles);
-
-        EnvironmentTierRule Env_Zone4_Mage_Towers = new EnvironmentTierRule();
-        Env_Zone4_Mage_Towers.enabled = true;
-        Env_Zone4_Mage_Towers.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Mage_Towers", Env_Zone4_Mage_Towers);
-
-        EnvironmentTierRule Env_Zone4_Sewers = new EnvironmentTierRule();
-        Env_Zone4_Sewers.enabled = true;
-        Env_Zone4_Sewers.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Sewers", Env_Zone4_Sewers);
-
-        EnvironmentTierRule Env_Zone4_Shores = new EnvironmentTierRule();
-        Env_Zone4_Shores.enabled = true;
-        Env_Zone4_Shores.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Shores", Env_Zone4_Shores);
-
-        EnvironmentTierRule Env_Zone4_Volcanoes = new EnvironmentTierRule();
-        Env_Zone4_Volcanoes.enabled = true;
-        Env_Zone4_Volcanoes.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Volcanoes", Env_Zone4_Volcanoes);
-
-        EnvironmentTierRule Env_Zone4_Wastes = new EnvironmentTierRule();
-        Env_Zone4_Wastes.enabled = true;
-        Env_Zone4_Wastes.spawnChancePerTier = new double[]{0.00, 0.00, 0.40, 0.33, 0.27};
-        map.put("Env_Zone4_Wastes", Env_Zone4_Wastes);
+        EnvironmentTierRule zone0 = new EnvironmentTierRule();
+        zone0.enabled = true;
+        zone0.spawnChancePerTier = new double[]{100, 0, 0, 0, 0};
+        map.put("zone0", zone0);
+
+        EnvironmentTierRule zone1 = new EnvironmentTierRule();
+        zone1.enabled = true;
+        zone1.spawnChancePerTier = new double[]{60, 25, 15, 0, 0};
+        map.put("zone1", zone1);
+
+        EnvironmentTierRule zone2 = new EnvironmentTierRule();
+        zone2.enabled = true;
+        zone2.spawnChancePerTier = new double[]{50, 25, 18, 7, 0};
+        map.put("zone2", zone2);
+
+        EnvironmentTierRule zone3 = new EnvironmentTierRule();
+        zone3.enabled = true;
+        zone3.spawnChancePerTier = new double[]{0, 32, 28, 22, 18};
+        map.put("zone3", zone3);
+
+        EnvironmentTierRule zone4 = new EnvironmentTierRule();
+        zone4.enabled = true;
+        zone4.spawnChancePerTier = new double[]{0, 0, 40, 33, 27};
+        map.put("zone4", zone4);
 
         return map;
     }
@@ -559,12 +129,6 @@ public final class RPGMobsConfig {
         @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Enable nameplates for specific tiers.")
         public boolean[] mobNameplatesEnabledPerTier = {true, true, true, true, true};
 
-        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Include specific role names (case-insensitive). Empty allows all.")
-        public List<String> mobNameplateMustContainRoles = List.of();
-
-        @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Exclude specific role names (case-insensitive).")
-        public List<String> mobNameplateMustNotContainRoles = List.of();
-
         @FixedArraySize(TIERS_AMOUNT)
         @Default
         @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Visual indicators for each tier.")
@@ -572,17 +136,6 @@ public final class RPGMobsConfig {
 
         @Cfg(group = "Nameplates", file = "visuals.yml", comment = "Tier-based name prefixes per family (Zombie, Skeleton, etc.). Each list must have 5 values.")
         public Map<String, List<String>> defaultedTierPrefixesByFamily = defaultTierPrefixesByFamily();
-    }
-
-    public static final class ReconcileConfig {
-        @Min(0.0)
-        @Default
-        @Cfg(group = "Reconcile", file = "core.yml", comment = "Ticks to reconcile existing elites after a config reload (0 to disable).")
-        public int reconcileWindowTicks = 40;
-
-        @Default
-        @Cfg(group = "Reconcile", file = "core.yml", comment = "Announce when reconciliation starts and ends in the logs.")
-        public boolean announceReconcile = true;
     }
 
     public static final class IntegrationsConfig {
@@ -593,6 +146,27 @@ public final class RPGMobsConfig {
             @Default
             @Cfg(group = "Integrations.RPGLeveling", file = "core.yml", comment = "Enable RPGLeveling XP integration. Requires RPGLeveling to be installed.")
             public boolean enabled = true;
+
+            @Default
+            @FixedArraySize(TIERS_AMOUNT)
+            @Cfg(group = "Integrations.RPGLeveling", file = "core.yml",
+                 comment = "XP multiplier per tier. Applied to the base XP determined by RPGLeveling.\n"
+                           + "Example: Tier 3 with 2.0 means the player receives 2x the base XP.")
+            public float[] xpMultiplierPerTier = {1.0f, 1.5f, 2.0f, 3.0f, 5.0f};
+
+            @Default
+            @Min(0.0)
+            @Cfg(group = "Integrations.RPGLeveling", file = "core.yml",
+                 comment = "Bonus XP added for each active ability on the killed elite.\n"
+                           + "Abilities: Charge Leap, Heal Potion, Undead Summon.")
+            public double xpBonusPerAbility = 1000.0;
+
+            @Default
+            @Min(0.0)
+            @Cfg(group = "Integrations.RPGLeveling", file = "core.yml",
+                 comment = "XP multiplier for summoned minion kills.\n"
+                           + "0.05 = 5% of the base XP. Set to 0.0 to grant no XP for minions.")
+            public double minionXPMultiplier = 0.05;
         }
     }
 
@@ -606,13 +180,9 @@ public final class RPGMobsConfig {
         public ProgressionStyle progressionStyle = ProgressionStyle.ENVIRONMENT;
 
         @Default
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Used if style is ENVIRONMENT. Enable zone-specific tier probabilities.")
-        public boolean enableEnvironmentTierSpawns = true;
-
-        @Default
         @FixedArraySize(TIERS_AMOUNT)
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Global tier weights used for NONE style or as fallback. Higher = more common.")
-        public double[] spawnChancePerTier = {0.46, 0.28, 0.16, 0.08, 0.04};
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Global tier spawn weights used for NONE style or as fallback. Higher = more likely relative to sum.")
+        public double[] spawnChancePerTier = {46, 28, 16, 8, 4};
 
         @Default
         @Cfg(group = "Spawning", file = "spawning.yml", comment = "Blocks required per tier transition (e.g. 1000m = Tier 1, 2000m = Tier 2).")
@@ -638,7 +208,7 @@ public final class RPGMobsConfig {
         @Cfg(group = "Spawning", file = "spawning.yml", comment = "Max bonus damage multiplier added by distance progression (0.5 = +50% base damage max).")
         public float distanceDamageBonusCap = 0.5f;
 
-        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Zone-specific rules. Key is environment id (e.g. Env_Zone1_Forests).")
+        @Cfg(group = "Spawning", file = "spawning.yml", comment = "Zone-based spawn weight rules. Key is a zone substring (e.g. zone1, zone2). Environments with no matching zone do not spawn elites.")
         public Map<String, EnvironmentTierRule> defaultEnvironmentTierSpawns = defaultEnvironmentTierSpawns();
     }
 
@@ -648,7 +218,7 @@ public final class RPGMobsConfig {
 
         @Default
         @FixedArraySize(TIERS_AMOUNT)
-        public double[] spawnChancePerTier = {0.46, 0.28, 0.16, 0.08, 0.04};
+        public double[] spawnChancePerTier = {46, 28, 16, 8, 4};
     }
 
     public static final class HealthConfig {
@@ -659,7 +229,7 @@ public final class RPGMobsConfig {
         @Default
         @FixedArraySize(TIERS_AMOUNT)
         @Cfg(group = "Health", file = "stats.yml", comment = "Base health multiplier per tier.")
-        public float[] mobHealthMultiplierPerTier = {0.3f, 0.6f, 1.2f, 1.8f, 2.6f};
+        public float[] mobHealthMultiplierPerTier = {0.6f, 1.0f, 1.5f, 2.1f, 2.8f};
 
         @Default
         @Min(0.0)
@@ -726,6 +296,12 @@ public final class RPGMobsConfig {
 
         @Cfg(group = "Gear", file = "gear.yml", comment = "Valid armor materials for Elite generation.")
         public List<String> defaultArmorMaterials = defaultArmorMaterials();
+
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Weapon category tree: organizes weapon IDs into hierarchical groups.")
+        public GearCategory weaponCategoryTree = defaultWeaponCategoryTree();
+
+        @Cfg(group = "Gear", file = "gear.yml", comment = "Armor category tree: organizes full armor IDs (Armor_Material_Slot) into hierarchical groups.")
+        public GearCategory armorCategoryTree = defaultArmorCategoryTree();
     }
 
     private static Map<String, String> defaultWeaponRarityRules() {
@@ -777,7 +353,6 @@ public final class RPGMobsConfig {
         m.put("wool", "common");
         m.put("wood", "common");
         m.put("copper", "common");
-        m.put("club_zombie", "common");
 
         m.put("diving", "uncommon");
         m.put("kweebec", "uncommon");
@@ -835,7 +410,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Axe_Thorium",
                                        "Weapon_Axe_Tribal",
 
-
                                        "Weapon_Battleaxe_Adamantite",
                                        "Weapon_Battleaxe_Cobalt",
                                        "Weapon_Battleaxe_Copper",
@@ -851,7 +425,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Battleaxe_Thorium",
                                        "Weapon_Battleaxe_Tribal",
                                        "Weapon_Battleaxe_Wood_Fence",
-
 
                                        "Weapon_Club_Adamantite",
                                        "Weapon_Club_Cobalt",
@@ -876,10 +449,8 @@ public final class RPGMobsConfig {
                                        "Weapon_Club_Zombie_Sand_Arm",
                                        "Weapon_Club_Zombie_Sand_Leg",
 
-
                                        "Weapon_Crossbow_Ancient_Steel",
                                        "Weapon_Crossbow_Iron",
-
 
                                        "Weapon_Daggers_Adamantite_Saurian",
                                        "Weapon_Daggers_Adamantite",
@@ -897,7 +468,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Daggers_Onyxium",
                                        "Weapon_Daggers_Stone_Trork",
                                        "Weapon_Daggers_Thorium",
-
 
                                        "Weapon_Longsword_Adamantite_Saurian",
                                        "Weapon_Longsword_Adamantite",
@@ -917,7 +487,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Longsword_Tribal",
                                        "Weapon_Longsword_Void",
 
-
                                        "Weapon_Mace_Adamantite",
                                        "Weapon_Mace_Cobalt",
                                        "Weapon_Mace_Copper",
@@ -929,7 +498,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Mace_Scrap",
                                        "Weapon_Mace_Stone_Trork",
                                        "Weapon_Mace_Thorium",
-
 
                                        "Weapon_Shield_Adamantite",
                                        "Weapon_Shield_Cobalt",
@@ -946,7 +514,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Shield_Scrap",
                                        "Weapon_Shield_Thorium",
                                        "Weapon_Shield_Wood",
-
 
                                        "Weapon_Shortbow_Adamantite",
                                        "Weapon_Shortbow_Bomb",
@@ -967,7 +534,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Shortbow_Thorium",
                                        "Weapon_Shortbow_Vampire",
 
-
                                        "Weapon_Spear_Adamantite_Saurian",
                                        "Weapon_Spear_Adamantite",
                                        "Weapon_Spear_Bone",
@@ -985,7 +551,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Spear_Stone_Trork",
                                        "Weapon_Spear_Thorium",
                                        "Weapon_Spear_Tribal",
-
 
                                        "Halloween_Broomstick",
                                        "Weapon_Staff_Adamantite",
@@ -1013,7 +578,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Staff_Wood_Rotten",
                                        "Weapon_Staff_Wood",
 
-
                                        "Weapon_Sword_Adamantite",
                                        "Weapon_Sword_Bone",
                                        "Weapon_Sword_Bronze_Ancient",
@@ -1038,7 +602,6 @@ public final class RPGMobsConfig {
                                        "Weapon_Sword_Thorium",
                                        "Weapon_Sword_Wood",
 
-
                                        "Tool_Pickaxe_Adamantite",
                                        "Tool_Pickaxe_Cobalt",
                                        "Tool_Pickaxe_Copper",
@@ -1050,12 +613,10 @@ public final class RPGMobsConfig {
                                        "Tool_Pickaxe_Thorium",
                                        "Tool_Pickaxe_Wood",
 
-
                                        "Weapon_Bomb",
                                        "Weapon_Bomb_Stun",
                                        "Weapon_Bomb_Potion_Poison",
                                        "Weapon_Bomb_Continuous",
-
 
                                        "Weapon_Kunai",
 
@@ -1100,6 +661,79 @@ public final class RPGMobsConfig {
         ));
     }
 
+    private static GearCategory defaultWeaponCategoryTree() {
+        List<String> catalog = defaultWeaponCatalog();
+        Map<String, List<String>> buckets = new LinkedHashMap<>();
+        Map<String, String> prefixToCategory = new LinkedHashMap<>();
+        prefixToCategory.put("Weapon_Axe_", "Axes");
+        prefixToCategory.put("Weapon_Battleaxe_", "Battleaxes");
+        prefixToCategory.put("Weapon_Club_", "Clubs");
+        prefixToCategory.put("Weapon_Crossbow_", "Crossbows");
+        prefixToCategory.put("Weapon_Daggers_", "Daggers");
+        prefixToCategory.put("Weapon_Longsword_", "Longswords");
+        prefixToCategory.put("Weapon_Mace_", "Maces");
+        prefixToCategory.put("Weapon_Shield_", "Shields");
+        prefixToCategory.put("Weapon_Shortbow_", "Shortbows");
+        prefixToCategory.put("Weapon_Spear_", "Spears");
+        prefixToCategory.put("Weapon_Staff_", "Staves");
+        prefixToCategory.put("Weapon_Sword_", "Swords");
+        prefixToCategory.put("Tool_Pickaxe_", "Pickaxes");
+        prefixToCategory.put("Weapon_Bomb", "Bombs");
+        prefixToCategory.put("Weapon_Kunai", "Other");
+        prefixToCategory.put("Weapon_Gun_", "Guns");
+        prefixToCategory.put("Weapon_Spellbook_", "Spellbooks");
+        prefixToCategory.put("Halloween_", "Other");
+
+        for (String weaponId : catalog) {
+            String assigned = null;
+            for (var entry : prefixToCategory.entrySet()) {
+                if (weaponId.startsWith(entry.getKey())) {
+                    assigned = entry.getValue();
+                    break;
+                }
+            }
+            if (assigned == null) assigned = "Other";
+            buckets.computeIfAbsent(assigned, k -> new ArrayList<>()).add(weaponId);
+        }
+
+        List<GearCategory> children = new ArrayList<>();
+        for (String catName : List.of("Axes", "Battleaxes", "Clubs", "Crossbows", "Daggers",
+                "Guns", "Longswords", "Maces", "Pickaxes", "Shields", "Shortbows", "Spears",
+                "Spellbooks", "Staves", "Swords", "Bombs", "Other")) {
+            List<String> items = buckets.get(catName);
+            if (items != null && !items.isEmpty()) {
+                children.add(new GearCategory(catName, items));
+            }
+        }
+        return new GearCategory("All", List.of(), children.toArray(new GearCategory[0]));
+    }
+
+    private static GearCategory defaultArmorCategoryTree() {
+        String[] materials = {
+                "Adamantite", "Bronze", "Bronze_Ornate", "Cloth_Cindercloth", "Cloth_Cotton",
+                "Cloth_Linen", "Cloth_Silk", "Cloth_Wool", "Cobalt", "Copper",
+                "Diving_Crude", "Iron", "Kweebec", "Leather_Heavy", "Leather_Light",
+                "Leather_Medium", "Leather_Raven", "Leather_Soft", "Mithril", "Onyxium",
+                "Prisma", "Steel", "Steel_Ancient", "Thorium", "Trork", "Wood"
+        };
+        var children = new ArrayList<GearCategory>();
+        for (String material : materials) {
+            children.add(new GearCategory(material, armorIdsForMaterials(material)));
+        }
+        return new GearCategory("All", List.of(), children.toArray(new GearCategory[0]));
+    }
+
+    private static List<String> armorIdsForMaterials(String... materials) {
+        List<String> ids = new ArrayList<>();
+        for (String material : materials) {
+            ids.add("Armor_" + material + "_Head");
+            ids.add("Armor_" + material + "_Chest");
+            ids.add("Armor_" + material + "_Hands");
+            ids.add("Armor_" + material + "_Legs");
+        }
+        return ids;
+    }
+
     public static final class ModelConfig {
         @Default
         @Cfg(group = "Model", file = "visuals.yml", comment = "Enable or disable physical size scaling per tier.")
@@ -1121,7 +755,7 @@ public final class RPGMobsConfig {
         @Default
         @FixedArraySize(TIERS_AMOUNT)
         @Cfg(group = "Loot", file = "loot.yml", comment = "Extra rolls of the mob's vanilla drop table per tier. 0 = no extra drops.")
-        public int[] vanillaDroplistExtraRollsPerTier = {0, 0, 2, 4, 6};
+        public int[] vanillaDroplistExtraRollsPerTier = {0, 0, 1, 2, 3};
 
         @Min(0.0)
         @Max(1.0)
@@ -1141,8 +775,11 @@ public final class RPGMobsConfig {
         @Cfg(group = "Loot", file = "loot.yml", comment = "Chance for an Elite to drop its off-hand item (shields, torches, etc.).")
         public double dropOffhandItemChance = 0.05;
 
-        @Cfg(group = "Loot", file = "loot.yml", comment = "Custom loot tables for specific tiers.")
-        public List<ExtraDropRule> defaultExtraDrops = defaultExtraDrops();
+        @Cfg(group = "Loot", file = "loot.yml", comment = "Loot templates: named reusable drop tables linked to mob rule categories.")
+        public Map<String, LootTemplate> lootTemplates = defaultLootTemplates();
+
+        @Cfg(group = "Loot", file = "loot.yml", comment = "Loot template category tree for UI organization.")
+        public LootTemplateCategory lootTemplateTree = defaultLootTemplateTree();
     }
 
     public static final class DamageConfig {
@@ -1162,68 +799,311 @@ public final class RPGMobsConfig {
         public float mobDamageRandomVariance = 0.05f;
     }
 
-    private static List<ExtraDropRule> defaultExtraDrops() {
+    private static List<ExtraDropRule> tier1DropRules() {
         List<ExtraDropRule> list = new ArrayList<>();
-        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 3, 4, 11, 21));
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 0, 0, 1, 2));
+        return list;
+    }
+
+    private static List<ExtraDropRule> tier2DropRules() {
+        List<ExtraDropRule> list = new ArrayList<>();
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 1, 1, 1, 2));
+        list.add(createExtraDropRule("Ore_Copper", 0.1, 1, 1, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Copper", 0.07, 1, 1, 1, 4));
+        list.add(createExtraDropRule("Ore_Iron", 0.1, 1, 1, 1, 4));
+        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 1, 1, 1, 3));
+        return list;
+    }
+
+    private static List<ExtraDropRule> tier3DropRules() {
+        List<ExtraDropRule> list = new ArrayList<>();
         list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 2, 2, 3, 7));
-        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 0, 1, 1, 2));
-
-        list.add(createExtraDropRule("Ore_Copper", 0.1, 1, 2, 1, 2));
-        list.add(createExtraDropRule("Ingredient_Bar_Copper", 0.07, 1, 2, 1, 4));
-        list.add(createExtraDropRule("Ore_Iron", 0.1, 1, 3, 1, 4));
-        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 1, 3, 1, 3));
-
-
-        list.add(createExtraDropRule("Ore_Silver", 0.07, 2, 4, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 2, 4, 1, 2));
-        list.add(createExtraDropRule("Ore_Gold", 0.07, 2, 4, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 2, 4, 1, 2));
-        list.add(createExtraDropRule("Ore_Cobalt", 0.07, 3, 3, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Cobalt", 0.05, 3, 3, 1, 2));
-        list.add(createExtraDropRule("Ingredient_Bar_Bronze", 0.05, 2, 3, 1, 2));
-
+        list.add(createExtraDropRule("Ore_Copper", 0.1, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Copper", 0.07, 2, 2, 1, 4));
+        list.add(createExtraDropRule("Ore_Iron", 0.1, 2, 2, 1, 4));
+        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 2, 2, 1, 3));
+        list.add(createExtraDropRule("Ore_Silver", 0.07, 2, 2, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ore_Gold", 0.07, 2, 2, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Bronze", 0.05, 2, 2, 1, 2));
         list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.1, 2, 2, 1, 3));
         list.add(createExtraDropRule("Ingredient_Leather_Light", 0.13, 2, 2, 1, 3));
+        return list;
+    }
 
-
+    private static List<ExtraDropRule> tier4DropRules() {
+        List<ExtraDropRule> list = new ArrayList<>();
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 3, 3, 11, 21));
+        list.add(createExtraDropRule("Ore_Iron", 0.1, 3, 3, 1, 4));
+        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ore_Silver", 0.07, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ore_Gold", 0.07, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ore_Cobalt", 0.07, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Cobalt", 0.05, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Bronze", 0.05, 3, 3, 1, 2));
         list.add(createExtraDropRule("Ore_Thorium", 0.07, 3, 3, 1, 3));
         list.add(createExtraDropRule("Ingredient_Bar_Thorium", 0.05, 3, 3, 1, 2));
-        list.add(createExtraDropRule("Ore_Prisma", 0.07, 3, 4, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Prisma", 0.05, 3, 4, 1, 2));
+        list.add(createExtraDropRule("Ore_Prisma", 0.07, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Prisma", 0.05, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ore_Adamantite", 0.15, 3, 3, 1, 5));
+        list.add(createExtraDropRule("Ingredient_Bar_Adamantite", 0.1, 3, 3, 1, 5));
         list.add(createExtraDropRule("Ingredient_Leather_Heavy", 0.09, 3, 3, 2, 5));
         list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.11, 3, 3, 2, 5));
         list.add(createExtraDropRule("Ingredient_Leather_Light", 0.15, 3, 3, 2, 5));
-        list.add(createExtraDropRule("Potion_Mana", 0.07, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Potion_Regen_Health", 0.07, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Potion_Health_Greater", 0.12, 4, 4, 1, 2));
-        list.add(createExtraDropRule("Potion_Stamina_Greater", 0.12, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Rock_Gem_Ruby", 0.03, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Rock_Gem_Sapphire", 0.03, 3, 3, 1, 1));
+        return list;
+    }
 
-
+    private static List<ExtraDropRule> tier5DropRules() {
+        List<ExtraDropRule> list = new ArrayList<>();
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 4, 4, 11, 21));
+        list.add(createExtraDropRule("Ore_Silver", 0.07, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Ore_Gold", 0.07, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Ore_Prisma", 0.07, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Prisma", 0.05, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Ore_Adamantite", 0.15, 4, 4, 1, 5));
+        list.add(createExtraDropRule("Ingredient_Bar_Adamantite", 0.1, 4, 4, 1, 5));
         list.add(createExtraDropRule("Ore_Mithril", 0.15, 4, 4, 1, 5));
         list.add(createExtraDropRule("Ingredient_Bar_Mithril", 0.1, 4, 4, 1, 5));
         list.add(createExtraDropRule("Ore_Onyxium", 0.15, 4, 4, 1, 1));
         list.add(createExtraDropRule("Ingredient_Bar_Onyxium", 0.1, 4, 4, 1, 5));
-        list.add(createExtraDropRule("Ore_Adamantite", 0.15, 3, 4, 1, 5));
-        list.add(createExtraDropRule("Ingredient_Bar_Adamantite", 0.1, 3, 4, 1, 5));
         list.add(createExtraDropRule("Ingredient_Leather_Heavy", 0.3, 4, 4, 3, 7));
         list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.4, 4, 4, 3, 7));
         list.add(createExtraDropRule("Ingredient_Leather_Light", 0.5, 4, 4, 3, 7));
         list.add(createExtraDropRule("Tool_Repair_Kit_Iron", 0.3, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Potion_Mana", 0.07, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Regen_Health", 0.07, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Health_Greater", 0.2, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Potion_Stamina_Greater", 0.2, 4, 4, 1, 3));
         list.add(createExtraDropRule("Potion_Mana_Large", 0.1, 4, 4, 1, 2));
         list.add(createExtraDropRule("Potion_Regen_Health_Large", 0.1, 4, 4, 1, 1));
         list.add(createExtraDropRule("Potion_Regen_Stamina_Large", 0.1, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Potion_Health_Greater", 0.2, 4, 4, 1, 3));
-        list.add(createExtraDropRule("Potion_Stamina_Greater", 0.2, 4, 4, 1, 3));
         list.add(createExtraDropRule("Potion_Health_Large", 0.1, 4, 4, 1, 2));
         list.add(createExtraDropRule("Potion_Stamina_Large", 0.1, 4, 4, 1, 2));
-
         list.add(createExtraDropRule("Rock_Gem_Diamond", 0.02, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Rock_Gem_Ruby", 0.03, 3, 4, 1, 1));
-        list.add(createExtraDropRule("Rock_Gem_Sapphire", 0.03, 3, 4, 1, 1));
+        list.add(createExtraDropRule("Rock_Gem_Ruby", 0.03, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Rock_Gem_Sapphire", 0.03, 4, 4, 1, 1));
         list.add(createExtraDropRule("Rock_Gem_Voidstone", 0.02, 4, 4, 1, 1));
         list.add(createExtraDropRule("Rock_Gem_Zephyr", 0.02, 4, 4, 1, 1));
-
         return list;
+    }
+
+    private static Map<String, LootTemplate> defaultLootTemplates() {
+        Map<String, LootTemplate> templates = new LinkedHashMap<>();
+        List<String> linkedAll = List.of(MobRuleCategoryHelpers.toCategoryKey("All"));
+
+        templates.put("Tier 1 Loot", new LootTemplate("Tier 1 Loot", tier1DropRules(), linkedAll));
+        templates.put("Tier 2 Loot", new LootTemplate("Tier 2 Loot", tier2DropRules(), linkedAll));
+        templates.put("Tier 3 Loot", new LootTemplate("Tier 3 Loot", tier3DropRules(), linkedAll));
+        templates.put("Tier 4 Loot", new LootTemplate("Tier 4 Loot", tier4DropRules(), linkedAll));
+        templates.put("Tier 5 Loot", new LootTemplate("Tier 5 Loot", tier5DropRules(), linkedAll));
+
+        return templates;
+    }
+
+    private static LootTemplateCategory defaultLootTemplateTree() {
+        List<String> perTierKeys = new ArrayList<>(List.of(
+                "Tier 1 Loot", "Tier 2 Loot", "Tier 3 Loot", "Tier 4 Loot", "Tier 5 Loot"
+        ));
+        var perTierCategory = new LootTemplateCategory("Per Tier", perTierKeys);
+        return new LootTemplateCategory("All", List.of(), perTierCategory);
+    }
+
+    private static MobRuleCategory defaultCategoryTree() {
+
+        var goblinLobber = new MobRuleCategory("Lobber", List.of(
+                "Goblin_Lobber", "Goblin_Lobber_Patrol"
+        ));
+        var goblinMiner = new MobRuleCategory("Miner", List.of(
+                "Goblin_Miner", "Goblin_Miner_Patrol"
+        ));
+        var goblinScavenger = new MobRuleCategory("Scavenger", List.of(
+                "Goblin_Scavenger", "Goblin_Scavenger_Battleaxe", "Goblin_Scavenger_Sword"
+        ));
+        var goblinScrapper = new MobRuleCategory("Scrapper", List.of(
+                "Goblin_Scrapper", "Goblin_Scrapper_Patrol"
+        ));
+        var goblinThief = new MobRuleCategory("Thief", List.of(
+                "Goblin_Thief", "Goblin_Thief_Patrol"
+        ));
+        var goblins = new MobRuleCategory("Goblins", List.of(
+                "Goblin_Duke", "Goblin_Hermit", "Goblin_Ogre"
+        ), goblinLobber, goblinMiner, goblinScavenger, goblinScrapper, goblinThief);
+
+        var outlanders = new MobRuleCategory("Outlanders", List.of(
+                "Outlander_Berserker", "Outlander_Brute", "Outlander_Cultist",
+                "Outlander_Hunter", "Outlander_Marauder", "Outlander_Peon",
+                "Outlander_Priest", "Outlander_Sorcerer", "Outlander_Stalker"
+        ));
+
+        var trorkSentry = new MobRuleCategory("Sentry", List.of(
+                "Trork_Sentry", "Trork_Sentry_Patrol"
+        ));
+        var trorkWarrior = new MobRuleCategory("Warrior", List.of(
+                "Trork_Warrior", "Trork_Warrior_Patrol"
+        ));
+        var trorks = new MobRuleCategory("Trorks", List.of(
+                "Trork_Brawler", "Trork_Chieftain", "Trork_Doctor_Witch", "Trork_Guard",
+                "Trork_Hunter", "Trork_Mauler", "Trork_Shaman", "Trork_Unarmed"
+        ), trorkSentry, trorkWarrior);
+
+        var skelArcher = new MobRuleCategory("Archer", List.of(
+                "Skeleton_Archer", "Skeleton_Archer_Patrol", "Skeleton_Archer_Wander"
+        ));
+        var skelArchmage = new MobRuleCategory("Archmage", List.of(
+                "Skeleton_Archmage", "Skeleton_Archmage_Patrol", "Skeleton_Archmage_Wander"
+        ));
+        var skelFighter = new MobRuleCategory("Fighter", List.of(
+                "Skeleton_Fighter", "Skeleton_Fighter_Patrol", "Skeleton_Fighter_Wander"
+        ));
+        var skelKnight = new MobRuleCategory("Knight", List.of(
+                "Skeleton_Knight", "Skeleton_Knight_Patrol", "Skeleton_Knight_Wander"
+        ));
+        var skelMage = new MobRuleCategory("Mage", List.of(
+                "Skeleton_Mage", "Skeleton_Mage_Patrol", "Skeleton_Mage_Wander"
+        ));
+        var skelRanger = new MobRuleCategory("Ranger", List.of(
+                "Skeleton_Ranger", "Skeleton_Ranger_Patrol", "Skeleton_Ranger_Wander"
+        ));
+        var skelScout = new MobRuleCategory("Scout", List.of(
+                "Skeleton_Scout", "Skeleton_Scout_Patrol", "Skeleton_Scout_Wander"
+        ));
+        var skelSoldier = new MobRuleCategory("Soldier", List.of(
+                "Skeleton_Soldier", "Skeleton_Soldier_Patrol", "Skeleton_Soldier_Wander"
+        ));
+
+        var burntAlchemist = new MobRuleCategory("Alchemist", List.of(
+                "Skeleton_Burnt_Alchemist", "Skeleton_Burnt_Alchemist_Patrol", "Skeleton_Burnt_Alchemist_Wander"
+        ));
+        var burntArcher = new MobRuleCategory("Archer", List.of(
+                "Skeleton_Burnt_Archer", "Skeleton_Burnt_Archer_Patrol", "Skeleton_Burnt_Archer_Wander"
+        ));
+        var burntGunner = new MobRuleCategory("Gunner", List.of(
+                "Skeleton_Burnt_Gunner", "Skeleton_Burnt_Gunner_Patrol", "Skeleton_Burnt_Gunner_Wander"
+        ));
+        var burntKnight = new MobRuleCategory("Knight", List.of(
+                "Skeleton_Burnt_Knight", "Skeleton_Burnt_Knight_Patrol", "Skeleton_Burnt_Knight_Wander"
+        ));
+        var burntLancer = new MobRuleCategory("Lancer", List.of(
+                "Skeleton_Burnt_Lancer", "Skeleton_Burnt_Lancer_Patrol", "Skeleton_Burnt_Lancer_Wander"
+        ));
+        var burntPraetorian = new MobRuleCategory("Praetorian", List.of(
+                "Skeleton_Burnt_Praetorian", "Skeleton_Burnt_Praetorian_Patrol", "Skeleton_Burnt_Praetorian_Wander"
+        ));
+        var burntSoldier = new MobRuleCategory("Soldier", List.of(
+                "Skeleton_Burnt_Soldier", "Skeleton_Burnt_Soldier_Patrol", "Skeleton_Burnt_Soldier_Wander"
+        ));
+        var burntWizard = new MobRuleCategory("Wizard", List.of(
+                "Skeleton_Burnt_Wizard", "Skeleton_Burnt_Wizard_Patrol", "Skeleton_Burnt_Wizard_Wander"
+        ));
+        var skeletonsBurnt = new MobRuleCategory("Burnt", List.of(),
+                burntAlchemist, burntArcher, burntGunner, burntKnight, burntLancer, burntPraetorian, burntSoldier, burntWizard);
+
+        var frostArcher = new MobRuleCategory("Archer", List.of(
+                "Skeleton_Frost_Archer", "Skeleton_Frost_Archer_Patrol", "Skeleton_Frost_Archer_Wander"
+        ));
+        var frostArchmage = new MobRuleCategory("Archmage", List.of(
+                "Skeleton_Frost_Archmage", "Skeleton_Frost_Archmage_Patrol", "Skeleton_Frost_Archmage_Wander"
+        ));
+        var frostFighter = new MobRuleCategory("Fighter", List.of(
+                "Skeleton_Frost_Fighter", "Skeleton_Frost_Fighter_Patrol", "Skeleton_Frost_Fighter_Wander"
+        ));
+        var frostKnight = new MobRuleCategory("Knight", List.of(
+                "Skeleton_Frost_Knight", "Skeleton_Frost_Knight_Patrol", "Skeleton_Frost_Knight_Wander"
+        ));
+        var frostMage = new MobRuleCategory("Mage", List.of(
+                "Skeleton_Frost_Mage", "Skeleton_Frost_Mage_Patrol", "Skeleton_Frost_Mage_Wander"
+        ));
+        var frostRanger = new MobRuleCategory("Ranger", List.of(
+                "Skeleton_Frost_Ranger", "Skeleton_Frost_Ranger_Patrol", "Skeleton_Frost_Ranger_Wander"
+        ));
+        var frostScout = new MobRuleCategory("Scout", List.of(
+                "Skeleton_Frost_Scout", "Skeleton_Frost_Scout_Patrol", "Skeleton_Frost_Scout_Wander"
+        ));
+        var frostSoldier = new MobRuleCategory("Soldier", List.of(
+                "Skeleton_Frost_Soldier", "Skeleton_Frost_Soldier_Patrol", "Skeleton_Frost_Soldier_Wander"
+        ));
+        var skeletonsFrost = new MobRuleCategory("Frost", List.of(),
+                frostArcher, frostArchmage, frostFighter, frostKnight, frostMage, frostRanger, frostScout, frostSoldier);
+
+        var sandArcher = new MobRuleCategory("Archer", List.of(
+                "Skeleton_Sand_Archer", "Skeleton_Sand_Archer_Patrol", "Skeleton_Sand_Archer_Wander"
+        ));
+        var sandArchmage = new MobRuleCategory("Archmage", List.of(
+                "Skeleton_Sand_Archmage", "Skeleton_Sand_Archmage_Patrol", "Skeleton_Sand_Archmage_Wander"
+        ));
+        var sandAssassin = new MobRuleCategory("Assassin", List.of(
+                "Skeleton_Sand_Assassin", "Skeleton_Sand_Assassin_Patrol", "Skeleton_Sand_Assassin_Wander"
+        ));
+        var sandGuard = new MobRuleCategory("Guard", List.of(
+                "Skeleton_Sand_Guard", "Skeleton_Sand_Guard_Patrol", "Skeleton_Sand_Guard_Wander"
+        ));
+        var sandMage = new MobRuleCategory("Mage", List.of(
+                "Skeleton_Sand_Mage", "Skeleton_Sand_Mage_Patrol", "Skeleton_Sand_Mage_Wander"
+        ));
+        var sandRanger = new MobRuleCategory("Ranger", List.of(
+                "Skeleton_Sand_Ranger", "Skeleton_Sand_Ranger_Patrol", "Skeleton_Sand_Ranger_Wander"
+        ));
+        var sandScout = new MobRuleCategory("Scout", List.of(
+                "Skeleton_Sand_Scout", "Skeleton_Sand_Scout_Patrol", "Skeleton_Sand_Scout_Wander"
+        ));
+        var sandSoldier = new MobRuleCategory("Soldier", List.of(
+                "Skeleton_Sand_Soldier", "Skeleton_Sand_Soldier_Patrol", "Skeleton_Sand_Soldier_Wander"
+        ));
+        var skeletonsSand = new MobRuleCategory("Sand", List.of(),
+                sandArcher, sandArchmage, sandAssassin, sandGuard, sandMage, sandRanger, sandScout, sandSoldier);
+
+        var pirateCaptain = new MobRuleCategory("Captain", List.of(
+                "Skeleton_Pirate_Captain", "Skeleton_Pirate_Captain_Patrol", "Skeleton_Pirate_Captain_Wander"
+        ));
+        var pirateGunner = new MobRuleCategory("Gunner", List.of(
+                "Skeleton_Pirate_Gunner", "Skeleton_Pirate_Gunner_Patrol", "Skeleton_Pirate_Gunner_Wander"
+        ));
+        var pirateStriker = new MobRuleCategory("Striker", List.of(
+                "Skeleton_Pirate_Striker", "Skeleton_Pirate_Striker_Patrol", "Skeleton_Pirate_Striker_Wander"
+        ));
+        var skeletonsPirate = new MobRuleCategory("Pirate", List.of(),
+                pirateCaptain, pirateGunner, pirateStriker);
+
+        var incanFighter = new MobRuleCategory("Fighter", List.of(
+                "Skeleton_Incandescent_Fighter", "Skeleton_Incandescent_Fighter_Patrol", "Skeleton_Incandescent_Fighter_Wander"
+        ));
+        var incanFootman = new MobRuleCategory("Footman", List.of(
+                "Skeleton_Incandescent_Footman", "Skeleton_Incandescent_Footman_Patrol", "Skeleton_Incandescent_Footman_Wander"
+        ));
+        var incanMage = new MobRuleCategory("Mage", List.of(
+                "Skeleton_Incandescent_Mage", "Skeleton_Incandescent_Mage_Patrol", "Skeleton_Incandescent_Mage_Wander"
+        ));
+        var skeletonsIncandescent = new MobRuleCategory("Incandescent", List.of(
+                "Skeleton_Incandescent_Head"
+        ), incanFighter, incanFootman, incanMage);
+
+        var skeletons = new MobRuleCategory("Skeletons", List.of("Skeleton"),
+                skelArcher, skelArchmage, skelFighter, skelKnight, skelMage, skelRanger, skelScout, skelSoldier,
+                skeletonsBurnt, skeletonsFrost, skeletonsSand, skeletonsPirate, skeletonsIncandescent);
+
+        var zombiesAberrant = new MobRuleCategory("Aberrant", List.of(
+                "Zombie_Aberrant", "Zombie_Aberrant_Big", "Zombie_Aberrant_Small"
+        ));
+        var zombies = new MobRuleCategory("Zombies", List.of(
+                "Zombie", "Zombie_Burnt", "Zombie_Frost", "Zombie_Sand"
+        ), zombiesAberrant);
+
+        var wraiths = new MobRuleCategory("Wraiths", List.of("Wraith"));
+
+        var voidMobs = new MobRuleCategory("Void", List.of(
+                "Crawler_Void", "Eye_Void", "Spawn_Void", "Spectre_Void"
+        ));
+
+        return new MobRuleCategory("All", List.of(),
+                goblins, outlanders, trorks, skeletons, zombies, wraiths, voidMobs
+        );
     }
 
     public static final class EffectsConfig {
@@ -1239,10 +1119,10 @@ public final class RPGMobsConfig {
         projectileResistance.isEnabledPerTier = new boolean[]{false, false, false, true, true};
         projectileResistance.amountMultiplierPerTier = new float[]{0f, 0f, 0f, 0.7f, 0.85f};
         projectileResistance.infinite = true;
-        projectileResistance.templates.add(RPGMobsProjectileResistanceEffectFeature.EFFECT_PROJECTILE_RESISTANCE,
+        projectileResistance.templates.add("projectile_resistance",
                                            "Entity/Effects/RPGMobs/RPGMobs_Effect_ProjectileResistance.template.json"
         );
-        m.put(RPGMobsProjectileResistanceEffectFeature.EFFECT_PROJECTILE_RESISTANCE, projectileResistance);
+        m.put("projectile_resistance", projectileResistance);
 
         return m;
     }
@@ -1274,12 +1154,37 @@ public final class RPGMobsConfig {
         public Map<String, AbilityConfig> defaultAbilities = defaultAbilities();
     }
 
+    private static List<String> buildDefaultLinkedKeysExcludingVoid(MobRuleCategory defaultTree) {
+        List<String> keys = new ArrayList<>();
+        for (MobRuleCategory child : defaultTree.children) {
+            if (!"Void".equals(child.name)) {
+                keys.add(MobRuleCategoryHelpers.toCategoryKey(child.name));
+            }
+        }
+        return keys;
+    }
+
+    private static List<String> buildDefaultSummonLinkedKeys(MobRuleCategory defaultTree) {
+        List<String> keys = new ArrayList<>();
+        for (MobRuleCategory child : defaultTree.children) {
+            if ("Skeletons".equals(child.name) || "Zombies".equals(child.name) || "Wraiths".equals(child.name)) {
+                keys.add(MobRuleCategoryHelpers.toCategoryKey(child.name));
+            }
+        }
+        keys.add("Goblin_Duke");
+        keys.add("Trork_Shaman");
+        return keys;
+    }
+
     private static Map<String, AbilityConfig> defaultAbilities() {
         Map<String, AbilityConfig> m = new LinkedHashMap<>();
 
+        MobRuleCategory defaultTree = defaultCategoryTree();
+
         ChargeLeapAbilityConfig chargeLeap = new ChargeLeapAbilityConfig();
-        chargeLeap.gate.weaponIdMustNotContain = DAMAGE_MELEE_ONLY_NOT_CONTAINS;
-        chargeLeap.gate.roleMustNotContain = DENY_ABILITY_CHARGE_LEAP_ROLE_LIST;
+        chargeLeap.gate.allowedWeaponCategories = WEAPON_CATS_MELEE;
+        chargeLeap.linkedMobRuleKeys = buildDefaultLinkedKeysExcludingVoid(defaultTree);
+        chargeLeap.excludeLinkedMobRuleKeys = new ArrayList<>(List.of("Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void"));
 
         chargeLeap.isEnabled = true;
         chargeLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
@@ -1311,7 +1216,8 @@ public final class RPGMobsConfig {
         m.put(AbilityIds.CHARGE_LEAP, chargeLeap);
 
         HealLeapAbilityConfig healLeap = new HealLeapAbilityConfig();
-        healLeap.gate.roleMustNotContain = DENY_ABILITY_HEAL_LEAP_ROLE_LIST;
+        healLeap.linkedMobRuleKeys = buildDefaultLinkedKeysExcludingVoid(defaultTree);
+        healLeap.excludeLinkedMobRuleKeys = new ArrayList<>(List.of("Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void"));
         healLeap.isEnabled = true;
         healLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
         healLeap.chancePerTier = new float[]{0f, 0f, 0f, 1.00f, 1.00f};
@@ -1344,12 +1250,12 @@ public final class RPGMobsConfig {
         m.put(AbilityIds.HEAL_LEAP, healLeap);
 
         SummonAbilityConfig undeadSummon = new SummonAbilityConfig();
-        undeadSummon.gate.roleMustNotContain = DENY_ABILITY_SUMMON_UNDEAD_ROLE_LIST;
         undeadSummon.isEnabled = true;
         undeadSummon.isEnabledPerTier = new boolean[]{false, false, false, true, true};
         undeadSummon.chancePerTier = new float[]{0f, 0f, 0f, 0.50f, 1.00f};
         undeadSummon.cooldownSecondsPerTier = new float[]{0f, 0f, 0f, 25f, 25f};
-        undeadSummon.gate.roleMustContain = ALLOW_ABILITY_SUMMON_UNDEAD_ROLE_LIST;
+        undeadSummon.linkedMobRuleKeys = buildDefaultSummonLinkedKeys(defaultTree);
+        undeadSummon.excludeLinkedMobRuleKeys = new ArrayList<>(List.of("Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void"));
 
         undeadSummon.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
                                    "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_UndeadSummon_Root.template.json"
@@ -1370,6 +1276,9 @@ public final class RPGMobsConfig {
         public static final String TEMPLATE_ENTRY_INTERACTION = "entryInteraction";
 
         public AbilityGate gate = new AbilityGate();
+        public List<String> linkedMobRuleKeys = new ArrayList<>();
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Mob rule keys excluded from this ability even if they are inside a linked category.")
+        public List<String> excludeLinkedMobRuleKeys = new ArrayList<>();
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Chance per tier for this ability to be active on an elite (roll happens once on spawn).")
         @FixedArraySize(value = TIERS_AMOUNT)
@@ -1411,11 +1320,11 @@ public final class RPGMobsConfig {
         public static final String TEMPLATE_EFFECT_INSTANT_HEAL = "effectInstantHeal";
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum health percent at which the heal can trigger (rolled once per elite on spawn).")
-        public float minHealthTriggerPercent = 0.1f;
+        public float minHealthTriggerPercent = 0.5f;
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum health percent at which the heal can trigger (rolled once per elite on spawn).")
-        public float maxHealthTriggerPercent = 0.4f;
+        public float maxHealthTriggerPercent = 0.5f;
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Chance to use instant heal instead of regeneration.")
-        public float instantHealChance = 0.5f;
+        public float instantHealChance = 1.0f;
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Instant heal amount per tier (percent of max health).")
         @FixedArraySize(value = TIERS_AMOUNT)
@@ -1437,25 +1346,33 @@ public final class RPGMobsConfig {
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum number of active summoned minions per summoner (0 disables summoning). Clamped to 0..50.")
         public int maxAliveMinionsPerSummoner = DEFAULT_MAX_ALIVE_MINIONS_PER_SUMMONER;
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Role identifiers used to pick which minions get summoned. First match (role name contains this text) wins. 'default' is used if none match.")
-        public List<String> roleIdentifiers = new ArrayList<>(List.of("Skeleton_Frost",
-                                                                      "Skeleton_Sand",
-                                                                      "Skeleton_Burnt",
-                                                                      "Skeleton_Incandescent",
-                                                                      "Skeleton_Pirate",
-                                                                      "Skeleton",
-                                                                      "Zombie_Burnt",
-                                                                      "Zombie_Frost",
-                                                                      "Zombie_Sand",
-                                                                      "Zombie",
-                                                                      "Goblin_",
-                                                                      "Trork_"
+        public List<String> roleIdentifiers = new ArrayList<>(List.of(
+                "Skeleton_Frost_Mage",
+                "Skeleton_Sand_Mage",
+                "Skeleton_Incandescent_Mage",
+                "Skeleton_Mage",
+                "Skeleton_Frost_Archmage",
+                "Skeleton_Sand_Archmage",
+                "Skeleton_Archmage",
+                "Skeleton_Frost",
+                "Skeleton_Sand",
+                "Skeleton_Burnt",
+                "Skeleton_Incandescent",
+                "Skeleton_Pirate",
+                "Skeleton",
+                "Zombie_Burnt",
+                "Zombie_Frost",
+                "Zombie_Sand",
+                "Zombie",
+                "Goblin_",
+                "Trork_"
         ));
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for role-matched skeleton archers in the summon pool.")
         public double skeletonArcherWeight = 100;
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for extra zombies added to all pools (0 = disabled, only zombie summoners get zombies from primary entries).")
-        public double zombieWeight = 0;
-        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for wraiths in the skeleton summon pool (~20% chance).")
-        public double wraithWeight = 25;
+        public double zombieWeight = 50;
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for wraiths in the skeleton summon pool.")
+        public double wraithWeight = 10;
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Weight for aberrant zombies in the zombie summon pool (~20% chance).")
         public double aberrantWeight = 25;
 
@@ -1483,32 +1400,18 @@ public final class RPGMobsConfig {
     }
 
     public static final class AbilityGate {
-        public List<String> roleMustContain = List.of();
-        public List<String> roleMustNotContain = List.of();
-        public List<String> weaponIdMustContain = List.of();
-        public List<String> weaponIdMustNotContain = List.of();
-        public List<AbilityRule> rules = List.of();
-    }
-
-    public static final class AbilityRule {
-
-        public boolean deny = true;
-
-        public boolean enabled = true;
-        public boolean[] enabledPerTier = {true, true, true, true, true};
-
-        public List<String> roleMustContain = List.of();
-        public List<String> roleMustNotContain = List.of();
-        public List<String> weaponIdMustContain = List.of();
-        public List<String> weaponIdMustNotContain = List.of();
+        public List<String> allowedWeaponCategories = List.of();
     }
 
     public static final class MobsConfig {
         @Cfg(group = "MobRules", file = "mobrules.yml", comment = "Mob rules: decide what to do if our scan found a NPC Entity with this id. If the id of the mob is not on the list, it will get the fist (it won't be transformed into an RPGMob. First mobRule match wins btw)")
         public Map<String, MobRule> defaultMobRules = defaultMobRules();
+
+        @Cfg(group = "MobRules", file = "mobrules.yml", comment = "Mob rule category tree for organizing mob rules into groups.")
+        public MobRuleCategory categoryTree = defaultCategoryTree();
     }
 
-    private static Map<String, MobRule> defaultMobRules() {
+    public static Map<String, MobRule> defaultMobRules() {
         Map<String, MobRule> m = new LinkedHashMap<>();
 
         m.put("Goblin_Duke",
@@ -1519,8 +1422,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_CLUBS_ONLY,
-                      List.of()
+                      WEAPON_CATS_CLUBS
 
               )
         );
@@ -1533,8 +1435,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -1546,7 +1447,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.ONLY_IF_EMPTY,
-                      List.of(),
                       List.of()
               )
         );
@@ -1559,7 +1459,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.ONLY_IF_EMPTY,
-                      List.of(),
                       List.of()
               )
         );
@@ -1572,8 +1471,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_PICKAXE_ONLY,
-                      List.of()
+                      WEAPON_CATS_PICKAXES
               )
         );
 
@@ -1585,8 +1483,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_PICKAXE_ONLY,
-                      List.of()
+                      WEAPON_CATS_PICKAXES
               )
         );
 
@@ -1598,8 +1495,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_DAGGERS_ONLY,
-                      List.of()
+                      WEAPON_CATS_DAGGERS
               )
         );
 
@@ -1611,8 +1507,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_AXES_ONLY,
-                      List.of()
+                      WEAPON_CATS_AXES
               )
         );
 
@@ -1624,8 +1519,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -1637,8 +1531,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -1650,7 +1543,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -1663,7 +1555,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -1676,7 +1567,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -1689,7 +1579,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -1702,8 +1591,7 @@ public final class RPGMobsConfig {
                       List.of("wolf"),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -1715,8 +1603,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_AXES_ONLY,
-                      List.of()
+                      WEAPON_CATS_AXES
               )
         );
 
@@ -1728,8 +1615,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of("kunai", "daggers"),
-                      List.of()
+                      WEAPON_CATS_DAGGERS
               )
         );
 
@@ -1741,8 +1627,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -1754,8 +1639,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SHARP_WEAPONS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SHARP
               )
         );
 
@@ -1767,8 +1651,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_PICKAXE_ONLY,
-                      List.of()
+                      WEAPON_CATS_PICKAXES
               )
         );
 
@@ -1780,8 +1663,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -1793,8 +1675,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -1806,8 +1687,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of("shortbow", "crossbow", "dagger"),
-                      List.of()
+                      List.of("Shortbows", "Crossbows", "Daggers")
               )
         );
 
@@ -1819,8 +1699,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_CLUBS_ONLY,
-                      List.of()
+                      WEAPON_CATS_CLUBS
               )
         );
 
@@ -1832,8 +1711,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_AXES_ONLY,
-                      List.of()
+                      WEAPON_CATS_AXES
               )
         );
 
@@ -1845,8 +1723,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -1858,8 +1735,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(DAMAGE_MELEE_SPEARS_ONLY.getFirst(), DAMAGE_MELEE_DAGGERS_ONLY.getFirst()),
-                      List.of()
+                      List.of("Spears", "Daggers")
               )
         );
 
@@ -1871,8 +1747,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -1884,8 +1759,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_CLUBS_ONLY,
-                      List.of()
+                      WEAPON_CATS_CLUBS
               )
         );
 
@@ -1897,8 +1771,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SPEARS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPEARS
               )
         );
 
@@ -1910,8 +1783,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SPEARS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPEARS
               )
         );
 
@@ -1923,8 +1795,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -1936,7 +1807,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -1949,8 +1819,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_TWO_HANDED_SHARP_WEAPONS_ONLY,
-                      List.of()
+                      WEAPON_CATS_TWO_HANDED_SHARP
               )
         );
 
@@ -1962,8 +1831,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_TWO_HANDED_SHARP_WEAPONS_ONLY,
-                      List.of()
+                      WEAPON_CATS_TWO_HANDED_SHARP
               )
         );
 
@@ -1975,8 +1843,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -1988,8 +1855,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2001,8 +1867,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2014,8 +1879,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2027,8 +1891,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2040,8 +1903,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2053,8 +1915,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2066,8 +1927,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2079,8 +1939,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2092,8 +1951,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2105,8 +1963,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2118,8 +1975,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2131,8 +1987,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -2144,8 +1999,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -2157,8 +2011,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -2170,8 +2023,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2183,8 +2035,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2196,8 +2047,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2209,8 +2059,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2222,8 +2071,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2235,8 +2083,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2248,8 +2095,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2261,8 +2107,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2274,8 +2119,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2287,7 +2131,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -2300,7 +2143,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -2313,7 +2155,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -2326,8 +2167,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2339,8 +2179,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2352,8 +2191,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2365,8 +2203,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
-                      List.of()
+                      WEAPON_CATS_GUNS
               )
         );
 
@@ -2378,8 +2215,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
-                      List.of()
+                      WEAPON_CATS_GUNS
               )
         );
 
@@ -2391,8 +2227,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
-                      List.of()
+                      WEAPON_CATS_GUNS
               )
         );
 
@@ -2404,8 +2239,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2417,8 +2251,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2430,8 +2263,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2443,8 +2275,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_AXES_ONLY,
-                      List.of()
+                      WEAPON_CATS_AXES
               )
         );
 
@@ -2456,8 +2287,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_AXES_ONLY,
-                      List.of()
+                      WEAPON_CATS_AXES
               )
         );
 
@@ -2469,8 +2299,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_AXES_ONLY,
-                      List.of()
+                      WEAPON_CATS_AXES
               )
         );
 
@@ -2482,8 +2311,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2495,8 +2323,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2508,8 +2335,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2521,8 +2347,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2534,8 +2359,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2547,8 +2371,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2560,8 +2383,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2573,8 +2395,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2586,8 +2407,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2599,8 +2419,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2612,8 +2431,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2625,8 +2443,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2638,8 +2455,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2651,8 +2467,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2664,8 +2479,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -2677,8 +2491,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2690,8 +2503,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2703,8 +2515,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2716,8 +2527,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2729,8 +2539,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2742,8 +2551,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2755,8 +2563,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -2768,8 +2575,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -2781,8 +2587,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -2794,8 +2599,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2807,8 +2611,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2820,8 +2623,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2833,8 +2635,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2846,8 +2647,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2859,8 +2659,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -2872,8 +2671,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2885,8 +2683,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2898,8 +2695,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2911,8 +2707,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2924,8 +2719,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2937,8 +2731,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -2950,8 +2743,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SPEARS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPEARS
               )
         );
 
@@ -2963,8 +2755,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SPEARS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPEARS
               )
         );
 
@@ -2976,8 +2767,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SPEARS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPEARS
               )
         );
 
@@ -2989,7 +2779,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of(),
                       List.of("HEAD")
               )
@@ -3003,8 +2792,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -3016,8 +2804,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -3029,8 +2816,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -3042,8 +2828,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3055,8 +2840,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3068,8 +2852,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3081,8 +2864,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
-                      List.of()
+                      WEAPON_CATS_GUNS
               )
         );
 
@@ -3094,8 +2876,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
-                      List.of()
+                      WEAPON_CATS_GUNS
               )
         );
 
@@ -3107,8 +2888,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_GUN_BLUNDERBUSS_ONLY,
-                      List.of()
+                      WEAPON_CATS_GUNS
               )
         );
 
@@ -3120,8 +2900,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3133,8 +2912,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3146,8 +2924,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3159,8 +2936,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3172,8 +2948,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3185,8 +2960,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3198,8 +2972,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -3211,8 +2984,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -3224,8 +2996,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_STAFFS_ONLY,
-                      List.of()
+                      WEAPON_CATS_STAVES
               )
         );
 
@@ -3237,8 +3008,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_DAGGERS_ONLY,
-                      List.of()
+                      WEAPON_CATS_DAGGERS
               )
         );
 
@@ -3250,8 +3020,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_DAGGERS_ONLY,
-                      List.of()
+                      WEAPON_CATS_DAGGERS
               )
         );
 
@@ -3263,8 +3032,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_DAGGERS_ONLY,
-                      List.of()
+                      WEAPON_CATS_DAGGERS
               )
         );
 
@@ -3276,8 +3044,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3289,8 +3056,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3302,8 +3068,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_SWORDS_ONLY,
-                      List.of()
+                      WEAPON_CATS_SWORDS
               )
         );
 
@@ -3315,8 +3080,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -3328,8 +3092,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -3341,8 +3104,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_SPELLBOOK_ONLY,
-                      List.of()
+                      WEAPON_CATS_SPELLBOOKS
               )
         );
 
@@ -3354,8 +3116,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3367,8 +3128,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3380,8 +3140,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3393,8 +3152,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3406,8 +3164,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3419,8 +3176,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_RANGED_BOWS_ONLY,
-                      List.of()
+                      WEAPON_CATS_BOWS
               )
         );
 
@@ -3432,8 +3188,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -3445,8 +3200,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -3458,8 +3212,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -3471,8 +3224,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
@@ -3484,7 +3236,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -3497,7 +3248,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -3510,7 +3260,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -3523,7 +3272,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -3536,7 +3284,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -3549,7 +3296,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -3562,7 +3308,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of()
               )
         );
@@ -3575,7 +3320,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of(),
                       List.of("HEAD", "CHEST")
               )
@@ -3590,7 +3334,6 @@ public final class RPGMobsConfig {
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
                       List.of(),
-                      List.of(),
                       List.of("NONE")
               )
         );
@@ -3603,8 +3346,7 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, true, true},
                       WeaponOverrideMode.ALWAYS,
-                      DAMAGE_MELEE_LONGSWORD_ONLY,
-                      List.of()
+                      WEAPON_CATS_LONGSWORDS
               )
         );
 
@@ -3616,7 +3358,6 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
-                      List.of(),
                       List.of(),
                       List.of()
               )
@@ -3630,14 +3371,12 @@ public final class RPGMobsConfig {
                       List.of(),
                       new boolean[]{true, true, true, false, false},
                       WeaponOverrideMode.ALWAYS,
-                      List.of(),
-                      DAMAGE_MELEE_ONLY_NOT_CONTAINS
+                      WEAPON_CATS_MELEE
               )
         );
 
         return m;
     }
-
 
     public enum WeaponOverrideMode {
         NONE, ONLY_IF_EMPTY, ALWAYS,
@@ -3646,10 +3385,138 @@ public final class RPGMobsConfig {
     public static final class ExtraDropRule {
         public String itemId = "";
         public double chance = 0.0;
-        public int minTierInclusive = 0;
-        public int maxTierInclusive = 0;
+        @FixedArraySize(TIERS_AMOUNT)
+        public boolean[] enabledPerTier = {true, true, true, true, true};
         public int minQty = 1;
         public int maxQty = 1;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof ExtraDropRule that)) return false;
+            return Double.compare(that.chance, chance) == 0
+                    && java.util.Arrays.equals(enabledPerTier, that.enabledPerTier)
+                    && minQty == that.minQty
+                    && maxQty == that.maxQty
+                    && java.util.Objects.equals(itemId, that.itemId);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(itemId, chance, java.util.Arrays.hashCode(enabledPerTier), minQty, maxQty);
+        }
+    }
+
+    public static final class GearCategory {
+        public String name = "";
+        public List<GearCategory> children = new ArrayList<>();
+        public List<String> itemKeys = new ArrayList<>();
+
+        public GearCategory() {}
+
+        public GearCategory(String name, List<String> itemKeys, GearCategory... children) {
+            this.name = name;
+            this.itemKeys = new ArrayList<>(itemKeys);
+            this.children = new ArrayList<>(List.of(children));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof GearCategory that)) return false;
+            return java.util.Objects.equals(name, that.name)
+                    && java.util.Objects.equals(children, that.children)
+                    && java.util.Objects.equals(itemKeys, that.itemKeys);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(name, children, itemKeys);
+        }
+    }
+
+    public static final class MobRuleCategory {
+        public String name = "";
+        public List<MobRuleCategory> children = new ArrayList<>();
+        public List<String> mobRuleKeys = new ArrayList<>();
+
+        public MobRuleCategory() {}
+
+        public MobRuleCategory(String name, List<String> mobRuleKeys, MobRuleCategory... children) {
+            this.name = name;
+            this.mobRuleKeys = new ArrayList<>(mobRuleKeys);
+            this.children = new ArrayList<>(List.of(children));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof MobRuleCategory that)) return false;
+            return java.util.Objects.equals(name, that.name)
+                    && java.util.Objects.equals(children, that.children)
+                    && java.util.Objects.equals(mobRuleKeys, that.mobRuleKeys);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(name, children, mobRuleKeys);
+        }
+    }
+
+    public static final class LootTemplate {
+        public String name = "";
+        public List<ExtraDropRule> drops = new ArrayList<>();
+        public List<String> linkedMobRuleKeys = new ArrayList<>();
+
+        public LootTemplate() {}
+
+        public LootTemplate(String name, List<ExtraDropRule> drops, List<String> linkedMobRuleKeys) {
+            this.name = name;
+            this.drops = new ArrayList<>(drops);
+            this.linkedMobRuleKeys = new ArrayList<>(linkedMobRuleKeys);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof LootTemplate that)) return false;
+            return java.util.Objects.equals(name, that.name)
+                    && java.util.Objects.equals(drops, that.drops)
+                    && java.util.Objects.equals(linkedMobRuleKeys, that.linkedMobRuleKeys);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(name, drops, linkedMobRuleKeys);
+        }
+    }
+
+    public static final class LootTemplateCategory {
+        public String name = "";
+        public List<LootTemplateCategory> children = new ArrayList<>();
+        public List<String> templateKeys = new ArrayList<>();
+
+        public LootTemplateCategory() {}
+
+        public LootTemplateCategory(String name, List<String> templateKeys, LootTemplateCategory... children) {
+            this.name = name;
+            this.templateKeys = new ArrayList<>(templateKeys);
+            this.children = new ArrayList<>(List.of(children));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof LootTemplateCategory that)) return false;
+            return java.util.Objects.equals(name, that.name)
+                    && java.util.Objects.equals(children, that.children)
+                    && java.util.Objects.equals(templateKeys, that.templateKeys);
+        }
+
+        @Override
+        public int hashCode() {
+            return java.util.Objects.hash(name, children, templateKeys);
+        }
     }
 
     public static final class MobRule {
@@ -3663,25 +3530,48 @@ public final class RPGMobsConfig {
         public boolean[] enableWeaponOverrideForTier = new boolean[]{true, true, true, true, true};
         public WeaponOverrideMode weaponOverrideMode = WeaponOverrideMode.ALWAYS;
 
-        public List<String> weaponIdMustContain = List.of();
-        public List<String> weaponIdMustNotContain = List.of();
+        public List<String> allowedWeaponCategories = List.of();
+
+        public List<String> allowedArmorCategories = List.of();
 
         public List<String> allowedArmorSlots = List.of();
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof MobRule that)) return false;
+            return enabled == that.enabled
+                    && java.util.Arrays.equals(enableWeaponOverrideForTier, that.enableWeaponOverrideForTier)
+                    && weaponOverrideMode == that.weaponOverrideMode
+                    && java.util.Objects.equals(matchExact, that.matchExact)
+                    && java.util.Objects.equals(matchStartsWith, that.matchStartsWith)
+                    && java.util.Objects.equals(matchContains, that.matchContains)
+                    && java.util.Objects.equals(matchExcludes, that.matchExcludes)
+                    && java.util.Objects.equals(allowedWeaponCategories, that.allowedWeaponCategories)
+                    && java.util.Objects.equals(allowedArmorCategories, that.allowedArmorCategories)
+                    && java.util.Objects.equals(allowedArmorSlots, that.allowedArmorSlots);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = java.util.Objects.hash(enabled, weaponOverrideMode, matchExact, matchStartsWith,
+                    matchContains, matchExcludes, allowedWeaponCategories, allowedArmorCategories, allowedArmorSlots);
+            result = 31 * result + java.util.Arrays.hashCode(enableWeaponOverrideForTier);
+            return result;
+        }
     }
 
     private static MobRule mobRule(boolean enabled, List<String> matchExact, List<String> matchStartsWith,
                                    List<String> contains, List<String> excludes, boolean[] enableWeaponOverrideForTier,
-                                   WeaponOverrideMode overrideMode, List<String> mustContain,
-                                   List<String> mustNotContain) {
+                                   WeaponOverrideMode overrideMode, List<String> allowedWeaponCategories) {
         return mobRule(enabled, matchExact, matchStartsWith, contains, excludes, enableWeaponOverrideForTier,
-                       overrideMode, mustContain, mustNotContain, List.of());
+                       overrideMode, allowedWeaponCategories, List.of());
     }
 
     private static MobRule mobRule(boolean enabled, List<String> matchExact, List<String> matchStartsWith,
                                    List<String> contains, List<String> excludes, boolean[] enableWeaponOverrideForTier,
-                                   WeaponOverrideMode overrideMode, List<String> mustContain,
-                                   List<String> mustNotContain, List<String> allowedArmorSlots) {
+                                   WeaponOverrideMode overrideMode, List<String> allowedWeaponCategories,
+                                   List<String> allowedArmorSlots) {
         MobRule r = new MobRule();
         r.matchExact = matchExact;
         r.matchStartsWith = matchStartsWith;
@@ -3690,8 +3580,7 @@ public final class RPGMobsConfig {
         r.matchExcludes = excludes;
         r.enableWeaponOverrideForTier = enableWeaponOverrideForTier;
         r.weaponOverrideMode = overrideMode;
-        r.weaponIdMustContain = mustContain;
-        r.weaponIdMustNotContain = mustNotContain;
+        r.allowedWeaponCategories = allowedWeaponCategories;
         r.allowedArmorSlots = allowedArmorSlots;
         return r;
     }
@@ -3701,8 +3590,9 @@ public final class RPGMobsConfig {
         ExtraDropRule r = new ExtraDropRule();
         r.itemId = itemId;
         r.chance = chance;
-        r.minTierInclusive = minTier;
-        r.maxTierInclusive = maxTier;
+        for (int i = 0; i < 5; i++) {
+            r.enabledPerTier[i] = i >= minTier && i <= maxTier;
+        }
         r.minQty = minQty;
         r.maxQty = maxQty;
         return r;
@@ -3732,11 +3622,6 @@ public final class RPGMobsConfig {
             summonConfig.spawnMarkerEntriesJson = toJson(summonConfig.spawnMarkerEntries);
         }
 
-        // Ensure non-undead summoners pass the gate (may be missing from older YAML configs)
-        ensureGateRoleMustContain(summonConfig, "Goblin_Duke");
-        ensureGateRoleMustContain(summonConfig, "Trork_Shaman");
-
-        // Ensure non-undead role identifiers are present (may be missing from older YAML configs)
         ensureRoleIdentifier(summonConfig, "Goblin_");
         ensureRoleIdentifier(summonConfig, "Trork_");
         ensureSummonPoolExclusion(summonConfig, "Trork_Shaman");
@@ -3800,7 +3685,7 @@ public final class RPGMobsConfig {
             }
 
             if (!isTierEnabled(rule.enableWeaponOverrideForTier, 0)) continue;
-            if (!hasBowWeaponConstraint(rule.weaponIdMustContain)) continue;
+            if (!hasBowWeaponConstraint(rule.allowedWeaponCategories)) continue;
 
             archerNpcIds.addAll(ids);
         }
@@ -3894,7 +3779,6 @@ public final class RPGMobsConfig {
 
             moreSpecificIdentifiers.add(identifier.toLowerCase(Locale.ROOT));
 
-            // Remove excluded roles from the summon pool (e.g., Trork_Shaman to prevent summon loops)
             List<String> excludeList = summonConfig.excludeFromSummonPool;
             if (excludeList != null && !excludeList.isEmpty()) {
                 roleNpcIds.removeIf(id -> isExcludedFromSummonPool(id, excludeList));
@@ -3995,20 +3879,6 @@ public final class RPGMobsConfig {
         summonConfig.roleIdentifiers.add(identifier);
     }
 
-    private static void ensureGateRoleMustContain(SummonAbilityConfig summonConfig, String role) {
-        if (summonConfig.gate == null) summonConfig.gate = new AbilityGate();
-        if (summonConfig.gate.roleMustContain == null || summonConfig.gate.roleMustContain.isEmpty()) {
-            summonConfig.gate.roleMustContain = new ArrayList<>();
-        }
-        if (!(summonConfig.gate.roleMustContain instanceof ArrayList)) {
-            summonConfig.gate.roleMustContain = new ArrayList<>(summonConfig.gate.roleMustContain);
-        }
-        for (String existing : summonConfig.gate.roleMustContain) {
-            if (existing != null && existing.equalsIgnoreCase(role)) return;
-        }
-        summonConfig.gate.roleMustContain.add(role);
-    }
-
     private static void ensureSummonPoolExclusion(SummonAbilityConfig summonConfig, String excluded) {
         if (summonConfig.excludeFromSummonPool == null) {
             summonConfig.excludeFromSummonPool = new ArrayList<>();
@@ -4097,12 +3967,12 @@ public final class RPGMobsConfig {
         return enabledPerTier[tierIndex];
     }
 
-    private static boolean hasBowWeaponConstraint(List<String> mustContain) {
-        if (mustContain == null || mustContain.isEmpty()) return false;
-        for (String fragment : mustContain) {
-            if (fragment == null) continue;
-            String lower = fragment.toLowerCase(Locale.ROOT);
-            if (lower.contains("shortbow") || lower.contains("crossbow")) return true;
+    private static boolean hasBowWeaponConstraint(List<String> allowedCategories) {
+        if (allowedCategories == null || allowedCategories.isEmpty()) return false;
+        for (String entry : allowedCategories) {
+            if (entry == null) continue;
+            String name = entry.startsWith("category:") ? entry.substring("category:".length()) : entry;
+            if (name.equals("Shortbows") || name.equals("Crossbows")) return true;
         }
         return false;
     }
@@ -4114,7 +3984,6 @@ public final class RPGMobsConfig {
             case EFFECTS -> effectsConfig.defaultEntityEffects;
         };
     }
-
 
     public void migrate(String fromVersion) {
         if (fromVersion == null || fromVersion.equals(configVersion)) return;

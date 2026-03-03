@@ -4,6 +4,7 @@ public final class RPGMobsPermissions {
     private RPGMobsPermissions() {
     }
 
-    public static final String RPGMobs_RELOAD = "RPGMobs.reload";
-    public static final String RPGMobs_SPAWN = "RPGMobs.spawn";
+    public static final String RPGMobs_RELOAD = "rpgmobs.reload";
+    public static final String RPGMobs_SPAWN = "rpgmobs.spawn";
+    public static final String RPGMOBS_CONFIG = "rpgmobs.config";
 }

@@ -7,7 +7,6 @@ public abstract class AssetConfig {
     @YamlIgnore
     private transient String key;
 
-
     public final String key() {
         return key;
     }

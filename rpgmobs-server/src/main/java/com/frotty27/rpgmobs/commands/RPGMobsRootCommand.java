@@ -14,13 +14,14 @@ public final class RPGMobsRootCommand extends AbstractCommand {
         super("RPGMobs", "RPGMobs root command.");
 
         addSubCommand(new RPGMobsReloadCommand(plugin));
-        if (plugin.getConfig().debugConfig.isDebugModeEnabled) addSubCommand(new RPGMobsSpawnCommand(plugin));
+        addSubCommand(new RPGMobsConfigCommand(plugin));
+        addSubCommand(new RPGMobsSpawnCommand(plugin));
         addAliases("em");
     }
 
     @Override
     protected CompletableFuture<Void> execute(@NonNull CommandContext ctx) {
-        ctx.sendMessage(Message.raw("[RPGMobs] Usage: /RPGMobs reload"));
+        ctx.sendMessage(Message.raw("[RPGMobs] Usage: /RPGMobs <reload|config|spawn>"));
         return CompletableFuture.completedFuture(null);
     }
 }

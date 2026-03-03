@@ -3,33 +3,33 @@ title: Core Settings
 description: Global system settings for diagnostics, reconciliation, and compatibility.
 ---
 
-`core.yml` contains the global system settings that control how RPGMobs behaves behind the scenes. This includes debug logging, config reload behavior, and compatibility with other mods.
+RPGMobs uses two core configuration files: a root `core.yml` for global settings and `base/core.yml` for system-level configuration.
 
-## Config Version
+## Global Config (root core.yml)
 
-```yaml
-System:
-  configVersion: "1.1.0"
-```
-
-This is managed automatically by the mod. Do not edit this value. It is used internally to detect when configuration files need to be migrated after an update.
-
-## Reconcile
-
-When you reload the configuration with `/RPGMobs reload`, existing elites in the world need to be updated to match the new settings. The reconcile system handles this.
+The root `core.yml` contains settings that apply to the entire mod, independent of any world or overlay.
 
 ```yaml
-Reconcile:
-  reconcileWindowTicks: 40
-  announceReconcile: true
+configVersion: "3.260303.0"
+configFormatVersion: 3
+enabledByDefault: true
 ```
 
 | Setting | What it does | Default |
 | :--- | :--- | :--- |
-| `reconcileWindowTicks` | Number of game ticks to spend updating existing elites after a reload. Set to `0` to skip reconciliation entirely (existing elites keep their old stats until they despawn). | `40` |
-| `announceReconcile` | Logs a message in the server console when reconciliation starts and finishes. | `true` |
+| `configVersion` | Managed automatically by the mod. Do not edit. Tracks which plugin version last wrote the config. | Auto |
+| `configFormatVersion` | Config layout version. When this value is lower than the version expected by the mod, **all config files** (base, world overlays, instance overlays) are wiped and regenerated with fresh defaults. This is not tied to plugin versions — it only changes when the config architecture breaks. Do not edit. | `3` |
+| `enabledByDefault` | When `true`, worlds without a specific overlay file use the base config. When `false`, RPGMobs is disabled for unmatched worlds. | `true` |
 
-## Debug
+## System Config (base/core.yml)
+
+`base/core.yml` contains system-level settings shared across all worlds.
+
+### Reconcile
+
+When you reload configuration with `/rpgmobs reload` or save from the [Admin UI](/config/admin-ui), existing elites in the world are automatically reconciled to match the new settings. Each elite re-evaluates its mob rule on its next tick — if the rule was removed, the elite is despawned; if the rule changed, equipment is re-applied. Mobs loaded from saved chunks after a config change are reconciled when they load.
+
+### Debug
 
 ```yaml
 Debug:
@@ -39,19 +39,10 @@ Debug:
 
 | Setting | What it does | Default |
 | :--- | :--- | :--- |
-| `isDebugModeEnabled` | Enables detailed logging for spawn scans, ability decisions, and damage events. Turn this off in production to reduce log noise. | `true` |
+| `isDebugModeEnabled` | Enables detailed logging for spawn scans, ability decisions, damage events, and all 12 event types. Turn this off in production to reduce log noise. | `true` |
 | `debugMobRuleScanIntervalSeconds` | How often (in seconds) the debug logger reports mob rule scan statistics. | `5` |
 
-## Compatibility
-
-```yaml
-Compat:
-  showCompatJoinMessages: true
-```
-
-When a player joins the server, RPGMobs can display a message if it detects compatible mods. Set this to `false` to silence those messages.
-
-## Integrations
+### Integrations
 
 ```yaml
 Integrations:
@@ -61,6 +52,6 @@ Integrations:
 
 | Setting | What it does | Default |
 | :--- | :--- | :--- |
-| `RPGLeveling.enabled` | Enables the RPGLeveling integration for tier-scaled XP and minion XP reduction. Requires [RPGLeveling](https://www.curseforge.com/hytale/mods/rpgleveling) to be installed. When active, a separate `rpgleveling.yml` file is generated with XP balance settings. | `true` |
+| `RPGLeveling.enabled` | Enables the RPGLeveling integration for tier-scaled XP and minion XP reduction. Requires [RPGLeveling](https://www.curseforge.com/hytale/mods/rpgleveling) to be installed. When active, a separate `rpgleveling.yml` file is generated with XP balance settings. XP settings are also overlayable per-world. | `true` |
 
 See [Compatibility — RPGLeveling](/reference/compatibility#rpgleveling) for full configuration details.

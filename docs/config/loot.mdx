@@ -3,7 +3,7 @@ title: Loot
 description: Configuring what rewards players get for defeating elites.
 ---
 
-`loot.yml` controls the drops and rewards that elites leave behind when defeated. This includes their equipped gear, vanilla loot multipliers, and custom drop tables.
+`loot.yml` controls the drops and rewards that elites leave behind when defeated. This includes their equipped gear, vanilla loot multipliers, custom drop tables, and loot templates.
 
 ## Equipment Drops
 
@@ -24,6 +24,21 @@ Loot:
 
 **Tip:** If you want equipment drops to feel special and rare, keep these low. If you want a more generous loot experience, raise them to `0.15` or higher.
 
+## Dropped Gear Durability
+
+Controls the condition of equipment dropped by elites on death. These values can be overridden per-world via the overlay system.
+
+```yaml
+Loot:
+  droppedGearDurabilityMin: 0.02
+  droppedGearDurabilityMax: 0.30
+```
+
+| Setting | What it does | Default |
+| :--- | :--- | :--- |
+| `droppedGearDurabilityMin` | Minimum durability fraction for dropped gear. | `0.02` (2%) |
+| `droppedGearDurabilityMax` | Maximum durability fraction for dropped gear. | `0.30` (30%) |
+
 ## Vanilla Loot Extra Rolls
 
 Higher-tier elites roll the mob's vanilla drop table additional times, dropping more of their standard loot (bones, rotten flesh, etc.).
@@ -42,40 +57,64 @@ A value of `0` means the mob drops its normal vanilla amount (no extra rolls). A
 
 ## Extra Drops
 
-Custom items that only drop from specific tier ranges. This is where you add crafting materials, potions, gems, and other rewards.
+Custom items that only drop from elites of specific tiers. This is where you add crafting materials, potions, gems, and other rewards.
 
 ```yaml
 Loot:
   extraDrops:
     - itemId: "Ingredient_Life_Essence"
       chance: 1.0
-      minTierInclusive: 3
-      maxTierInclusive: 4
+      enabledPerTier: [false, false, true, true, false]
       minQty: 11
       maxQty: 21
 
     - itemId: "Ore_Mithril"
       chance: 0.15
-      minTierInclusive: 4
-      maxTierInclusive: 4
+      enabledPerTier: [false, false, false, true, true]
       minQty: 1
       maxQty: 5
-
-    - itemId: "Rock_Gem_Diamond"
-      chance: 0.02
-      minTierInclusive: 4
-      maxTierInclusive: 4
-      minQty: 1
-      maxQty: 1
 ```
 
 | Field | What it does |
 | :--- | :--- |
 | `itemId` | The Hytale item identifier to drop. |
 | `chance` | Drop probability from `0.0` (never) to `1.0` (always). |
-| `minTierInclusive` | Lowest tier that can drop this item (0-4). |
-| `maxTierInclusive` | Highest tier that can drop this item (0-4). |
+| `enabledPerTier` | Boolean array [T1..T5]. `true` means this drop can come from elites of that tier. |
 | `minQty` | Minimum stack size when dropped. |
 | `maxQty` | Maximum stack size when dropped. |
 
 The default configuration includes a progression of crafting materials: copper and iron ores from early tiers, cobalt and thorium from mid tiers, and mithril, onyxium, adamantite, gems, and potions from the highest tiers.
+
+## Loot Templates
+
+Loot templates are named collections of drop rules that can be linked to specific mob rules. When an elite dies, RPGMobs checks if any loot template's linked mob rules include the elite's matched rule key. If a match is found, the template's drops are rolled in addition to the base extra drops.
+
+![Loot Templates](../images/admin-ui-loot-templates.png)
+
+```yaml
+Loot:
+  lootTemplates:
+    "Per Tier":
+      linkedMobRuleKeys:
+        - "category:All"
+      drops:
+        - { itemId: "Ore_Copper", chance: 0.3, enabledPerTier: [true, true, false, false, false], minQty: 1, maxQty: 3 }
+        - { itemId: "Ore_Iron", chance: 0.2, enabledPerTier: [false, true, true, false, false], minQty: 1, maxQty: 3 }
+        - { itemId: "Ore_Mithril", chance: 0.1, enabledPerTier: [false, false, false, true, true], minQty: 1, maxQty: 2 }
+```
+
+| Field | What it does |
+| :--- | :--- |
+| `linkedMobRuleKeys` | List of mob rule keys and `category:*` keys. When an elite's matched rule key appears in this list, these drops are eligible. |
+| `drops` | List of extra drop rules (same format as base extra drops, with `itemId`, `chance`, `enabledPerTier`, `minQty`, `maxQty`). |
+
+### Linking
+
+- **Individual mob keys:** `"Goblin_Duke"` targets that specific mob rule.
+- **Category keys:** `"category:Goblins"` targets all mob rules in the Goblins category.
+
+### Per-World Overlays
+
+Overlays can define their own loot templates. The `defaultLootTemplate` overlay field assigns a fallback template, and `lootOverrides` can map specific mob rule keys to specific templates.
+
+Loot templates can be managed through the [Admin UI](/config/admin-ui) in the Loot tab.

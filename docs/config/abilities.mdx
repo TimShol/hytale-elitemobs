@@ -5,6 +5,8 @@ description: Configuring the special combat abilities that elites can use.
 
 `abilities.yml` defines the special combat abilities that make elites more than just stat-boosted mobs. Each ability has its own activation rules, cooldowns, and per-tier scaling.
 
+![Abilities](../images/admin-ui-abilities.png)
+
 ## Common Fields
 
 Every ability shares these settings:
@@ -12,24 +14,55 @@ Every ability shares these settings:
 | Field | What it does |
 | :--- | :--- |
 | `isEnabled` | Master toggle for the ability. |
-| `isEnabledPerTier` | Toggle per tier. For example, `[false, false, false, true, true]` means only Tier 4-5 elites can use this ability. |
 | `chancePerTier` | Probability that an elite of each tier gets this ability when it spawns. `1.0` = guaranteed. |
 | `cooldownSecondsPerTier` | Minimum time between uses for each tier. |
-| `gate` | Restrictions on which mobs can use this ability based on role name or weapon type. |
+| `gate` | Weapon category restrictions. Only mobs holding weapons from the allowed categories can use this ability. |
 
 ### Ability Gating
 
-Gates prevent certain mobs from using abilities that don't make sense for them.
+The ability gating system controls which elites can use each ability. When a mob spawns as an elite, RPGMobs checks three conditions before granting an ability:
+
+1. **Linked mob rule keys** -- the elite's matched mob rule key must appear in the ability's `linkedMobRuleKeys` list.
+2. **Per-entry tier enablement** -- each linked entry has its own per-tier toggle array. The entry's tier toggle must be enabled for the elite's tier.
+3. **Weapon category gate** -- the elite's equipped weapon must belong to one of the ability's `allowedWeaponCategories`.
+
+If all three checks pass, the ability is granted.
 
 ```yaml
-gate:
-  roleMustContain: []
-  roleMustNotContain: ["Eye_Void", "Crawler_Void"]
-  weaponIdMustContain: []
-  weaponIdMustNotContain: ["shortbow", "crossbow", "staff"]
+charge_leap:
+  isEnabled: true
+  linkedMobRuleKeys:
+    - "category:Skeletons"
+    - "category:Zombies"
+    - "category:Goblins"
+    - "category:Trorks"
+    - "category:Outlanders"
+    - "category:Wraiths"
+  excludeLinkedMobRuleKeys:
+    - "Skeleton_Incandescent_Head"
+    - "Crawler_Void"
+    - "Eye_Void"
+  gate:
+    allowedWeaponCategories:
+      - "category:Axes"
+      - "category:Battleaxes"
+      - "category:Swords"
+      - "category:Longswords"
+      - "category:Clubs"
+      - "category:Daggers"
+      - "category:Maces"
+      - "category:Spears"
 ```
 
-For example, the Charge Leap gate excludes ranged mobs (they shouldn't leap) and specific void creatures.
+- **`linkedMobRuleKeys`** accepts both individual mob rule keys (e.g. `"Goblin_Duke"`) and category keys (e.g. `"category:Skeletons"`). A category key includes all mob rules within that category.
+- **`excludeLinkedMobRuleKeys`** removes specific mob rule keys that would otherwise be included by a category. For example, `"Skeleton_Incandescent_Head"` is excluded from Charge Leap even though the `Skeletons` category is linked.
+- **`allowedWeaponCategories`** restricts the ability to mobs wielding weapons from the listed categories. This prevents ranged mobs from using melee-only abilities like Charge Leap.
+
+Each linked entry's per-tier enablement is managed through the Admin UI. When you expand an ability in the Abilities tab, each linked mob entry shows five T1--T5 toggle buttons that control which tiers that specific mob can use the ability at.
+
+### Per-World Overlays
+
+Abilities can be configured per-world via `abilityOverlays` in the [overlay system](/config/instances). Each world can define its own set of linked mob entries with independent per-tier toggles, allowing you to enable or disable abilities for specific mobs on a per-world basis without changing the base configuration.
 
 ## Charge Leap
 
@@ -38,7 +71,6 @@ A physics-based attack where the elite launches itself at a nearby player, deali
 ```yaml
 charge_leap:
   isEnabled: true
-  isEnabledPerTier: [false, false, false, true, true]
   cooldownSecondsPerTier: [0, 0, 0, 16, 20]
   minRange: 9.0
   maxRange: 30.0
@@ -69,7 +101,6 @@ Allows the elite to drink a healing potion when its health drops below a thresho
 ```yaml
 heal_potion:
   isEnabled: true
-  isEnabledPerTier: [false, false, false, true, true]
   cooldownSecondsPerTier: [0, 0, 0, 15, 15]
   minHealthTriggerPercent: 0.50
   maxHealthTriggerPercent: 0.50
@@ -94,7 +125,6 @@ Allows elites to summon reinforcement minions during combat. By default, undead 
 ```yaml
 undead_summon:
   isEnabled: true
-  isEnabledPerTier: [false, false, false, true, true]
   chancePerTier: [0, 0, 0, 0.5, 1.0]
   cooldownSecondsPerTier: [0, 0, 0, 25, 25]
   maxAliveMinionsPerSummoner: 7
@@ -136,4 +166,4 @@ The summon system automatically builds per-faction summon pools from the mob rul
 - **Goblin_Duke** summons other goblins (matching `"Goblin_"`)
 - **Trork_Shaman** summons other trorks (matching `"Trork_"`), excluding itself via `excludeFromSummonPool`
 
-**Tip:** The summon ability is gated by default to undead mobs plus Goblin_Duke and Trork_Shaman (`roleMustContain: ["skeleton", "zombie", "wraith", "Goblin_Duke", "Trork_Shaman"]`). To allow other mob types to summon, add them to both `roleMustContain` in the gate and add an appropriate prefix to `roleIdentifiers`.
+**Tip:** The summon ability is gated via `linkedMobRuleKeys` to undead mobs, Goblin_Duke, and Trork_Shaman by default. To allow other mob types to summon, add them to the ability's `linkedMobRuleKeys` (either individually or via a category) and add an appropriate prefix to `roleIdentifiers` so the summon system knows which faction pool to build for them.

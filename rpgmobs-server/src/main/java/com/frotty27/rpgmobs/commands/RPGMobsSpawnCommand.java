@@ -52,6 +52,11 @@ public final class RPGMobsSpawnCommand extends AbstractPlayerCommand {
             return;
         }
 
+        if (!plugin.getConfig().debugConfig.isDebugModeEnabled) {
+            ctx.sendMessage(Message.raw("[RPGMobs] Debug mode is not enabled. Enable it in the config to use this command."));
+            return;
+        }
+
         BuilderInfo roleInfo = roleArg.get(ctx);
         if (roleInfo == null) {
             ctx.sendMessage(Message.raw("[RPGMobs] Invalid NPC role."));

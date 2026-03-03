@@ -51,8 +51,6 @@ public final class RPGMobsAssetGenerator {
             int writtenFileCount = 0;
             int processedJsonFileCount = 0;
 
-            // Populate spawn marker entries before template processing so the
-            // marker template can embed valid NPC entries (build-8 rejects empty NPCs).
             config.populateSummonMarkerEntriesIfEmpty();
 
             DotModelIndex modelIndex = DotModelIndex.build(config);
@@ -68,7 +66,6 @@ public final class RPGMobsAssetGenerator {
                     Path destinationPath = outputRootDirectory.resolve(relativePath.toString().replace('\\', '/'));
                     Files.createDirectories(destinationPath.getParent());
 
-
                     if (lowercaseFileName.endsWith(TEMPLATE_SUFFIX)) {
                         String templateText;
                         try {
@@ -77,12 +74,10 @@ public final class RPGMobsAssetGenerator {
                             throw new TemplateSyntaxException("Failed to read template: " + sourcePath);
                         }
 
-
                         if (templateText.contains("${") && !templateText.contains("}")) {
                             throw new TemplateSyntaxException("Malformed placeholder in template: " + sourcePath);
                         }
 
-                        // Skip spawn marker templates whose NPCs would be empty (build-8 rejects these)
                         if (lowercaseFileName.contains("summon_marker") && templateText.contains(
                                 "spawnMarkerEntriesJson")) {
                             String testRender = applyPlaceholders(templateText, modelIndex, 0);
@@ -122,7 +117,6 @@ public final class RPGMobsAssetGenerator {
                         continue;
                     }
 
-
                     if (!lowercaseFileName.endsWith(".json")) {
                         Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
                         writtenFileCount++;
@@ -158,19 +152,16 @@ public final class RPGMobsAssetGenerator {
         }
     }
 
-
     private static int generateTierVariants(Path relativeTemplatePath, Path outputRootDirectory, String templateJson,
                                             DotModelIndex modelIndex) throws IOException {
 
         Path relativeParentDirectory = relativeTemplatePath.getParent();
         String templateFileName = relativeTemplatePath.getFileName().toString();
 
-
         String baseTemplateId = TemplateNameGenerator.getBaseTemplateNameFromPath(templateFileName);
         if (baseTemplateId == null || baseTemplateId.isBlank()) return 0;
 
         int generatedCount = 0;
-
 
         for (int tierIndex = 0; tierIndex < 5; tierIndex++) {
             String outputFileName = TemplateNameGenerator.appendTierSuffix(baseTemplateId,
@@ -196,7 +187,6 @@ public final class RPGMobsAssetGenerator {
         return outputRootDirectory.resolve(normalizedParentPath).resolve(fileName);
     }
 
-
     private static boolean isTemplateTieredByResolvedPlaceholderTypes(String templateText, DotModelIndex modelIndex) {
         Matcher placeholderMatcher = PLACEHOLDER_PATTERN.matcher(templateText);
         while (placeholderMatcher.find()) {
@@ -217,7 +207,6 @@ public final class RPGMobsAssetGenerator {
         if (value == null) return false;
         return value.getClass().isArray() || (value instanceof List<?>);
     }
-
 
     private static String applyPlaceholders(String inputText, DotModelIndex modelIndex, int tierIndex) {
         Matcher placeholderMatcher = PLACEHOLDER_PATTERN.matcher(inputText);
@@ -245,10 +234,8 @@ public final class RPGMobsAssetGenerator {
         Object resolvedValue = resolveDotPathValue(dotPath, modelIndex, tierIndex);
         if (resolvedValue == null) return null;
 
-
         resolvedValue = selectTierElementIfNeeded(resolvedValue, tierIndex);
         if (resolvedValue == null) return null;
-
 
         resolvedValue = convertTemplatePathToAssetIdIfNeeded(resolvedValue, modelIndex, tierIndex);
 
@@ -281,7 +268,6 @@ public final class RPGMobsAssetGenerator {
 
         Object currentValue = null;
         int startSegmentIndex = 0;
-
 
         Object singleSegmentRoot = modelIndex.byNamespaceAndKey.get(pathSegments.get(0).name);
         if (singleSegmentRoot != null) {
@@ -407,7 +393,6 @@ public final class RPGMobsAssetGenerator {
                 text);
     }
 
-
     private static final class DotModelIndex {
         final RPGMobsConfig config;
         final Map<String, Object> byNamespaceAndKey = new LinkedHashMap<>();
@@ -489,7 +474,6 @@ public final class RPGMobsAssetGenerator {
                 modelIndex.byNamespaceAndKey.put(namespaceId + "." + configKey, assetConfig);
             }
 
-
             if (!(assetConfig instanceof TieredAssetConfig)) return;
 
             for (String templatePath : ((TieredAssetConfig) assetConfig).templates.values()) {
@@ -525,7 +509,6 @@ public final class RPGMobsAssetGenerator {
             return fields;
         }
     }
-
 
     private record PathSegment(String name, Integer index) {
         static List<PathSegment> parse(String dotPath) {
@@ -567,7 +550,6 @@ public final class RPGMobsAssetGenerator {
             return pathSegments;
         }
     }
-
 
     private static String stripTemplateSuffix(Path relativePath) {
         String normalizedPath = relativePath.toString().replace('\\', '/');
@@ -725,7 +707,6 @@ public final class RPGMobsAssetGenerator {
         return written;
     }
 
-
     private static int generateSummonRoleVariantAssets(Path outputRootDirectory,
                                                        RPGMobsConfig config) throws IOException {
         if (config == null || config.abilitiesConfig == null || config.abilitiesConfig.defaultAbilities == null)
@@ -826,7 +807,6 @@ public final class RPGMobsAssetGenerator {
             }
         }
     }
-
 
     private static String readResourceText(String resourcePath) throws IOException {
         ClassLoader classLoader = RPGMobsAssetGenerator.class.getClassLoader();

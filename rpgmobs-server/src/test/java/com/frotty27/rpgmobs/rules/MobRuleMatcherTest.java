@@ -30,7 +30,7 @@ public class MobRuleMatcherTest {
         rules.put("contains", contains);
         cfg.mobsConfig.defaultMobRules = rules;
 
-        MobRuleMatcher.MatchResult result = new MobRuleMatcher().findBestMatch(cfg, "Goblin_Duke");
+        MobRuleMatcher.MatchResult result = new MobRuleMatcher().findBestMatch(cfg.mobsConfig.defaultMobRules, "Goblin_Duke");
         assertNotNull(result);
     }
 
@@ -49,7 +49,7 @@ public class MobRuleMatcherTest {
         rules.put("a_rule", r2);
         cfg.mobsConfig.defaultMobRules = rules;
 
-        MobRuleMatcher.MatchResult result = new MobRuleMatcher().findBestMatch(cfg, "goblin_scout");
+        MobRuleMatcher.MatchResult result = new MobRuleMatcher().findBestMatch(cfg.mobsConfig.defaultMobRules, "goblin_scout");
         assertNotNull(result);
     }
 }

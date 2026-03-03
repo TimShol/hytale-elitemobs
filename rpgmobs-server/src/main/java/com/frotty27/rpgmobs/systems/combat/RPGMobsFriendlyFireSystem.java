@@ -3,7 +3,7 @@ package com.frotty27.rpgmobs.systems.combat;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
-import com.frotty27.rpgmobs.config.InstancesConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.utils.Constants;
 import com.hypixel.hytale.component.ArchetypeChunk;
@@ -54,16 +54,14 @@ public final class RPGMobsFriendlyFireSystem extends DamageEventSystem {
         Ref<EntityStore> victimRef = archetypeChunk.getReferenceTo(entityIndex);
         if (victimRef == null || !victimRef.isValid()) return;
 
-        // Check if victim is an elite — needed for both fall damage and friendly fire
         RPGMobsTierComponent victimTier = store.getComponent(victimRef, plugin.getRPGMobsComponentType());
 
         Damage.Source damageSource = damage.getSource();
 
-        // Handle non-entity damage (fall damage, fire, etc.) for elites
         if (!(damageSource instanceof Damage.EntitySource attackerEntitySource)) {
             if (victimTier != null) {
-                InstancesConfig.InstanceRule rule = resolveInstanceRule(store, victimRef);
-                if (rule != null && Boolean.TRUE.equals(rule.eliteFallDamageDisabled)) {
+                ResolvedConfig resolved = resolveConfig(store, victimRef);
+                if (resolved != null && resolved.eliteFallDamageDisabled) {
                     damage.setAmount(0f);
                 }
             }
@@ -73,19 +71,17 @@ public final class RPGMobsFriendlyFireSystem extends DamageEventSystem {
         Ref<EntityStore> attackerRef = attackerEntitySource.getRef();
         if (!attackerRef.isValid()) return;
 
-        // Elite-vs-elite friendly fire prevention
         if (victimTier != null) {
             RPGMobsTierComponent attackerTier = store.getComponent(attackerRef, plugin.getRPGMobsComponentType());
             if (attackerTier != null) {
-                InstancesConfig.InstanceRule rule = resolveInstanceRule(store, victimRef);
-                if (rule != null && Boolean.TRUE.equals(rule.eliteFriendlyFireDisabled)) {
+                ResolvedConfig resolved = resolveConfig(store, victimRef);
+                if (resolved != null && (resolved.eliteFriendlyFireDisabled || resolved.eliteNoAggroOnElite)) {
                     damage.setAmount(0f);
                     return;
                 }
             }
         }
 
-        // Summoner/minion friendly fire prevention
         RPGMobsSummonedMinionComponent attackerMinion = store.getComponent(attackerRef,
                                                                            plugin.getSummonedMinionComponentType()
         );
@@ -137,15 +133,12 @@ public final class RPGMobsFriendlyFireSystem extends DamageEventSystem {
         }
     }
 
-    private InstancesConfig.@Nullable InstanceRule resolveInstanceRule(Store<EntityStore> store,
-                                                                       Ref<EntityStore> entityRef) {
-        InstancesConfig instancesConfig = plugin.getInstancesConfig();
-        if (instancesConfig == null || !instancesConfig.enabled) return null;
-
+    private @Nullable ResolvedConfig resolveConfig(Store<EntityStore> store,
+                                                    Ref<EntityStore> entityRef) {
         NPCEntity npc = store.getComponent(entityRef, Constants.NPC_COMPONENT_TYPE);
         if (npc == null || npc.getWorld() == null) return null;
 
-        return instancesConfig.resolveRule(npc.getWorld().getName());
+        return plugin.getResolvedConfig(npc.getWorld().getName());
     }
 
     private static UUID getEntityUuid(Store<EntityStore> store, Ref<EntityStore> ref) {

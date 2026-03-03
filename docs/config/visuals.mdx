@@ -5,6 +5,8 @@ description: Customizing nameplates, model scaling, and asset generation.
 
 `visuals.yml` controls how elites look in the world. This includes their overhead nameplates, physical size, and the internal asset generation system.
 
+All visual settings can be overridden per-world via the [overlay system](/config/instances).
+
 ## Nameplates
 
 Nameplates are the overhead text labels that help players identify an elite's tier at a glance.
@@ -28,18 +30,6 @@ Nameplates:
 | `monNameplatePrefixPerTier` | The visual indicator prepended to the mob's name for each tier. | See above |
 | `mobNameplatesEnabledPerTier` | Toggle nameplates per tier individually. | All `true` |
 
-### Nameplate Filtering
-
-You can control which mobs get nameplates using include/exclude lists.
-
-```yaml
-Nameplates:
-  mobNameplateMustContainRoles: []
-  mobNameplateMustNotContainRoles: []
-```
-
-Leave `mobNameplateMustContainRoles` empty to allow all mobs. Add role name fragments to restrict nameplates to specific mob types. Use `mobNameplateMustNotContainRoles` to exclude specific mobs.
-
 ### Family Prefixes
 
 Elites get themed name prefixes based on their mob family. A zombie might be called "Rotting" at Tier 1 and "Evolved" at Tier 5, while a skeleton could be "Broken" at Tier 1 and "Ascendant" at Tier 5.
@@ -48,13 +38,27 @@ Elites get themed name prefixes based on their mob family. A zombie might be cal
 Nameplates:
   defaultedTierPrefixesByFamily:
     zombie: ["Rotting", "Ravenous", "Putrid", "Monstrous", "Evolved"]
+    zombie_burnt: ["Charred", "Scorching", "Ashen", "Infernal", "Emberlord"]
+    zombie_frost: ["Chilled", "Frostbitten", "Glacial", "Arctic", "Permafrost"]
+    zombie_sand: ["Dusty", "Parched", "Sandswept", "Desiccated", "Sandblight"]
+    zombie_aberrant: ["Warped", "Distorted", "Aberrant", "Mutated", "Cataclysmic"]
     skeleton: ["Broken", "Reforged", "Grim", "Deathbound", "Ascendant"]
+    skeleton_burnt: ["Charred", "Blazing", "Infernal", "Pyro", "Cinderlord"]
+    skeleton_frost: ["Frozen", "Glacial", "Frostbound", "Blizzard", "Frostlord"]
+    skeleton_sand: ["Dusty", "Sandworn", "Dune", "Oasis", "Pharaoh"]
+    skeleton_pirate: ["Scurvy", "Plundering", "Corsair", "Admiral", "Dreadpirate"]
+    skeleton_incandescent: ["Dim", "Glowing", "Radiant", "Blazing", "Supernova"]
     goblin: ["Sneaky", "Cutthroat", "Brutal", "Overseer", "Overlord"]
+    trork: ["Rough", "Hardened", "Blooded", "Warbound", "Warlord"]
+    outlander: ["Wandering", "Raiding", "Veteran", "Champion", "Warchief"]
+    wraith: ["Fading", "Haunting", "Spectral", "Dreadful", "Phantasmal"]
     void: ["Faded", "Shaded", "Umbral", "Abyssal", "Voidborn"]
     default: ["Common", "Uncommon", "Rare", "Epic", "Legendary"]
 ```
 
 Each list must have exactly 5 entries (one per tier). The `default` entry is used for mob families not explicitly listed. You can add or customize families to match your server's theme.
+
+**Important:** When a per-world overlay defines `tierPrefixesByFamily`, it **fully replaces** the base family prefixes for that world (not additive). If you only define one family in an overlay, all other families will use the `default` entry. Include all families you want in the overlay.
 
 ## Model Scaling
 

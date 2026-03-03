@@ -25,14 +25,13 @@ Mobs:
       matchExact: ["Goblin_Miner"]
       enableWeaponOverrideForTier: [true, true, true, true, true]
       weaponOverrideMode: ALWAYS
-      weaponIdMustContain: ["pickaxe"]
-      weaponIdMustNotContain: []
+      allowedWeaponCategories: ["category:Pickaxes"]
 
     Trork_Shaman:
       enabled: true
       matchExact: ["Trork_Shaman"]
       weaponOverrideMode: ALWAYS
-      weaponIdMustContain: ["staff"]
+      allowedWeaponCategories: ["category:Staves"]
 
     Goblin_Lobber:
       enabled: true
@@ -49,12 +48,40 @@ Mobs:
 | `ONLY_IF_EMPTY` | Only equips a weapon if the mob's hands are empty. |
 | `NONE` | Never changes the mob's equipment. Use this for custom bosses or unarmed mobs. |
 
-## Weapon Filtering
+## Weapon Category Restrictions
 
-Use `weaponIdMustContain` and `weaponIdMustNotContain` to restrict what weapons a mob can be given.
+Use `allowedWeaponCategories` to restrict what weapons a mob can be given. Categories are defined in `gear.yml` and referenced using the `category:CategoryName` syntax.
 
-- `weaponIdMustContain: ["pickaxe"]` -- the mob will only receive weapons whose ID contains "pickaxe".
-- `weaponIdMustNotContain: ["shortbow", "crossbow"]` -- the mob will never receive ranged weapons.
+```yaml
+Mobs:
+  rules:
+    Goblin_Miner:
+      enabled: true
+      matchExact: ["Goblin_Miner"]
+      weaponOverrideMode: ALWAYS
+      allowedWeaponCategories: ["category:Pickaxes"]
+
+    Trork_Shaman:
+      enabled: true
+      matchExact: ["Trork_Shaman"]
+      weaponOverrideMode: ALWAYS
+      allowedWeaponCategories: ["category:Staves"]
+```
+
+When `allowedWeaponCategories` is set, only weapons from those categories are eligible during equipment assignment. An empty list means all weapons from the tier's allowed rarities are available.
+
+## Armor Category Restrictions
+
+Use `allowedArmorCategories` to restrict what armor materials a mob can wear. Works the same as weapon categories.
+
+```yaml
+Goblin_Scrapper:
+  enabled: true
+  matchExact: ["Goblin_Scrapper"]
+  allowedArmorCategories: ["category:Iron", "category:Leather"]
+```
+
+An empty list means all armor materials are available (default behavior).
 
 ## Per-Tier Enable
 
@@ -87,8 +114,26 @@ Skeleton_Incandescent_Head:
 | `[]` (empty) | All armor slots are available (default behavior). |
 | `["HEAD"]` | Only the head slot gets armor. |
 | `["HEAD", "CHEST"]` | Only head and chest slots get armor. |
-| `["NONE"]` | No armor slots are available — the mob gets no armor at all. |
+| `["NONE"]` | No armor slots are available -- the mob gets no armor at all. |
 
 Valid slot names: `HEAD`, `CHEST`, `HANDS`, `LEGS` (case-insensitive).
+
+## Mob Rule Category Tree
+
+Mob rules are organized into a hierarchical category tree in `mobrules.yml`. Categories group related mob rules together, making it easy to reference them in abilities and loot templates using the `category:CategoryName` syntax.
+
+The default tree organizes 200+ mob rules into families:
+
+- **Goblins** -- Lobber, Miner, Scavenger, Scrapper, Thief subcategories
+- **Trorks** -- Sentry, Warrior subcategories
+- **Skeletons** -- Standard, Burnt, Frost, Sand, Pirate, Incandescent subcategories
+- **Zombies** -- Aberrant subcategory
+- **Outlanders**, **Wraiths**, **Void**
+
+When an ability or loot template links to `category:Skeletons`, it targets all skeleton mob rules across all subcategories.
+
+The category tree can be managed through the [Admin UI](/config/admin-ui) in the Mob Rules tab.
+
+![Mob Rule Category Tree](../images/admin-ui-mob-rules.png)
 
 **Tip:** The default configuration includes rules for **most** standard Hytale hostile NPCs. If you add custom NPCs from another mod, add a matching rule here so they can become elites.

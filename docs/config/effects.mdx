@@ -1,18 +1,20 @@
 ---
 title: Effects
-description: Configuring passive status effects applied to elites.
+description: Configuring passive entity effects applied to elites.
 ---
 
-`effects.yml` controls the passive status effects that are applied to elites. These are ongoing buffs that affect gameplay and have visible particle effects.
+`effects.yml` controls the passive entity effects applied to elites. Effects are ongoing buffs or debuffs with configurable per-tier enablement and visual particle systems. The system is generic — new effects can be added by config entry alone.
 
-## Projectile Resistance
+## How Effects Work
 
-This effect reduces the damage elites take from ranged attacks (bows, crossbows, staffs). It encourages players to engage high-tier elites in melee combat rather than kiting them from a distance.
+Effects are applied when an elite spawns and re-evaluated during configuration reconciliation. If an effect is enabled for the elite's tier, it is applied. If an effect is later disabled (by config change or overlay), it is removed on the next reconcile pass.
+
+## Effect Configuration
 
 ```yaml
 Effects:
   byId:
-    EFFECT_PROJECTILE_RESISTANCE:
+    projectile_resistance:
       isEnabled: true
       isEnabledPerTier: [false, false, false, true, true]
       amountMultiplierPerTier: [0.0, 0.0, 0.0, 0.7, 0.85]
@@ -22,8 +24,28 @@ Effects:
 | Setting | What it does | Default |
 | :--- | :--- | :--- |
 | `isEnabled` | Master toggle for this effect. Disabling it removes both the mechanic and the particle visuals. | `true` |
-| `isEnabledPerTier` | Toggle per tier. By default, only Tier 4 and 5 have projectile resistance. | `[false, false, false, true, true]` |
-| `amountMultiplierPerTier` | The resistance percentage for each tier. `0.7` means 70% of projectile damage is blocked. `0.85` means 85%. | `[0, 0, 0, 0.7, 0.85]` |
+| `isEnabledPerTier` | Toggle per tier. Controls which tiers receive this effect. | Varies per effect |
+| `amountMultiplierPerTier` | The effect strength for each tier. Meaning depends on the effect (e.g., for projectile resistance, `0.7` means 70% of projectile damage is blocked). | Varies per effect |
 | `infinite` | Whether the effect lasts forever or has a limited duration. | `true` |
 
+## Default Effects
+
+### Projectile Resistance
+
+Reduces the damage elites take from ranged attacks (bows, crossbows, staves). Encourages players to engage high-tier elites in melee combat rather than kiting from a distance.
+
+- **Default tiers:** T4 and T5 only
+- **Default strength:** 70% block (T4), 85% block (T5)
+- **Visual:** Particle effect on the elite
+
 **Tip:** If you want ranged builds to remain viable against high-tier elites, lower the resistance values (e.g., `0.3` and `0.5`).
+
+## Adding New Effects
+
+New effects can be added by creating a new entry in `effects.yml` under the `byId` map. The key should match a valid Hytale status effect identifier. The system will automatically apply it during spawn and manage it during reconciliation.
+
+## Admin UI
+
+Effects are editable in the Entity Effects sub-tab of the [Admin UI](/config/admin-ui). The tree explorer shows all configured effects. Clicking an effect expands a detail panel with per-tier toggles, multiplier fields, and the infinite toggle.
+
+![Entity Effects Editor](../images/admin-ui-entity-effects.png)

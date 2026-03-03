@@ -33,8 +33,7 @@ public final class RPGMobsFeatureRegistry {
         register(new RPGMobsAbilityCoreFeature());
         register(new RPGMobsDropsFeature());
         register(new RPGMobsNameplateFeature());
-        register(new RPGMobsEffectsFeature());
-        register(new RPGMobsProjectileResistanceEffectFeature(plugin));
+        register(new RPGMobsEffectsFeature(plugin));
         register(new RPGMobsChargeLeapAbilityFeature());
         register(new RPGMobsHealLeapAbilityFeature());
         register(new RPGMobsUndeadSummonAbilityFeature());
@@ -83,6 +82,16 @@ public final class RPGMobsFeatureRegistry {
 
     public Map<String, IRPGMobsFeature> getFeaturesByKey() {
         return featuresByKey;
+    }
+
+    public List<IRPGMobsAbilityFeature> getAbilityFeatures() {
+        List<IRPGMobsAbilityFeature> abilities = new ArrayList<>();
+        for (IRPGMobsFeature feature : orderedFeatures) {
+            if (feature instanceof IRPGMobsAbilityFeature abilityFeature) {
+                abilities.add(abilityFeature);
+            }
+        }
+        return abilities;
     }
 
     public void applyAll(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,

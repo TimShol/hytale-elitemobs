@@ -37,6 +37,5 @@ public final class RPGMobsHealthScalingFeature implements IRPGMobsFeature {
     public void registerSystems(RPGMobsPlugin plugin) {
         HealthScalingSystem system = new HealthScalingSystem(plugin, this);
         plugin.registerSystem(system);
-        plugin.getEventBus().registerListener(system);
     }
 }

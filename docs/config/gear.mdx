@@ -38,6 +38,44 @@ Gear:
 
 If a weapon ID contains any of these strings, it counts as two-handed. Add your own modded weapon keywords here if needed.
 
+## Weapon Categories
+
+Weapons are organized into named categories in `gear.yml`. Mob rules reference these categories instead of individual weapon IDs, making it easy to control what weapons a mob type can equip.
+
+Categories use a hierarchical tree structure. The default config ships with categories like Axes, Battleaxes, Clubs, Daggers, Longswords, Maces, Spears, Swords, Shortbows, Crossbows, Staves, Guns, Spellbooks, Pickaxes, and Shields.
+
+```yaml
+Gear:
+  weaponCategoryTree:
+    name: "All"
+    subcategories:
+      - name: "Swords"
+        weaponIds: ["Weapon_Sword_Iron", "Weapon_Sword_Cobalt", "Weapon_Sword_Steel", ...]
+      - name: "Axes"
+        weaponIds: ["Weapon_Axe_Iron", "Weapon_Axe_Cobalt", ...]
+      - name: "Staves"
+        weaponIds: ["Weapon_Staff_Bone", "Weapon_Staff_Nature", ...]
+```
+
+Mob rules reference categories using the `category:CategoryName` syntax. For example, `category:Swords` targets all weapons in the Swords category.
+
+Categories can be managed through the [Admin UI](/config/admin-ui) under Global Config &rarr; Weapon Categories.
+
+![Weapon Categories](../images/admin-ui-weapon-categories.png)
+
+## Armor Categories
+
+Armor follows the same category pattern as weapons. Armor IDs use the `Armor_Material_Slot` format:
+
+- `Armor_Iron_Head` -- Iron helmet
+- `Armor_Iron_Chest` -- Iron chestplate
+- `Armor_Iron_Hands` -- Iron gauntlets
+- `Armor_Iron_Legs` -- Iron leggings
+
+Categories are organized by material (e.g., "Iron" contains all 4 iron armor slots).
+
+![Armor Categories](../images/admin-ui-armor-categories.png)
+
 ## Rarity Rules
 
 RPGMobs determines an item's rarity by checking its ID against keyword rules. The first matching keyword wins.
@@ -57,6 +95,8 @@ Gear:
 ```
 
 Armor uses the same system with `armorRarityRulesContains`.
+
+These settings are editable through the [Admin UI](/config/admin-ui) under Global Config &rarr; Rarity & Tiers.
 
 ## Tier Equipment Quality
 
@@ -78,6 +118,8 @@ Gear:
     - { "epic": 0.70, "rare": 0.30 }          # Tier 4
     - { "legendary": 0.40, "epic": 0.60 }     # Tier 5
 ```
+
+These settings are editable through the [Admin UI](/config/admin-ui) under Global Config &rarr; Rarity & Tiers.
 
 ## Armor Slots
 
@@ -120,3 +162,5 @@ Gear:
 ```
 
 The default lists include all standard Hytale weapons and armor materials. The full lists are written to the generated config file on first run.
+
+While `weaponCatalog` and `armorMaterials` still exist as flat item pools, the category trees (Weapon Categories and Armor Categories above) are the primary organizational system used by mob rules. Categories are the recommended way to control equipment assignment -- they let you group weapons and armor logically and reference entire groups at once from mob rules.

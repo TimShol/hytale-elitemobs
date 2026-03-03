@@ -2,8 +2,8 @@ package com.frotty27.rpgmobs.features;
 
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
-import com.frotty27.rpgmobs.config.InstancesConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.rules.AbilityGateEvaluator;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
@@ -39,13 +39,13 @@ public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeatu
         }
 
         int tierIndex = tierComponent.tierIndex;
-        InstancesConfig.InstanceRule instanceRule = RPGMobsAbilityFeatureHelpers.resolveInstanceRule(plugin, npcRef, entityStore);
+        ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
         String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
+        String matchedRuleKey = tierComponent.matchedRuleKey;
 
-        if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.HEAL_LEAP, roleName, weaponId, tierIndex, instanceRule)) {
+        if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.HEAL_LEAP, weaponId, tierIndex, matchedRuleKey, resolved)) {
             return;
         }
-
 
         float spawnChance = tierIndex < abilityConfig.chancePerTier.length ? abilityConfig.chancePerTier[tierIndex] : 0f;
 
@@ -59,5 +59,36 @@ public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeatu
         component.cooldownTicksRemaining = 0L;
 
         commandBuffer.putComponent(npcRef, plugin.getHealLeapAbilityComponentType(), component);
+    }
+
+    @Override
+    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
+                          Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
+                          RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+        HealLeapAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getHealLeapAbilityComponentType());
+        if (comp == null) return;
+
+        RPGMobsConfig.HealLeapAbilityConfig abilityConfig = (RPGMobsConfig.HealLeapAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
+                AbilityIds.HEAL_LEAP);
+
+        if (abilityConfig == null) {
+            if (comp.abilityEnabled) {
+                comp.abilityEnabled = false;
+                commandBuffer.replaceComponent(npcRef, plugin.getHealLeapAbilityComponentType(), comp);
+            }
+            return;
+        }
+
+        int tierIndex = tierComponent.tierIndex;
+        ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
+        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
+        String matchedRuleKey = tierComponent.matchedRuleKey;
+
+        boolean allowed = AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.HEAL_LEAP, weaponId, tierIndex, matchedRuleKey, resolved);
+
+        if (!allowed && comp.abilityEnabled) {
+            comp.abilityEnabled = false;
+            commandBuffer.replaceComponent(npcRef, plugin.getHealLeapAbilityComponentType(), comp);
+        }
     }
 }

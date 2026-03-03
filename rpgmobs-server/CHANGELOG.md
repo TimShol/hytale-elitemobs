@@ -2,28 +2,34 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
-## [3.260218.0] - 2026-02-19
+## [3.260303.0] - 2026-03-03
 
 ### Added
 
-- **Per-instance configuration** (`instances.yml`) — customize RPGMobs behavior for each world or dungeon instance independently. Override spawning style, tier weights, health/damage multipliers, loot, abilities, and elite behavior on a per-world basis. Instance worlds are automatically matched by their template name. Ships with all 25 vanilla instance templates and a fully worked Goblin Dungeon example
-- **Per-mob armor slot restrictions** (`allowedArmorSlots` in mob rules) — control which armor slots a mob can equip, so mobs whose models don't support full armor no longer look broken (e.g., void eyes get no armor)
-- **Faction-based summoning** — Goblin_Duke now summons goblins and Trork_Shaman now summons trorks, instead of only undead mobs being able to summon
-- **Summon pool exclusion** (`excludeFromSummonPool`) — configurable list to prevent specific roles from being summoned (e.g., Trork_Shaman can't summon other Shamans)
-- **Weapon-aware ability gating** — ability gates now check the mob's actual equipped weapon, so weapon-based restrictions work correctly (e.g., staff-wielding mobs can no longer use Charge Leap)
+- **In-game Admin UI** — `/rpgmobs config` opens a full configuration panel. Per-world and per-instance settings with 9 tabs: General, Mob Rules, Stats, Loot, Spawning, Entity Effects, Abilities, Visuals, and Overrides
+- **Per-world and per-instance configuration** — each world or dungeon instance can have its own settings. Unset fields inherit from the base config
+- **Category-based equipment system** — weapon and armor categories (e.g. Swords, Axes, Heavy Armor) replace the old text-based filters. Fully editable in the Admin UI
+- **Loot templates** — create custom drop tables and link them to specific mobs or entire categories. Each drop can be toggled per tier individually
+- **Per-mob armor slot restrictions** — control which armor slots a mob can equip, so mobs whose models don't support armor no longer look broken
+- **Faction-based summoning** — summoners now call reinforcements from their own faction (goblins summon goblins, trorks summon trorks) instead of only undead
+- **Generic entity effects** — new status effects can be added via config alone, no code changes needed
+- **Elite anti-aggro** — new option to prevent elites from targeting other elites
+- **Per-world tier and loot overrides** — restrict which tiers specific mobs can spawn as, adjust spawn weights, and assign loot templates per mob per world
+- **Ability weapon gating** — abilities now check the mob's equipped weapon, so staff-wielding mobs won't use melee-only abilities like Charge Leap
+- **Per-mob per-tier ability control** — each linked mob in an ability can have tiers toggled individually
 
 ### Changed
 
-- Adopted new versioning scheme: `{hytale_update}.{YYMMDD}.{mod_build}`
-- Updated server version
-- Renamed `vanillaDroplistMultiplierPerTier` to `vanillaDroplistExtraRollsPerTier` for clarity
-- Renamed `maxAlive` to `maxAliveMinionsPerSummoner` for clarity
-- All three abilities now have proper role exclusion gates
+- Config files reorganized into `base/` (9 files), `worlds/`, `instances/`, and `core.yml` — existing configs are migrated automatically
+- Mob rule weapon filtering now uses categories instead of substring matching
+- Ability gating reworked from role-based allow/deny lists to per-mob-rule linking with tier control
+- Config changes now take effect on already-spawned elites (mob rules are re-evaluated on reload)
 
 ### Fixed
 
-- Crash when switching between world instances (stale entity references during chunk unloading)
-- Ability gate weapon restrictions being silently ignored for all mobs
+- Pickaxe-wielding mobs incorrectly matching "Axe" weapon rules
+- Ability weapon restrictions being silently ignored
+- Crash when switching between world instances
 
 ## [2.0.2] - 2026-02-18
 
@@ -73,7 +79,7 @@ All notable changes to RPGMobs will be documented in this file.
 - Ability cooldowns configurable per tier
 - Random health variance so no two elites of the same tier have identical health pools
 - Distance-based progression with health and damage bonuses that scale with distance from spawn
-- Projectile resistance status effect for higher-tier elites with visual particles
+- Projectile resistance status effect for higher-tier elites
 - Consumable drops (food items and potions) with tier-based availability
 - Config version tracking with automatic config file regeneration on major version changes
 - Reconciliation system to sync existing elites with updated config after a live reload

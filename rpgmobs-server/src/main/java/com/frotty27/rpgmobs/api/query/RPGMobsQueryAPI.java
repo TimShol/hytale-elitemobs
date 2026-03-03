@@ -27,7 +27,6 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         return entityRef.getStore();
     }
 
-
     @Override
     public Optional<Integer> getTier(Ref<EntityStore> entityRef) {
         if (entityRef == null) return Optional.empty();
@@ -74,7 +73,6 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         return prog != null ? Optional.of(prog.spawnDistanceMeters()) : Optional.empty();
     }
 
-
     @Override
     public Optional<Float> getHealthMultiplier(Ref<EntityStore> entityRef) {
         if (entityRef == null) return Optional.empty();
@@ -94,7 +92,6 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         if (tier == null) return Optional.empty();
 
         float multiplier = 1.0f + (tier.tierIndex * 0.5f);
-
 
         RPGMobsProgressionComponent prog = store.getComponent(entityRef, plugin.getProgressionComponentType());
         if (prog != null) {
@@ -124,7 +121,6 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         return healthScaling != null && healthScaling.healthFinalized;
     }
 
-
     @Override
     public Optional<Integer> getSummonedMinionCount(Ref<EntityStore> entityRef) {
         if (entityRef == null) return Optional.empty();
@@ -134,7 +130,6 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         );
         return tracking != null ? Optional.of(tracking.summonedAliveCount) : Optional.empty();
     }
-
 
     @Override
     public Optional<Ref<EntityStore>> getLastAggroTarget(Ref<EntityStore> entityRef) {
@@ -169,7 +164,6 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         return tracking.isInCombat();
     }
 
-
     @Override
     public int getMigrationVersion(Ref<EntityStore> entityRef) {
         if (entityRef == null) return 1;
@@ -185,7 +179,6 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         RPGMobsMigrationComponent migration = store.getComponent(entityRef, plugin.getMigrationComponentType());
         return migration != null && migration.needsMigration();
     }
-
 
     @Override
     public Set<String> getSupportedTriggerTypes() {

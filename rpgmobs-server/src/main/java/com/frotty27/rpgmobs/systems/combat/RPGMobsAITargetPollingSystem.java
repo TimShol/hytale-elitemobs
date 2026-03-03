@@ -5,7 +5,7 @@ import com.frotty27.rpgmobs.api.events.RPGMobsDeaggroEvent;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.combat.RPGMobsCombatTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
-import com.frotty27.rpgmobs.config.InstancesConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
@@ -62,12 +62,10 @@ public final class RPGMobsAITargetPollingSystem extends EntityTickingSystem<Enti
             if (npc != null) {
                 Ref<EntityStore> aiTarget = getAITarget(npc);
 
-                // Filter out own-minion targets — prevents summoner from aggro-ing its minions
                 if (aiTarget != null && isOwnMinion(store, mobRef, aiTarget)) {
                     aiTarget = null;
                 }
 
-                // Filter out other elites when friendly fire is disabled for this instance
                 if (aiTarget != null && isEliteTargetBlocked(store, npc, aiTarget)) {
                     aiTarget = null;
                 }
@@ -146,26 +144,18 @@ public final class RPGMobsAITargetPollingSystem extends EntityTickingSystem<Enti
         return null;
     }
 
-    /**
-     * Returns true if the target is another elite and the instance rule disables elite friendly fire.
-     * This prevents elites from aggro-ing on other elites when the instance says so.
-     */
     private boolean isEliteTargetBlocked(Store<EntityStore> store, NPCEntity npc, Ref<EntityStore> targetRef) {
         RPGMobsTierComponent targetTier = store.getComponent(targetRef, plugin.getRPGMobsComponentType());
         if (targetTier == null) return false;
 
-        InstancesConfig instancesConfig = plugin.getInstancesConfig();
-        if (instancesConfig == null || !instancesConfig.enabled) return false;
         if (npc.getWorld() == null) return false;
 
-        InstancesConfig.InstanceRule rule = instancesConfig.resolveRule(npc.getWorld().getName());
-        return rule != null && Boolean.TRUE.equals(rule.eliteFriendlyFireDisabled);
+        String worldName = npc.getWorld().getName();
+        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
+
+        return resolved.eliteFriendlyFireDisabled || resolved.eliteNoAggroOnElite;
     }
 
-    /**
-     * Returns true if the target is a summoned minion belonging to the mob at mobRef.
-     * This prevents summoners from targeting (and aggro-ing on) their own minions.
-     */
     private boolean isOwnMinion(Store<EntityStore> store, Ref<EntityStore> mobRef, Ref<EntityStore> targetRef) {
         RPGMobsSummonedMinionComponent targetMinion = store.getComponent(targetRef,
                                                                          plugin.getSummonedMinionComponentType()

@@ -5,6 +5,7 @@ import com.frotty27.rpgmobs.api.events.RPGMobsSpawnedEvent;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsModelScalingComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
@@ -50,29 +51,102 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
     public void tick(float deltaTime, int entityIndex, @NonNull ArchetypeChunk<EntityStore> chunk,
                      @NonNull Store<EntityStore> store, @NonNull CommandBuffer<EntityStore> commandBuffer) {
         RPGMobsConfig config = plugin.getConfig();
-        if (config == null || !config.modelConfig.enableMobModelScaling) return;
-
-        if (!plugin.shouldReconcileThisTick()) return;
+        if (config == null) return;
 
         Ref<EntityStore> npcRef = chunk.getReferenceTo(entityIndex);
+        RPGMobsTierComponent tierComp = store.getComponent(npcRef, plugin.getRPGMobsComponentType());
+        if (tierComp == null) return;
+
+        boolean needsReconcile = plugin.shouldReconcileThisTick()
+                || tierComp.lastReconciledAt < plugin.getConfigReloadCount();
+        if (!needsReconcile) return;
+
+        NPCEntity npcEntity = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+        String worldName = (npcEntity != null && npcEntity.getWorld() != null) ? npcEntity.getWorld().getName() : null;
+        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
+
         RPGMobsModelScalingComponent modelComp = store.getComponent(npcRef, plugin.getModelScalingComponentType());
-        if (modelComp == null || !modelComp.scaledApplied || modelComp.appliedScale <= 0.001f) return;
 
-        if (modelComp.resyncVerified) return;
+        if (!resolved.enableModelScaling) {
 
-        tryScaleModelComponent(npcRef, store, commandBuffer, modelComp.appliedScale, false);
-        modelComp.resyncVerified = true;
-        commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelComp);
+            if (modelComp != null && modelComp.scaledApplied && Math.abs(modelComp.appliedScale - 1.0f) > 0.001f) {
+                tryScaleModelComponent(npcRef, store, commandBuffer, 1.0f, false);
+                modelComp.scaledApplied = false;
+                modelComp.appliedScale = 1.0f;
+                modelComp.configuredBaseScale = 1.0f;
+                modelComp.resyncVerified = true;
+                commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelComp);
+            }
+            return;
+        }
+
+        float targetBaseScale = getBaseScaleMultiplier(resolved, tierComp.tierIndex);
+
+        if (modelComp == null) {
+
+            float scaleWithVariance = applyVariance(targetBaseScale, resolved.modelScaleVariance);
+            boolean scaled = tryScaleModelComponent(npcRef, store, commandBuffer, scaleWithVariance, false);
+            if (scaled) {
+                RPGMobsModelScalingComponent newComp = new RPGMobsModelScalingComponent();
+                newComp.scaledApplied = true;
+                newComp.appliedScale = scaleWithVariance;
+                newComp.configuredBaseScale = targetBaseScale;
+                newComp.resyncVerified = true;
+                commandBuffer.putComponent(npcRef, plugin.getModelScalingComponentType(), newComp);
+            }
+            return;
+        }
+
+        boolean configChanged = Math.abs(modelComp.configuredBaseScale - targetBaseScale) > 0.001f;
+        if (configChanged) {
+            float modelVariance = resolved.modelScaleVariance;
+            float minValid = targetBaseScale - modelVariance;
+            float maxValid = targetBaseScale + modelVariance;
+            float currentScale = modelComp.appliedScale;
+
+            if (currentScale >= minValid - 0.001f && currentScale <= maxValid + 0.001f) {
+                modelComp.configuredBaseScale = targetBaseScale;
+                modelComp.resyncVerified = true;
+                commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelComp);
+            } else {
+                float newScale = currentScale < minValid
+                        ? clampFloat(minValid, MODEL_SCALE_MIN, MODEL_SCALE_MAX)
+                        : clampFloat(maxValid, MODEL_SCALE_MIN, MODEL_SCALE_MAX);
+                boolean scaled = tryScaleModelComponent(npcRef, store, commandBuffer, newScale, false);
+                if (scaled) {
+                    modelComp.scaledApplied = true;
+                    modelComp.appliedScale = newScale;
+                    modelComp.configuredBaseScale = targetBaseScale;
+                    modelComp.resyncVerified = true;
+                    commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelComp);
+                }
+            }
+            return;
+        }
+
+        if (!modelComp.resyncVerified && modelComp.scaledApplied && modelComp.appliedScale > 0.001f) {
+            tryScaleModelComponent(npcRef, store, commandBuffer, modelComp.appliedScale, false);
+            modelComp.resyncVerified = true;
+            commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelComp);
+        }
     }
 
+    private static float getBaseScaleMultiplier(ResolvedConfig resolved, int tierIndex) {
+        if (resolved.modelScalePerTier != null && tierIndex >= 0 && tierIndex < resolved.modelScalePerTier.length) {
+            return resolved.modelScalePerTier[tierIndex];
+        }
+        return 1.0f;
+    }
 
-    private float computeModelScaleMultiplier(RPGMobsConfig config, int tierIndex) {
-        float baseMultiplier = (config.modelConfig.mobModelScaleMultiplierPerTier != null && config.modelConfig.mobModelScaleMultiplierPerTier.length > tierIndex) ? config.modelConfig.mobModelScaleMultiplierPerTier[tierIndex] : 1.0f;
+    private float applyVariance(float baseScale, float variance) {
+        float v = Math.max(0f, variance);
+        float randomized = baseScale + ((random.nextFloat() * 2f - 1f) * v);
+        return clampFloat(randomized, MODEL_SCALE_MIN, MODEL_SCALE_MAX);
+    }
 
-        float variance = Math.max(0f, config.modelConfig.mobModelScaleRandomVariance);
-        float randomizedMultiplier = baseMultiplier + ((random.nextFloat() * 2f - 1f) * variance);
-
-        return clampFloat(randomizedMultiplier, MODEL_SCALE_MIN, MODEL_SCALE_MAX);
+    public void resetModelScale(Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                               CommandBuffer<EntityStore> commandBuffer) {
+        tryScaleModelComponent(npcRef, entityStore, commandBuffer, 1.0f, false);
     }
 
     private boolean tryScaleModelComponent(Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
@@ -130,11 +204,17 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
         return true;
     }
 
-
     public void applyModelScalingOnSpawn(Ref<EntityStore> npcRef, Store<EntityStore> store,
                                          CommandBuffer<EntityStore> commandBuffer) {
         RPGMobsConfig config = plugin.getConfig();
-        if (config == null || !config.modelConfig.enableMobModelScaling) return;
+        if (config == null) return;
+
+        NPCEntity npcEntityForSpawn = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+        String spawnWorldName = (npcEntityForSpawn != null && npcEntityForSpawn.getWorld() != null)
+                ? npcEntityForSpawn.getWorld().getName() : null;
+        ResolvedConfig resolved = plugin.getResolvedConfig(spawnWorldName);
+
+        if (!resolved.enableModelScaling) return;
 
         RPGMobsTierComponent tierComponent = store.getComponent(npcRef, plugin.getRPGMobsComponentType());
         RPGMobsModelScalingComponent modelScalingComponent = store.getComponent(npcRef,
@@ -146,10 +226,8 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
         if (modelScalingComponent != null && modelScalingComponent.scaledApplied) return;
 
         int tierIndex = tierComponent.tierIndex;
-
-
-        float scaleMultiplier = computeModelScaleMultiplier(config, tierIndex);
-
+        float baseScale = getBaseScaleMultiplier(resolved, tierIndex);
+        float scaleMultiplier = applyVariance(baseScale, resolved.modelScaleVariance);
 
         boolean scaled = tryScaleModelComponent(npcRef,
                                                 store,
@@ -160,10 +238,10 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
 
         if (!scaled) return;
 
-
         if (modelScalingComponent != null) {
             modelScalingComponent.scaledApplied = true;
             modelScalingComponent.appliedScale = scaleMultiplier;
+            modelScalingComponent.configuredBaseScale = baseScale;
             commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelScalingComponent);
         }
     }

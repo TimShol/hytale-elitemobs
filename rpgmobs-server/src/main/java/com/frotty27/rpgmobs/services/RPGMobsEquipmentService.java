@@ -1,6 +1,7 @@
-package com.frotty27.rpgmobs.equipment;
+package com.frotty27.rpgmobs.services;
 
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.utils.MobRuleCategoryHelpers;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
@@ -18,11 +19,66 @@ public final class RPGMobsEquipmentService {
 
     private static final String SHIELD_TOKEN = "weapon_shield";
     private static final String ARMOR_PREFIX = "Armor_";
+    private static final int ARMOR_SLOT_COUNT = 4;
 
     private final Random random = new Random();
+    private double activeDurabilityMin;
+    private double activeDurabilityMax;
 
-    public void buildAndApply(NPCEntity npcEntity, RPGMobsConfig config, int tierIndex, RPGMobsConfig.MobRule mobRule) {
+    public void clearAllEquipment(NPCEntity npcEntity) {
+        if (npcEntity == null) return;
+        Inventory inventory = npcEntity.getInventory();
+        if (inventory == null) return;
+
+        boolean changed = false;
+
+        ItemContainer armor = inventory.getArmor();
+        if (armor != null) {
+            for (int i = 0; i < ARMOR_SLOT_COUNT; i++) {
+                try {
+                    var existing = armor.getItemStack((short) i);
+                    if (existing != null && !existing.isEmpty()) {
+                        armor.setItemStackForSlot((short) i, null);
+                        changed = true;
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+
+        byte activeSlot = inventory.getActiveHotbarSlot();
+        if (activeSlot != Inventory.INACTIVE_SLOT_INDEX) {
+            ItemContainer hotbar = inventory.getHotbar();
+            if (hotbar != null) {
+                try {
+                    var existing = hotbar.getItemStack(activeSlot);
+                    if (existing != null && !existing.isEmpty()) {
+                        hotbar.setItemStackForSlot(activeSlot, null);
+                        changed = true;
+                    }
+                } catch (Throwable ignored) {}
+            }
+        }
+
+        ItemContainer utility = inventory.getUtility();
+        if (utility != null) {
+            try {
+                var existing = utility.getItemStack((short) 0);
+                if (existing != null && !existing.isEmpty()) {
+                    utility.setItemStackForSlot((short) 0, null);
+                    changed = true;
+                }
+            } catch (Throwable ignored) {}
+        }
+
+        if (changed) inventory.markChanged();
+    }
+
+    public void buildAndApply(NPCEntity npcEntity, RPGMobsConfig config, int tierIndex,
+                              RPGMobsConfig.MobRule mobRule, double durabilityMin, double durabilityMax) {
         if (npcEntity == null || config == null || mobRule == null) return;
+
+        this.activeDurabilityMin = durabilityMin;
+        this.activeDurabilityMax = durabilityMax;
 
         int clampedTierIndex = clampTierIndex(tierIndex);
 
@@ -34,8 +90,8 @@ public final class RPGMobsEquipmentService {
 
         boolean inventoryChanged = false;
 
-        inventoryChanged |= equipArmor(inventory.getArmor(), config, clampedTierIndex, mobRule.allowedArmorSlots);
-
+        inventoryChanged |= clearDisallowedArmor(inventory.getArmor(), mobRule.allowedArmorSlots);
+        inventoryChanged |= equipArmor(inventory.getArmor(), config, clampedTierIndex, mobRule);
 
         ItemStack chosenWeapon = maybePickWeapon(inventory, config, clampedTierIndex, mobRule);
         if (chosenWeapon != null) {
@@ -43,12 +99,7 @@ public final class RPGMobsEquipmentService {
             inventoryChanged = true;
         }
 
-
-        inventoryChanged |= applyInHandDurability(inventory,
-                                                  config.gearConfig.spawnGearDurabilityMin,
-                                                  config.gearConfig.spawnGearDurabilityMax
-        );
-
+        inventoryChanged |= applyInHandDurability(inventory, activeDurabilityMin, activeDurabilityMax);
 
         ItemStack chosenShield = maybeEquipUtilityShield(inventory, config, clampedTierIndex);
         if (chosenShield != null) inventoryChanged = true;
@@ -56,8 +107,62 @@ public final class RPGMobsEquipmentService {
         if (inventoryChanged) inventory.markChanged();
     }
 
+    private boolean clearDisallowedArmor(ItemContainer armorContainer, List<String> allowedArmorSlots) {
+        if (armorContainer == null) return false;
+        if (allowedArmorSlots == null || allowedArmorSlots.isEmpty()) return false;
+
+        boolean noneMode = allowedArmorSlots.size() == 1
+                && "NONE".equalsIgnoreCase(allowedArmorSlots.getFirst());
+
+        if (noneMode) {
+            boolean changed = false;
+            for (int i = 0; i < ARMOR_SLOT_COUNT; i++) {
+                try {
+                    var existing = armorContainer.getItemStack((short) i);
+                    if (existing != null && !existing.isEmpty()) {
+                        armorContainer.setItemStackForSlot((short) i, null);
+                        changed = true;
+                    }
+                } catch (Throwable ignored) {}
+            }
+            return changed;
+        }
+
+        Set<String> allowed = new HashSet<>();
+        for (String s : allowedArmorSlots) {
+            if (s != null) allowed.add(s.toUpperCase(Locale.ROOT));
+        }
+
+        boolean changed = false;
+        for (int i = 0; i < ARMOR_SLOT_COUNT; i++) {
+            try {
+                var existing = armorContainer.getItemStack((short) i);
+                if (existing == null || existing.isEmpty()) continue;
+
+                String itemId = existing.getItemId();
+                if (itemId == null || itemId.isBlank()) continue;
+
+                String slotType = identifyArmorSlotType(itemId);
+                if (slotType != null && !allowed.contains(slotType)) {
+                    armorContainer.setItemStackForSlot((short) i, null);
+                    changed = true;
+                }
+            } catch (Throwable ignored) {}
+        }
+
+        return changed;
+    }
+
+    private static String identifyArmorSlotType(String itemId) {
+        if (itemId.endsWith("_Head")) return "HEAD";
+        if (itemId.endsWith("_Chest")) return "CHEST";
+        if (itemId.endsWith("_Hands")) return "HANDS";
+        if (itemId.endsWith("_Legs")) return "LEGS";
+        return null;
+    }
+
     private boolean equipArmor(ItemContainer armorContainer, RPGMobsConfig config, int tierIndex,
-                               List<String> allowedArmorSlots) {
+                               RPGMobsConfig.MobRule mobRule) {
         if (armorContainer == null) return false;
 
         if (config.gearConfig.armorPiecesToEquipPerTier == null || config.gearConfig.armorPiecesToEquipPerTier.length <= tierIndex) {
@@ -78,6 +183,12 @@ public final class RPGMobsEquipmentService {
         }
         if (armorMaterials.isEmpty()) return false;
 
+        if (mobRule.allowedArmorCategories != null && !mobRule.allowedArmorCategories.isEmpty()) {
+            armorMaterials = filterArmorMaterialsByCategory(armorMaterials, mobRule.allowedArmorCategories,
+                    config.gearConfig.armorCategoryTree);
+            if (armorMaterials.isEmpty()) return false;
+        }
+
         enum ArmorSlot {
             HEAD("Head"), CHEST("Chest"), HANDS("Hands"), LEGS("Legs");
 
@@ -90,6 +201,7 @@ public final class RPGMobsEquipmentService {
 
         List<ArmorSlot> availableSlots = new ArrayList<>(List.of(ArmorSlot.values()));
 
+        List<String> allowedArmorSlots = mobRule.allowedArmorSlots;
         if (allowedArmorSlots != null && !allowedArmorSlots.isEmpty()) {
             Set<String> allowed = new HashSet<>();
             for (String s : allowedArmorSlots) {
@@ -112,10 +224,7 @@ public final class RPGMobsEquipmentService {
             if (Item.getAssetMap().getAsset(itemId) == null) continue;
 
             ItemStack armorPiece = new ItemStack(itemId, 1);
-            armorPiece = withRandomDurabilityFraction(armorPiece,
-                                                      config.gearConfig.spawnGearDurabilityMin,
-                                                      config.gearConfig.spawnGearDurabilityMax
-            );
+            armorPiece = withRandomDurabilityFraction(armorPiece, activeDurabilityMin, activeDurabilityMax);
 
             InventoryHelper.useArmor(armorContainer, armorPiece);
             changed = true;
@@ -157,10 +266,7 @@ public final class RPGMobsEquipmentService {
         }
 
         ItemStack weapon = new ItemStack(weaponItemId, 1);
-        return withRandomDurabilityFraction(weapon,
-                                            config.gearConfig.spawnGearDurabilityMin,
-                                            config.gearConfig.spawnGearDurabilityMax
-        );
+        return withRandomDurabilityFraction(weapon, activeDurabilityMin, activeDurabilityMax);
     }
 
     private boolean applyInHandDurability(Inventory inventory, double minFraction, double maxFraction) {
@@ -218,13 +324,11 @@ public final class RPGMobsEquipmentService {
             itemInHand = inventory.getHotbar().getItemStack((short) 0);
             if (itemInHand == null || itemInHand.isEmpty()) return null;
 
-
             inventory.setActiveHotbarSlot((byte) 0);
         }
 
         String weaponItemId = itemInHand.getItemId();
         if (weaponItemId.isBlank()) return null;
-
 
         if (!isOneHandedWeaponIdInternal(config, weaponItemId)) return null;
 
@@ -245,10 +349,7 @@ public final class RPGMobsEquipmentService {
         if (shieldItemId == null || shieldItemId.isBlank()) return null;
 
         ItemStack shield = new ItemStack(shieldItemId, 1);
-        shield = withRandomDurabilityFraction(shield,
-                                              config.gearConfig.spawnGearDurabilityMin,
-                                              config.gearConfig.spawnGearDurabilityMax
-        );
+        shield = withRandomDurabilityFraction(shield, activeDurabilityMin, activeDurabilityMax);
 
         try {
             utilityContainer.setItemStackForSlot(utilitySlot, shield);
@@ -264,7 +365,6 @@ public final class RPGMobsEquipmentService {
     private boolean isOneHandedWeaponIdInternal(RPGMobsConfig config, String weaponItemId) {
         String lowercaseWeaponId = weaponItemId.toLowerCase(Locale.ROOT);
         if (lowercaseWeaponId.contains(SHIELD_TOKEN)) return false;
-
 
         if (config.gearConfig.twoHandedWeaponIds == null) return true;
 
@@ -319,23 +419,20 @@ public final class RPGMobsEquipmentService {
 
         String wantedRarity = pickRarityForTier(config, tierIndex);
 
-        List<String> requiredFragments = (mobRule.weaponIdMustContain == null) ? List.of() : mobRule.weaponIdMustContain;
-
-        List<String> forbiddenFragments = (mobRule.weaponIdMustNotContain == null) ? List.of() : mobRule.weaponIdMustNotContain;
-
-        boolean hasRequiredFragments = hasAnyNonBlank(requiredFragments);
+        List<String> allowedCategories = mobRule.allowedWeaponCategories;
+        RPGMobsConfig.GearCategory weaponTree = config.gearConfig.weaponCategoryTree;
+        boolean hasCategories = allowedCategories != null && !allowedCategories.isEmpty();
 
         ArrayList<String> weaponCandidates = new ArrayList<>();
-
 
         for (String itemId : config.gearConfig.defaultWeaponCatalog) {
             if (itemId == null || itemId.isBlank()) continue;
             if (Item.getAssetMap().getAsset(itemId) == null) continue;
             if (isShieldItemId(itemId)) continue;
             if (!wantedRarity.equals(classifyWeaponRarity(config, itemId))) continue;
-            if (passesWeaponFilters(itemId, requiredFragments, forbiddenFragments)) weaponCandidates.add(itemId);
+            if (passesWeaponCategoryFilter(itemId, allowedCategories, weaponTree))
+                weaponCandidates.add(itemId);
         }
-
 
         if (weaponCandidates.isEmpty()) {
             for (String allowedRarity : allowedRaritiesForTier(config, tierIndex)) {
@@ -344,23 +441,22 @@ public final class RPGMobsEquipmentService {
                     if (Item.getAssetMap().getAsset(itemId) == null) continue;
                     if (isShieldItemId(itemId)) continue;
                     if (!allowedRarity.equals(classifyWeaponRarity(config, itemId))) continue;
-                    if (passesWeaponFilters(itemId, requiredFragments, forbiddenFragments))
+                    if (passesWeaponCategoryFilter(itemId, allowedCategories, weaponTree))
                         weaponCandidates.add(itemId);
                 }
                 if (!weaponCandidates.isEmpty()) break;
             }
         }
 
-
-        if (weaponCandidates.isEmpty() && hasRequiredFragments) return null;
-
+        if (weaponCandidates.isEmpty() && hasCategories) return null;
 
         if (weaponCandidates.isEmpty()) {
             for (String itemId : config.gearConfig.defaultWeaponCatalog) {
                 if (itemId == null || itemId.isBlank()) continue;
                 if (Item.getAssetMap().getAsset(itemId) == null) continue;
                 if (isShieldItemId(itemId)) continue;
-                if (passesWeaponFilters(itemId, requiredFragments, forbiddenFragments)) weaponCandidates.add(itemId);
+                if (passesWeaponCategoryFilter(itemId, allowedCategories, weaponTree))
+                    weaponCandidates.add(itemId);
             }
         }
 
@@ -368,44 +464,55 @@ public final class RPGMobsEquipmentService {
         return weaponCandidates.get(random.nextInt(weaponCandidates.size()));
     }
 
-
-    private boolean passesWeaponFilters(String weaponItemId, List<String> requiredFragments,
-                                        List<String> forbiddenFragments) {
-        String lowercaseWeaponId = weaponItemId.toLowerCase(Locale.ROOT);
-
-        if (forbiddenFragments != null) {
-            for (String forbiddenFragment : forbiddenFragments) {
-                if (forbiddenFragment == null || forbiddenFragment.isBlank()) continue;
-                if (lowercaseWeaponId.contains(forbiddenFragment.toLowerCase(Locale.ROOT))) return false;
+    private static boolean passesWeaponCategoryFilter(String weaponId, List<String> allowedCategories,
+                                                      RPGMobsConfig.GearCategory weaponTree) {
+        if (allowedCategories == null || allowedCategories.isEmpty()) return true;
+        for (String entry : allowedCategories) {
+            if (MobRuleCategoryHelpers.isCategoryKey(entry)) {
+                if (weaponTree == null) continue;
+                String catName = MobRuleCategoryHelpers.fromCategoryKey(entry);
+                RPGMobsConfig.GearCategory cat = MobRuleCategoryHelpers.findGearCategoryByName(weaponTree, catName);
+                if (cat != null && MobRuleCategoryHelpers.collectAllGearItemKeys(cat).contains(weaponId)) return true;
+            } else {
+                if (entry.equals(weaponId)) return true;
             }
         }
+        return false;
+    }
 
-        if (requiredFragments != null && !requiredFragments.isEmpty()) {
-            boolean matchesAnyRequiredFragment = false;
+    private static final String[] ARMOR_SLOT_SUFFIXES = {"_Head", "_Chest", "_Hands", "_Legs"};
 
-            for (String requiredFragment : requiredFragments) {
-                if (requiredFragment == null || requiredFragment.isBlank()) continue;
-
-                if (lowercaseWeaponId.contains(requiredFragment.toLowerCase(Locale.ROOT))) {
-                    matchesAnyRequiredFragment = true;
+    private static List<String> filterArmorMaterialsByCategory(List<String> materials,
+                                                                List<String> allowedCategories,
+                                                                RPGMobsConfig.GearCategory armorTree) {
+        if (allowedCategories == null || allowedCategories.isEmpty()) return materials;
+        Set<String> allowed = new HashSet<>();
+        Set<String> directItems = new HashSet<>();
+        for (String entry : allowedCategories) {
+            if (MobRuleCategoryHelpers.isCategoryKey(entry)) {
+                if (armorTree == null) continue;
+                String catName = MobRuleCategoryHelpers.fromCategoryKey(entry);
+                RPGMobsConfig.GearCategory cat = MobRuleCategoryHelpers.findGearCategoryByName(armorTree, catName);
+                if (cat != null) {
+                    allowed.addAll(MobRuleCategoryHelpers.collectAllGearItemKeys(cat));
+                }
+            } else {
+                directItems.add(entry);
+            }
+        }
+        List<String> filtered = new ArrayList<>();
+        for (String material : materials) {
+            boolean matched = false;
+            for (String suffix : ARMOR_SLOT_SUFFIXES) {
+                String fullId = ARMOR_PREFIX + material + suffix;
+                if (allowed.contains(fullId) || directItems.contains(fullId)) {
+                    matched = true;
                     break;
                 }
             }
-
-            return matchesAnyRequiredFragment;
+            if (matched) filtered.add(material);
         }
-
-        return true;
-    }
-
-    private static boolean hasAnyNonBlank(List<String> strings) {
-        if (strings == null || strings.isEmpty()) return false;
-
-        for (String value : strings) {
-            if (value != null && !value.isBlank()) return true;
-        }
-
-        return false;
+        return filtered;
     }
 
     private String pickRarityForTier(RPGMobsConfig config, int tierIndex) {
@@ -433,7 +540,6 @@ public final class RPGMobsEquipmentService {
         return weights.keySet().iterator().next();
     }
 
-
     private List<String> allowedRaritiesForTier(RPGMobsConfig config, int tierIndex) {
         if (config.gearConfig.defaultTierAllowedRarities == null) return List.of(DEFAULT_RARITY);
         if (tierIndex < 0 || tierIndex >= config.gearConfig.defaultTierAllowedRarities.size()) {
@@ -443,7 +549,6 @@ public final class RPGMobsEquipmentService {
         List<String> rarities = config.gearConfig.defaultTierAllowedRarities.get(tierIndex);
         return (rarities == null || rarities.isEmpty()) ? List.of(DEFAULT_RARITY) : rarities;
     }
-
 
     private List<String> pickArmorMaterialsOfRarity(RPGMobsConfig config, String wantedRarity) {
         if (config.gearConfig.defaultArmorMaterials == null || config.gearConfig.defaultArmorMaterials.isEmpty())
