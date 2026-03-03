@@ -31,8 +31,8 @@ public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeatu
                       Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
                       RPGMobsTierComponent tierComponent, @Nullable String roleName) {
 
-        RPGMobsConfig.HealLeapAbilityConfig abilityConfig = (RPGMobsConfig.HealLeapAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
-                AbilityIds.HEAL_LEAP);
+        RPGMobsConfig.AbilityConfig rawHealConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.HEAL_LEAP);
+        RPGMobsConfig.HealLeapAbilityConfig abilityConfig = (rawHealConfig instanceof RPGMobsConfig.HealLeapAbilityConfig hl) ? hl : null;
 
         if (abilityConfig == null) {
             return;
@@ -67,8 +67,8 @@ public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeatu
                           RPGMobsTierComponent tierComponent, @Nullable String roleName) {
         HealLeapAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getHealLeapAbilityComponentType());
 
-        RPGMobsConfig.HealLeapAbilityConfig abilityConfig = (RPGMobsConfig.HealLeapAbilityConfig) config.abilitiesConfig.defaultAbilities.get(
-                AbilityIds.HEAL_LEAP);
+        RPGMobsConfig.AbilityConfig rawHealRecon = config.abilitiesConfig.defaultAbilities.get(AbilityIds.HEAL_LEAP);
+        RPGMobsConfig.HealLeapAbilityConfig abilityConfig = (rawHealRecon instanceof RPGMobsConfig.HealLeapAbilityConfig hl) ? hl : null;
 
         if (abilityConfig == null) {
             if (comp != null && comp.abilityEnabled) {
@@ -95,6 +95,8 @@ public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeatu
         if (!allowed && comp.abilityEnabled) {
             comp.abilityEnabled = false;
             commandBuffer.replaceComponent(npcRef, plugin.getHealLeapAbilityComponentType(), comp);
+        } else if (allowed && !comp.abilityEnabled) {
+            apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
         }
     }
 }

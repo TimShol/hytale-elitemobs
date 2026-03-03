@@ -227,14 +227,27 @@ public final class RPGMobsPlugin extends JavaPlugin {
     private void reloadNpcRoleAssetsIfPossible() {
     }
 
-    private static final String[] CONFIG_FILES = {"core.yml", "visuals.yml", "spawning.yml", "stats.yml", "gear.yml", "loot.yml", "effects.yml", "abilities.yml", "mobrules.yml"};
-
     public synchronized void loadOrCreateRPGMobsConfig() {
         Path modDirectory = getModDirectory();
 
         ConfigMigrationV2.migrateIfNeeded(modDirectory);
 
         Path baseDir = modDirectory.resolve("base");
+
+        int oldFormatVersion = readConfigFormatVersion(modDirectory);
+        if (oldFormatVersion < 3) {
+            LOGGER.atWarning().log(
+                    "[RPGMobs] Config format version %d → 3 — deleting entire config directory.", oldFormatVersion);
+            deleteDirectoryContents(modDirectory);
+        }
+
+        String oldVersion = readConfigVersionFromAnyLocation(modDirectory, baseDir);
+        if (needsFullWipe(oldVersion)) {
+            LOGGER.atWarning().log(
+                    "[RPGMobs] Incompatible config version '%s' — deleting entire config directory.", oldVersion);
+            deleteDirectoryContents(modDirectory);
+        }
+
         try {
             if (!Files.isDirectory(baseDir)) Files.createDirectories(baseDir);
             Files.createDirectories(modDirectory.resolve("worlds"));
@@ -244,23 +257,6 @@ public final class RPGMobsPlugin extends JavaPlugin {
         }
 
         Path configRoot = Files.isDirectory(baseDir) ? baseDir : modDirectory;
-
-        int oldFormatVersion = readConfigFormatVersion(modDirectory);
-        if (oldFormatVersion < 3) {
-            LOGGER.atWarning().log(
-                    "[RPGMobs] Config format version %d → 3 — regenerating all config files.", oldFormatVersion);
-            deleteConfigFiles(configRoot);
-            deleteOverlayFiles(modDirectory.resolve("worlds"));
-            deleteOverlayFiles(modDirectory.resolve("instances"));
-        }
-
-        String oldVersion = YamlSerializer.readConfigVersion(configRoot, "core.yml", "configVersion");
-
-        if ("0.0.0".equals(oldVersion) && Files.exists(configRoot.resolve("core.yml"))) {
-            LOGGER.atWarning().log(
-                    "[RPGMobs] Config version missing (0.0.0) — wiping all config files to regenerate fresh defaults.");
-            deleteConfigFiles(configRoot);
-        }
 
         RPGMobsConfig defaults = new RPGMobsConfig();
         try {
@@ -466,17 +462,21 @@ public final class RPGMobsPlugin extends JavaPlugin {
         overlay.tierOverrides.put(key, to);
     }
 
-    private void deleteConfigFiles(Path directory) {
-        for (String fileName : CONFIG_FILES) {
-            try {
-                Path file = directory.resolve(fileName);
-                if (Files.deleteIfExists(file)) {
-                    LOGGER.atInfo().log("Deleted outdated config: %s", fileName);
+    private void deleteDirectoryContents(Path directory) {
+        if (!Files.isDirectory(directory)) return;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+            for (Path entry : stream) {
+                if (Files.isDirectory(entry)) {
+                    deleteDirectoryContents(entry);
+                    Files.deleteIfExists(entry);
+                } else {
+                    Files.deleteIfExists(entry);
                 }
-            } catch (IOException e) {
-                LOGGER.atWarning().log("Failed to delete config file %s: %s", fileName, e.getMessage());
             }
+        } catch (IOException e) {
+            LOGGER.atWarning().log("[RPGMobs] Failed to clean directory %s: %s", directory, e.getMessage());
         }
+        LOGGER.atInfo().log("[RPGMobs] Deleted contents of: %s", directory);
     }
 
     private int readConfigFormatVersion(Path modDirectory) {
@@ -488,16 +488,39 @@ public final class RPGMobsPlugin extends JavaPlugin {
         }
     }
 
-    private void deleteOverlayFiles(Path directory) {
-        if (!Files.isDirectory(directory)) return;
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, "*.yml")) {
-            for (Path file : stream) {
-                if (Files.deleteIfExists(file)) {
-                    LOGGER.atInfo().log("Deleted outdated overlay: %s", file.getFileName());
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.atWarning().log("[RPGMobs] Failed to clean overlay directory %s: %s", directory, e.getMessage());
+    private String readConfigVersionFromAnyLocation(Path modDirectory, Path baseDir) {
+        if (Files.isDirectory(baseDir) && Files.exists(baseDir.resolve("core.yml"))) {
+            return YamlSerializer.readConfigVersion(baseDir, "core.yml", "configVersion");
+        }
+        if (Files.exists(modDirectory.resolve("core.yml"))) {
+            return YamlSerializer.readConfigVersion(modDirectory, "core.yml", "configVersion");
+        }
+        return null;
+    }
+
+    private boolean needsFullWipe(String oldVersion) {
+        if (oldVersion == null) return false;
+        if ("0.0.0".equals(oldVersion)) return true;
+        try {
+            Object currentVersionObj = getManifest().getVersion();
+            if (currentVersionObj == null) return false;
+            String currentVersion = currentVersionObj.toString();
+            int oldMajor = parseMajorVersion(oldVersion);
+            int currentMajor = parseMajorVersion(currentVersion);
+            return oldMajor >= 0 && currentMajor >= 0 && oldMajor != currentMajor;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    private static int parseMajorVersion(String version) {
+        if (version == null || version.isBlank()) return -1;
+        int dot = version.indexOf('.');
+        if (dot <= 0) return -1;
+        try {
+            return Integer.parseInt(version.substring(0, dot));
+        } catch (NumberFormatException e) {
+            return -1;
         }
     }
 
