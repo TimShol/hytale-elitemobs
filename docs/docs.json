@@ -33,7 +33,6 @@
           "ui/entity-effects",
           "ui/abilities",
           "ui/visuals",
-          "ui/overrides",
           "ui/global-config"
         ]
       },
