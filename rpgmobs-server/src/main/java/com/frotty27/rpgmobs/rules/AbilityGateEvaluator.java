@@ -6,7 +6,6 @@ import com.frotty27.rpgmobs.utils.MobRuleCategoryHelpers;
 import com.hypixel.hytale.logger.HytaleLogger;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -22,12 +21,7 @@ public final class AbilityGateEvaluator {
     public static boolean isAllowed(RPGMobsConfig.AbilityConfig abilityConfig, @Nullable String abilityId,
                                     String weaponId, int tierIndex, @Nullable String matchedRuleKey,
                                     @Nullable ResolvedConfig resolved) {
-        if (abilityConfig == null || !abilityConfig.isEnabled) {
-            LOGGER.atInfo().log("[AbilityGate] DENY %s: config=%s enabled=%s",
-                    abilityId, abilityConfig != null ? "present" : "null",
-                    abilityConfig != null ? String.valueOf(abilityConfig.isEnabled) : "N/A");
-            return false;
-        }
+        if (abilityConfig == null || !abilityConfig.isEnabled) return false;
 
         int clamped = clampTierIndex(tierIndex);
 
@@ -37,50 +31,28 @@ public final class AbilityGateEvaluator {
         }
 
         if (resolvedAbility != null) {
-            if (!resolvedAbility.enabled) {
-                LOGGER.atInfo().log("[AbilityGate] DENY %s: resolvedAbility.enabled=false", abilityId);
-                return false;
-            }
+            if (!resolvedAbility.enabled) return false;
         } else {
-            if (!isEnabledForTier(abilityConfig.isEnabledPerTier, tierIndex)) {
-                LOGGER.atInfo().log("[AbilityGate] DENY %s: tier %d not enabled (perTier=%s, resolvedAbility=null)",
-                        abilityId, tierIndex, Arrays.toString(abilityConfig.isEnabledPerTier));
-                return false;
-            }
+            if (!isEnabledForTier(abilityConfig.isEnabledPerTier, tierIndex)) return false;
         }
 
         RPGMobsConfig.AbilityGate gate = abilityConfig.gate;
         if (gate != null && gate.allowedWeaponCategories != null && !gate.allowedWeaponCategories.isEmpty()) {
             RPGMobsConfig.GearCategory weaponTree = resolved != null ? resolved.weaponCategoryTree : null;
             if (weaponTree != null) {
-                if (!weaponInCategories(weaponId, gate.allowedWeaponCategories, weaponTree)) {
-                    LOGGER.atInfo().log("[AbilityGate] DENY %s: weapon '%s' not in allowed categories %s",
-                            abilityId, weaponId, gate.allowedWeaponCategories);
-                    return false;
-                }
+                if (!weaponInCategories(weaponId, gate.allowedWeaponCategories, weaponTree)) return false;
             }
         }
 
-        if (matchedRuleKey == null || matchedRuleKey.isBlank()) {
-            LOGGER.atInfo().log("[AbilityGate] DENY %s: matchedRuleKey is null/blank", abilityId);
-            return false;
-        }
+        if (matchedRuleKey == null || matchedRuleKey.isBlank()) return false;
 
         if (abilityConfig.excludeLinkedMobRuleKeys != null
-                && abilityConfig.excludeLinkedMobRuleKeys.contains(matchedRuleKey)) {
-            LOGGER.atInfo().log("[AbilityGate] DENY %s: matchedRuleKey '%s' is excluded", abilityId, matchedRuleKey);
-            return false;
-        }
+                && abilityConfig.excludeLinkedMobRuleKeys.contains(matchedRuleKey)) return false;
 
         if (resolvedAbility != null) {
             boolean[] entryTiers = resolvedAbility.linkedMobEntries.get(matchedRuleKey);
             if (entryTiers != null) {
-                boolean result = clamped < 0 || clamped >= entryTiers.length || entryTiers[clamped];
-                if (!result) {
-                    LOGGER.atInfo().log("[AbilityGate] DENY %s: direct entry '%s' tier %d disabled (tiers=%s)",
-                            abilityId, matchedRuleKey, clamped, Arrays.toString(entryTiers));
-                }
-                return result;
+                return clamped < 0 || clamped >= entryTiers.length || entryTiers[clamped];
             }
             for (Map.Entry<String, boolean[]> entry : resolvedAbility.linkedMobEntries.entrySet()) {
                 if (MobRuleCategoryHelpers.isCategoryKey(entry.getKey())) {
@@ -88,24 +60,13 @@ public final class AbilityGateEvaluator {
                     if (resolved != null && MobRuleCategoryHelpers.isMobKeyInCategory(
                             resolved.mobRuleCategoryTree, catName, matchedRuleKey)) {
                         boolean[] catTiers = entry.getValue();
-                        boolean result = clamped < 0 || clamped >= catTiers.length || catTiers[clamped];
-                        if (!result) {
-                            LOGGER.atInfo().log("[AbilityGate] DENY %s: category '%s' tier %d disabled (tiers=%s)",
-                                    abilityId, catName, clamped, Arrays.toString(catTiers));
-                        }
-                        return result;
+                        return clamped < 0 || clamped >= catTiers.length || catTiers[clamped];
                     }
                 }
             }
-            LOGGER.atInfo().log("[AbilityGate] DENY %s: matchedRuleKey '%s' not in any linked entry (entries=%s, tree=%s)",
-                    abilityId, matchedRuleKey, resolvedAbility.linkedMobEntries.keySet(),
-                    resolved != null && resolved.mobRuleCategoryTree != null ? "present" : "null");
         } else {
             List<String> linkedKeys = abilityConfig.linkedMobRuleKeys;
-            if (linkedKeys == null || linkedKeys.isEmpty()) {
-                LOGGER.atInfo().log("[AbilityGate] DENY %s: linkedMobRuleKeys is null/empty (no resolvedAbility)", abilityId);
-                return false;
-            }
+            if (linkedKeys == null || linkedKeys.isEmpty()) return false;
             if (linkedKeys.contains(matchedRuleKey)) return true;
             RPGMobsConfig.MobRuleCategory tree = resolved != null ? resolved.mobRuleCategoryTree : null;
             if (tree != null) {
@@ -118,8 +79,6 @@ public final class AbilityGateEvaluator {
                     }
                 }
             }
-            LOGGER.atInfo().log("[AbilityGate] DENY %s: matchedRuleKey '%s' not in linkedKeys %s (no resolvedAbility)",
-                    abilityId, matchedRuleKey, linkedKeys);
         }
         return false;
     }

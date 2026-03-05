@@ -93,9 +93,9 @@ RPGMobs includes a full in-game configuration panel accessible via `/rpgmobs con
 - **Global Config** tabs for managing weapon categories, armor categories, rarity rules, and tier equipment quality
 - **Save & Discard** with unsaved change indicators (yellow/green markers) across all tabs
 
-![Admin UI Overview](docs/images/admin-ui-overview.png)
+![Admin UI Overview](docs/images/admin-ui-main.png)
 
-![Admin UI Mob Rules](docs/images/admin-ui-mob-rules.png)
+![Admin UI Mob Rules](docs/images/ui-mob-rules.png)
 
 ### Integrations
 

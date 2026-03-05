@@ -2,6 +2,12 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [3.260219.1] - 2026-03-05
+
+### Fixed
+
+- Abilities (Charge Leap, Heal Leap, Undead Summon) not working in worlds that have a saved overlay — the weapon category tree was not carried over when merging per-world config overlays, causing the weapon gate to reject all weapons
+
 ## [3.260303.0] - 2026-03-03
 
 ### Added
