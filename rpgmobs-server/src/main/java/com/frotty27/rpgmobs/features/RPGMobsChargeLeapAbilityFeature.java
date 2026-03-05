@@ -48,10 +48,6 @@ public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFea
         String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
         String matchedRuleKey = tierComponent.matchedRuleKey;
 
-        LOGGER.atInfo().log("[ChargeLeap] apply: tier=%d weapon='%s' matchedRuleKey='%s' enabled=%s resolved=%s",
-                tierIndex, weaponId, matchedRuleKey, abilityConfig.isEnabled,
-                resolved != null ? "present" : "null");
-
         if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.CHARGE_LEAP, weaponId, tierIndex, matchedRuleKey, resolved)) return;
 
         float spawnChance = tierIndex < abilityConfig.chancePerTier.length ? abilityConfig.chancePerTier[tierIndex] : 0f;

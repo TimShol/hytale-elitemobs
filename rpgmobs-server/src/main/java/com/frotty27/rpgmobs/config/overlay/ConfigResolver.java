@@ -659,6 +659,9 @@ public final class ConfigResolver {
             merged.lootTemplateCategoryTree = base.lootTemplateCategoryTree;
         }
 
+        merged.weaponCategoryTree = base.weaponCategoryTree;
+        merged.armorCategoryTree = base.armorCategoryTree;
+
         return merged;
     }
 

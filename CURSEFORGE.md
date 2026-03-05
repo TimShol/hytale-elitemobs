@@ -14,6 +14,10 @@ You can find all the documentation, configuration guides, and developer referenc
 
 [![GitHub](https://img.shields.io/badge/GitHub-RPGMobs-3da15b?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-rpgmobs)
 
+## Required Dependencies
+
+*   **[NameplateBuilder](https://www.curseforge.com/hytale/mods/nameplatebuilder)** — Handles nameplate rendering for elite mobs. Must be installed alongside RPGMobs.
+
 ***
 
 ## Combat
@@ -37,7 +41,7 @@ Each ability is linked to specific mob rules with per-tier enablement toggles an
 
 More abilities and new AI behaviours are actively in development, including conditional combos, environmental awareness, and tier-exclusive mechanics that will make each encounter feel distinct.
 
-<div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/1498/352/tiers-png.png" alt="Tiers"></p></div>
+<div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/description/1444529/description_158dce7c-1520-4c2a-a6c0-2053fdce20a8.png" alt="Tiers"></p></div>
 
 ## Loot & Gear
 
@@ -50,7 +54,7 @@ More abilities and new AI behaviours are actively in development, including cond
 *   Consumable drops including food, potions, gems, and materials
 *   30+ custom loot entries (ores, bars, gems, life essence, …)
 
-<div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/1498/353/loot-png.png" alt="Loot"></p></div>
+<div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/description/1444529/description_4fc00da8-81bb-4793-8763-7a1f4725bc11.png" alt="Loot"></p></div>
 
 ## Visual Identity
 
@@ -77,30 +81,32 @@ There are 3 progression styles currently:
 *   **Distance from Spawn:** Tier selection and stat bonuses scale based on how far the mob spawns from the world origin. The further out players explore, the stronger the elites become. Health and damage bonuses increase gradually with distance, creating a natural difficulty gradient without relying on zone tags.
 *   **Random (None):** Any tier can spawn anywhere with equal probability. Useful for arena-style servers or testing.
 
-## Admin UI
+## Configuration
 
-RPGMobs includes a full in-game configuration panel. Use `/rpgmobs config` to open it — no YAML editing required.
+<span style="color:#2dc26b"><strong>Almost everything is configurable!</strong></span> The recommended way to configure RPGMobs is through the in-game Admin UI using `/rpgmobs config`.
 
-*   **Sidebar navigation** with sections for Global Core, Global Debug, Per-World overlays, and Per-Instance overlays
 *   **9 sub-tabs** per world/instance: General, Mob Rules, Stats, Loot, Spawning, Entity Effects, Abilities, Visuals, Overrides
+*   **Sidebar navigation** with sections for Global Core, Global Debug, Per-World overlays, and Per-Instance overlays
 *   **Tree explorers** for mob rules, loot templates, abilities, and entity effects with search filtering
 *   **NPC picker** and **Item picker** popups for adding mob rules and loot drops
 *   **Global Config** tabs for managing weapon categories, armor categories, rarity rules, and tier equipment quality
 *   **Save & Discard** with unsaved change indicators across all tabs
 
-## Configuration
+<!-- TODO: Replace with actual UI-General screenshot URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_UI_GENERAL" alt="Admin UI General"></p></div>
 
-<span style="color:#2dc26b"><strong>Almost everything is configurable!</strong></span> RPGMobs generates 9 base YAML files plus per-world and per-instance overlay files under:
+### Editing via Config Files
+
+Optionally, you can also configure RPGMobs by editing the YAML files directly. RPGMobs generates 9 base YAML files plus per-world and per-instance overlay files under:
 
 ```
 %APPDATA%\Hytale\UserData\Saves\(your save name)\mods\RPGMobs
 ```
 
-<div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/1498/351/configdirectory-png.png" alt="Config Directory"></p></div>
+<div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/description/1444529/description_7ec2c5a1-5926-4ed7-8e44-f96ad5861c85.png" alt="Config Directory"></p></div>
 
-*   In-game Admin UI via `/rpgmobs config` for visual configuration of every setting
-*   Live reload via `/rpgmobs reload` with automatic reconciliation of existing elites
 *   Layered config: `base/` (9 YAML files) + `worlds/` (per-world overlays) + `instances/` (per-instance overlays)
+*   Live reload via `/rpgmobs reload` with automatic reconciliation of existing elites
 *   Every feature is independently toggleable
 *   Config format version migration — automatically regenerates config when the architecture changes, preserves custom changes on regular updates
 *   Missing keys are regenerated automatically — no need to start fresh after a content update
@@ -121,7 +127,7 @@ RPGMobs includes a full in-game configuration panel. Use `/rpgmobs config` to op
 *   Download the RPGMobs `.jar` from CurseForge
 *   Place it in your server's `mods` folder
 *   Start the server to generate default configuration
-*   Use `/rpgmobs config` for the in-game Admin UI, or edit the YAML files under `%APPDATA%\Hytale\UserData\Saves\(your save name)\mods\RPGMobs`
+*   Use `/rpgmobs config` to open the in-game Admin UI (recommended), or edit the YAML files under `%APPDATA%\Hytale\UserData\Saves\(your save name)\mods\RPGMobs`
 *   Run `/rpgmobs reload` to apply YAML changes without restarting
 
 ## Uninstalling
