@@ -6,5 +6,5 @@ public final class RPGMobsPermissions {
 
     public static final String RPGMobs_RELOAD = "rpgmobs.reload";
     public static final String RPGMobs_SPAWN = "rpgmobs.spawn";
-    public static final String RPGMOBS_CONFIG = "rpgm obs.config";
+    public static final String RPGMOBS_CONFIG = "rpgmobs.config";
 }
