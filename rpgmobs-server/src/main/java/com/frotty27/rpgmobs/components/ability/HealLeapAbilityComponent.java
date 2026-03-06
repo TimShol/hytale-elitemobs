@@ -10,7 +10,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.Nullable;
 
-public final class HealLeapAbilityComponent implements Component<EntityStore> {
+public final class HealLeapAbilityComponent implements AbilityEnabledComponent {
 
     public boolean abilityEnabled;
     public float triggerHealthPercent;
@@ -50,6 +50,16 @@ public final class HealLeapAbilityComponent implements Component<EntityStore> {
         this.swapActive = false;
         this.swapSlot = -1;
         this.swapPreviousItem = null;
+    }
+
+    @Override
+    public boolean isAbilityEnabled() {
+        return abilityEnabled;
+    }
+
+    @Override
+    public void setAbilityEnabled(boolean enabled) {
+        this.abilityEnabled = enabled;
     }
 
     @Override

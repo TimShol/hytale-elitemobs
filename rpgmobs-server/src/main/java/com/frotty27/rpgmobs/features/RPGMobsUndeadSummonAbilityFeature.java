@@ -1,114 +1,107 @@
 package com.frotty27.rpgmobs.features;
 
-import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.SummonUndeadAbilityComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
-import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
-import com.frotty27.rpgmobs.rules.AbilityGateEvaluator;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
 import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Random;
 
-public final class RPGMobsUndeadSummonAbilityFeature implements IRPGMobsAbilityFeature {
-
-    public static final String ABILITY_UNDEAD_SUMMON = AbilityIds.SUMMON_UNDEAD;
-
-    private final Random random = new Random();
+public final class RPGMobsUndeadSummonAbilityFeature
+        extends AbstractGatedAbilityFeature<SummonUndeadAbilityComponent, RPGMobsConfig.SummonAbilityConfig> {
 
     @Override
     public String id() {
-        return ABILITY_UNDEAD_SUMMON;
+        return AbilityIds.SUMMON_UNDEAD;
     }
 
     @Override
-    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                      Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                      RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    public String displayName() {
+        return "Undead Summon";
+    }
 
-        RPGMobsConfig.AbilityConfig rawSummonConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
-        RPGMobsConfig.SummonAbilityConfig abilityConfig = (rawSummonConfig instanceof RPGMobsConfig.SummonAbilityConfig sm) ? sm : null;
+    @Override
+    public RPGMobsConfig.AbilityConfig createDefaultConfig() {
+        return new RPGMobsConfig.SummonAbilityConfig();
+    }
 
-        if (abilityConfig == null) {
-            return;
-        }
+    @Override
+    public List<AbilityConfigField> describeConfigFields() {
+        return List.of(
+                new AbilityConfigField.ScalarInt("Max Alive Minions",
+                        config -> ((RPGMobsConfig.SummonAbilityConfig) config).maxAliveMinionsPerSummoner,
+                        (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).maxAliveMinionsPerSummoner = value),
+                new AbilityConfigField.ScalarDouble("Skeleton Archer Weight",
+                        config -> ((RPGMobsConfig.SummonAbilityConfig) config).skeletonArcherWeight,
+                        (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).skeletonArcherWeight = value),
+                new AbilityConfigField.ScalarDouble("Zombie Weight",
+                        config -> ((RPGMobsConfig.SummonAbilityConfig) config).zombieWeight,
+                        (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).zombieWeight = value),
+                new AbilityConfigField.ScalarDouble("Wraith Weight",
+                        config -> ((RPGMobsConfig.SummonAbilityConfig) config).wraithWeight,
+                        (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).wraithWeight = value),
+                new AbilityConfigField.ScalarDouble("Aberrant Weight",
+                        config -> ((RPGMobsConfig.SummonAbilityConfig) config).aberrantWeight,
+                        (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).aberrantWeight = value),
+                new AbilityConfigField.StringList("Role Identifiers",
+                        config -> ((RPGMobsConfig.SummonAbilityConfig) config).roleIdentifiers,
+                        (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).roleIdentifiers = value),
+                new AbilityConfigField.StringList("Exclude From Summon Pool",
+                        config -> ((RPGMobsConfig.SummonAbilityConfig) config).excludeFromSummonPool,
+                        (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).excludeFromSummonPool = value)
+        );
+    }
 
-        int tierIndex = tierComponent.tierIndex;
-        ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
-        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
-        String matchedRuleKey = tierComponent.matchedRuleKey;
+    @Override
+    protected Class<RPGMobsConfig.SummonAbilityConfig> configClass() {
+        return RPGMobsConfig.SummonAbilityConfig.class;
+    }
 
-        if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.SUMMON_UNDEAD, weaponId, tierIndex, matchedRuleKey, resolved)) {
-            return;
-        }
+    @Override
+    protected ComponentType<EntityStore, SummonUndeadAbilityComponent> componentType(RPGMobsPlugin plugin) {
+        return plugin.getSummonUndeadAbilityComponentType();
+    }
 
-        float spawnChance = tierIndex < abilityConfig.chancePerTier.length ? abilityConfig.chancePerTier[tierIndex] : 0f;
+    @Override
+    protected SummonUndeadAbilityComponent getComponent(Store<EntityStore> store, Ref<EntityStore> ref,
+                                                        RPGMobsPlugin plugin) {
+        return store.getComponent(ref, plugin.getSummonUndeadAbilityComponentType());
+    }
 
-        boolean enabled = random.nextFloat() < spawnChance;
-
-        SummonUndeadAbilityComponent component = new SummonUndeadAbilityComponent();
+    @Override
+    protected SummonUndeadAbilityComponent createComponent(RPGMobsConfig.SummonAbilityConfig abilityConfig,
+                                                           int tierIndex, boolean enabled, Random random) {
+        var component = new SummonUndeadAbilityComponent();
         component.abilityEnabled = enabled;
         component.cooldownTicksRemaining = 0L;
         component.pendingSummonTicksRemaining = 0L;
         component.pendingSummonRole = null;
+        return component;
+    }
 
-        commandBuffer.putComponent(npcRef, plugin.getSummonUndeadAbilityComponentType(), component);
+    @Override
+    protected void onDisable(SummonUndeadAbilityComponent component) {
+        component.pendingSummonTicksRemaining = 0L;
+        component.pendingSummonRole = null;
+    }
 
-        RPGMobsSummonMinionTrackingComponent trackingComponent = new RPGMobsSummonMinionTrackingComponent();
+    @Override
+    protected void afterApply(RPGMobsPlugin plugin, Ref<EntityStore> npcRef,
+                              Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+        var trackingComponent = new RPGMobsSummonMinionTrackingComponent();
         commandBuffer.putComponent(npcRef, plugin.getSummonMinionTrackingComponentType(), trackingComponent);
-
     }
 
     @Override
-    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                          Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                          RPGMobsTierComponent tierComponent, @Nullable String roleName) {
-        SummonUndeadAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getSummonUndeadAbilityComponentType());
-
-        RPGMobsConfig.AbilityConfig rawSummonRecon = config.abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
-        RPGMobsConfig.SummonAbilityConfig abilityConfig = (rawSummonRecon instanceof RPGMobsConfig.SummonAbilityConfig sm) ? sm : null;
-
-        if (abilityConfig == null) {
-            if (comp != null && comp.abilityEnabled) {
-                comp.abilityEnabled = false;
-                comp.pendingSummonTicksRemaining = 0L;
-                comp.pendingSummonRole = null;
-                commandBuffer.replaceComponent(npcRef, plugin.getSummonUndeadAbilityComponentType(), comp);
-            }
-            return;
-        }
-
-        int tierIndex = tierComponent.tierIndex;
-        ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
-        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
-        String matchedRuleKey = tierComponent.matchedRuleKey;
-
-        boolean allowed = AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.SUMMON_UNDEAD, weaponId, tierIndex, matchedRuleKey, resolved);
-
-        if (comp == null) {
-            if (allowed) {
-                apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
-            }
-            return;
-        }
-
-        if (!allowed && comp.abilityEnabled) {
-            comp.abilityEnabled = false;
-            comp.pendingSummonTicksRemaining = 0L;
-            comp.pendingSummonRole = null;
-            commandBuffer.replaceComponent(npcRef, plugin.getSummonUndeadAbilityComponentType(), comp);
-        } else if (allowed && !comp.abilityEnabled) {
-            apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
-        }
-    }
-
-    @Override
-    public void registerSystems(RPGMobsPlugin plugin) {
+    protected void afterRemove(RPGMobsPlugin plugin, Ref<EntityStore> npcRef,
+                               Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getSummonMinionTrackingComponentType());
     }
 }

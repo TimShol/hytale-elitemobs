@@ -161,24 +161,10 @@ public final class ConfigResolver {
     private ResolvedConfig buildBaseResolved(RPGMobsConfig cfg) {
         ResolvedConfig base = new ResolvedConfig();
 
-        base.enabled = true;
+        OverlayFieldRegistry.buildAllBase(cfg, base);
 
         base.progressionStyle = cfg.spawning.progressionStyle;
         base.spawnChancePerTier = Arrays.copyOf(cfg.spawning.spawnChancePerTier, cfg.spawning.spawnChancePerTier.length);
-
-        base.distancePerTier = cfg.spawning.distancePerTier;
-        base.distanceBonusInterval = cfg.spawning.distanceBonusInterval;
-        base.distanceHealthBonusPerInterval = cfg.spawning.distanceHealthBonusPerInterval;
-        base.distanceDamageBonusPerInterval = cfg.spawning.distanceDamageBonusPerInterval;
-        base.distanceHealthBonusCap = cfg.spawning.distanceHealthBonusCap;
-        base.distanceDamageBonusCap = cfg.spawning.distanceDamageBonusCap;
-
-        base.enableHealthScaling = cfg.healthConfig.enableMobHealthScaling;
-        base.healthMultiplierPerTier = Arrays.copyOf(cfg.healthConfig.mobHealthMultiplierPerTier,
-                                                     cfg.healthConfig.mobHealthMultiplierPerTier.length);
-        base.enableDamageScaling = cfg.damageConfig.enableMobDamageMultiplier;
-        base.damageMultiplierPerTier = Arrays.copyOf(cfg.damageConfig.mobDamageMultiplierPerTier,
-                                                     cfg.damageConfig.mobDamageMultiplierPerTier.length);
 
         base.resolvedAbilities = new LinkedHashMap<>();
         if (cfg.abilitiesConfig.defaultAbilities != null) {
@@ -194,40 +180,7 @@ public final class ConfigResolver {
             }
         }
 
-        base.vanillaDroplistExtraRollsPerTier = Arrays.copyOf(cfg.lootConfig.vanillaDroplistExtraRollsPerTier,
-                                                               cfg.lootConfig.vanillaDroplistExtraRollsPerTier.length);
-        base.dropWeaponChance = cfg.lootConfig.dropWeaponChance;
-        base.dropArmorPieceChance = cfg.lootConfig.dropArmorPieceChance;
-        base.dropOffhandItemChance = cfg.lootConfig.dropOffhandItemChance;
-        base.droppedGearDurabilityMin = cfg.gearConfig.spawnGearDurabilityMin;
-        base.droppedGearDurabilityMax = cfg.gearConfig.spawnGearDurabilityMax;
-        base.defaultLootTemplate = "";
-
-        base.healthRandomVariance = cfg.healthConfig.mobHealthRandomVariance;
-        base.damageRandomVariance = cfg.damageConfig.mobDamageRandomVariance;
-
-        base.eliteFriendlyFireDisabled = true;
-        base.eliteFallDamageDisabled = true;
-        base.eliteNoAggroOnElite = true;
-
-        base.enableNameplates = cfg.nameplatesConfig.enableMobNameplates;
-        base.nameplateMode = cfg.nameplatesConfig.nameplateMode.name();
-        base.nameplateTierEnabled = Arrays.copyOf(cfg.nameplatesConfig.mobNameplatesEnabledPerTier,
-                                                  cfg.nameplatesConfig.mobNameplatesEnabledPerTier.length);
-        base.nameplatePrefixPerTier = Arrays.copyOf(cfg.nameplatesConfig.monNameplatePrefixPerTier,
-                                                    cfg.nameplatesConfig.monNameplatePrefixPerTier.length);
         base.tierPrefixesByFamily = new LinkedHashMap<>(cfg.nameplatesConfig.defaultedTierPrefixesByFamily);
-
-        base.enableModelScaling = cfg.modelConfig.enableMobModelScaling;
-        base.modelScalePerTier = Arrays.copyOf(cfg.modelConfig.mobModelScaleMultiplierPerTier,
-                                               cfg.modelConfig.mobModelScaleMultiplierPerTier.length);
-        base.modelScaleVariance = cfg.modelConfig.mobModelScaleRandomVariance;
-
-        base.rpgLevelingEnabled = cfg.integrationsConfig.rpgLeveling.enabled;
-        base.xpMultiplierPerTier = Arrays.copyOf(cfg.integrationsConfig.rpgLeveling.xpMultiplierPerTier,
-                                                  cfg.integrationsConfig.rpgLeveling.xpMultiplierPerTier.length);
-        base.xpBonusPerAbility = cfg.integrationsConfig.rpgLeveling.xpBonusPerAbility;
-        base.minionXPMultiplier = cfg.integrationsConfig.rpgLeveling.minionXPMultiplier;
 
         base.tierOverrides = new LinkedHashMap<>();
 
@@ -339,7 +292,7 @@ public final class ConfigResolver {
 
     private void applyYamlToOverlay(ConfigOverlay overlay, Map<String, Object> yaml) {
 
-        overlay.enabled = getBooleanOrNull(yaml, "enabled");
+        OverlayFieldRegistry.applyAllYaml(yaml, overlay);
 
         overlay.progressionStyle = getStringOrNull(yaml, "progressionStyle");
         overlay.spawnChancePerTier = getDoubleArrayOrNull(yaml, "spawnChancePerTier");
@@ -360,20 +313,6 @@ public final class ConfigResolver {
             }
             overlay.environmentTierRules = envRules;
         }
-
-        overlay.distancePerTier = getDoubleOrNull(yaml, "distancePerTier");
-        overlay.distanceBonusInterval = getDoubleOrNull(yaml, "distanceBonusInterval");
-        overlay.distanceHealthBonusPerInterval = getFloatOrNull(yaml, "distanceHealthBonusPerInterval");
-        overlay.distanceDamageBonusPerInterval = getFloatOrNull(yaml, "distanceDamageBonusPerInterval");
-        overlay.distanceHealthBonusCap = getFloatOrNull(yaml, "distanceHealthBonusCap");
-        overlay.distanceDamageBonusCap = getFloatOrNull(yaml, "distanceDamageBonusCap");
-
-        overlay.enableHealthScaling = getBooleanOrNull(yaml, "enableHealthScaling");
-        overlay.healthMultiplierPerTier = getFloatArrayOrNull(yaml, "healthMultiplierPerTier");
-        overlay.healthRandomVariance = getFloatOrNull(yaml, "healthRandomVariance");
-        overlay.enableDamageScaling = getBooleanOrNull(yaml, "enableDamageScaling");
-        overlay.damageMultiplierPerTier = getFloatArrayOrNull(yaml, "damageMultiplierPerTier");
-        overlay.damageRandomVariance = getFloatOrNull(yaml, "damageRandomVariance");
 
         Object abilityOverlaysRaw = yaml.get("abilityOverlays");
         if (abilityOverlaysRaw instanceof Map<?, ?> abilOverlayMap) {
@@ -421,29 +360,6 @@ public final class ConfigResolver {
             if (!overlays.isEmpty()) overlay.abilityOverlays = overlays;
         }
 
-        overlay.vanillaDroplistExtraRollsPerTier = getIntArrayOrNull(yaml, "vanillaDroplistExtraRollsPerTier");
-        overlay.dropWeaponChance = getDoubleOrNull(yaml, "dropWeaponChance");
-        overlay.dropArmorPieceChance = getDoubleOrNull(yaml, "dropArmorPieceChance");
-        overlay.dropOffhandItemChance = getDoubleOrNull(yaml, "dropOffhandItemChance");
-        overlay.droppedGearDurabilityMin = getDoubleOrNull(yaml, "droppedGearDurabilityMin");
-        overlay.droppedGearDurabilityMax = getDoubleOrNull(yaml, "droppedGearDurabilityMax");
-        overlay.defaultLootTemplate = getStringOrNull(yaml, "defaultLootTemplate");
-
-        overlay.eliteFriendlyFireDisabled = getBooleanOrNull(yaml, "eliteFriendlyFireDisabled");
-        overlay.eliteFallDamageDisabled = getBooleanOrNull(yaml, "eliteFallDamageDisabled");
-        overlay.eliteNoAggroOnElite = getBooleanOrNull(yaml, "eliteNoAggroOnElite");
-
-        overlay.enableNameplates = getBooleanOrNull(yaml, "enableNameplates");
-        overlay.nameplateMode = getStringOrNull(yaml, "nameplateMode");
-        overlay.nameplateTierEnabled = getBooleanArrayOrNull(yaml, "nameplateTierEnabled");
-        Object nppRaw = yaml.get("nameplatePrefixPerTier");
-        if (nppRaw instanceof List<?> nppList) {
-            String[] arr = new String[nppList.size()];
-            for (int i = 0; i < nppList.size(); i++) {
-                arr[i] = nppList.get(i) != null ? String.valueOf(nppList.get(i)) : "";
-            }
-            overlay.nameplatePrefixPerTier = arr;
-        }
         Object tierPrefixRaw = yaml.get("tierPrefixesByFamily");
         if (tierPrefixRaw instanceof Map<?, ?> tpMap) {
             Map<String, List<String>> families = new LinkedHashMap<>();
@@ -457,15 +373,6 @@ public final class ConfigResolver {
             }
             if (!families.isEmpty()) overlay.tierPrefixesByFamily = families;
         }
-
-        overlay.enableModelScaling = getBooleanOrNull(yaml, "enableModelScaling");
-        overlay.modelScalePerTier = getFloatArrayOrNull(yaml, "modelScalePerTier");
-        overlay.modelScaleVariance = getFloatOrNull(yaml, "modelScaleVariance");
-
-        overlay.rpgLevelingEnabled = getBooleanOrNull(yaml, "rpgLevelingEnabled");
-        overlay.xpMultiplierPerTier = getFloatArrayOrNull(yaml, "xpMultiplierPerTier");
-        overlay.xpBonusPerAbility = getDoubleOrNull(yaml, "xpBonusPerAbility");
-        overlay.minionXPMultiplier = getDoubleOrNull(yaml, "minionXPMultiplier");
 
         Object tierOverridesRaw = yaml.get("tierOverrides");
         if (tierOverridesRaw instanceof Map<?, ?> tierMap) {
@@ -525,7 +432,7 @@ public final class ConfigResolver {
     private ResolvedConfig mergeOverlay(ResolvedConfig base, ConfigOverlay overlay) {
         ResolvedConfig merged = new ResolvedConfig();
 
-        merged.enabled = overlay.enabled != null ? overlay.enabled : base.enabled;
+        OverlayFieldRegistry.mergeAll(overlay, base, merged);
 
         if (overlay.progressionStyle != null) {
             try {
@@ -542,22 +449,6 @@ public final class ConfigResolver {
         merged.spawnChancePerTier = overlay.spawnChancePerTier != null
                 ? Arrays.copyOf(overlay.spawnChancePerTier, overlay.spawnChancePerTier.length)
                 : Arrays.copyOf(base.spawnChancePerTier, base.spawnChancePerTier.length);
-
-        merged.distancePerTier = overlay.distancePerTier != null ? overlay.distancePerTier : base.distancePerTier;
-        merged.distanceBonusInterval = overlay.distanceBonusInterval != null ? overlay.distanceBonusInterval : base.distanceBonusInterval;
-        merged.distanceHealthBonusPerInterval = overlay.distanceHealthBonusPerInterval != null ? overlay.distanceHealthBonusPerInterval : base.distanceHealthBonusPerInterval;
-        merged.distanceDamageBonusPerInterval = overlay.distanceDamageBonusPerInterval != null ? overlay.distanceDamageBonusPerInterval : base.distanceDamageBonusPerInterval;
-        merged.distanceHealthBonusCap = overlay.distanceHealthBonusCap != null ? overlay.distanceHealthBonusCap : base.distanceHealthBonusCap;
-        merged.distanceDamageBonusCap = overlay.distanceDamageBonusCap != null ? overlay.distanceDamageBonusCap : base.distanceDamageBonusCap;
-
-        merged.enableHealthScaling = overlay.enableHealthScaling != null ? overlay.enableHealthScaling : base.enableHealthScaling;
-        merged.healthMultiplierPerTier = overlay.healthMultiplierPerTier != null
-                ? Arrays.copyOf(overlay.healthMultiplierPerTier, overlay.healthMultiplierPerTier.length)
-                : Arrays.copyOf(base.healthMultiplierPerTier, base.healthMultiplierPerTier.length);
-        merged.enableDamageScaling = overlay.enableDamageScaling != null ? overlay.enableDamageScaling : base.enableDamageScaling;
-        merged.damageMultiplierPerTier = overlay.damageMultiplierPerTier != null
-                ? Arrays.copyOf(overlay.damageMultiplierPerTier, overlay.damageMultiplierPerTier.length)
-                : Arrays.copyOf(base.damageMultiplierPerTier, base.damageMultiplierPerTier.length);
 
         merged.resolvedAbilities = new LinkedHashMap<>();
         for (var entry : base.resolvedAbilities.entrySet()) {
@@ -585,50 +476,11 @@ public final class ConfigResolver {
             merged.resolvedAbilities.put(abilityId, mergedAbil);
         }
 
-        merged.vanillaDroplistExtraRollsPerTier = overlay.vanillaDroplistExtraRollsPerTier != null
-                ? Arrays.copyOf(overlay.vanillaDroplistExtraRollsPerTier, overlay.vanillaDroplistExtraRollsPerTier.length)
-                : Arrays.copyOf(base.vanillaDroplistExtraRollsPerTier, base.vanillaDroplistExtraRollsPerTier.length);
-        merged.dropWeaponChance = overlay.dropWeaponChance != null ? overlay.dropWeaponChance : base.dropWeaponChance;
-        merged.dropArmorPieceChance = overlay.dropArmorPieceChance != null ? overlay.dropArmorPieceChance : base.dropArmorPieceChance;
-        merged.dropOffhandItemChance = overlay.dropOffhandItemChance != null ? overlay.dropOffhandItemChance : base.dropOffhandItemChance;
-        merged.droppedGearDurabilityMin = overlay.droppedGearDurabilityMin != null ? overlay.droppedGearDurabilityMin : base.droppedGearDurabilityMin;
-        merged.droppedGearDurabilityMax = overlay.droppedGearDurabilityMax != null ? overlay.droppedGearDurabilityMax : base.droppedGearDurabilityMax;
-        merged.defaultLootTemplate = overlay.defaultLootTemplate != null ? overlay.defaultLootTemplate : base.defaultLootTemplate;
-
-        merged.healthRandomVariance = overlay.healthRandomVariance != null ? overlay.healthRandomVariance : base.healthRandomVariance;
-        merged.damageRandomVariance = overlay.damageRandomVariance != null ? overlay.damageRandomVariance : base.damageRandomVariance;
-
-        merged.eliteFriendlyFireDisabled = overlay.eliteFriendlyFireDisabled != null ? overlay.eliteFriendlyFireDisabled : base.eliteFriendlyFireDisabled;
-        merged.eliteFallDamageDisabled = overlay.eliteFallDamageDisabled != null ? overlay.eliteFallDamageDisabled : base.eliteFallDamageDisabled;
-        merged.eliteNoAggroOnElite = overlay.eliteNoAggroOnElite != null ? overlay.eliteNoAggroOnElite : base.eliteNoAggroOnElite;
-
-        merged.enableNameplates = overlay.enableNameplates != null ? overlay.enableNameplates : base.enableNameplates;
-        merged.nameplateMode = overlay.nameplateMode != null ? overlay.nameplateMode : base.nameplateMode;
-        merged.nameplateTierEnabled = overlay.nameplateTierEnabled != null
-                ? Arrays.copyOf(overlay.nameplateTierEnabled, overlay.nameplateTierEnabled.length)
-                : Arrays.copyOf(base.nameplateTierEnabled, base.nameplateTierEnabled.length);
-        merged.nameplatePrefixPerTier = overlay.nameplatePrefixPerTier != null
-                ? Arrays.copyOf(overlay.nameplatePrefixPerTier, overlay.nameplatePrefixPerTier.length)
-                : Arrays.copyOf(base.nameplatePrefixPerTier, base.nameplatePrefixPerTier.length);
-
         if (overlay.tierPrefixesByFamily != null) {
             merged.tierPrefixesByFamily = new LinkedHashMap<>(overlay.tierPrefixesByFamily);
         } else {
             merged.tierPrefixesByFamily = new LinkedHashMap<>(base.tierPrefixesByFamily);
         }
-
-        merged.enableModelScaling = overlay.enableModelScaling != null ? overlay.enableModelScaling : base.enableModelScaling;
-        merged.modelScalePerTier = overlay.modelScalePerTier != null
-                ? Arrays.copyOf(overlay.modelScalePerTier, overlay.modelScalePerTier.length)
-                : Arrays.copyOf(base.modelScalePerTier, base.modelScalePerTier.length);
-        merged.modelScaleVariance = overlay.modelScaleVariance != null ? overlay.modelScaleVariance : base.modelScaleVariance;
-
-        merged.rpgLevelingEnabled = overlay.rpgLevelingEnabled != null ? overlay.rpgLevelingEnabled : base.rpgLevelingEnabled;
-        merged.xpMultiplierPerTier = overlay.xpMultiplierPerTier != null
-                ? Arrays.copyOf(overlay.xpMultiplierPerTier, overlay.xpMultiplierPerTier.length)
-                : Arrays.copyOf(base.xpMultiplierPerTier, base.xpMultiplierPerTier.length);
-        merged.xpBonusPerAbility = overlay.xpBonusPerAbility != null ? overlay.xpBonusPerAbility : base.xpBonusPerAbility;
-        merged.minionXPMultiplier = overlay.minionXPMultiplier != null ? overlay.minionXPMultiplier : base.minionXPMultiplier;
 
         merged.tierOverrides = new LinkedHashMap<>(base.tierOverrides);
         if (overlay.tierOverrides != null) {
@@ -674,33 +526,33 @@ public final class ConfigResolver {
         return out;
     }
 
-    private static @Nullable Boolean getBooleanOrNull(Map<String, Object> yaml, String key) {
+    static @Nullable Boolean getBooleanOrNull(Map<String, Object> yaml, String key) {
         Object v = yaml.get(key);
         if (v == null) return null;
         if (v instanceof Boolean b) return b;
         return Boolean.parseBoolean(String.valueOf(v));
     }
 
-    private static @Nullable String getStringOrNull(Map<String, Object> yaml, String key) {
+    static @Nullable String getStringOrNull(Map<String, Object> yaml, String key) {
         Object v = yaml.get(key);
         return v != null ? String.valueOf(v) : null;
     }
 
-    private static @Nullable Double getDoubleOrNull(Map<String, Object> yaml, String key) {
+    static @Nullable Double getDoubleOrNull(Map<String, Object> yaml, String key) {
         Object v = yaml.get(key);
         if (v == null) return null;
         if (v instanceof Number n) return n.doubleValue();
         try { return Double.parseDouble(String.valueOf(v)); } catch (NumberFormatException e) { return null; }
     }
 
-    private static @Nullable Float getFloatOrNull(Map<String, Object> yaml, String key) {
+    static @Nullable Float getFloatOrNull(Map<String, Object> yaml, String key) {
         Object v = yaml.get(key);
         if (v == null) return null;
         if (v instanceof Number n) return n.floatValue();
         try { return Float.parseFloat(String.valueOf(v)); } catch (NumberFormatException e) { return null; }
     }
 
-    private static double @Nullable [] getDoubleArrayOrNull(Map<String, Object> yaml, String key) {
+    static double @Nullable [] getDoubleArrayOrNull(Map<String, Object> yaml, String key) {
         Object v = yaml.get(key);
         if (!(v instanceof List<?> list)) return null;
         double[] arr = new double[list.size()];
@@ -711,7 +563,7 @@ public final class ConfigResolver {
         return arr;
     }
 
-    private static float @Nullable [] getFloatArrayOrNull(Map<String, Object> yaml, String key) {
+    static float @Nullable [] getFloatArrayOrNull(Map<String, Object> yaml, String key) {
         Object v = yaml.get(key);
         if (!(v instanceof List<?> list)) return null;
         float[] arr = new float[list.size()];
@@ -722,7 +574,7 @@ public final class ConfigResolver {
         return arr;
     }
 
-    private static int @Nullable [] getIntArrayOrNull(Map<String, Object> yaml, String key) {
+    static int @Nullable [] getIntArrayOrNull(Map<String, Object> yaml, String key) {
         Object v = yaml.get(key);
         if (!(v instanceof List<?> list)) return null;
         int[] arr = new int[list.size()];
@@ -733,7 +585,7 @@ public final class ConfigResolver {
         return arr;
     }
 
-    private static boolean @Nullable [] getBooleanArrayOrNull(Map<String, Object> yaml, String key) {
+    static boolean @Nullable [] getBooleanArrayOrNull(Map<String, Object> yaml, String key) {
         Object v = yaml.get(key);
         if (!(v instanceof List<?> list)) return null;
         boolean[] arr = new boolean[list.size()];
@@ -748,7 +600,7 @@ public final class ConfigResolver {
         return Boolean.parseBoolean(String.valueOf(value));
     }
 
-    private static RPGMobsConfig.@Nullable ExtraDropRule parseExtraDropRule(Map<String, Object> map) {
+    static RPGMobsConfig.@Nullable ExtraDropRule parseExtraDropRule(Map<String, Object> map) {
         RPGMobsConfig.ExtraDropRule rule = new RPGMobsConfig.ExtraDropRule();
         Object itemId = map.get("itemId");
         if (itemId == null) return null;
@@ -779,7 +631,7 @@ public final class ConfigResolver {
         return to;
     }
 
-    private static double getDoubleOr(Map<String, Object> map, String key, double defaultValue) {
+    static double getDoubleOr(Map<String, Object> map, String key, double defaultValue) {
         Object v = map.get(key);
         if (v instanceof Number n) return n.doubleValue();
         if (v != null) {
@@ -788,7 +640,7 @@ public final class ConfigResolver {
         return defaultValue;
     }
 
-    private static int getIntOr(Map<String, Object> map, String key, int defaultValue) {
+    static int getIntOr(Map<String, Object> map, String key, int defaultValue) {
         Object v = map.get(key);
         if (v instanceof Number n) return n.intValue();
         if (v != null) {
@@ -797,7 +649,7 @@ public final class ConfigResolver {
         return defaultValue;
     }
 
-    private static RPGMobsConfig.MobRule parseMobRule(Map<String, Object> map) {
+    static RPGMobsConfig.MobRule parseMobRule(Map<String, Object> map) {
         RPGMobsConfig.MobRule rule = new RPGMobsConfig.MobRule();
         Boolean enabled = getBooleanOrNull(map, "enabled");
         if (enabled != null) rule.enabled = enabled;
@@ -819,7 +671,7 @@ public final class ConfigResolver {
         return rule;
     }
 
-    private static RPGMobsConfig.MobRuleCategory parseMobRuleCategory(Map<String, Object> map) {
+    static RPGMobsConfig.MobRuleCategory parseMobRuleCategory(Map<String, Object> map) {
         RPGMobsConfig.MobRuleCategory cat = new RPGMobsConfig.MobRuleCategory();
         String name = getStringOrNull(map, "name");
         if (name != null) cat.name = name;
@@ -870,7 +722,7 @@ public final class ConfigResolver {
         return cat;
     }
 
-    private static List<String> getStringList(Map<String, Object> map, String key) {
+    static List<String> getStringList(Map<String, Object> map, String key) {
         Object v = map.get(key);
         if (!(v instanceof List<?> list)) return List.of();
         var result = new ArrayList<String>();

@@ -4,7 +4,6 @@ import com.frotty27.rpgmobs.assets.AssetConfig;
 import com.frotty27.rpgmobs.assets.AssetType;
 import com.frotty27.rpgmobs.assets.TieredAssetConfig;
 import com.frotty27.rpgmobs.config.schema.*;
-import com.frotty27.rpgmobs.features.RPGMobsUndeadSummonAbilityFeature;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
 import com.frotty27.rpgmobs.utils.MobRuleCategoryHelpers;
 import com.google.gson.Gson;
@@ -3398,15 +3397,15 @@ public final class RPGMobsConfig {
             if (this == o) return true;
             if (!(o instanceof ExtraDropRule that)) return false;
             return Double.compare(that.chance, chance) == 0
-                    && java.util.Arrays.equals(enabledPerTier, that.enabledPerTier)
+                    && Arrays.equals(enabledPerTier, that.enabledPerTier)
                     && minQty == that.minQty
                     && maxQty == that.maxQty
-                    && java.util.Objects.equals(itemId, that.itemId);
+                    && Objects.equals(itemId, that.itemId);
         }
 
         @Override
         public int hashCode() {
-            return java.util.Objects.hash(itemId, chance, java.util.Arrays.hashCode(enabledPerTier), minQty, maxQty);
+            return Objects.hash(itemId, chance, Arrays.hashCode(enabledPerTier), minQty, maxQty);
         }
     }
 
@@ -3427,14 +3426,14 @@ public final class RPGMobsConfig {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof GearCategory that)) return false;
-            return java.util.Objects.equals(name, that.name)
-                    && java.util.Objects.equals(children, that.children)
-                    && java.util.Objects.equals(itemKeys, that.itemKeys);
+            return Objects.equals(name, that.name)
+                    && Objects.equals(children, that.children)
+                    && Objects.equals(itemKeys, that.itemKeys);
         }
 
         @Override
         public int hashCode() {
-            return java.util.Objects.hash(name, children, itemKeys);
+            return Objects.hash(name, children, itemKeys);
         }
     }
 
@@ -3455,14 +3454,14 @@ public final class RPGMobsConfig {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof MobRuleCategory that)) return false;
-            return java.util.Objects.equals(name, that.name)
-                    && java.util.Objects.equals(children, that.children)
-                    && java.util.Objects.equals(mobRuleKeys, that.mobRuleKeys);
+            return Objects.equals(name, that.name)
+                    && Objects.equals(children, that.children)
+                    && Objects.equals(mobRuleKeys, that.mobRuleKeys);
         }
 
         @Override
         public int hashCode() {
-            return java.util.Objects.hash(name, children, mobRuleKeys);
+            return Objects.hash(name, children, mobRuleKeys);
         }
     }
 
@@ -3483,14 +3482,14 @@ public final class RPGMobsConfig {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof LootTemplate that)) return false;
-            return java.util.Objects.equals(name, that.name)
-                    && java.util.Objects.equals(drops, that.drops)
-                    && java.util.Objects.equals(linkedMobRuleKeys, that.linkedMobRuleKeys);
+            return Objects.equals(name, that.name)
+                    && Objects.equals(drops, that.drops)
+                    && Objects.equals(linkedMobRuleKeys, that.linkedMobRuleKeys);
         }
 
         @Override
         public int hashCode() {
-            return java.util.Objects.hash(name, drops, linkedMobRuleKeys);
+            return Objects.hash(name, drops, linkedMobRuleKeys);
         }
     }
 
@@ -3511,14 +3510,14 @@ public final class RPGMobsConfig {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof LootTemplateCategory that)) return false;
-            return java.util.Objects.equals(name, that.name)
-                    && java.util.Objects.equals(children, that.children)
-                    && java.util.Objects.equals(templateKeys, that.templateKeys);
+            return Objects.equals(name, that.name)
+                    && Objects.equals(children, that.children)
+                    && Objects.equals(templateKeys, that.templateKeys);
         }
 
         @Override
         public int hashCode() {
-            return java.util.Objects.hash(name, children, templateKeys);
+            return Objects.hash(name, children, templateKeys);
         }
     }
 
@@ -3544,22 +3543,22 @@ public final class RPGMobsConfig {
             if (this == o) return true;
             if (!(o instanceof MobRule that)) return false;
             return enabled == that.enabled
-                    && java.util.Arrays.equals(enableWeaponOverrideForTier, that.enableWeaponOverrideForTier)
+                    && Arrays.equals(enableWeaponOverrideForTier, that.enableWeaponOverrideForTier)
                     && weaponOverrideMode == that.weaponOverrideMode
-                    && java.util.Objects.equals(matchExact, that.matchExact)
-                    && java.util.Objects.equals(matchStartsWith, that.matchStartsWith)
-                    && java.util.Objects.equals(matchContains, that.matchContains)
-                    && java.util.Objects.equals(matchExcludes, that.matchExcludes)
-                    && java.util.Objects.equals(allowedWeaponCategories, that.allowedWeaponCategories)
-                    && java.util.Objects.equals(allowedArmorCategories, that.allowedArmorCategories)
-                    && java.util.Objects.equals(allowedArmorSlots, that.allowedArmorSlots);
+                    && Objects.equals(matchExact, that.matchExact)
+                    && Objects.equals(matchStartsWith, that.matchStartsWith)
+                    && Objects.equals(matchContains, that.matchContains)
+                    && Objects.equals(matchExcludes, that.matchExcludes)
+                    && Objects.equals(allowedWeaponCategories, that.allowedWeaponCategories)
+                    && Objects.equals(allowedArmorCategories, that.allowedArmorCategories)
+                    && Objects.equals(allowedArmorSlots, that.allowedArmorSlots);
         }
 
         @Override
         public int hashCode() {
-            int result = java.util.Objects.hash(enabled, weaponOverrideMode, matchExact, matchStartsWith,
+            int result = Objects.hash(enabled, weaponOverrideMode, matchExact, matchStartsWith,
                     matchContains, matchExcludes, allowedWeaponCategories, allowedArmorCategories, allowedArmorSlots);
-            result = 31 * result + java.util.Arrays.hashCode(enableWeaponOverrideForTier);
+            result = 31 * result + Arrays.hashCode(enableWeaponOverrideForTier);
             return result;
         }
     }
@@ -3617,7 +3616,7 @@ public final class RPGMobsConfig {
     public void populateSummonMarkerEntriesIfEmpty() {
         SummonAbilityConfig summonConfig = null;
         if (abilitiesConfig.defaultAbilities != null) {
-            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
+            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return;
@@ -3642,7 +3641,7 @@ public final class RPGMobsConfig {
     public void populateSummonMarkerEntriesByRoleIfEmpty() {
         SummonAbilityConfig summonConfig = null;
         if (abilitiesConfig.defaultAbilities != null) {
-            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
+            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return;
@@ -3895,7 +3894,7 @@ public final class RPGMobsConfig {
     public void upgradeSummonMarkerEntriesToVariantIds() {
         SummonAbilityConfig summonConfig = null;
         if (abilitiesConfig.defaultAbilities != null) {
-            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
+            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return;
@@ -3922,7 +3921,7 @@ public final class RPGMobsConfig {
     public boolean isSummonMarkerEntriesEmpty() {
         SummonAbilityConfig summonConfig = null;
         if (abilitiesConfig.defaultAbilities != null) {
-            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
+            AbilityConfig abilityConfig = abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
             if (abilityConfig instanceof SummonAbilityConfig s) summonConfig = s;
         }
         if (summonConfig == null) return true;

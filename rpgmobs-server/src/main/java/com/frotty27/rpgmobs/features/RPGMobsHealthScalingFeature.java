@@ -12,10 +12,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.Nullable;
-
-import static com.frotty27.rpgmobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 public final class RPGMobsHealthScalingFeature implements IRPGMobsFeature {
 
@@ -30,25 +27,23 @@ public final class RPGMobsHealthScalingFeature implements IRPGMobsFeature {
     }
 
     @Override
-    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                      Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                      RPGMobsTierComponent tierComponent, @Nullable String roleName) {
-        if (config.healthConfig.enableMobHealthScaling) {
+    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                      Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                      CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                      @Nullable String roleName) {
+        if (resolved.enableHealthScaling) {
             RPGMobsHealthScalingComponent healthScaling = new RPGMobsHealthScalingComponent();
             commandBuffer.putComponent(npcRef, plugin.getHealthScalingComponentType(), healthScaling);
         }
     }
 
     @Override
-    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                          Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                          RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                          Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                          CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                          @Nullable String roleName) {
         RPGMobsHealthScalingComponent healthComp = entityStore.getComponent(npcRef,
                 plugin.getHealthScalingComponentType());
-
-        NPCEntity npc = entityStore.getComponent(npcRef, NPC_COMPONENT_TYPE);
-        String worldName = (npc != null && npc.getWorld() != null) ? npc.getWorld().getName() : null;
-        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
 
         if (!resolved.enableHealthScaling) {
             if (healthComp != null && healthComp.healthApplied) {
@@ -70,6 +65,23 @@ public final class RPGMobsHealthScalingFeature implements IRPGMobsFeature {
             healthComp = new RPGMobsHealthScalingComponent();
             commandBuffer.putComponent(npcRef, plugin.getHealthScalingComponentType(), healthComp);
         }
+    }
+
+    @Override
+    public void cleanup(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
+                        Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+        RPGMobsHealthScalingComponent healthComp = entityStore.getComponent(npcRef,
+                plugin.getHealthScalingComponentType());
+        if (healthComp != null && healthComp.healthApplied) {
+            EntityStatMap entityStats = entityStore.getComponent(npcRef, EntityStatMap.getComponentType());
+            if (entityStats != null) {
+                int healthStatId = DefaultEntityStatTypes.getHealth();
+                entityStats.removeModifier(healthStatId, getFeatureKey());
+                entityStats.maximizeStatValue(healthStatId);
+                commandBuffer.replaceComponent(npcRef, EntityStatMap.getComponentType(), entityStats);
+            }
+        }
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getHealthScalingComponentType());
     }
 
     @Override

@@ -1,102 +1,88 @@
 package com.frotty27.rpgmobs.features;
 
-import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
-import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
-import com.frotty27.rpgmobs.rules.AbilityGateEvaluator;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
-import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Random;
 
-public final class RPGMobsHealLeapAbilityFeature implements IRPGMobsAbilityFeature {
-
-    public static final String ABILITY_HEAL_LEAP = AbilityIds.HEAL_LEAP;
-
-    private final Random random = new Random();
+public final class RPGMobsHealLeapAbilityFeature
+        extends AbstractGatedAbilityFeature<HealLeapAbilityComponent, RPGMobsConfig.HealLeapAbilityConfig> {
 
     @Override
     public String id() {
-        return ABILITY_HEAL_LEAP;
+        return AbilityIds.HEAL_LEAP;
     }
 
     @Override
-    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                      Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                      RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    public String displayName() {
+        return "Heal Leap";
+    }
 
-        RPGMobsConfig.AbilityConfig rawHealConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.HEAL_LEAP);
-        RPGMobsConfig.HealLeapAbilityConfig abilityConfig = (rawHealConfig instanceof RPGMobsConfig.HealLeapAbilityConfig hl) ? hl : null;
+    @Override
+    public RPGMobsConfig.AbilityConfig createDefaultConfig() {
+        return new RPGMobsConfig.HealLeapAbilityConfig();
+    }
 
-        if (abilityConfig == null) {
-            return;
-        }
+    @Override
+    public List<AbilityConfigField> describeConfigFields() {
+        return List.of(
+                new AbilityConfigField.ScalarFloat("Min Health Trigger %",
+                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).minHealthTriggerPercent,
+                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).minHealthTriggerPercent = value),
+                new AbilityConfigField.ScalarFloat("Max Health Trigger %",
+                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).maxHealthTriggerPercent,
+                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).maxHealthTriggerPercent = value),
+                new AbilityConfigField.ScalarFloat("Instant Heal Chance",
+                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).instantHealChance,
+                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).instantHealChance = value),
+                new AbilityConfigField.ScalarFloat("Drink Duration (s)",
+                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).npcDrinkDurationSeconds,
+                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).npcDrinkDurationSeconds = value),
+                new AbilityConfigField.ScalarString("Drink Item ID",
+                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).npcDrinkItemId,
+                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).npcDrinkItemId = value),
+                new AbilityConfigField.PerTierFloat("Instant Heal Amount",
+                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).instantHealAmountPerTier,
+                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).instantHealAmountPerTier = value),
+                new AbilityConfigField.PerTierFloat("Apply Force",
+                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).applyForcePerTier,
+                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).applyForcePerTier = value)
+        );
+    }
 
-        int tierIndex = tierComponent.tierIndex;
-        ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
-        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
-        String matchedRuleKey = tierComponent.matchedRuleKey;
+    @Override
+    protected Class<RPGMobsConfig.HealLeapAbilityConfig> configClass() {
+        return RPGMobsConfig.HealLeapAbilityConfig.class;
+    }
 
-        if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.HEAL_LEAP, weaponId, tierIndex, matchedRuleKey, resolved)) {
-            return;
-        }
+    @Override
+    protected ComponentType<EntityStore, HealLeapAbilityComponent> componentType(RPGMobsPlugin plugin) {
+        return plugin.getHealLeapAbilityComponentType();
+    }
 
-        float spawnChance = tierIndex < abilityConfig.chancePerTier.length ? abilityConfig.chancePerTier[tierIndex] : 0f;
+    @Override
+    protected HealLeapAbilityComponent getComponent(Store<EntityStore> store, Ref<EntityStore> ref,
+                                                    RPGMobsPlugin plugin) {
+        return store.getComponent(ref, plugin.getHealLeapAbilityComponentType());
+    }
 
-        boolean enabled = random.nextFloat() < spawnChance;
+    @Override
+    protected HealLeapAbilityComponent createComponent(RPGMobsConfig.HealLeapAbilityConfig abilityConfig,
+                                                       int tierIndex, boolean enabled, Random random) {
+        float triggerHealthPercent = abilityConfig.minHealthTriggerPercent
+                + random.nextFloat() * (abilityConfig.maxHealthTriggerPercent - abilityConfig.minHealthTriggerPercent);
 
-        float triggerHealthPercent = abilityConfig.minHealthTriggerPercent + random.nextFloat() * (abilityConfig.maxHealthTriggerPercent - abilityConfig.minHealthTriggerPercent);
-
-        HealLeapAbilityComponent component = new HealLeapAbilityComponent();
+        var component = new HealLeapAbilityComponent();
         component.abilityEnabled = enabled;
         component.triggerHealthPercent = triggerHealthPercent;
         component.cooldownTicksRemaining = 0L;
-
-        commandBuffer.putComponent(npcRef, plugin.getHealLeapAbilityComponentType(), component);
-    }
-
-    @Override
-    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                          Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                          RPGMobsTierComponent tierComponent, @Nullable String roleName) {
-        HealLeapAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getHealLeapAbilityComponentType());
-
-        RPGMobsConfig.AbilityConfig rawHealRecon = config.abilitiesConfig.defaultAbilities.get(AbilityIds.HEAL_LEAP);
-        RPGMobsConfig.HealLeapAbilityConfig abilityConfig = (rawHealRecon instanceof RPGMobsConfig.HealLeapAbilityConfig hl) ? hl : null;
-
-        if (abilityConfig == null) {
-            if (comp != null && comp.abilityEnabled) {
-                comp.abilityEnabled = false;
-                commandBuffer.replaceComponent(npcRef, plugin.getHealLeapAbilityComponentType(), comp);
-            }
-            return;
-        }
-
-        int tierIndex = tierComponent.tierIndex;
-        ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
-        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
-        String matchedRuleKey = tierComponent.matchedRuleKey;
-
-        boolean allowed = AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.HEAL_LEAP, weaponId, tierIndex, matchedRuleKey, resolved);
-
-        if (comp == null) {
-            if (allowed) {
-                apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
-            }
-            return;
-        }
-
-        if (!allowed && comp.abilityEnabled) {
-            comp.abilityEnabled = false;
-            commandBuffer.replaceComponent(npcRef, plugin.getHealLeapAbilityComponentType(), comp);
-        } else if (allowed && !comp.abilityEnabled) {
-            apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
-        }
+        return component;
     }
 }

@@ -2,12 +2,12 @@ package com.frotty27.rpgmobs.features;
 
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.Nullable;
 
 public interface IRPGMobsFeature {
@@ -24,20 +24,20 @@ public interface IRPGMobsFeature {
         return null;
     }
 
-    void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
-               CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent, @Nullable String roleName);
+    void apply(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved, Ref<EntityStore> npcRef,
+               Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
+               RPGMobsTierComponent tierComponent, @Nullable String roleName);
 
-    default void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                           Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                           RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    default void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                           Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                           CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                           @Nullable String roleName) {
+    }
+
+    default void cleanup(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
+                         Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
     }
 
     default void registerSystems(RPGMobsPlugin plugin) {
-    }
-
-    default void onDamage(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> victimRef,
-                          Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                          RPGMobsTierComponent tierComponent, @Nullable NPCEntity npcEntity, int tierIndex,
-                          long currentTick, com.hypixel.hytale.server.core.modules.entity.damage.Damage damage) {
     }
 }

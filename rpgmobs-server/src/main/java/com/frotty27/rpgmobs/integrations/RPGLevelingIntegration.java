@@ -13,6 +13,7 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.zuxaw.plugin.api.ExperienceGainedEvent;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -101,7 +102,7 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
         ResolvedConfig resolved = plugin.getResolvedConfig(data.worldName);
         if (!resolved.rpgLevelingEnabled) return;
 
-        var xpEvent = (org.zuxaw.plugin.api.ExperienceGainedEvent) event;
+        var xpEvent = (ExperienceGainedEvent) event;
         double baseXP = xpEvent.getXpAmount();
 
         if (data.minion) {

@@ -10,7 +10,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.Nullable;
 
-public final class SummonUndeadAbilityComponent implements Component<EntityStore> {
+public final class SummonUndeadAbilityComponent implements AbilityEnabledComponent {
 
     public boolean abilityEnabled;
 
@@ -52,6 +52,16 @@ public final class SummonUndeadAbilityComponent implements Component<EntityStore
         this.cooldownTicksRemaining = 0L;
         this.pendingSummonTicksRemaining = 0L;
         this.pendingSummonRole = null;
+    }
+
+    @Override
+    public boolean isAbilityEnabled() {
+        return abilityEnabled;
+    }
+
+    @Override
+    public void setAbilityEnabled(boolean enabled) {
+        this.abilityEnabled = enabled;
     }
 
     @Override

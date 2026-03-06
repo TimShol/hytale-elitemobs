@@ -4,6 +4,9 @@ import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
 final class AdminUIData {
 
     private static BuilderCodec.Builder<AdminUIData> b() {
@@ -11,8 +14,8 @@ final class AdminUIData {
     }
 
     private static BuilderCodec.Builder<AdminUIData> addString(BuilderCodec.Builder<AdminUIData> builder, String key,
-                                                                java.util.function.BiConsumer<AdminUIData, String> setter,
-                                                                java.util.function.Function<AdminUIData, String> getter) {
+                                                                BiConsumer<AdminUIData, String> setter,
+                                                                Function<AdminUIData, String> getter) {
         return builder.append(new KeyedCodec<>(key, Codec.STRING), setter, getter).add();
     }
 

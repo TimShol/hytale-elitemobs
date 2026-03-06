@@ -1,7 +1,7 @@
 package com.frotty27.rpgmobs.services;
 
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
-import com.frotty27.rpgmobs.utils.MobRuleCategoryHelpers;
+import com.frotty27.rpgmobs.utils.EquipmentHelpers;
 import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
@@ -154,11 +154,7 @@ public final class RPGMobsEquipmentService {
     }
 
     private static String identifyArmorSlotType(String itemId) {
-        if (itemId.endsWith("_Head")) return "HEAD";
-        if (itemId.endsWith("_Chest")) return "CHEST";
-        if (itemId.endsWith("_Hands")) return "HANDS";
-        if (itemId.endsWith("_Legs")) return "LEGS";
-        return null;
+        return EquipmentHelpers.identifyArmorSlotType(itemId);
     }
 
     private boolean equipArmor(ItemContainer armorContainer, RPGMobsConfig config, int tierIndex,
@@ -363,22 +359,11 @@ public final class RPGMobsEquipmentService {
     }
 
     private boolean isOneHandedWeaponIdInternal(RPGMobsConfig config, String weaponItemId) {
-        String lowercaseWeaponId = weaponItemId.toLowerCase(Locale.ROOT);
-        if (lowercaseWeaponId.contains(SHIELD_TOKEN)) return false;
-
-        if (config.gearConfig.twoHandedWeaponIds == null) return true;
-
-        for (String twoHandedWeaponIdFragment : config.gearConfig.twoHandedWeaponIds) {
-            if (twoHandedWeaponIdFragment == null || twoHandedWeaponIdFragment.isBlank()) continue;
-            if (lowercaseWeaponId.contains(twoHandedWeaponIdFragment.toLowerCase(Locale.ROOT))) return false;
-        }
-
-        return true;
+        return EquipmentHelpers.isOneHandedWeapon(config.gearConfig.twoHandedWeaponIds, weaponItemId);
     }
 
     private boolean isShieldItemId(String itemId) {
-        if (itemId == null || itemId.isBlank()) return false;
-        return itemId.toLowerCase(Locale.ROOT).contains(SHIELD_TOKEN);
+        return EquipmentHelpers.isShieldItemId(itemId);
     }
 
     private String pickShieldForTier(RPGMobsConfig config, int tierIndex) {
@@ -466,78 +451,17 @@ public final class RPGMobsEquipmentService {
 
     private static boolean passesWeaponCategoryFilter(String weaponId, List<String> allowedCategories,
                                                       RPGMobsConfig.GearCategory weaponTree) {
-        if (allowedCategories == null || allowedCategories.isEmpty()) return true;
-        for (String entry : allowedCategories) {
-            if (MobRuleCategoryHelpers.isCategoryKey(entry)) {
-                if (weaponTree == null) continue;
-                String catName = MobRuleCategoryHelpers.fromCategoryKey(entry);
-                RPGMobsConfig.GearCategory cat = MobRuleCategoryHelpers.findGearCategoryByName(weaponTree, catName);
-                if (cat != null && MobRuleCategoryHelpers.collectAllGearItemKeys(cat).contains(weaponId)) return true;
-            } else {
-                if (entry.equals(weaponId)) return true;
-            }
-        }
-        return false;
+        return EquipmentHelpers.passesWeaponCategoryFilter(weaponId, allowedCategories, weaponTree);
     }
-
-    private static final String[] ARMOR_SLOT_SUFFIXES = {"_Head", "_Chest", "_Hands", "_Legs"};
 
     private static List<String> filterArmorMaterialsByCategory(List<String> materials,
                                                                 List<String> allowedCategories,
                                                                 RPGMobsConfig.GearCategory armorTree) {
-        if (allowedCategories == null || allowedCategories.isEmpty()) return materials;
-        Set<String> allowed = new HashSet<>();
-        Set<String> directItems = new HashSet<>();
-        for (String entry : allowedCategories) {
-            if (MobRuleCategoryHelpers.isCategoryKey(entry)) {
-                if (armorTree == null) continue;
-                String catName = MobRuleCategoryHelpers.fromCategoryKey(entry);
-                RPGMobsConfig.GearCategory cat = MobRuleCategoryHelpers.findGearCategoryByName(armorTree, catName);
-                if (cat != null) {
-                    allowed.addAll(MobRuleCategoryHelpers.collectAllGearItemKeys(cat));
-                }
-            } else {
-                directItems.add(entry);
-            }
-        }
-        List<String> filtered = new ArrayList<>();
-        for (String material : materials) {
-            boolean matched = false;
-            for (String suffix : ARMOR_SLOT_SUFFIXES) {
-                String fullId = ARMOR_PREFIX + material + suffix;
-                if (allowed.contains(fullId) || directItems.contains(fullId)) {
-                    matched = true;
-                    break;
-                }
-            }
-            if (matched) filtered.add(material);
-        }
-        return filtered;
+        return EquipmentHelpers.filterArmorMaterialsByCategory(materials, allowedCategories, armorTree);
     }
 
     private String pickRarityForTier(RPGMobsConfig config, int tierIndex) {
-        if (config.gearConfig.defaultTierEquipmentRarityWeights == null || config.gearConfig.defaultTierEquipmentRarityWeights.isEmpty()) {
-            return DEFAULT_RARITY;
-        }
-
-        if (tierIndex < 0 || tierIndex >= config.gearConfig.defaultTierEquipmentRarityWeights.size()) {
-            return DEFAULT_RARITY;
-        }
-
-        Map<String, Double> weights = config.gearConfig.defaultTierEquipmentRarityWeights.get(tierIndex);
-        if (weights == null || weights.isEmpty()) return DEFAULT_RARITY;
-
-        double totalWeight = 0.0;
-        for (double weight : weights.values()) totalWeight += Math.max(0.0, weight);
-        if (totalWeight <= 0.0) return DEFAULT_RARITY;
-
-        double selection = random.nextDouble() * totalWeight;
-        for (Map.Entry<String, Double> entry : weights.entrySet()) {
-            selection -= Math.max(0.0, entry.getValue());
-            if (selection <= 0.0) return entry.getKey();
-        }
-
-        return weights.keySet().iterator().next();
+        return EquipmentHelpers.pickRarityForTier(config.gearConfig.defaultTierEquipmentRarityWeights, tierIndex, random);
     }
 
     private List<String> allowedRaritiesForTier(RPGMobsConfig config, int tierIndex) {
@@ -564,40 +488,10 @@ public final class RPGMobsEquipmentService {
     }
 
     private String classifyArmorRarity(RPGMobsConfig config, String armorMaterial) {
-        if (config.gearConfig.defaultArmorRarityRules == null || config.gearConfig.defaultArmorRarityRules.isEmpty())
-            return DEFAULT_RARITY;
-
-        String lowercaseMaterial = armorMaterial.toLowerCase(Locale.ROOT);
-
-        for (Map.Entry<String, String> entry : config.gearConfig.defaultArmorRarityRules.entrySet()) {
-            String matchFragment = entry.getKey();
-            if (matchFragment == null || matchFragment.isBlank()) continue;
-
-            if (lowercaseMaterial.contains(matchFragment.toLowerCase(Locale.ROOT))) {
-                String rarity = entry.getValue();
-                return (rarity == null || rarity.isBlank()) ? DEFAULT_RARITY : rarity;
-            }
-        }
-
-        return DEFAULT_RARITY;
+        return EquipmentHelpers.classifyArmorRarity(config.gearConfig.defaultArmorRarityRules, armorMaterial);
     }
 
     private String classifyWeaponRarity(RPGMobsConfig config, String itemId) {
-        if (config.gearConfig.defaultWeaponRarityRules == null || config.gearConfig.defaultWeaponRarityRules.isEmpty())
-            return DEFAULT_RARITY;
-
-        String lowercaseItemId = itemId.toLowerCase(Locale.ROOT);
-
-        for (Map.Entry<String, String> entry : config.gearConfig.defaultWeaponRarityRules.entrySet()) {
-            String matchFragment = entry.getKey();
-            if (matchFragment == null || matchFragment.isBlank()) continue;
-
-            if (lowercaseItemId.contains(matchFragment.toLowerCase(Locale.ROOT))) {
-                String rarity = entry.getValue();
-                return (rarity == null || rarity.isBlank()) ? DEFAULT_RARITY : rarity;
-            }
-        }
-
-        return DEFAULT_RARITY;
+        return EquipmentHelpers.classifyWeaponRarity(config.gearConfig.defaultWeaponRarityRules, itemId);
     }
 }

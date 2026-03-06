@@ -7,7 +7,7 @@ import com.frotty27.rpgmobs.exceptions.TemplatePlaceholderException;
 import com.frotty27.rpgmobs.exceptions.TemplateSyntaxException;
 import com.frotty27.rpgmobs.features.IRPGMobsFeature;
 import com.frotty27.rpgmobs.features.RPGMobsFeatureRegistry;
-import com.frotty27.rpgmobs.features.RPGMobsUndeadSummonAbilityFeature;
+import com.frotty27.rpgmobs.systems.ability.AbilityIds;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -643,7 +643,7 @@ public final class RPGMobsAssetGenerator {
     private static int generateSummonRoleAssets(Path outputRootDirectory, RPGMobsConfig config) throws IOException {
         if (config == null || config.abilitiesConfig == null || config.abilitiesConfig.defaultAbilities == null)
             return 0;
-        var abilityConfig = config.abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
+        var abilityConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
         if (!(abilityConfig instanceof RPGMobsConfig.SummonAbilityConfig summonConfig)) return 0;
         cleanupSummonRoleAssets(outputRootDirectory);
         if (summonConfig.spawnMarkerEntriesByRole == null || summonConfig.spawnMarkerEntriesByRole.isEmpty()) {
@@ -711,7 +711,7 @@ public final class RPGMobsAssetGenerator {
                                                        RPGMobsConfig config) throws IOException {
         if (config == null || config.abilitiesConfig == null || config.abilitiesConfig.defaultAbilities == null)
             return 0;
-        var abilityConfig = config.abilitiesConfig.defaultAbilities.get(RPGMobsUndeadSummonAbilityFeature.ABILITY_UNDEAD_SUMMON);
+        var abilityConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.SUMMON_UNDEAD);
         if (!(abilityConfig instanceof RPGMobsConfig.SummonAbilityConfig summonConfig)) return 0;
         cleanupSummonMarkerAssets(outputRootDirectory);
         if (summonConfig.spawnMarkerEntriesByRole == null || summonConfig.spawnMarkerEntriesByRole.isEmpty()) {

@@ -10,7 +10,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public final class ConfigWriter {
@@ -48,7 +51,7 @@ public final class ConfigWriter {
     static Map<String, Object> overlayToMap(ConfigOverlay overlay) {
         Map<String, Object> map = new LinkedHashMap<>();
 
-        putIfNotNull(map, "enabled", overlay.enabled);
+        OverlayFieldRegistry.writeAll(overlay, map);
 
         putIfNotNull(map, "progressionStyle", overlay.progressionStyle);
         putDoubleArrayIfNotNull(map, "spawnChancePerTier", overlay.spawnChancePerTier);
@@ -66,20 +69,6 @@ public final class ConfigWriter {
                 map.put("environmentTierRules", envMap);
             }
         }
-
-        putIfNotNull(map, "distancePerTier", overlay.distancePerTier);
-        putIfNotNull(map, "distanceBonusInterval", overlay.distanceBonusInterval);
-        putIfNotNull(map, "distanceHealthBonusPerInterval", overlay.distanceHealthBonusPerInterval);
-        putIfNotNull(map, "distanceDamageBonusPerInterval", overlay.distanceDamageBonusPerInterval);
-        putIfNotNull(map, "distanceHealthBonusCap", overlay.distanceHealthBonusCap);
-        putIfNotNull(map, "distanceDamageBonusCap", overlay.distanceDamageBonusCap);
-
-        putIfNotNull(map, "enableHealthScaling", overlay.enableHealthScaling);
-        putFloatArrayIfNotNull(map, "healthMultiplierPerTier", overlay.healthMultiplierPerTier);
-        putIfNotNull(map, "healthRandomVariance", overlay.healthRandomVariance != null ? (double) overlay.healthRandomVariance : null);
-        putIfNotNull(map, "enableDamageScaling", overlay.enableDamageScaling);
-        putFloatArrayIfNotNull(map, "damageMultiplierPerTier", overlay.damageMultiplierPerTier);
-        putIfNotNull(map, "damageRandomVariance", overlay.damageRandomVariance != null ? (double) overlay.damageRandomVariance : null);
 
         if (overlay.abilityOverlays != null && !overlay.abilityOverlays.isEmpty()) {
             Map<String, Object> aoMap = new LinkedHashMap<>();
@@ -104,36 +93,9 @@ public final class ConfigWriter {
             if (!aoMap.isEmpty()) map.put("abilityOverlays", aoMap);
         }
 
-        putIntArrayIfNotNull(map, "vanillaDroplistExtraRollsPerTier", overlay.vanillaDroplistExtraRollsPerTier);
-        putIfNotNull(map, "dropWeaponChance", overlay.dropWeaponChance);
-        putIfNotNull(map, "dropArmorPieceChance", overlay.dropArmorPieceChance);
-        putIfNotNull(map, "dropOffhandItemChance", overlay.dropOffhandItemChance);
-        putIfNotNull(map, "droppedGearDurabilityMin", overlay.droppedGearDurabilityMin);
-        putIfNotNull(map, "droppedGearDurabilityMax", overlay.droppedGearDurabilityMax);
-        putIfNotNull(map, "defaultLootTemplate", overlay.defaultLootTemplate);
-
-        putIfNotNull(map, "eliteFriendlyFireDisabled", overlay.eliteFriendlyFireDisabled);
-        putIfNotNull(map, "eliteFallDamageDisabled", overlay.eliteFallDamageDisabled);
-        putIfNotNull(map, "eliteNoAggroOnElite", overlay.eliteNoAggroOnElite);
-
-        putIfNotNull(map, "enableNameplates", overlay.enableNameplates);
-        putIfNotNull(map, "nameplateMode", overlay.nameplateMode);
-        putBooleanArrayIfNotNull(map, "nameplateTierEnabled", overlay.nameplateTierEnabled);
-        if (overlay.nameplatePrefixPerTier != null) {
-            map.put("nameplatePrefixPerTier", Arrays.asList(overlay.nameplatePrefixPerTier));
-        }
         if (overlay.tierPrefixesByFamily != null && !overlay.tierPrefixesByFamily.isEmpty()) {
             map.put("tierPrefixesByFamily", new LinkedHashMap<>(overlay.tierPrefixesByFamily));
         }
-
-        putIfNotNull(map, "enableModelScaling", overlay.enableModelScaling);
-        putFloatArrayIfNotNull(map, "modelScalePerTier", overlay.modelScalePerTier);
-        putIfNotNull(map, "modelScaleVariance", overlay.modelScaleVariance != null ? (double) overlay.modelScaleVariance : null);
-
-        putIfNotNull(map, "rpgLevelingEnabled", overlay.rpgLevelingEnabled);
-        putFloatArrayIfNotNull(map, "xpMultiplierPerTier", overlay.xpMultiplierPerTier);
-        putIfNotNull(map, "xpBonusPerAbility", overlay.xpBonusPerAbility);
-        putIfNotNull(map, "minionXPMultiplier", overlay.minionXPMultiplier);
 
         if (overlay.tierOverrides != null && !overlay.tierOverrides.isEmpty()) {
             Map<String, Object> toMap = new LinkedHashMap<>();

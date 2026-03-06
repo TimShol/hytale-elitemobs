@@ -8,6 +8,7 @@ import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.data.EffectState;
 import com.frotty27.rpgmobs.components.effects.RPGMobsActiveEffectsComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
@@ -56,9 +57,10 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
     }
 
     @Override
-    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                      Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                      RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                      Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                      CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                      @Nullable String roleName) {
         var activeEffects = new RPGMobsActiveEffectsComponent();
         commandBuffer.putComponent(npcRef, plugin.getActiveEffectsComponentType(), activeEffects);
 
@@ -66,9 +68,10 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
     }
 
     @Override
-    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                          Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                          RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                          Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                          CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                          @Nullable String roleName) {
         var activeEffects = entityStore.getComponent(npcRef, plugin.getActiveEffectsComponentType());
         if (activeEffects == null) {
             activeEffects = new RPGMobsActiveEffectsComponent();
@@ -304,6 +307,15 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         activeEffects.removeEffect(effectKey);
 
         return true;
+    }
+
+    @Override
+    public void cleanup(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
+                        Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+        RPGMobsTierComponent tierComp = entityStore.getComponent(npcRef, plugin.getRPGMobsComponentType());
+        int tierIndex = tierComp != null ? clampTierIndex(tierComp.tierIndex) : 0;
+        clearAllEffects(config, npcRef, entityStore, commandBuffer, tierIndex);
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getActiveEffectsComponentType());
     }
 
     public void clearAllEffects(RPGMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
