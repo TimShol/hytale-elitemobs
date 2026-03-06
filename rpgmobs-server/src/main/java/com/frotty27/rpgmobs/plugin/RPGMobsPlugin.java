@@ -42,6 +42,7 @@ import com.frotty27.rpgmobs.systems.migration.RPGMobsComponentMigrationSystem;
 import com.frotty27.rpgmobs.systems.spawn.RPGMobsSpawnSystem;
 import com.frotty27.rpgmobs.utils.TickClock;
 import com.hypixel.hytale.assetstore.AssetPack;
+import com.hypixel.hytale.builtin.instances.InstancesPlugin;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
@@ -52,6 +53,7 @@ import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathSystems;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.io.IOException;
@@ -59,7 +61,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -154,7 +159,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
     public void discoverWorldsAndInstances() {
 
         try {
-            var universeWorlds = com.hypixel.hytale.server.core.universe.Universe.get().getWorlds();
+            var universeWorlds = Universe.get().getWorlds();
             if (universeWorlds != null) {
                 for (String worldName : universeWorlds.keySet()) {
                     configResolver.registerWorldIfAbsent(worldName);
@@ -166,7 +171,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         }
 
         try {
-            var instanceAssets = com.hypixel.hytale.builtin.instances.InstancesPlugin.get().getInstanceAssets();
+            var instanceAssets = InstancesPlugin.get().getInstanceAssets();
             if (instanceAssets != null) {
                 for (String templateName : instanceAssets) {
                     configResolver.registerInstanceIfAbsent(templateName);
@@ -323,7 +328,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         }
     }
 
-    private static final java.util.List<String> GOBLIN_MOB_RULE_KEYS = java.util.List.of(
+    private static final List<String> GOBLIN_MOB_RULE_KEYS = List.of(
             "Goblin_Duke", "Goblin_Hermit", "Goblin_Ogre",
             "Goblin_Lobber", "Goblin_Lobber_Patrol",
             "Goblin_Miner", "Goblin_Miner_Patrol",
@@ -367,7 +372,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         o.enableNameplates = true;
         o.nameplateTierEnabled = new boolean[]{true, true, true, true, true};
         o.tierPrefixesByFamily = new LinkedHashMap<>();
-        o.tierPrefixesByFamily.put("goblin", java.util.List.of("Sneaky", "Cutthroat", "Brutal", "Overseer", "Overlord"));
+        o.tierPrefixesByFamily.put("goblin", List.of("Sneaky", "Cutthroat", "Brutal", "Overseer", "Overlord"));
         o.enableModelScaling = true;
         o.modelScalePerTier = new float[]{1.0f, 1.05f, 1.1f, 1.15f, 1.25f};
         o.modelScaleVariance = 0.04f;
@@ -387,7 +392,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
 
         o.lootTemplates = buildGoblinLootTemplates();
         o.lootTemplateCategoryTree = new RPGMobsConfig.LootTemplateCategory("All",
-                java.util.List.of("Goblin Dungeon Loot", "Goblin Boss Loot"));
+                List.of("Goblin Dungeon Loot", "Goblin Boss Loot"));
 
         o.distancePerTier = 0.0;
         o.distanceBonusInterval = 0.0;
@@ -399,9 +404,9 @@ public final class RPGMobsPlugin extends JavaPlugin {
         return o;
     }
 
-    private static java.util.Map<String, RPGMobsConfig.MobRule> buildGoblinMobRules() {
-        java.util.Map<String, RPGMobsConfig.MobRule> base = RPGMobsConfig.defaultMobRules();
-        java.util.Map<String, RPGMobsConfig.MobRule> goblinRules = new LinkedHashMap<>();
+    private static Map<String, RPGMobsConfig.MobRule> buildGoblinMobRules() {
+        Map<String, RPGMobsConfig.MobRule> base = RPGMobsConfig.defaultMobRules();
+        Map<String, RPGMobsConfig.MobRule> goblinRules = new LinkedHashMap<>();
         for (String key : GOBLIN_MOB_RULE_KEYS) {
             RPGMobsConfig.MobRule rule = base.get(key);
             if (rule != null) goblinRules.put(key, rule);
@@ -410,42 +415,42 @@ public final class RPGMobsPlugin extends JavaPlugin {
     }
 
     private static RPGMobsConfig.MobRuleCategory buildGoblinCategoryTree() {
-        var lobber = new RPGMobsConfig.MobRuleCategory("Lobber", java.util.List.of(
+        var lobber = new RPGMobsConfig.MobRuleCategory("Lobber", List.of(
                 "Goblin_Lobber", "Goblin_Lobber_Patrol"));
-        var miner = new RPGMobsConfig.MobRuleCategory("Miner", java.util.List.of(
+        var miner = new RPGMobsConfig.MobRuleCategory("Miner", List.of(
                 "Goblin_Miner", "Goblin_Miner_Patrol"));
-        var scavenger = new RPGMobsConfig.MobRuleCategory("Scavenger", java.util.List.of(
+        var scavenger = new RPGMobsConfig.MobRuleCategory("Scavenger", List.of(
                 "Goblin_Scavenger", "Goblin_Scavenger_Battleaxe", "Goblin_Scavenger_Sword"));
-        var scrapper = new RPGMobsConfig.MobRuleCategory("Scrapper", java.util.List.of(
+        var scrapper = new RPGMobsConfig.MobRuleCategory("Scrapper", List.of(
                 "Goblin_Scrapper", "Goblin_Scrapper_Patrol"));
-        var thief = new RPGMobsConfig.MobRuleCategory("Thief", java.util.List.of(
+        var thief = new RPGMobsConfig.MobRuleCategory("Thief", List.of(
                 "Goblin_Thief", "Goblin_Thief_Patrol"));
-        var goblins = new RPGMobsConfig.MobRuleCategory("Goblins", java.util.List.of(
+        var goblins = new RPGMobsConfig.MobRuleCategory("Goblins", List.of(
                 "Goblin_Duke", "Goblin_Hermit", "Goblin_Ogre"),
                 lobber, miner, scavenger, scrapper, thief);
-        return new RPGMobsConfig.MobRuleCategory("All", java.util.List.of(), goblins);
+        return new RPGMobsConfig.MobRuleCategory("All", List.of(), goblins);
     }
 
-    private static java.util.Map<String, RPGMobsConfig.LootTemplate> buildGoblinLootTemplates() {
-        java.util.Map<String, RPGMobsConfig.LootTemplate> templates = new LinkedHashMap<>();
+    private static Map<String, RPGMobsConfig.LootTemplate> buildGoblinLootTemplates() {
+        Map<String, RPGMobsConfig.LootTemplate> templates = new LinkedHashMap<>();
 
-        var generalDrops = new java.util.ArrayList<RPGMobsConfig.ExtraDropRule>();
+        var generalDrops = new ArrayList<RPGMobsConfig.ExtraDropRule>();
         generalDrops.add(makeDropRule("Ingredient_Life_Essence", 1.0, true, true, true, true, true, 2, 5));
         generalDrops.add(makeDropRule("Ore_Copper", 0.15, true, true, true, true, true, 1, 3));
         generalDrops.add(makeDropRule("Ingredient_Bar_Iron", 0.10, false, true, true, true, true, 1, 2));
         generalDrops.add(makeDropRule("Ingredient_Leather_Light", 0.12, true, true, true, true, true, 1, 3));
         templates.put("Goblin Dungeon Loot", new RPGMobsConfig.LootTemplate(
                 "Goblin Dungeon Loot", generalDrops,
-                java.util.List.of("category:Goblins")));
+                List.of("category:Goblins")));
 
-        var bossDrops = new java.util.ArrayList<RPGMobsConfig.ExtraDropRule>();
+        var bossDrops = new ArrayList<RPGMobsConfig.ExtraDropRule>();
         bossDrops.add(makeDropRule("Ingredient_Life_Essence", 1.0, true, true, true, true, true, 5, 15));
         bossDrops.add(makeDropRule("Ore_Gold", 0.20, false, false, false, true, true, 1, 3));
         bossDrops.add(makeDropRule("Rock_Gem_Ruby", 0.05, false, false, false, true, true, 1, 1));
         bossDrops.add(makeDropRule("Tool_Repair_Kit_Iron", 0.25, false, false, true, true, true, 1, 2));
         templates.put("Goblin Boss Loot", new RPGMobsConfig.LootTemplate(
                 "Goblin Boss Loot", bossDrops,
-                java.util.List.of("Goblin_Duke", "Goblin_Ogre")));
+                List.of("Goblin_Duke", "Goblin_Ogre")));
 
         return templates;
     }

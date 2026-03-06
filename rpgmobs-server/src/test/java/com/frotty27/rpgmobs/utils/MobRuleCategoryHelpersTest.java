@@ -4,6 +4,7 @@ import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -324,7 +325,7 @@ class MobRuleCategoryHelpersTest {
         var root = new RPGMobsConfig.GearCategory("All", List.of());
         root.children.add(child);
 
-        var names = new java.util.HashSet<String>();
+        var names = new HashSet<String>();
         MobRuleCategoryHelpers.collectGearCategoryNames(root, names);
         assertTrue(names.contains("All"));
         assertTrue(names.contains("Swords"));

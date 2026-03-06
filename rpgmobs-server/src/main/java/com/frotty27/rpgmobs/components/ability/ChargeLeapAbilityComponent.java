@@ -7,7 +7,7 @@ import com.hypixel.hytale.codec.codecs.simple.LongCodec;
 import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
-public final class ChargeLeapAbilityComponent implements Component<EntityStore> {
+public final class ChargeLeapAbilityComponent implements AbilityEnabledComponent {
 
     public boolean abilityEnabled;
 
@@ -29,6 +29,16 @@ public final class ChargeLeapAbilityComponent implements Component<EntityStore> 
     public ChargeLeapAbilityComponent() {
         this.abilityEnabled = false;
         this.cooldownTicksRemaining = 0L;
+    }
+
+    @Override
+    public boolean isAbilityEnabled() {
+        return abilityEnabled;
+    }
+
+    @Override
+    public void setAbilityEnabled(boolean enabled) {
+        this.abilityEnabled = enabled;
     }
 
     @Override

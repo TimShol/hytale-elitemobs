@@ -14,6 +14,11 @@ You can find all the documentation, configuration guides, and developer referenc
 
 [![GitHub](https://img.shields.io/badge/GitHub-RPGMobs-3da15b?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-rpgmobs)
 
+## Support
+I'm not able to setup a Ko-Fi or donation platform as I have to be registered as a business where I live.
+If you wish to support me and this project, you can simply download and play this mod (already makes me happy that people are interested in seeing this grow) and if you want to go the extra mile, you can vote/recommend this mod in the Modding Contest. I'll be adding a link later here if you wish to do so.
+**Thank you** for all the support and patience!
+
 ## Required Dependencies
 
 *   **[NameplateBuilder](https://www.curseforge.com/hytale/mods/nameplatebuilder)** — Handles nameplate rendering for elite mobs. Must be installed alongside RPGMobs.

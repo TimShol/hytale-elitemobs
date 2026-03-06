@@ -281,8 +281,8 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         }
     }
 
-    private static boolean isLinkedToMob(List<String> linkedKeys, String matchedRuleKey,
-                                          RPGMobsConfig.MobRuleCategory tree) {
+    static boolean isLinkedToMob(List<String> linkedKeys, String matchedRuleKey,
+                                   RPGMobsConfig.MobRuleCategory tree) {
         for (String key : linkedKeys) {
             if (MobRuleCategoryHelpers.isCategoryKey(key)) {
                 String catName = MobRuleCategoryHelpers.fromCategoryKey(key);

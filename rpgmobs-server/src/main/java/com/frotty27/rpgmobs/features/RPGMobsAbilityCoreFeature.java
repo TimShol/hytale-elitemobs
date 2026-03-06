@@ -3,6 +3,7 @@ package com.frotty27.rpgmobs.features;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.RPGMobsAbilityLockComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.systems.ability.RPGMobsAbilityCombatReevaluationSystem;
 import com.frotty27.rpgmobs.systems.ability.RPGMobsAbilityCompletionSystem;
@@ -22,11 +23,18 @@ public final class RPGMobsAbilityCoreFeature implements IRPGMobsFeature {
     }
 
     @Override
-    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                      Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                      RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                      Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                      CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                      @Nullable String roleName) {
         RPGMobsAbilityLockComponent abilityLock = new RPGMobsAbilityLockComponent();
         commandBuffer.putComponent(npcRef, plugin.getAbilityLockComponentType(), abilityLock);
+    }
+
+    @Override
+    public void cleanup(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
+                        Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getAbilityLockComponentType());
     }
 
     @Override

@@ -1,102 +1,90 @@
 package com.frotty27.rpgmobs.features;
 
-import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.ChargeLeapAbilityComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
-import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
-import com.frotty27.rpgmobs.rules.AbilityGateEvaluator;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
-import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Random;
 
-public final class RPGMobsChargeLeapAbilityFeature implements IRPGMobsAbilityFeature {
-
-    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
-
-    public static final String ABILITY_CHARGE_LEAP = AbilityIds.CHARGE_LEAP;
-
-    private final Random random = new Random();
+public final class RPGMobsChargeLeapAbilityFeature
+        extends AbstractGatedAbilityFeature<ChargeLeapAbilityComponent, RPGMobsConfig.ChargeLeapAbilityConfig> {
 
     @Override
     public String id() {
-        return ABILITY_CHARGE_LEAP;
+        return AbilityIds.CHARGE_LEAP;
     }
 
     @Override
-    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                      Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                      RPGMobsTierComponent tierComponent, @Nullable String roleName) {
-        RPGMobsConfig.AbilityConfig rawConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.CHARGE_LEAP);
-        if (rawConfig == null) {
-            LOGGER.atInfo().log("[ChargeLeap] apply: abilityConfig is NULL — no entry for '%s' in defaultAbilities", AbilityIds.CHARGE_LEAP);
-            return;
-        }
-        if (!(rawConfig instanceof RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig)) {
-            LOGGER.atInfo().log("[ChargeLeap] apply: abilityConfig is WRONG TYPE — expected ChargeLeapAbilityConfig, got %s", rawConfig.getClass().getSimpleName());
-            return;
-        }
+    public String displayName() {
+        return "Charge Leap";
+    }
 
-        int tierIndex = tierComponent.tierIndex;
-        ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
-        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
-        String matchedRuleKey = tierComponent.matchedRuleKey;
+    @Override
+    public RPGMobsConfig.AbilityConfig createDefaultConfig() {
+        return new RPGMobsConfig.ChargeLeapAbilityConfig();
+    }
 
-        if (!AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.CHARGE_LEAP, weaponId, tierIndex, matchedRuleKey, resolved)) return;
+    @Override
+    public List<AbilityConfigField> describeConfigFields() {
+        return List.of(
+                new AbilityConfigField.ScalarFloat("Min Range",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).minRange,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).minRange = value),
+                new AbilityConfigField.ScalarFloat("Max Range",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).maxRange,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).maxRange = value),
+                new AbilityConfigField.ScalarBoolean("Face Target",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).faceTarget,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).faceTarget = value),
+                new AbilityConfigField.PerTierFloat("Slam Range",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).slamRangePerTier,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).slamRangePerTier = value),
+                new AbilityConfigField.PerTierInt("Slam Base Damage",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).slamBaseDamagePerTier,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).slamBaseDamagePerTier = value),
+                new AbilityConfigField.PerTierFloat("Apply Force",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).applyForcePerTier,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).applyForcePerTier = value),
+                new AbilityConfigField.PerTierFloat("Knockback Lift",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).knockbackLiftPerTier,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).knockbackLiftPerTier = value),
+                new AbilityConfigField.PerTierFloat("Knockback Push",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).knockbackPushAwayPerTier,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).knockbackPushAwayPerTier = value),
+                new AbilityConfigField.PerTierFloat("Knockback Force",
+                        config -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).knockbackForcePerTier,
+                        (config, value) -> ((RPGMobsConfig.ChargeLeapAbilityConfig) config).knockbackForcePerTier = value)
+        );
+    }
 
-        float spawnChance = tierIndex < abilityConfig.chancePerTier.length ? abilityConfig.chancePerTier[tierIndex] : 0f;
+    @Override
+    protected Class<RPGMobsConfig.ChargeLeapAbilityConfig> configClass() {
+        return RPGMobsConfig.ChargeLeapAbilityConfig.class;
+    }
 
-        boolean enabled = random.nextFloat() < spawnChance;
+    @Override
+    protected ComponentType<EntityStore, ChargeLeapAbilityComponent> componentType(RPGMobsPlugin plugin) {
+        return plugin.getChargeLeapAbilityComponentType();
+    }
 
-        ChargeLeapAbilityComponent component = new ChargeLeapAbilityComponent();
+    @Override
+    protected ChargeLeapAbilityComponent getComponent(Store<EntityStore> store, Ref<EntityStore> ref,
+                                                      RPGMobsPlugin plugin) {
+        return store.getComponent(ref, plugin.getChargeLeapAbilityComponentType());
+    }
+
+    @Override
+    protected ChargeLeapAbilityComponent createComponent(RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig,
+                                                         int tierIndex, boolean enabled, Random random) {
+        var component = new ChargeLeapAbilityComponent();
         component.abilityEnabled = enabled;
         component.cooldownTicksRemaining = 0L;
-
-        commandBuffer.putComponent(npcRef, plugin.getChargeLeapAbilityComponentType(), component);
-    }
-
-    @Override
-    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                          Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                          RPGMobsTierComponent tierComponent, @Nullable String roleName) {
-        ChargeLeapAbilityComponent comp = entityStore.getComponent(npcRef, plugin.getChargeLeapAbilityComponentType());
-
-        RPGMobsConfig.AbilityConfig rawConfig = config.abilitiesConfig.defaultAbilities.get(AbilityIds.CHARGE_LEAP);
-        RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig = (rawConfig instanceof RPGMobsConfig.ChargeLeapAbilityConfig cl) ? cl : null;
-
-        if (abilityConfig == null) {
-            if (comp != null && comp.abilityEnabled) {
-                comp.abilityEnabled = false;
-                commandBuffer.replaceComponent(npcRef, plugin.getChargeLeapAbilityComponentType(), comp);
-            }
-            return;
-        }
-
-        int tierIndex = tierComponent.tierIndex;
-        ResolvedConfig resolved = RPGMobsAbilityFeatureHelpers.resolveConfig(plugin, npcRef, entityStore);
-        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
-        String matchedRuleKey = tierComponent.matchedRuleKey;
-
-        boolean allowed = AbilityGateEvaluator.isAllowed(abilityConfig, AbilityIds.CHARGE_LEAP, weaponId, tierIndex, matchedRuleKey, resolved);
-
-        if (comp == null) {
-            if (allowed) {
-                apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
-            }
-            return;
-        }
-
-        if (!allowed && comp.abilityEnabled) {
-            comp.abilityEnabled = false;
-            commandBuffer.replaceComponent(npcRef, plugin.getChargeLeapAbilityComponentType(), comp);
-        } else if (allowed && !comp.abilityEnabled) {
-            apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
-        }
+        return component;
     }
 }

@@ -2,15 +2,14 @@ package com.frotty27.rpgmobs.features;
 
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.exceptions.FeatureRegistrationException;
 import com.frotty27.rpgmobs.exceptions.FeatureResolutionException;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -94,44 +93,34 @@ public final class RPGMobsFeatureRegistry {
         return abilities;
     }
 
-    public void applyAll(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                         Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                         RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    public void applyAll(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                         Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                         CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                         @Nullable String roleName) {
         for (IRPGMobsFeature feature : orderedFeatures) {
-            feature.apply(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
+            feature.apply(plugin, config, resolved, npcRef, entityStore, commandBuffer, tierComponent, roleName);
         }
     }
 
-    public void reconcileAll(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                             Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                             RPGMobsTierComponent tierComponent, @Nullable String roleName) {
+    public void reconcileAll(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                             Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                             CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                             @Nullable String roleName) {
         for (IRPGMobsFeature feature : orderedFeatures) {
-            feature.reconcile(plugin, config, npcRef, entityStore, commandBuffer, tierComponent, roleName);
+            feature.reconcile(plugin, config, resolved, npcRef, entityStore, commandBuffer, tierComponent, roleName);
+        }
+    }
+
+    public void cleanupAll(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
+                           Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+        for (IRPGMobsFeature feature : orderedFeatures) {
+            feature.cleanup(plugin, config, npcRef, entityStore, commandBuffer);
         }
     }
 
     public void registerSystems(RPGMobsPlugin plugin) {
         for (IRPGMobsFeature feature : orderedFeatures) {
             feature.registerSystems(plugin);
-        }
-    }
-
-    public void onDamageAll(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> victimRef,
-                            Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                            RPGMobsTierComponent tierComponent, @Nullable NPCEntity npcEntity, int tierIndex,
-                            long currentTick, Damage damage) {
-        for (IRPGMobsFeature feature : orderedFeatures) {
-            feature.onDamage(plugin,
-                             config,
-                             victimRef,
-                             entityStore,
-                             commandBuffer,
-                             tierComponent,
-                             npcEntity,
-                             tierIndex,
-                             currentTick,
-                             damage
-            );
         }
     }
 }

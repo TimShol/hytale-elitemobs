@@ -10,10 +10,7 @@ import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.Nullable;
-
-import static com.frotty27.rpgmobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 public final class RPGMobsModelScalingFeature implements IRPGMobsFeature {
 
@@ -30,23 +27,21 @@ public final class RPGMobsModelScalingFeature implements IRPGMobsFeature {
     }
 
     @Override
-    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                      Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                      RPGMobsTierComponent tierComponent, @Nullable String roleName) {
-        if (config.modelConfig.enableMobModelScaling) {
+    public void apply(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                      Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                      CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                      @Nullable String roleName) {
+        if (resolved.enableModelScaling) {
             RPGMobsModelScalingComponent modelScaling = new RPGMobsModelScalingComponent();
             commandBuffer.putComponent(npcRef, plugin.getModelScalingComponentType(), modelScaling);
         }
     }
 
     @Override
-    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
-                          Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
-                          RPGMobsTierComponent tierComponent, @Nullable String roleName) {
-        NPCEntity npc = entityStore.getComponent(npcRef, NPC_COMPONENT_TYPE);
-        String worldName = (npc != null && npc.getWorld() != null) ? npc.getWorld().getName() : null;
-        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
-
+    public void reconcile(RPGMobsPlugin plugin, RPGMobsConfig config, ResolvedConfig resolved,
+                          Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                          CommandBuffer<EntityStore> commandBuffer, RPGMobsTierComponent tierComponent,
+                          @Nullable String roleName) {
         RPGMobsModelScalingComponent modelComp = entityStore.getComponent(npcRef,
                 plugin.getModelScalingComponentType());
 
@@ -67,6 +62,15 @@ public final class RPGMobsModelScalingFeature implements IRPGMobsFeature {
             modelComp = new RPGMobsModelScalingComponent();
             commandBuffer.putComponent(npcRef, plugin.getModelScalingComponentType(), modelComp);
         }
+    }
+
+    @Override
+    public void cleanup(RPGMobsPlugin plugin, RPGMobsConfig config, Ref<EntityStore> npcRef,
+                        Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+        if (modelScalingSystem != null) {
+            modelScalingSystem.resetModelScale(npcRef, entityStore, commandBuffer);
+        }
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getModelScalingComponentType());
     }
 
     @Override

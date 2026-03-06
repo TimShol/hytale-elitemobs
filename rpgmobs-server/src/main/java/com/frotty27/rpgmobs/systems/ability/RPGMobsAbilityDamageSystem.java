@@ -72,10 +72,9 @@ public final class RPGMobsAbilityDamageSystem extends DamageEventSystem {
 
         NPCEntity npcEntity = archetypeChunk.getComponent(entityIndex, NPC_COMPONENT_TYPE);
         int tierIndex = clampTierIndex(tierComponent.tierIndex);
-        long currentTick = plugin.getTickClock().getTick();
 
         Damage.Source damageSource = damage.getSource();
-        com.hypixel.hytale.component.Ref<EntityStore> dmgAttackerRef = null;
+        Ref<EntityStore> dmgAttackerRef = null;
         if (damageSource instanceof Damage.EntitySource src) {
             dmgAttackerRef = src.getRef();
         }
@@ -87,17 +86,5 @@ public final class RPGMobsAbilityDamageSystem extends DamageEventSystem {
                                                                  dmgAttackerRef,
                                                                  damage.getAmount()
         ));
-
-        plugin.getFeatureRegistry().onDamageAll(plugin,
-                                                config,
-                                                victimRef,
-                                                entityStore,
-                                                commandBuffer,
-                                                tierComponent,
-                                                npcEntity,
-                                                tierIndex,
-                                                currentTick,
-                                                damage
-        );
     }
 }
