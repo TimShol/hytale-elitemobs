@@ -1,0 +1,59 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashShort Clubs V2  - 1-hit overhead charged slam (~1.9s total).",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 1.1s charging with weapon trail",
+      "RunTime": 0.8,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club",
+        "ItemAnimationId": "SwingDownCharging",
+        "WorldSoundEventId": "SFX_Mace_T1_Raise",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - SwingDownCharged rooted slam",
+      "RunTime": 0.3,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club",
+        "ItemAnimationId": "SwingDownCharged",
+        "WorldSoundEventId": "SFX_Mace_T1_Swing",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashShort.config.templates.damageInteractionClubs} ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery",
+      "RunTime": 0.3,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs Undead Summon - empty-handed summoning with Necromancer Summon_Moving animation. Green orb energy on hands.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "RunTime": 0.01
+    },
+    {
+      "Type": "Simple",
+      "RunTime": 3.0,
+      "Effects": {
+        "MovementEffects": {
+          "DisableAll": true
+        },
+        "ItemPlayerAnimationsId": "RPGMobs_UndeadSummon",
+        "ItemAnimationId": "SummonMoving",
+        "WorldSoundEventId": "SFX_Skeleton_Praetorian_Spawn_1",
+        "Particles": [
+          {
+            "SystemId": "Praetorian_Summon_Ground",
+            "DetachedFromModel": true
+          },
+          {
+            "SystemId": "Praetorian_Summon_Energy",
+            "TargetEntityPart": "Entity",
+            "TargetNodeName": "L-Hand"
+          },
+          {
+            "SystemId": "Praetorian_Summon_Energy",
+            "TargetEntityPart": "Entity",
+            "TargetNodeName": "R-Hand"
+          },
+          {
+            "SystemId": "GreenOrbTrail",
+            "TargetEntityPart": "Entity",
+            "TargetNodeName": "L-Hand",
+            "Scale": 0.6
+          }
+        ],
+        "ClearAnimationOnFinish": true
+      }
+    }
+  ]
+}

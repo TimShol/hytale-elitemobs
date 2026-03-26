@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.MultiSlashMedium.config.templates.entryClubsFlailV1}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

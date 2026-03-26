@@ -1,0 +1,20 @@
+{
+  "Duration": 25.0,
+  "ApplicationEffects": {
+    "Trails": [
+      {
+        "TrailId": "Large_Charged_Red",
+        "TargetEntityPart": "Entity",
+        "TargetNodeName": "Hip",
+        "PositionOffset": { "X": -0.08, "Y": 1.55, "Z": 0.15 }
+      },
+      {
+        "TrailId": "Large_Charged_Red",
+        "TargetEntityPart": "Entity",
+        "TargetNodeName": "Hip",
+        "PositionOffset": { "X": 0.08, "Y": 1.55, "Z": 0.15 }
+      }
+    ]
+  },
+  "OverlapBehavior": "Overwrite"
+}

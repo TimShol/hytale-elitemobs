@@ -1,0 +1,82 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashShort ClubsFlail V3 - 2-hit left-right bashes. Direct Selector pattern.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up - 0.8s charging with weapon trail",
+      "RunTime": 0.8,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club_Flail",
+        "ItemAnimationId": "SpinSwingLeftCharging",
+        "WorldSoundEventId": "SFX_Flail_Charge",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1 - SwingLeft",
+      "RunTime": 0.60,
+      "HorizontalSpeedMultiplier": 0.35,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club_Flail",
+        "ItemAnimationId": "SwingLeft",
+        "WorldSoundEventId": "SFX_Flail_Swing",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashShort.config.templates.damageInteractionClubsFlail} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 2 - SwingRight",
+      "RunTime": 0.60,
+      "HorizontalSpeedMultiplier": 0.35,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club_Flail",
+        "ItemAnimationId": "SwingRight",
+        "WorldSoundEventId": "SFX_Flail_Swing",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashShort.config.templates.damageInteractionClubsFlail} ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery - Idle recovery, movement locked",
+      "RunTime": 0.3,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club_Flail",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

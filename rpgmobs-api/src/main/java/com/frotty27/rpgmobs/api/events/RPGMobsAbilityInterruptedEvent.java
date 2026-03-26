@@ -4,13 +4,10 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
- * Event fired when an RPG mob's ability is interrupted before it completes.
+ * Fired when an ability chain is interrupted before completion. The reason string indicates
+ * the cause (e.g. "death", "deaggro", "heal_leap_cast"). Informational only.
  *
- * <p>Interruption can occur for various reasons, such as the target becoming
- * invalid, the mob being stunned, or the mob dying mid-ability. The specific
- * reason is available via {@link #getReason()}.</p>
- *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsAbilityInterruptedEvent {
 
@@ -20,12 +17,10 @@ public final class RPGMobsAbilityInterruptedEvent {
     private final String reason;
 
     /**
-     * Constructs a new ability interrupted event.
-     *
-     * @param entityRef the entity reference of the RPG mob whose ability was interrupted
-     * @param abilityId the string identifier of the ability that was interrupted
-     * @param tierIndex the zero-based tier index of the RPG mob
-     * @param reason    a human-readable description of why the ability was interrupted
+     * @param entityRef reference to the elite whose ability was interrupted
+     * @param abilityId the ability identifier
+     * @param tierIndex tier index (0-based)
+     * @param reason    the interruption cause (e.g. "death", "deaggro", "heal_leap_cast")
      */
     public RPGMobsAbilityInterruptedEvent(Ref<EntityStore> entityRef, String abilityId, int tierIndex, String reason) {
         this.entityRef = entityRef;
@@ -35,39 +30,28 @@ public final class RPGMobsAbilityInterruptedEvent {
     }
 
     /**
-     * Returns the entity reference of the RPG mob whose ability was interrupted.
-     *
-     * @return the entity reference, never {@code null}
+     * @return reference to the elite entity
      */
     public Ref<EntityStore> getEntityRef() {
         return entityRef;
     }
 
     /**
-     * Returns the string identifier of the ability that was interrupted.
-     *
-     * <p>This corresponds to the {@link com.frotty27.rpgmobs.api.query.AbilityType}
-     * enum names (e.g., {@code "CHARGE_LEAP"}).</p>
-     *
-     * @return the ability identifier, never {@code null}
+     * @return the ability identifier
      */
     public String getAbilityId() {
         return abilityId;
     }
 
     /**
-     * Returns the zero-based tier index of the RPG mob.
-     *
-     * @return the tier index
+     * @return tier index (0-based)
      */
     public int getTierIndex() {
         return tierIndex;
     }
 
     /**
-     * Returns a human-readable description of why the ability was interrupted.
-     *
-     * @return the interruption reason, never {@code null}
+     * @return the reason the ability was interrupted (e.g. "death", "deaggro")
      */
     public String getReason() {
         return reason;

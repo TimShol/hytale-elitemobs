@@ -1,0 +1,165 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashLong Clubs  - 3-hit bashing combo with overhead slam finisher (~4.2s total). Snappy hit timing with rooted slam. Uses SFX_Mace_T1 sounds.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 2.1s overhead charge with Large_Charged trail on weapon",
+      "RunTime": 1.2,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club",
+        "ItemAnimationId": "SwingDownCharging",
+        "WorldSoundEventId": "SFX_Mace_T1_Raise",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - SwingLeft side bash",
+      "RunTime": 0.5,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club",
+        "ItemAnimationId": "SwingLeft",
+        "WorldSoundEventId": "SFX_Mace_T1_Swing",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.8 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionClubs} ]
+      }
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 2  - SwingRight backhand bash with forward drift + dual trails",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.05, "Z": -1.0 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.5,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Club",
+            "ItemAnimationId": "SwingRight",
+            "WorldSoundEventId": "SFX_Mace_T1_Swing",
+            "Trails": [
+              {
+                "TrailId": "Large_Charged",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Mace_Signature2",
+                "RotationOffset": { "Roll": 90.0 },
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.2 }, "Range": 3.0 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionClubs} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 3  - SwingDownCharged FINISHER overhead slam, rooted + impact VFX",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.08, "Z": -1.5 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.3,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Club",
+            "ItemAnimationId": "SwingDownCharged",
+            "WorldSoundEventId": "SFX_Mace_T1_Swing",
+            "Particles": [
+              {
+                "SystemId": "Block_Break_Dust",
+                "TargetEntityPart": "Entity",
+                "TargetNodeName": "Hip",
+                "PositionOffset": { "Y": 0.2 }
+              },
+              {
+                "SystemId": "Mace_Signature_Cast",
+                "TargetEntityPart": "Entity",
+                "TargetNodeName": "Hip",
+                "PositionOffset": { "Y": 0.5 }
+              }
+            ],
+            "Trails": [
+              {
+                "TrailId": "Large_Charged",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Mace_Signature2",
+                "RotationOffset": { "Roll": 90.0 },
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ],
+            "MovementEffects": { "DisableAll": true }
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.5 }, "Range": 3.0 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionClubs} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery, movement locked",
+      "RunTime": 0.65,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

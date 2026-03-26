@@ -46,10 +46,10 @@ public final class RPGMobsModelScalingFeature implements IRPGMobsFeature {
                 plugin.getModelScalingComponentType());
 
         if (!resolved.enableModelScaling) {
-            if (modelComp != null && modelComp.scaledApplied
+            if (modelComp != null && modelComp.scaleApplied
                     && Math.abs(modelComp.appliedScale - 1.0f) > 0.001f) {
                 modelScalingSystem.resetModelScale(npcRef, entityStore, commandBuffer);
-                modelComp.scaledApplied = false;
+                modelComp.scaleApplied = false;
                 modelComp.appliedScale = 1.0f;
                 modelComp.configuredBaseScale = 1.0f;
                 modelComp.resyncVerified = true;

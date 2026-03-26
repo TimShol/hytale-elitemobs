@@ -238,4 +238,154 @@ class AbilityConfigFieldTest {
         src.linkedMobRuleKeys.add("Wraith");
         assertNotEquals(src.linkedMobRuleKeys.size(), dst.linkedMobRuleKeys.size());
     }
+
+    @Test
+    void dodgeRollChargedMultiplierDetectsChange() {
+        var edit = new RPGMobsConfig.DodgeRollAbilityConfig();
+        var saved = new RPGMobsConfig.DodgeRollAbilityConfig();
+        edit.chargedAttackDodgeMultiplier = 3.0f;
+        saved.chargedAttackDodgeMultiplier = 2.5f;
+
+        var field = new AbilityConfigField.ScalarFloat("Charged Attack Dodge Multiplier",
+                config -> ((RPGMobsConfig.DodgeRollAbilityConfig) config).chargedAttackDodgeMultiplier,
+                (config, value) -> ((RPGMobsConfig.DodgeRollAbilityConfig) config).chargedAttackDodgeMultiplier = value);
+        assertTrue(field.hasChanged(edit, saved));
+
+        saved.chargedAttackDodgeMultiplier = 3.0f;
+        assertFalse(field.hasChanged(edit, saved));
+    }
+
+    @Test
+    void dodgeRollChargedMultiplierDeepCopies() {
+        var src = new RPGMobsConfig.DodgeRollAbilityConfig();
+        var dst = new RPGMobsConfig.DodgeRollAbilityConfig();
+        src.chargedAttackDodgeMultiplier = 5.0f;
+        dst.chargedAttackDodgeMultiplier = 0f;
+
+        var field = new AbilityConfigField.ScalarFloat("Charged Attack Dodge Multiplier",
+                config -> ((RPGMobsConfig.DodgeRollAbilityConfig) config).chargedAttackDodgeMultiplier,
+                (config, value) -> ((RPGMobsConfig.DodgeRollAbilityConfig) config).chargedAttackDodgeMultiplier = value);
+        field.deepCopy(src, dst);
+        assertEquals(5.0f, dst.chargedAttackDodgeMultiplier);
+    }
+
+    @Test
+    void healLeapInterruptHitCountDetectsChange() {
+        var edit = new RPGMobsConfig.HealLeapAbilityConfig();
+        var saved = new RPGMobsConfig.HealLeapAbilityConfig();
+        edit.interruptHitCount = 5;
+        saved.interruptHitCount = 3;
+
+        var field = new AbilityConfigField.ScalarInt("Interrupt Hit Count",
+                config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).interruptHitCount,
+                (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).interruptHitCount = value);
+        assertTrue(field.hasChanged(edit, saved));
+
+        saved.interruptHitCount = 5;
+        assertFalse(field.hasChanged(edit, saved));
+    }
+
+    @Test
+    void healLeapInterruptHitCountDeepCopies() {
+        var src = new RPGMobsConfig.HealLeapAbilityConfig();
+        var dst = new RPGMobsConfig.HealLeapAbilityConfig();
+        src.interruptHitCount = 7;
+        dst.interruptHitCount = 0;
+
+        var field = new AbilityConfigField.ScalarInt("Interrupt Hit Count",
+                config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).interruptHitCount,
+                (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).interruptHitCount = value);
+        field.deepCopy(src, dst);
+        assertEquals(7, dst.interruptHitCount);
+    }
+
+    @Test
+    void summonMinCountDetectsChange() {
+        var edit = new RPGMobsConfig.SummonAbilityConfig();
+        var saved = new RPGMobsConfig.SummonAbilityConfig();
+        edit.summonMinCount = 5;
+        saved.summonMinCount = 3;
+
+        var field = new AbilityConfigField.ScalarInt("Summon Min Count",
+                config -> ((RPGMobsConfig.SummonAbilityConfig) config).summonMinCount,
+                (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).summonMinCount = value);
+        assertTrue(field.hasChanged(edit, saved));
+
+        saved.summonMinCount = 5;
+        assertFalse(field.hasChanged(edit, saved));
+    }
+
+    @Test
+    void summonMaxCountDeepCopies() {
+        var src = new RPGMobsConfig.SummonAbilityConfig();
+        var dst = new RPGMobsConfig.SummonAbilityConfig();
+        src.summonMaxCount = 10;
+        dst.summonMaxCount = 0;
+
+        var field = new AbilityConfigField.ScalarInt("Summon Max Count",
+                config -> ((RPGMobsConfig.SummonAbilityConfig) config).summonMaxCount,
+                (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).summonMaxCount = value);
+        field.deepCopy(src, dst);
+        assertEquals(10, dst.summonMaxCount);
+    }
+
+    @Test
+    void summonSpawnRadiusDetectsChange() {
+        var edit = new RPGMobsConfig.SummonAbilityConfig();
+        var saved = new RPGMobsConfig.SummonAbilityConfig();
+        edit.summonSpawnRadius = 10.0;
+        saved.summonSpawnRadius = 6.0;
+
+        var field = new AbilityConfigField.ScalarDouble("Summon Spawn Radius",
+                config -> ((RPGMobsConfig.SummonAbilityConfig) config).summonSpawnRadius,
+                (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).summonSpawnRadius = value);
+        assertTrue(field.hasChanged(edit, saved));
+
+        saved.summonSpawnRadius = 10.0;
+        assertFalse(field.hasChanged(edit, saved));
+    }
+
+    @Test
+    void summonSpawnRadiusDeepCopies() {
+        var src = new RPGMobsConfig.SummonAbilityConfig();
+        var dst = new RPGMobsConfig.SummonAbilityConfig();
+        src.summonSpawnRadius = 15.0;
+        dst.summonSpawnRadius = 0.0;
+
+        var field = new AbilityConfigField.ScalarDouble("Summon Spawn Radius",
+                config -> ((RPGMobsConfig.SummonAbilityConfig) config).summonSpawnRadius,
+                (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).summonSpawnRadius = value);
+        field.deepCopy(src, dst);
+        assertEquals(15.0, dst.summonSpawnRadius);
+    }
+
+    @Test
+    void minionMinTierDetectsChange() {
+        var edit = new RPGMobsConfig.SummonAbilityConfig();
+        var saved = new RPGMobsConfig.SummonAbilityConfig();
+        edit.minionMinTier = 1;
+        saved.minionMinTier = 0;
+
+        var field = new AbilityConfigField.ScalarInt("Minion Min Tier",
+                config -> ((RPGMobsConfig.SummonAbilityConfig) config).minionMinTier,
+                (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).minionMinTier = value);
+        assertTrue(field.hasChanged(edit, saved));
+
+        saved.minionMinTier = 1;
+        assertFalse(field.hasChanged(edit, saved));
+    }
+
+    @Test
+    void minionMaxTierDeepCopies() {
+        var src = new RPGMobsConfig.SummonAbilityConfig();
+        var dst = new RPGMobsConfig.SummonAbilityConfig();
+        src.minionMaxTier = 4;
+        dst.minionMaxTier = 0;
+
+        var field = new AbilityConfigField.ScalarInt("Minion Max Tier",
+                config -> ((RPGMobsConfig.SummonAbilityConfig) config).minionMaxTier,
+                (config, value) -> ((RPGMobsConfig.SummonAbilityConfig) config).minionMaxTier = value);
+        field.deepCopy(src, dst);
+        assertEquals(4, dst.minionMaxTier);
+    }
 }

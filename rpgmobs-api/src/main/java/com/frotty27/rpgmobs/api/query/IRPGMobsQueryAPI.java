@@ -5,199 +5,137 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.Optional;
-import java.util.Set;
 
 /**
- * Read-only query interface for inspecting the state of RPG Mobs.
+ * Read-only query interface for inspecting RPGMobs entity state.
  *
- * <p>Obtain an instance via {@link RPGMobsAPI#query()}.
- * All methods accept an entity reference and return the requested data if the
- * entity is a recognized RPG mob, or {@link Optional#empty()} / default values
- * otherwise.</p>
+ * <p>Obtain an instance via {@link RPGMobsAPI#query()}. All methods are
+ * thread-safe and return {@link Optional#empty()} when the entity lacks
+ * the relevant component.</p>
  *
- * @since 1.1.0
+ * <h3>Example</h3>
+ * <pre>{@code
+ * IRPGMobsQueryAPI query = RPGMobsAPI.query();
+ *
+ * if (query.isRPGMob(entityRef)) {
+ *     int tier = query.getTier(entityRef).orElse(0);
+ *     boolean fighting = query.isInCombat(entityRef);
+ * }
+ * }</pre>
+ *
+ * @since 1.0.0
  */
 public interface IRPGMobsQueryAPI {
 
     /**
-     * Returns the tier index of the specified entity, if it is an RPG mob.
+     * Returns the tier index of the entity (0 = T1, 4 = T5).
      *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the zero-based tier index, or empty
-     * if the entity is not an RPG mob
+     * @param entityRef the entity to query
+     * @return tier index, or empty if the entity is not an RPGMobs elite
      */
     Optional<Integer> getTier(Ref<EntityStore> entityRef);
 
     /**
-     * Returns whether the specified entity is an RPG mob.
+     * Returns whether the entity is an RPGMobs elite (has a tier component).
      *
-     * @param entityRef the entity reference to query
-     * @return {@code true} if the entity is an RPG mob, {@code false} otherwise
+     * @param entityRef the entity to check
+     * @return true if the entity is an RPGMobs elite
      */
     boolean isRPGMob(Ref<EntityStore> entityRef);
 
     /**
-     * Returns whether the specified entity is a summoned minion of an RPG mob.
+     * Returns whether the entity is a summoned minion.
      *
-     * <p>A minion is a mob that was spawned by another RPG mob's summon ability,
-     * rather than through the normal spawn system.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return {@code true} if the entity is a summoned minion, {@code false} otherwise
-     * @since 2.0.2
+     * @param entityRef the entity to check
+     * @return true if the entity is a summoned minion
      */
     boolean isMinion(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the distance-based health bonus applied to the specified RPG mob.
+     * Returns the distance-based health bonus applied to this elite.
      *
-     * <p>This bonus is determined by how far the mob spawned from the world origin,
-     * increasing difficulty in more remote areas.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the health bonus, or empty if the
-     * entity is not an RPG mob or has no distance scaling applied
+     * @param entityRef the entity to query
+     * @return health bonus multiplier, or empty if not applicable
      */
     Optional<Float> getDistanceHealthBonus(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the distance-based damage bonus applied to the specified RPG mob.
+     * Returns the distance-based damage bonus applied to this elite.
      *
-     * <p>This bonus is determined by how far the mob spawned from the world origin,
-     * increasing difficulty in more remote areas.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the damage bonus, or empty if the
-     * entity is not an RPG mob or has no distance scaling applied
+     * @param entityRef the entity to query
+     * @return damage bonus multiplier, or empty if not applicable
      */
     Optional<Float> getDistanceDamageBonus(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the distance from the world origin at which the specified RPG mob spawned.
+     * Returns the distance from the world spawn point where this elite was created.
      *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the spawn distance, or empty if the
-     * entity is not an RPG mob or the distance is not tracked
+     * @param entityRef the entity to query
+     * @return spawn distance in blocks, or empty if not tracked
      */
     Optional<Float> getSpawnDistance(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the health multiplier applied to the specified RPG mob.
+     * Returns the total health multiplier applied to this elite.
      *
-     * <p>This multiplier scales the mob's base health based on tier and
-     * distance-based bonuses.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the health multiplier, or empty if
-     * the entity is not an RPG mob or health scaling is not enabled
+     * @param entityRef the entity to query
+     * @return health multiplier, or empty if health scaling has not been applied
      */
     Optional<Float> getHealthMultiplier(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the damage multiplier applied to the specified RPG mob.
+     * Returns the total damage multiplier for this elite (tier + distance bonus).
      *
-     * <p>This multiplier scales the mob's outgoing damage based on tier and
-     * distance-based bonuses.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the damage multiplier, or empty if
-     * the entity is not an RPG mob or damage scaling is not enabled
+     * @param entityRef the entity to query
+     * @return damage multiplier, or empty if the entity is not an elite
      */
     Optional<Float> getDamageMultiplier(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the model scale factor applied to the specified RPG mob.
+     * Returns the model scale factor applied to this elite.
      *
-     * <p>Higher-tier mobs may be visually larger to communicate their difficulty.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the model scale, or empty if the
-     * entity is not an RPG mob or model scaling is not enabled
+     * @param entityRef the entity to query
+     * @return model scale, or empty if model scaling has not been applied
      */
     Optional<Float> getModelScale(Ref<EntityStore> entityRef);
 
     /**
-     * Returns whether the health of the specified RPG mob has been finalized.
+     * Returns whether the elite's health has been finalized (fully scaled and locked).
      *
-     * <p>Health finalization occurs after all scaling calculations are complete
-     * and the final health value has been applied to the entity.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return {@code true} if health has been finalized, {@code false} if the entity
-     * is not an RPG mob or health has not yet been finalized
+     * @param entityRef the entity to check
+     * @return true if health is finalized
      */
     boolean isHealthFinalized(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the number of summoned minions currently active for the specified RPG mob.
+     * Returns the number of alive summoned minions for a summoner elite.
      *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the minion count, or empty if the
-     * entity is not an RPG mob or does not track summoned minions
+     * @param entityRef the summoner entity to query
+     * @return minion count, or empty if the entity is not a summoner
      */
     Optional<Integer> getSummonedMinionCount(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the entity reference of the last aggro target for the specified RPG mob.
+     * Returns the entity reference of the elite's current combat target.
      *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the last aggro target reference, or
-     * empty if the entity is not an RPG mob or has no recorded aggro target
+     * @param entityRef the entity to query
+     * @return target reference, or empty if not in combat or no target
      */
     Optional<Ref<EntityStore>> getLastAggroTarget(Ref<EntityStore> entityRef);
 
     /**
-     * Returns the server tick at which the specified RPG mob last acquired an aggro target.
+     * Returns the tick at which the elite's combat state last changed.
      *
-     * @param entityRef the entity reference to query
-     * @return an {@link Optional} containing the tick number, or empty if the entity
-     * is not an RPG mob or has no recorded aggro event
+     * @param entityRef the entity to query
+     * @return state change tick, or empty if no combat state tracked
      */
     Optional<Long> getLastAggroTick(Ref<EntityStore> entityRef);
 
     /**
-     * Returns whether the specified RPG mob is currently in combat.
+     * Returns whether the elite is currently in active combat.
      *
-     * <p>an RPG mob is considered in combat when it has an active aggro target.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return {@code true} if the RPG mob is in combat, {@code false} otherwise
+     * @param entityRef the entity to check
+     * @return true if in combat
      */
     boolean isInCombat(Ref<EntityStore> entityRef);
-
-    /**
-     * Returns the migration version of the specified RPG mob's component data.
-     *
-     * <p>Used internally to track which data migrations have been applied to the entity.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return the migration version number, or {@code 0} if the entity is not an RPG mob
-     */
-    int getMigrationVersion(Ref<EntityStore> entityRef);
-
-    /**
-     * Returns whether the specified RPG mob needs a data migration.
-     *
-     * <p>an RPG mob needs migration if its stored migration version is lower than
-     * the current expected version.</p>
-     *
-     * @param entityRef the entity reference to query
-     * @return {@code true} if migration is needed, {@code false} otherwise
-     */
-    boolean needsMigration(Ref<EntityStore> entityRef);
-
-    /**
-     * Returns the set of all supported ability trigger type identifiers.
-     *
-     * @return an unmodifiable set of trigger type strings, never {@code null}
-     */
-    Set<String> getSupportedTriggerTypes();
-
-    /**
-     * Returns whether the specified trigger type is supported by the ability system.
-     *
-     * @param triggerType the trigger type identifier to check
-     * @return {@code true} if the trigger type is supported, {@code false} otherwise
-     */
-    boolean isTriggerTypeSupported(String triggerType);
 }

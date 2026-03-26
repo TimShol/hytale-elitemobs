@@ -12,8 +12,8 @@ RPGMobs classifies enemies into 5 tiers of power. These tiers determine an entit
 | **1** | Common | `[•]` | Baseline challenge, slightly stronger than vanilla. |
 | **2** | Uncommon | `[• •]` | Noticeable threat, better equipped. |
 | **3** | Rare | `[• • •]` | Dangerous, requires decent gear to fight. |
-| **4** | Epic | `[• • • •]` | Mini-boss difficulty, can use combat abilities. |
-| **5** | Legendary | `[• • • • •]` | Boss-level threat, best loot, maximum size, full ability access. |
+| **4** | Epic | `[• • • •]` | Mini-boss difficulty with combat intelligence, personality-driven ability selection, and group coordination. |
+| **5** | Legendary | `[• • • • •]` | Boss-level threat with full ability access, advanced target analysis, and the best loot. |
 
 ## Progression Styles
 
@@ -38,12 +38,30 @@ Any tier can spawn anywhere based on global weights. Good for hardcore survival 
 ## Combat Mechanics
 
 ### Abilities
-Elites aren't just stat sponges. Depending on their type and tier, they can:
-*   **Charge Leap:** Launch themselves at a player with a physics-based slam attack.
-*   **Heal:** Drink potions during combat. Players can interrupt the heal by dealing damage.
-*   **Summon:** Call faction-appropriate reinforcements — undead summon undead, goblins summon goblins, trorks summon trorks.
+Elites aren't just stat sponges. RPGMobs includes 10 combat abilities across melee, ranged, defensive, and support archetypes:
 
-Each ability is linked to specific mob rules with per-tier toggles. By default, most mob categories have abilities enabled for Tier 4 and 5. Ability gates also check the mob's equipped weapon category — for example, staff-wielding mobs cannot use Charge Leap. See [Abilities](/config/abilities) for full configuration.
+*   **Charge Leap:** Launch at a player with a physics-based slam attack. 8 weapon-specific sound variants.
+*   **Heal Leap:** Jump to safety and drink a healing potion. Filtered by mob type  -  undead mobs are excluded by default.
+*   **Summon:** Call faction-appropriate reinforcements  -  undead summon undead, goblins summon goblins, trorks summon trorks.
+*   **Dodge Roll:** Reactive dodge on taking damage (all tiers) or preemptive dodge when T4+ intelligence detects the target attacking. Grants brief invulnerability.
+*   **Multi Slash (Short/Medium/Long):** 3 separate melee combo abilities with 48 unique weapon-specific combos. Short (1-2 hits, all tiers), Medium (2-4 hits, T2+), Long (4-6 hits, T3+).
+*   **War Cry:** Staff-channeling AOE buff for allies and debuff for enemies. The mob temporarily swaps to a staff during the cast.
+*   **Enrage:** Berserk fist-fighting transformation. The mob drops its weapon and enters a 20-second rapid punch chain, then dies from exhaustion with normal loot drops.
+*   **Volley:** Ranged projectile burst for bow, crossbow, and gun wielders.
+
+Each ability is linked to specific mob rules with per-tier toggles and weapon category gates. See [Abilities](/config/abilities) for full configuration.
+
+### Combat Intelligence (T4-T5)
+
+Tier 4 and Tier 5 elites have a combat intelligence system that makes them significantly more dangerous:
+
+*   **Target Analysis:** Every 10 ticks, the elite analyzes its target's weapon type, shield, and combat state (attacking, charging, blocking). This information triggers preemptive abilities like Dodge Roll.
+*   **Combat Personalities:** Each T4+ elite is assigned a personality at spawn  -  Aggressive, Tactical, Strategic, or Berserker. Each personality has preferred ability types that influence which abilities the mob receives and which fires first.
+*   **Group Coordination:** When multiple elites target the same entity, they dynamically assign combat roles (Engage, Flank, Support, Pressure, Recover) to create varied group behavior instead of identical actions.
+
+### Elite Friendly Fire
+
+Elites never target or damage other elites or their summoned minions. This is controlled by the `eliteFriendlyFireDisabled` and `eliteNoAggroOnElite` config options (both enabled by default). AI target markers are cleared when an elite attempts to target another elite, preventing the native AI from re-acquiring blocked targets.
 
 ### Scaling
 *   **Health:** Multiplied per tier (e.g., Tier 5 has +260% base health).
@@ -68,7 +86,7 @@ See [Overlays](/config/instances) for the full configuration reference.
 
 ## Loot System
 
-Elites drop vanilla loot with multipliers (e.g., 6x drops from Tier 5) and have a chance to drop their equipped gear. Loot templates provide targeted drop tables linked to specific mob rules — for example, a "Goblin Boss Loot" template can give better rewards for Goblin_Duke and Goblin_Ogre kills.
+Elites drop vanilla loot with multipliers (e.g., 6x drops from Tier 5) and have a chance to drop their equipped gear. Loot templates provide targeted drop tables linked to specific mob rules  -  for example, a "Goblin Boss Loot" template can give better rewards for Goblin_Duke and Goblin_Ogre kills.
 
 See [Loot](/config/loot) for drop rates, loot templates, and custom drop tables.
 

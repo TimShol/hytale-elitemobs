@@ -5,16 +5,14 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Event fired when an RPG mob begins executing an ability.
+ * Fired when an elite begins an ability chain. Cancellable - prevents the ability from
+ * starting. Does not extend {@link RPGMobsEvent} since ability triggers occur on the
+ * evaluation thread without a World reference.
  *
- * <p>This event implements {@link ICancellable}. Cancelling it will prevent the
- * ability from starting, and the RPG mob will remain in its idle state.</p>
+ * <p>Common ability IDs: charge_leap, dodge_roll, multi_slash_short, multi_slash_medium,
+ * multi_slash_long, war_cry, enrage, volley, heal_leap, undead_summon.
  *
- * <p>The {@linkplain #getAbilityId() ability ID} is a string identifier that
- * corresponds to the enum names in {@link com.frotty27.rpgmobs.api.query.AbilityType}
- * (e.g., {@code "CHARGE_LEAP"}, {@code "HEAL_LEAP"}, {@code "SUMMON_UNDEAD"}).</p>
- *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsAbilityStartedEvent implements ICancellable {
 
@@ -25,13 +23,10 @@ public final class RPGMobsAbilityStartedEvent implements ICancellable {
     private boolean cancelled;
 
     /**
-     * Constructs a new ability started event.
-     *
-     * @param entityRef the entity reference of the RPG mob starting the ability
-     * @param abilityId the string identifier of the ability being started
-     * @param tierIndex the zero-based tier index of the RPG mob
-     * @param targetRef the entity reference of the ability target, or {@code null}
-     *                  if the ability has no specific target
+     * @param entityRef reference to the elite starting the ability
+     * @param abilityId the ability identifier (e.g. "charge_leap", "dodge_roll")
+     * @param tierIndex tier index (0-based, 0 = T1 through 4 = T5)
+     * @param targetRef the elite's current combat target, or {@code null} if none
      */
     public RPGMobsAbilityStartedEvent(Ref<EntityStore> entityRef, String abilityId, int tierIndex,
                                       @Nullable Ref<EntityStore> targetRef) {
@@ -42,40 +37,28 @@ public final class RPGMobsAbilityStartedEvent implements ICancellable {
     }
 
     /**
-     * Returns the entity reference of the RPG mob starting the ability.
-     *
-     * @return the entity reference, never {@code null}
+     * @return reference to the elite entity
      */
     public Ref<EntityStore> getEntityRef() {
         return entityRef;
     }
 
     /**
-     * Returns the string identifier of the ability being started.
-     *
-     * <p>This corresponds to the {@link com.frotty27.rpgmobs.api.query.AbilityType}
-     * enum names (e.g., {@code "CHARGE_LEAP"}).</p>
-     *
-     * @return the ability identifier, never {@code null}
+     * @return the ability identifier (e.g. "charge_leap", "multi_slash_short")
      */
     public String getAbilityId() {
         return abilityId;
     }
 
     /**
-     * Returns the zero-based tier index of the RPG mob.
-     *
-     * @return the tier index
+     * @return tier index (0-based, 0 = T1 through 4 = T5)
      */
     public int getTierIndex() {
         return tierIndex;
     }
 
     /**
-     * Returns the entity reference of the ability target, if any.
-     *
-     * @return the target's entity reference, or {@code null} if the ability has no
-     * specific target
+     * @return the elite's combat target, or {@code null} if none
      */
     public @Nullable Ref<EntityStore> getTargetRef() {
         return targetRef;

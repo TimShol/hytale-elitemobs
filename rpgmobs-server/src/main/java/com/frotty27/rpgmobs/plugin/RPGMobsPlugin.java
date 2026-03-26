@@ -1,17 +1,12 @@
 package com.frotty27.rpgmobs.plugin;
 
 import com.frotty27.rpgmobs.api.RPGMobsAPI;
-import com.frotty27.rpgmobs.api.RPGMobsEventBus;
 import com.frotty27.rpgmobs.api.events.RPGMobsReconcileEvent;
-import com.frotty27.rpgmobs.api.query.RPGMobsQueryAPI;
 import com.frotty27.rpgmobs.assets.RPGMobsAssetGenerator;
 import com.frotty27.rpgmobs.assets.RPGMobsAssetRetriever;
 import com.frotty27.rpgmobs.commands.RPGMobsRootCommand;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
-import com.frotty27.rpgmobs.components.ability.ChargeLeapAbilityComponent;
-import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
-import com.frotty27.rpgmobs.components.ability.RPGMobsAbilityLockComponent;
-import com.frotty27.rpgmobs.components.ability.SummonUndeadAbilityComponent;
+import com.frotty27.rpgmobs.components.ability.*;
 import com.frotty27.rpgmobs.components.combat.RPGMobsCombatTrackingComponent;
 import com.frotty27.rpgmobs.components.effects.RPGMobsActiveEffectsComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsHealthScalingComponent;
@@ -33,13 +28,16 @@ import com.frotty27.rpgmobs.features.RPGMobsFeatureRegistry;
 import com.frotty27.rpgmobs.features.RPGMobsSpawningFeature;
 import com.frotty27.rpgmobs.integrations.RPGLevelingIntegration;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
+import com.frotty27.rpgmobs.services.RPGMobsEventBus;
 import com.frotty27.rpgmobs.services.RPGMobsNameplateService;
+import com.frotty27.rpgmobs.services.RPGMobsQueryAPI;
 import com.frotty27.rpgmobs.systems.combat.RPGMobsAITargetPollingSystem;
 import com.frotty27.rpgmobs.systems.combat.RPGMobsCombatStateSystem;
 import com.frotty27.rpgmobs.systems.death.RPGMobsVanillaDropsCullZoneManager;
 import com.frotty27.rpgmobs.systems.drops.RPGMobsExtraDropsScheduler;
 import com.frotty27.rpgmobs.systems.migration.RPGMobsComponentMigrationSystem;
 import com.frotty27.rpgmobs.systems.spawn.RPGMobsSpawnSystem;
+import com.frotty27.rpgmobs.utils.PlayerAttackTracker;
 import com.frotty27.rpgmobs.utils.TickClock;
 import com.hypixel.hytale.assetstore.AssetPack;
 import com.hypixel.hytale.builtin.instances.InstancesPlugin;
@@ -90,8 +88,14 @@ public final class RPGMobsPlugin extends JavaPlugin {
     private ComponentType<EntityStore, HealLeapAbilityComponent> healLeapAbilityComponentType;
     private ComponentType<EntityStore, SummonUndeadAbilityComponent> summonUndeadAbilityComponentType;
     private ComponentType<EntityStore, RPGMobsAbilityLockComponent> abilityLockComponentType;
-
+    private ComponentType<EntityStore, DodgeRollAbilityComponent> dodgeRollAbilityComponentType;
+    private ComponentType<EntityStore, MultiSlashShortComponent> multiSlashShortComponentType;
+    private ComponentType<EntityStore, MultiSlashMediumComponent> multiSlashMediumComponentType;
+    private ComponentType<EntityStore, MultiSlashLongComponent> multiSlashLongComponentType;
+    private ComponentType<EntityStore, EnrageAbilityComponent> enrageAbilityComponentType;
+    private ComponentType<EntityStore, VolleyAbilityComponent> volleyAbilityComponentType;
     private final TickClock tickClock = new TickClock();
+    private final PlayerAttackTracker playerAttackTracker = new PlayerAttackTracker();
     private final RPGMobsVanillaDropsCullZoneManager cullZoneManager = new RPGMobsVanillaDropsCullZoneManager(tickClock);
     private final RPGMobsExtraDropsScheduler dropsScheduler = new RPGMobsExtraDropsScheduler(tickClock);
     private final RPGMobsNameplateService nameplateService = new RPGMobsNameplateService();
@@ -164,10 +168,10 @@ public final class RPGMobsPlugin extends JavaPlugin {
                 for (String worldName : universeWorlds.keySet()) {
                     configResolver.registerWorldIfAbsent(worldName);
                 }
-                LOGGER.atInfo().log("[RPGMobs] Discovered %d worlds from Universe.", universeWorlds.size());
+                LOGGER.atInfo().log("Discovered %d worlds from Universe.", universeWorlds.size());
             }
         } catch (Throwable t) {
-            LOGGER.atWarning().log("[RPGMobs] Universe.get().getWorlds() failed: %s", t.getMessage());
+            LOGGER.atWarning().log("Universe.get().getWorlds() failed: %s", t.getMessage());
         }
 
         try {
@@ -176,10 +180,10 @@ public final class RPGMobsPlugin extends JavaPlugin {
                 for (String templateName : instanceAssets) {
                     configResolver.registerInstanceIfAbsent(templateName);
                 }
-                LOGGER.atInfo().log("[RPGMobs] Discovered %d instance templates from InstancesPlugin.", instanceAssets.size());
+                LOGGER.atInfo().log("Discovered %d instance templates from InstancesPlugin.", instanceAssets.size());
             }
         } catch (Throwable t) {
-            LOGGER.atWarning().log("[RPGMobs] InstancesPlugin.get().getInstanceAssets() failed: %s", t.getMessage());
+            LOGGER.atWarning().log("InstancesPlugin.get().getInstanceAssets() failed: %s", t.getMessage());
         }
     }
 
@@ -194,20 +198,17 @@ public final class RPGMobsPlugin extends JavaPlugin {
 
         AssetModule assetModule = AssetModule.get();
         if (assetModule == null) {
-            LOGGER.atWarning().log("[RPGMobs] AssetModule is null; cannot force reload asset pack.");
+            LOGGER.atWarning().log("AssetModule is null; cannot force reload asset pack.");
             return;
         }
 
         try {
             assetModule.registerPack(ASSET_PACK_NAME, RPGMobsDir, getManifest(), true);
-            LOGGER.atInfo().log("[RPGMobs] Reloaded config & regenerated assets successfully!");
+            LOGGER.atInfo().log("Reloaded config & regenerated assets successfully!");
             reloadNpcRoleAssetsIfPossible();
 
-            if (rpgLevelingIntegration != null) {
-                rpgLevelingIntegration.reloadBalanceConfig();
-            }
         } catch (Throwable error) {
-            LOGGER.atWarning().log("[RPGMobs] Failed to reload: %s", error.toString());
+            LOGGER.atWarning().log("Failed to reload: %s", error.toString());
             error.printStackTrace();
         }
     }
@@ -215,18 +216,14 @@ public final class RPGMobsPlugin extends JavaPlugin {
     public void reloadConfigOnly() {
         loadOrCreateRPGMobsConfig();
         int count = configReloadCount.incrementAndGet();
-        LOGGER.atInfo().log("[RPGMobs] Reloaded config (no asset regeneration). configReloadCount=%d", count);
-
-        if (rpgLevelingIntegration != null) {
-            rpgLevelingIntegration.reloadBalanceConfig();
-        }
+        LOGGER.atInfo().log("Reloaded config (no asset regeneration). configReloadCount=%d", count);
     }
 
     public void writeGlobalConfig() {
         if (globalConfig == null) return;
         Path modDirectory = getModDirectory();
         YamlSerializer.writeOnly(modDirectory, globalConfig);
-        LOGGER.atInfo().log("[RPGMobs] GlobalConfig written to disk.");
+        LOGGER.atInfo().log("GlobalConfig written to disk.");
     }
 
     private void reloadNpcRoleAssetsIfPossible() {
@@ -242,14 +239,14 @@ public final class RPGMobsPlugin extends JavaPlugin {
         int oldFormatVersion = readConfigFormatVersion(modDirectory);
         if (oldFormatVersion < 3) {
             LOGGER.atWarning().log(
-                    "[RPGMobs] Config format version %d → 3 — deleting entire config directory.", oldFormatVersion);
+                    "[RPGMobs] Config format version %d → 3  - deleting entire config directory.", oldFormatVersion);
             deleteDirectoryContents(modDirectory);
         }
 
         String oldVersion = readConfigVersionFromAnyLocation(modDirectory, baseDir);
         if (needsFullWipe(oldVersion)) {
             LOGGER.atWarning().log(
-                    "[RPGMobs] Incompatible config version '%s' — deleting entire config directory.", oldVersion);
+                    "[RPGMobs] Incompatible config version '%s'  - deleting entire config directory.", oldVersion);
             deleteDirectoryContents(modDirectory);
         }
 
@@ -258,7 +255,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
             Files.createDirectories(modDirectory.resolve("worlds"));
             Files.createDirectories(modDirectory.resolve("instances"));
         } catch (IOException e) {
-            LOGGER.atWarning().log("[RPGMobs] Failed to create config directories: %s", e.getMessage());
+            LOGGER.atWarning().log("Failed to create config directories: %s", e.getMessage());
         }
 
         Path configRoot = Files.isDirectory(baseDir) ? baseDir : modDirectory;
@@ -299,7 +296,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
             config.populateSummonMarkerEntriesByRoleIfEmpty();
             config.upgradeSummonMarkerEntriesToVariantIds();
             if (config.isSummonMarkerEntriesEmpty()) {
-                LOGGER.atWarning().log("[RPGMobs] Undead summon is enabled but no archer NPCs were found in mob rules.");
+                LOGGER.atWarning().log("Undead summon is enabled but no archer NPCs were found in mob rules.");
             }
         }
 
@@ -321,9 +318,9 @@ public final class RPGMobsPlugin extends JavaPlugin {
             try {
                 ConfigOverlay overlay = buildDungeonGoblinOverlay();
                 ConfigWriter.writeOverlay(overlay, goblinOverlay);
-                LOGGER.atInfo().log("[RPGMobs] Generated default Dungeon_Goblin.yml overlay.");
+                LOGGER.atInfo().log("Generated default Dungeon_Goblin.yml overlay.");
             } catch (Throwable e) {
-                LOGGER.atWarning().log("[RPGMobs] Failed to generate Dungeon_Goblin overlay: %s", e.getMessage());
+                LOGGER.atWarning().log("Failed to generate Dungeon_Goblin overlay: %s", e.getMessage());
             }
         }
     }
@@ -365,9 +362,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         o.droppedGearDurabilityMin = 0.3;
         o.droppedGearDurabilityMax = 0.8;
 
-        o.eliteFriendlyFireDisabled = true;
         o.eliteFallDamageDisabled = true;
-        o.eliteNoAggroOnElite = false;
 
         o.enableNameplates = true;
         o.nameplateTierEnabled = new boolean[]{true, true, true, true, true};
@@ -484,9 +479,9 @@ public final class RPGMobsPlugin extends JavaPlugin {
                 }
             }
         } catch (IOException e) {
-            LOGGER.atWarning().log("[RPGMobs] Failed to clean directory %s: %s", directory, e.getMessage());
+            LOGGER.atWarning().log("Failed to clean directory %s: %s", directory, e.getMessage());
         }
-        LOGGER.atInfo().log("[RPGMobs] Deleted contents of: %s", directory);
+        LOGGER.atInfo().log("Deleted contents of: %s", directory);
     }
 
     private int readConfigFormatVersion(Path modDirectory) {
@@ -540,88 +535,124 @@ public final class RPGMobsPlugin extends JavaPlugin {
                                                                           "RPGMobsTierComponent",
                                                                           RPGMobsTierComponent.CODEC
         );
-        LOGGER.atInfo().log("[1/14] Registered RPGMobsTierComponent");
+        LOGGER.atInfo().log("[1/21] Registered RPGMobsTierComponent");
 
         progressionComponentType = getEntityStoreRegistry().registerComponent(RPGMobsProgressionComponent.class,
                                                                               "RPGMobsProgressionComponent",
                                                                               RPGMobsProgressionComponent.CODEC
         );
-        LOGGER.atInfo().log("[2/14] Registered RPGMobsProgressionComponent");
+        LOGGER.atInfo().log("[2/21] Registered RPGMobsProgressionComponent");
 
         healthScalingComponentType = getEntityStoreRegistry().registerComponent(RPGMobsHealthScalingComponent.class,
                                                                                 "RPGMobsHealthScalingComponent",
                                                                                 RPGMobsHealthScalingComponent.CODEC
         );
-        LOGGER.atInfo().log("[3/14] Registered RPGMobsHealthScalingComponent");
+        LOGGER.atInfo().log("[3/21] Registered RPGMobsHealthScalingComponent");
 
         modelScalingComponentType = getEntityStoreRegistry().registerComponent(RPGMobsModelScalingComponent.class,
                                                                                "RPGMobsModelScalingComponent",
                                                                                RPGMobsModelScalingComponent.CODEC
         );
-        LOGGER.atInfo().log("[4/14] Registered RPGMobsModelScalingComponent");
+        LOGGER.atInfo().log("[4/21] Registered RPGMobsModelScalingComponent");
 
         activeEffectsComponentType = getEntityStoreRegistry().registerComponent(RPGMobsActiveEffectsComponent.class,
                                                                                 "RPGMobsActiveEffectsComponent",
                                                                                 RPGMobsActiveEffectsComponent.CODEC
         );
-        LOGGER.atInfo().log("[5/14] Registered RPGMobsActiveEffectsComponent");
+        LOGGER.atInfo().log("[5/21] Registered RPGMobsActiveEffectsComponent");
 
         combatTrackingComponentType = getEntityStoreRegistry().registerComponent(RPGMobsCombatTrackingComponent.class,
                                                                                  "RPGMobsCombatTrackingComponent",
                                                                                  RPGMobsCombatTrackingComponent.CODEC
         );
-        LOGGER.atInfo().log("[6/14] Registered RPGMobsCombatTrackingComponent");
+        LOGGER.atInfo().log("[6/21] Registered RPGMobsCombatTrackingComponent");
 
         migrationComponentType = getEntityStoreRegistry().registerComponent(RPGMobsMigrationComponent.class,
                                                                             "RPGMobsMigrationComponent",
                                                                             RPGMobsMigrationComponent.CODEC
         );
-        LOGGER.atInfo().log("[7/14] Registered RPGMobsMigrationComponent (for pre 1.1.0)");
+        LOGGER.atInfo().log("[7/21] Registered RPGMobsMigrationComponent (for pre 1.1.0)");
 
         summonedMinionComponentType = getEntityStoreRegistry().registerComponent(RPGMobsSummonedMinionComponent.class,
                                                                                  "RPGMobsSummonedMinionComponent",
                                                                                  RPGMobsSummonedMinionComponent.CODEC
         );
-        LOGGER.atInfo().log("[8/14] Registered RPGMobsSummonedMinionComponent");
+        LOGGER.atInfo().log("[8/21] Registered RPGMobsSummonedMinionComponent");
 
         summonMinionTrackingComponentType = getEntityStoreRegistry().registerComponent(
                 RPGMobsSummonMinionTrackingComponent.class,
                 "RPGMobsSummonMinionTrackingComponent",
                 RPGMobsSummonMinionTrackingComponent.CODEC
         );
-        LOGGER.atInfo().log("[9/14] Registered RPGMobsSummonMinionTrackingComponent");
+        LOGGER.atInfo().log("[9/21] Registered RPGMobsSummonMinionTrackingComponent");
 
         summonRiseComponentType = getEntityStoreRegistry().registerComponent(RPGMobsSummonRiseComponent.class,
                                                                              "RPGMobsSummonRiseComponent",
                                                                              RPGMobsSummonRiseComponent.CODEC
         );
-        LOGGER.atInfo().log("[10/14] Registered RPGMobsSummonRiseComponent");
+        LOGGER.atInfo().log("[10/21] Registered RPGMobsSummonRiseComponent");
 
         chargeLeapAbilityComponentType = getEntityStoreRegistry().registerComponent(ChargeLeapAbilityComponent.class,
                                                                                     "ChargeLeapAbilityComponent",
                                                                                     ChargeLeapAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[11/14] Registered ChargeLeapAbilityComponent");
+        LOGGER.atInfo().log("[11/21] Registered ChargeLeapAbilityComponent");
 
         healLeapAbilityComponentType = getEntityStoreRegistry().registerComponent(HealLeapAbilityComponent.class,
                                                                                   "HealLeapAbilityComponent",
                                                                                   HealLeapAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[12/14] Registered HealLeapAbilityComponent");
+        LOGGER.atInfo().log("[12/21] Registered HealLeapAbilityComponent");
 
         summonUndeadAbilityComponentType = getEntityStoreRegistry().registerComponent(SummonUndeadAbilityComponent.class,
                                                                                       "SummonUndeadAbilityComponent",
                                                                                       SummonUndeadAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[13/14] Registered SummonUndeadAbilityComponent");
+        LOGGER.atInfo().log("[13/21] Registered SummonUndeadAbilityComponent");
 
         abilityLockComponentType = getEntityStoreRegistry().registerComponent(RPGMobsAbilityLockComponent.class,
                                                                               "RPGMobsAbilityLockComponent",
                                                                               RPGMobsAbilityLockComponent.CODEC
         );
-        LOGGER.atInfo().log("[14/14] Registered RPGMobsAbilityLockComponent");
+        LOGGER.atInfo().log("[14/21] Registered RPGMobsAbilityLockComponent");
 
-        LOGGER.atInfo().log("Component registration complete: 14 total (10 core + 4 ability)");
+        dodgeRollAbilityComponentType = getEntityStoreRegistry().registerComponent(DodgeRollAbilityComponent.class,
+                                                                                    "DodgeRollAbilityComponent",
+                                                                                    DodgeRollAbilityComponent.CODEC
+        );
+        LOGGER.atInfo().log("[15/21] Registered DodgeRollAbilityComponent");
+
+        multiSlashShortComponentType = getEntityStoreRegistry().registerComponent(MultiSlashShortComponent.class,
+                                                                                    "MultiSlashShortComponent",
+                                                                                    MultiSlashShortComponent.CODEC
+        );
+        LOGGER.atInfo().log("[16/21] Registered MultiSlashShortComponent");
+
+        multiSlashMediumComponentType = getEntityStoreRegistry().registerComponent(MultiSlashMediumComponent.class,
+                                                                                    "MultiSlashMediumComponent",
+                                                                                    MultiSlashMediumComponent.CODEC
+        );
+        LOGGER.atInfo().log("[17/21] Registered MultiSlashMediumComponent");
+
+        multiSlashLongComponentType = getEntityStoreRegistry().registerComponent(MultiSlashLongComponent.class,
+                                                                                  "MultiSlashLongComponent",
+                                                                                  MultiSlashLongComponent.CODEC
+        );
+        LOGGER.atInfo().log("[18/21] Registered MultiSlashLongComponent");
+
+        enrageAbilityComponentType = getEntityStoreRegistry().registerComponent(EnrageAbilityComponent.class,
+                                                                                "EnrageAbilityComponent",
+                                                                                EnrageAbilityComponent.CODEC
+        );
+        LOGGER.atInfo().log("[19/21] Registered EnrageAbilityComponent");
+
+        volleyAbilityComponentType = getEntityStoreRegistry().registerComponent(VolleyAbilityComponent.class,
+                                                                                "VolleyAbilityComponent",
+                                                                                VolleyAbilityComponent.CODEC
+        );
+        LOGGER.atInfo().log("[20/21] Registered VolleyAbilityComponent");
+
+        LOGGER.atInfo().log("Component registration complete: 21 total (10 core + 11 ability)");
     }
 
     @SuppressWarnings("unchecked")
@@ -691,6 +722,10 @@ public final class RPGMobsPlugin extends JavaPlugin {
         return tickClock;
     }
 
+    public PlayerAttackTracker getPlayerAttackTracker() {
+        return playerAttackTracker;
+    }
+
     public ComponentType<EntityStore, RPGMobsTierComponent> getRPGMobsComponentType() {
         return RPGMobsComponentType;
     }
@@ -747,6 +782,31 @@ public final class RPGMobsPlugin extends JavaPlugin {
         return abilityLockComponentType;
     }
 
+    public ComponentType<EntityStore, DodgeRollAbilityComponent> getDodgeRollAbilityComponentType() {
+        return dodgeRollAbilityComponentType;
+    }
+
+    public ComponentType<EntityStore, MultiSlashShortComponent> getMultiSlashShortComponentType() {
+        return multiSlashShortComponentType;
+    }
+
+    public ComponentType<EntityStore, MultiSlashMediumComponent> getMultiSlashMediumComponentType() {
+        return multiSlashMediumComponentType;
+    }
+
+    public ComponentType<EntityStore, MultiSlashLongComponent> getMultiSlashLongComponentType() {
+        return multiSlashLongComponentType;
+    }
+
+    public ComponentType<EntityStore, EnrageAbilityComponent> getEnrageAbilityComponentType() {
+        return enrageAbilityComponentType;
+    }
+
+    public ComponentType<EntityStore, VolleyAbilityComponent> getVolleyAbilityComponentType() {
+        return volleyAbilityComponentType;
+    }
+
+
     public RPGMobsNameplateService getNameplateService() {
         return nameplateService;
     }
@@ -784,7 +844,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         if (reconcileEventPending.getAndSet(false)) {
             reconcileActiveThisTick = true;
             eventBus.fire(new RPGMobsReconcileEvent());
-            LOGGER.atInfo().log("[RPGMobs] Config changed — reconciling loaded elites (configReloadCount=%d).", configReloadCount.get());
+            LOGGER.atInfo().log("Config changed  - reconciling loaded elites (configReloadCount=%d).", configReloadCount.get());
         } else {
             reconcileActiveThisTick = false;
         }

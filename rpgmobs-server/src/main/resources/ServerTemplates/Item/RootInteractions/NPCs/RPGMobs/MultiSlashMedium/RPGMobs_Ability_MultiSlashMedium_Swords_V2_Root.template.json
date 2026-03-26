@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.MultiSlashMedium.config.templates.entrySwordsV2}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

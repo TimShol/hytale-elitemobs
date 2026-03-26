@@ -91,7 +91,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         var effectController = entityStore.getComponent(npcRef, EffectControllerComponent.getComponentType());
         if (effectController == null) {
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Apply All] EffectControllerComponent is null — skipping", RPGMobsLogLevel.WARNING);
+                RPGMobsLogger.debug(LOGGER, "Apply All:EffectControllerComponent is null  - skipping", RPGMobsLogLevel.WARNING);
             }
             return;
         }
@@ -99,13 +99,13 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         Map<String, RPGMobsConfig.EntityEffectConfig> allEffects = config.effectsConfig.defaultEntityEffects;
         if (allEffects == null || allEffects.isEmpty()) {
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Apply All] No configured effects — skipping", RPGMobsLogLevel.INFO);
+                RPGMobsLogger.debug(LOGGER, "Apply All:No configured effects  - skipping", RPGMobsLogLevel.INFO);
             }
             return;
         }
 
         if (debug) {
-            RPGMobsLogger.debug(LOGGER, "[Effects Apply All] tier=T%d effects=%d", RPGMobsLogLevel.INFO, tierIndex + 1, allEffects.size());
+            RPGMobsLogger.debug(LOGGER, "Apply All:tier=T%d effects=%d", RPGMobsLogLevel.INFO, tierIndex + 1, allEffects.size());
         }
 
         boolean modified = false;
@@ -120,7 +120,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
                 boolean isEnabled = effectConfig != null && effectConfig.isEnabled;
                 boolean[] perTier = effectConfig != null ? effectConfig.isEnabledPerTier : null;
                 RPGMobsLogger.debug(LOGGER,
-                                    "[Effects Apply All] effectKey='%s' tier=T%d enabled=%b (isEnabled=%b, perTier=%s)",
+                                    "Apply All:effectKey='%s' tier=T%d enabled=%b (isEnabled=%b, perTier=%s)",
                                     RPGMobsLogLevel.INFO, effectKey, tierIndex + 1, enabled, isEnabled,
                                     perTier != null ? Arrays.toString(perTier) : "null");
             }
@@ -146,7 +146,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         var effectController = entityStore.getComponent(npcRef, EffectControllerComponent.getComponentType());
         if (effectController == null) {
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Reconcile] EffectControllerComponent is null — skipping", RPGMobsLogLevel.WARNING);
+                RPGMobsLogger.debug(LOGGER, "Reconcile:EffectControllerComponent is null  - skipping", RPGMobsLogLevel.WARNING);
             }
             return;
         }
@@ -155,7 +155,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         if (debug) {
             int effectCount = allEffects != null ? allEffects.size() : 0;
             int activeCount = activeEffects.activeEffects.size();
-            RPGMobsLogger.debug(LOGGER, "[Effects Reconcile] tier=T%d configuredEffects=%d activeEffects=%d activeKeys=%s",
+            RPGMobsLogger.debug(LOGGER, "Reconcile:tier=T%d configuredEffects=%d activeEffects=%d activeKeys=%s",
                                 RPGMobsLogLevel.INFO, tierIndex + 1, effectCount, activeCount,
                                 activeEffects.activeEffects.keySet());
         }
@@ -179,7 +179,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
                 boolean isEnabled = effectConfig != null && effectConfig.isEnabled;
                 boolean[] perTier = effectConfig != null ? effectConfig.isEnabledPerTier : null;
                 RPGMobsLogger.debug(LOGGER,
-                                    "[Effects Reconcile] effectKey='%s' tier=T%d enabled=%b (isEnabled=%b, perTier=%s)",
+                                    "Reconcile:effectKey='%s' tier=T%d enabled=%b (isEnabled=%b, perTier=%s)",
                                     RPGMobsLogLevel.INFO, effectKey, tierIndex + 1, enabled, isEnabled,
                                     perTier != null ? Arrays.toString(perTier) : "null");
             }
@@ -198,7 +198,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         }
 
         if (debug && !toRemove.isEmpty()) {
-            RPGMobsLogger.debug(LOGGER, "[Effects Reconcile] Removing %d stale effects: %s",
+            RPGMobsLogger.debug(LOGGER, "Reconcile:Removing %d stale effects: %s",
                                 RPGMobsLogLevel.INFO, toRemove.size(), toRemove);
         }
 
@@ -221,7 +221,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         String effectId = AssetConfigHelpers.getTieredAssetIdFromOnlyTemplate(config, effectConfig, tierIndex);
         if (effectId == null || effectId.isBlank()) {
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Apply] effectKey='%s' tier=T%d — effectId is null/blank (asset not generated?)",
+                RPGMobsLogger.debug(LOGGER, "Apply:effectKey='%s' tier=T%d  - effectId is null/blank (asset not generated?)",
                                     RPGMobsLogLevel.WARNING, effectKey, tierIndex + 1);
             }
             return false;
@@ -232,13 +232,13 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         if (activeEffects.activeEffects.containsKey(effectKey)) {
             if (hasActiveEffectIndex(effectController, effectIndex)) {
                 if (debug) {
-                    RPGMobsLogger.debug(LOGGER, "[Effects Apply] effectKey='%s' tier=T%d — already active (index=%d), skipping",
+                    RPGMobsLogger.debug(LOGGER, "Apply:effectKey='%s' tier=T%d  - already active (index=%d), skipping",
                                         RPGMobsLogLevel.INFO, effectKey, tierIndex + 1, effectIndex);
                 }
                 return false;
             }
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Apply] effectKey='%s' tier=T%d — tracked but not on controller, re-applying",
+                RPGMobsLogger.debug(LOGGER, "Apply:effectKey='%s' tier=T%d  - tracked but not on controller, re-applying",
                                     RPGMobsLogLevel.INFO, effectKey, tierIndex + 1);
             }
             activeEffects.removeEffect(effectKey);
@@ -248,7 +248,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         EntityEffect effectAsset = loader != null ? loader.getAsset(effectId, EntityEffect.getAssetMap()::getAsset) : null;
         if (effectAsset == null) {
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Apply] effectKey='%s' tier=T%d id='%s' — EntityEffect asset not found (loader=%s)",
+                RPGMobsLogger.debug(LOGGER, "Apply:effectKey='%s' tier=T%d id='%s'  - EntityEffect asset not found (loader=%s)",
                                     RPGMobsLogLevel.WARNING, effectKey, tierIndex + 1, effectId,
                                     loader != null ? "present" : "NULL");
             }
@@ -258,7 +258,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         boolean applied = effectController.addInfiniteEffect(npcRef, effectIndex, effectAsset, entityStore);
         if (!applied) {
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Apply] effectKey='%s' tier=T%d id='%s' index=%d — addInfiniteEffect() returned FALSE",
+                RPGMobsLogger.debug(LOGGER, "Apply:effectKey='%s' tier=T%d id='%s' index=%d  - addInfiniteEffect() returned FALSE",
                                     RPGMobsLogLevel.WARNING, effectKey, tierIndex + 1, effectId, effectIndex);
             }
             return false;
@@ -267,7 +267,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         activeEffects.addEffect(effectKey, new EffectState(0L, -1L, 1, true));
 
         if (debug) {
-            RPGMobsLogger.debug(LOGGER, "[Effects Apply] SUCCESS effectKey='%s' tier=T%d id='%s' index=%d",
+            RPGMobsLogger.debug(LOGGER, "Apply:SUCCESS effectKey='%s' tier=T%d id='%s' index=%d",
                                 RPGMobsLogLevel.INFO, effectKey, tierIndex + 1, effectId, effectIndex);
         }
 
@@ -284,7 +284,7 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         String effectId = AssetConfigHelpers.getTieredAssetIdFromOnlyTemplate(config, effectConfig, tierIndex);
         if (effectId == null || effectId.isBlank()) {
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Remove] effectKey='%s' — effectId null/blank, removing from tracking only",
+                RPGMobsLogger.debug(LOGGER, "Remove:effectKey='%s'  - effectId null/blank, removing from tracking only",
                                     RPGMobsLogLevel.INFO, effectKey);
             }
             activeEffects.removeEffect(effectKey);
@@ -296,11 +296,11 @@ public final class RPGMobsEffectsFeature implements IRPGMobsFeature {
         if (hasActiveEffectIndex(effectController, effectIndex)) {
             effectController.removeEffect(npcRef, effectIndex, entityStore);
             if (debug) {
-                RPGMobsLogger.debug(LOGGER, "[Effects Remove] SUCCESS effectKey='%s' tier=T%d id='%s' index=%d — removed from controller",
+                RPGMobsLogger.debug(LOGGER, "Remove:SUCCESS effectKey='%s' tier=T%d id='%s' index=%d  - removed from controller",
                                     RPGMobsLogLevel.INFO, effectKey, tierIndex + 1, effectId, effectIndex);
             }
         } else if (debug) {
-            RPGMobsLogger.debug(LOGGER, "[Effects Remove] effectKey='%s' tier=T%d — not found on controller (index=%d), removing tracking only",
+            RPGMobsLogger.debug(LOGGER, "Remove:effectKey='%s' tier=T%d  - not found on controller (index=%d), removing tracking only",
                                 RPGMobsLogLevel.INFO, effectKey, tierIndex + 1, effectIndex);
         }
 

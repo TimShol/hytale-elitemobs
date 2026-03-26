@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.MultiSlashLong.config.templates.entryMaces}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

@@ -75,15 +75,9 @@ public final class OverlayFieldRegistry {
                     _ -> "", overlay -> overlay.defaultLootTemplate, (overlay, value) -> overlay.defaultLootTemplate = value,
                     resolved -> resolved.defaultLootTemplate, (resolved, value) -> resolved.defaultLootTemplate = value),
 
-            boolField("eliteFriendlyFireDisabled",
-                    _ -> true, overlay -> overlay.eliteFriendlyFireDisabled, (overlay, value) -> overlay.eliteFriendlyFireDisabled = value,
-                    resolved -> resolved.eliteFriendlyFireDisabled, (resolved, value) -> resolved.eliteFriendlyFireDisabled = value),
             boolField("eliteFallDamageDisabled",
                     _ -> true, overlay -> overlay.eliteFallDamageDisabled, (overlay, value) -> overlay.eliteFallDamageDisabled = value,
                     resolved -> resolved.eliteFallDamageDisabled, (resolved, value) -> resolved.eliteFallDamageDisabled = value),
-            boolField("eliteNoAggroOnElite",
-                    _ -> true, overlay -> overlay.eliteNoAggroOnElite, (overlay, value) -> overlay.eliteNoAggroOnElite = value,
-                    resolved -> resolved.eliteNoAggroOnElite, (resolved, value) -> resolved.eliteNoAggroOnElite = value),
 
             boolField("enableNameplates",
                     config -> config.nameplatesConfig.enableMobNameplates, overlay -> overlay.enableNameplates, (overlay, value) -> overlay.enableNameplates = value,
@@ -119,7 +113,14 @@ public final class OverlayFieldRegistry {
                     resolved -> resolved.xpBonusPerAbility, (resolved, value) -> resolved.xpBonusPerAbility = value),
             doubleField("minionXPMultiplier",
                     config -> config.integrationsConfig.rpgLeveling.minionXPMultiplier, overlay -> overlay.minionXPMultiplier, (overlay, value) -> overlay.minionXPMultiplier = value,
-                    resolved -> resolved.minionXPMultiplier, (resolved, value) -> resolved.minionXPMultiplier = value)
+                    resolved -> resolved.minionXPMultiplier, (resolved, value) -> resolved.minionXPMultiplier = value),
+
+            floatField("globalCooldownMinSeconds",
+                    config -> config.abilitiesConfig.globalCooldownMinSeconds, overlay -> overlay.globalCooldownMinSeconds, (overlay, value) -> overlay.globalCooldownMinSeconds = value,
+                    resolved -> resolved.globalCooldownMinSeconds, (resolved, value) -> resolved.globalCooldownMinSeconds = value),
+            floatField("globalCooldownMaxSeconds",
+                    config -> config.abilitiesConfig.globalCooldownMaxSeconds, overlay -> overlay.globalCooldownMaxSeconds, (overlay, value) -> overlay.globalCooldownMaxSeconds = value,
+                    resolved -> resolved.globalCooldownMaxSeconds, (resolved, value) -> resolved.globalCooldownMaxSeconds = value)
     );
 
     private OverlayFieldRegistry() {}

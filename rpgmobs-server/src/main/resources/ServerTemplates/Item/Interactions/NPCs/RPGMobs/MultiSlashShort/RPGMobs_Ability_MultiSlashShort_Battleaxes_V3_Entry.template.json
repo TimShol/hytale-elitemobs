@@ -1,0 +1,66 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashShort Battleaxes V3  - 1-hit frontflip chop (~2.3s total). Rooted throughout.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 1.1s overhead charge with weapon trail",
+      "RunTime": 1.1,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "SwingLeftCharging",
+        "WorldSoundEventId": "SFX_Battleaxe_T2_Raise",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged_Red",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - SwingDownFrontflipChop with dual trails",
+      "RunTime": 0.7,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "SwingDownFrontflipChop",
+        "WorldSoundEventId": "SFX_Battleaxe_T2_Swing",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged_Red",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          },
+          {
+            "TrailId": "Mace_Signature",
+            "RotationOffset": { "Roll": 90.0 },
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.8 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashShort.config.templates.damageInteractionBattleaxes} ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery, rooted",
+      "RunTime": 0.4,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

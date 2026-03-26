@@ -224,6 +224,8 @@ final class AdminUIData {
             builder = addString(builder, "@AbilCfgHLForce" + i,
                     (d, v) -> d.abilCfgHLForce[fi] = v, d -> d.abilCfgHLForce[fi]);
         }
+        builder = addString(builder, "@AbilCfgHLInterrupt",
+                (d, v) -> d.abilCfgHLInterrupt = v, d -> d.abilCfgHLInterrupt);
 
         for (int i = 0; i < TIERS_COUNT; i++) {
             final int fi = i;
@@ -242,6 +244,96 @@ final class AdminUIData {
                 (d, v) -> d.abilCfgSMWraithW = v, d -> d.abilCfgSMWraithW);
         builder = addString(builder, "@AbilCfgSMAbrrW",
                 (d, v) -> d.abilCfgSMAbrrW = v, d -> d.abilCfgSMAbrrW);
+        builder = addString(builder, "@AbilCfgSUMinCount",
+                (d, v) -> d.abilCfgSUMinCount = v, d -> d.abilCfgSUMinCount);
+        builder = addString(builder, "@AbilCfgSUMaxCount",
+                (d, v) -> d.abilCfgSUMaxCount = v, d -> d.abilCfgSUMaxCount);
+        builder = addString(builder, "@AbilCfgSURadius",
+                (d, v) -> d.abilCfgSURadius = v, d -> d.abilCfgSURadius);
+        builder = addString(builder, "@AbilCfgSUMinionMin",
+                (d, v) -> d.abilCfgSUMinionMin = v, d -> d.abilCfgSUMinionMin);
+        builder = addString(builder, "@AbilCfgSUMinionMax",
+                (d, v) -> d.abilCfgSUMinionMax = v, d -> d.abilCfgSUMinionMax);
+
+        for (int i = 0; i < TIERS_COUNT; i++) {
+            final int fi = i;
+            builder = addString(builder, "@AbilCfgDRChance" + i,
+                    (d, v) -> d.abilCfgDRChance[fi] = v, d -> d.abilCfgDRChance[fi]);
+            builder = addString(builder, "@AbilCfgDRCooldown" + i,
+                    (d, v) -> d.abilCfgDRCooldown[fi] = v, d -> d.abilCfgDRCooldown[fi]);
+        }
+        builder = addString(builder, "@AbilCfgDRDodgeForce",
+                (d, v) -> d.abilCfgDRDodgeForce = v, d -> d.abilCfgDRDodgeForce);
+        for (int i = 0; i < TIERS_COUNT; i++) {
+            final int fi = i;
+            builder = addString(builder, "@AbilCfgDRDodgeChance" + i,
+                    (d, v) -> d.abilCfgDRDodgeChance[fi] = v, d -> d.abilCfgDRDodgeChance[fi]);
+        }
+        builder = addString(builder, "@AbilCfgDRInvulnDur",
+                (d, v) -> d.abilCfgDRInvulnDur = v, d -> d.abilCfgDRInvulnDur);
+        builder = addString(builder, "@AbilCfgDRChargedMult",
+                (d, v) -> d.abilCfgDRChargedMult = v, d -> d.abilCfgDRChargedMult);
+
+        for (int i = 0; i < TIERS_COUNT; i++) {
+            final int fi = i;
+            builder = addString(builder, "@AbilCfgMSChance" + i,
+                    (d, v) -> d.abilCfgMSChance[fi] = v, d -> d.abilCfgMSChance[fi]);
+            builder = addString(builder, "@AbilCfgMSCooldown" + i,
+                    (d, v) -> d.abilCfgMSCooldown[fi] = v, d -> d.abilCfgMSCooldown[fi]);
+        }
+        builder = addString(builder, "@AbilCfgMSMeleeRange",
+                (d, v) -> d.abilCfgMSMeleeRange = v, d -> d.abilCfgMSMeleeRange);
+        for (int i = 0; i < TIERS_COUNT; i++) {
+            final int fi = i;
+            builder = addString(builder, "@AbilCfgMSTrigger" + i,
+                    (d, v) -> d.abilCfgMSTrigger[fi] = v, d -> d.abilCfgMSTrigger[fi]);
+            builder = addString(builder, "@AbilCfgMSDamage" + i,
+                    (d, v) -> d.abilCfgMSDamage[fi] = v, d -> d.abilCfgMSDamage[fi]);
+            builder = addString(builder, "@AbilCfgMSDrift" + i,
+                    (d, v) -> d.abilCfgMSDrift[fi] = v, d -> d.abilCfgMSDrift[fi]);
+            builder = addString(builder, "@AbilCfgMSKB" + i,
+                    (d, v) -> d.abilCfgMSKB[fi] = v, d -> d.abilCfgMSKB[fi]);
+        }
+
+        for (int i = 0; i < TIERS_COUNT; i++) {
+            final int fi = i;
+            builder = addString(builder, "@AbilCfgENChance" + i,
+                    (d, v) -> d.abilCfgENChance[fi] = v, d -> d.abilCfgENChance[fi]);
+            builder = addString(builder, "@AbilCfgENCooldown" + i,
+                    (d, v) -> d.abilCfgENCooldown[fi] = v, d -> d.abilCfgENCooldown[fi]);
+        }
+        for (int i = 0; i < TIERS_COUNT; i++) {
+            final int fi = i;
+            builder = addString(builder, "@AbilCfgENHealthPct" + i,
+                    (d, v) -> d.abilCfgENHealthPct[fi] = v, d -> d.abilCfgENHealthPct[fi]);
+            builder = addString(builder, "@AbilCfgENDmgMult" + i,
+                    (d, v) -> d.abilCfgENDmgMult[fi] = v, d -> d.abilCfgENDmgMult[fi]);
+            builder = addString(builder, "@AbilCfgENSpdMult" + i,
+                    (d, v) -> d.abilCfgENSpdMult[fi] = v, d -> d.abilCfgENSpdMult[fi]);
+        }
+
+        for (int i = 0; i < TIERS_COUNT; i++) {
+            final int fi = i;
+            builder = addString(builder, "@AbilCfgVLChance" + i,
+                    (d, v) -> d.abilCfgVLChance[fi] = v, d -> d.abilCfgVLChance[fi]);
+            builder = addString(builder, "@AbilCfgVLCooldown" + i,
+                    (d, v) -> d.abilCfgVLCooldown[fi] = v, d -> d.abilCfgVLCooldown[fi]);
+        }
+        builder = addString(builder, "@AbilCfgVLMinRange",
+                (d, v) -> d.abilCfgVLMinRange = v, d -> d.abilCfgVLMinRange);
+        builder = addString(builder, "@AbilCfgVLMaxRange",
+                (d, v) -> d.abilCfgVLMaxRange = v, d -> d.abilCfgVLMaxRange);
+        for (int i = 0; i < TIERS_COUNT; i++) {
+            final int fi = i;
+            builder = addString(builder, "@AbilCfgVLTrigger" + i,
+                    (d, v) -> d.abilCfgVLTrigger[fi] = v, d -> d.abilCfgVLTrigger[fi]);
+            builder = addString(builder, "@AbilCfgVLProjectiles" + i,
+                    (d, v) -> d.abilCfgVLProjectiles[fi] = v, d -> d.abilCfgVLProjectiles[fi]);
+            builder = addString(builder, "@AbilCfgVLSpread" + i,
+                    (d, v) -> d.abilCfgVLSpread[fi] = v, d -> d.abilCfgVLSpread[fi]);
+            builder = addString(builder, "@AbilCfgVLDamage" + i,
+                    (d, v) -> d.abilCfgVLDamage[fi] = v, d -> d.abilCfgVLDamage[fi]);
+        }
 
         builder = addString(builder, "@EffectTreeFilter",
                 (d, v) -> d.effectTreeFilter = v, d -> d.effectTreeFilter);
@@ -276,6 +368,11 @@ final class AdminUIData {
                         (d, v) -> d.rarityWt[ft][fr] = v, d -> d.rarityWt[ft][fr]);
             }
         }
+        builder = addString(builder, "@GlobalCdMin",
+                (d, v) -> d.globalCdMin = v, d -> d.globalCdMin);
+        builder = addString(builder, "@GlobalCdMax",
+                (d, v) -> d.globalCdMax = v, d -> d.globalCdMax);
+
         CODEC = builder.build();
     }
 
@@ -368,12 +465,48 @@ final class AdminUIData {
     String abilCfgHLDrinkDur;
     String[] abilCfgHLHeal = new String[TIERS_COUNT];
     String[] abilCfgHLForce = new String[TIERS_COUNT];
+    String abilCfgHLInterrupt;
 
     String abilCfgSMMaxMinions;
     String abilCfgSMSkelW;
     String abilCfgSMZombW;
     String abilCfgSMWraithW;
     String abilCfgSMAbrrW;
+    String abilCfgSUMinCount;
+    String abilCfgSUMaxCount;
+    String abilCfgSURadius;
+    String abilCfgSUMinionMin;
+    String abilCfgSUMinionMax;
+
+    String[] abilCfgDRChance = new String[TIERS_COUNT];
+    String[] abilCfgDRCooldown = new String[TIERS_COUNT];
+    String abilCfgDRDodgeForce;
+    String[] abilCfgDRDodgeChance = new String[TIERS_COUNT];
+    String abilCfgDRInvulnDur;
+    String abilCfgDRChargedMult;
+
+    String[] abilCfgMSChance = new String[TIERS_COUNT];
+    String[] abilCfgMSCooldown = new String[TIERS_COUNT];
+    String abilCfgMSMeleeRange;
+    String[] abilCfgMSTrigger = new String[TIERS_COUNT];
+    String[] abilCfgMSDamage = new String[TIERS_COUNT];
+    String[] abilCfgMSDrift = new String[TIERS_COUNT];
+    String[] abilCfgMSKB = new String[TIERS_COUNT];
+
+    String[] abilCfgENChance = new String[TIERS_COUNT];
+    String[] abilCfgENCooldown = new String[TIERS_COUNT];
+    String[] abilCfgENHealthPct = new String[TIERS_COUNT];
+    String[] abilCfgENDmgMult = new String[TIERS_COUNT];
+    String[] abilCfgENSpdMult = new String[TIERS_COUNT];
+
+    String[] abilCfgVLChance = new String[TIERS_COUNT];
+    String[] abilCfgVLCooldown = new String[TIERS_COUNT];
+    String abilCfgVLMinRange;
+    String abilCfgVLMaxRange;
+    String[] abilCfgVLTrigger = new String[TIERS_COUNT];
+    String[] abilCfgVLProjectiles = new String[TIERS_COUNT];
+    String[] abilCfgVLSpread = new String[TIERS_COUNT];
+    String[] abilCfgVLDamage = new String[TIERS_COUNT];
 
     String mobRuleTreeFilter;
 
@@ -384,4 +517,8 @@ final class AdminUIData {
     final String[] rarityArmorPieces = new String[TIERS_COUNT];
     final String[] rarityShieldChance = new String[TIERS_COUNT];
     final String[][] rarityWt = new String[TIERS_COUNT][TIERS_COUNT];
+
+    String globalCdMin;
+    String globalCdMax;
+
 }

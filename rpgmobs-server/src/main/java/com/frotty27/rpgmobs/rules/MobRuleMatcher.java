@@ -4,6 +4,7 @@ import com.frotty27.rpgmobs.config.RPGMobsConfig;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiPredicate;
 
 import static com.frotty27.rpgmobs.utils.StringHelpers.normalizeLower;
 
@@ -85,44 +86,29 @@ public final class MobRuleMatcher {
         return false;
     }
 
-    private static int longestExactMatchLength(String lowerCaseRoleName, List<String> exactMatchList) {
-        if (exactMatchList == null || exactMatchList.isEmpty()) return 0;
-
-        int bestScore = 0;
-        for (String exactMatchEntry : exactMatchList) {
-            String normalizedExactMatchEntry = normalizeEntry(exactMatchEntry);
-            if (normalizedExactMatchEntry.isEmpty()) continue;
-            if (lowerCaseRoleName.equals(normalizedExactMatchEntry)) bestScore = Math.max(bestScore,
-                                                                                          normalizedExactMatchEntry.length()
-            );
-        }
-        return bestScore;
+    private static int longestExactMatchLength(String roleLower, List<String> matchList) {
+        return longestMatchLength(roleLower, matchList, String::equals);
     }
 
-    private static int longestPrefixMatchLength(String lowerCaseRoleName, List<String> prefixMatchList) {
-        if (prefixMatchList == null || prefixMatchList.isEmpty()) return 0;
-
-        int bestScore = 0;
-        for (String prefixMatchEntry : prefixMatchList) {
-            String normalizedPrefixMatchEntry = normalizeEntry(prefixMatchEntry);
-            if (normalizedPrefixMatchEntry.isEmpty()) continue;
-            if (lowerCaseRoleName.startsWith(normalizedPrefixMatchEntry)) bestScore = Math.max(bestScore,
-                                                                                               normalizedPrefixMatchEntry.length()
-            );
-        }
-        return bestScore;
+    private static int longestPrefixMatchLength(String roleLower, List<String> matchList) {
+        return longestMatchLength(roleLower, matchList, String::startsWith);
     }
 
-    private static int longestContainsMatchLength(String lowerCaseRoleName, List<String> containsMatchList) {
-        if (containsMatchList == null || containsMatchList.isEmpty()) return 0;
+    private static int longestContainsMatchLength(String roleLower, List<String> matchList) {
+        return longestMatchLength(roleLower, matchList, String::contains);
+    }
+
+    private static int longestMatchLength(String roleLower, List<String> matchList,
+                                          BiPredicate<String, String> matcher) {
+        if (matchList == null || matchList.isEmpty()) return 0;
 
         int bestScore = 0;
-        for (String containsMatchEntry : containsMatchList) {
-            String normalizedContainsMatchEntry = normalizeEntry(containsMatchEntry);
-            if (normalizedContainsMatchEntry.isEmpty()) continue;
-            if (lowerCaseRoleName.contains(normalizedContainsMatchEntry)) bestScore = Math.max(bestScore,
-                                                                                               normalizedContainsMatchEntry.length()
-            );
+        for (String entry : matchList) {
+            var normalized = normalizeEntry(entry);
+            if (normalized.isEmpty()) continue;
+            if (matcher.test(roleLower, normalized)) {
+                bestScore = Math.max(bestScore, normalized.length());
+            }
         }
         return bestScore;
     }

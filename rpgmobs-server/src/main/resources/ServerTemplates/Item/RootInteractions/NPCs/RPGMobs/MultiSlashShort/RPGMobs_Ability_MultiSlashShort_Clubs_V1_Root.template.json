@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.MultiSlashShort.config.templates.entryClubsV1}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

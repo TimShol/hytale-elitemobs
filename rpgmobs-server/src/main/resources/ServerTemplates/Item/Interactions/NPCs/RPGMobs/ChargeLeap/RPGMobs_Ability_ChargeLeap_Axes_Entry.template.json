@@ -1,0 +1,143 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs ChargeLeap  - Axe sounds with charging weapon trail + ground impact dust.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - charging stance with weapon trail only (no particles).",
+      "RunTime": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "DownstrikeCharging",
+        "WorldSoundEventId": "SFX_Battleaxe_T1_Raise",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      }
+    },
+    {
+      "Type": "ApplyForce",
+      "$Comment": "Leap / launch.",
+      "Effects": {
+        "ItemPlayerAnimationsId": "Mace",
+        "ItemAnimationId": "SwingDownChargedFalling",
+        "WorldSoundEventId": "SFX_Battleaxe_T1_Swing",
+        "CameraEffect": "Mace_Jump",
+        "Particles": [
+          {
+            "SystemId": "Mace_Signature_Cast",
+            "DetachedFromModel": true
+          },
+          {
+            "SystemId": "Mace_Signature_Cast_End"
+          }
+        ],
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          },
+          {
+            "TrailId": "Mace_Signature2",
+            "RotationOffset": { "Roll": 90.0 },
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Force": ${features.ChargeLeap.config.applyForcePerTier},
+      "Direction": {
+        "X": 0,
+        "Y": 0.4,
+        "Z": -4.5
+      },
+      "WaitForGround": true,
+      "ChangeVelocityType": "Add",
+      "VelocityConfig": {
+        "AirResistance": 0.97,
+        "AirResistanceMax": 0.96,
+        "GroundResistance": 0.94,
+        "GroundResistanceMax": 0.82,
+        "Threshold": 0.1,
+        "Style": "Exp"
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Slam selector  - impact + ground dust + shockwave.",
+      "RunTime": 0.05,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Mace",
+        "ItemAnimationId": "SwingDownCharged",
+        "WorldSoundEventId": "SFX_Battleaxe_T1_Impact",
+        "Particles": [
+          {
+            "SystemId": "Mace_Signature_Slash",
+            "TargetEntityPart": "Entity",
+            "TargetNodeName": "Hip",
+            "PositionOffset": {
+              "Y": 0.3,
+              "Z": 0.5
+            },
+            "RotationOffset": {
+              "Pitch": 0
+            }
+          },
+          {
+            "SystemId": "Block_Break_Dust",
+            "DetachedFromModel": true
+          },
+          {
+            "SystemId": "Mace_Signature_Cast",
+            "DetachedFromModel": true
+          }
+        ],
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          },
+          {
+            "TrailId": "Mace_Signature2",
+            "RotationOffset": { "Roll": 90.0 },
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": {
+        "Id": "AOECircle",
+        "Offset": { "Z": -1.5 },
+        "Range": ${features.ChargeLeap.config.slamRangePerTier}
+      },
+      "HitEntity": {
+        "Interactions": [
+          ${features.ChargeLeap.config.templates.damageInteraction},
+          "Weapon_Mace_Signature_Groundslam_Explosion"
+        ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery (still rooted)",
+      "RunTime": 0.6,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Mace",
+        "ItemAnimationId": "SwingDownCharged",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

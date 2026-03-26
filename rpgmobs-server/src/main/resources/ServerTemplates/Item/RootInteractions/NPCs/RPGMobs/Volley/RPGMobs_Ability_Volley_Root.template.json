@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.Volley.config.templates.entryInteraction}
+  ],
+  "Tags": {
+    "Attack": [
+      "Ranged"
+    ]
+  }
+}

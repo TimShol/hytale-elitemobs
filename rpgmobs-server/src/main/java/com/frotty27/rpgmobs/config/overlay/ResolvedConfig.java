@@ -32,6 +32,9 @@ public final class ResolvedConfig {
     public float healthRandomVariance = 0.05f;
     public float damageRandomVariance = 0.05f;
 
+    public float globalCooldownMinSeconds = 1.0f;
+    public float globalCooldownMaxSeconds = 3.0f;
+
     public Map<String, ResolvedAbilityConfig> resolvedAbilities = new LinkedHashMap<>();
 
     public static final class ResolvedAbilityConfig {
@@ -47,10 +50,7 @@ public final class ResolvedConfig {
     public double droppedGearDurabilityMax = 0.8;
     public String defaultLootTemplate = "";
 
-    public boolean eliteFriendlyFireDisabled = false;
     public boolean eliteFallDamageDisabled = false;
-
-    public boolean eliteNoAggroOnElite = false;
 
     public boolean enableNameplates = true;
     public String nameplateMode = "RANKED_ROLE";

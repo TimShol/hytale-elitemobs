@@ -39,7 +39,7 @@ public final class ConfigMigrationV2 {
         }
         if (!hasOldFiles) return false;
 
-        LOGGER.info("[RPGMobs] Detected old config layout — migrating to v2 folder structure...");
+        LOGGER.info("Detected old config layout  - migrating to v2 folder structure...");
 
         try {
 
@@ -52,16 +52,16 @@ public final class ConfigMigrationV2 {
                 if (Files.exists(src)) {
                     Path dest = baseDir.resolve(file);
                     Files.move(src, dest, StandardCopyOption.REPLACE_EXISTING);
-                    LOGGER.info("[RPGMobs] Moved " + file + " → base/" + file);
+                    LOGGER.info("Moved " + file + " → base/" + file);
                 }
             }
 
             migrateInstancesYml(modDirectory);
 
-            LOGGER.info("[RPGMobs] Migration to v2 complete!");
+            LOGGER.info("Migration to v2 complete!");
             return true;
         } catch (Exception e) {
-            LOGGER.warning("[RPGMobs] Migration failed: " + e.getMessage());
+            LOGGER.warning("Migration failed: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -97,7 +97,7 @@ public final class ConfigMigrationV2 {
             }
 
             if (instanceRules == null || instanceRules.isEmpty()) {
-                LOGGER.info("[RPGMobs] No instance rules found in instances.yml to migrate.");
+                LOGGER.info("No instance rules found in instances.yml to migrate.");
             } else {
                 Path instancesDir = modDirectory.resolve("instances");
                 DumperOptions dumperOptions = new DumperOptions();
@@ -120,17 +120,17 @@ public final class ConfigMigrationV2 {
                     try (Writer writer = Files.newBufferedWriter(overlayFile, StandardCharsets.UTF_8)) {
                         writer.write("# Migrated from instances.yml\n");
                         dumper.dump(ruleData, writer);
-                        LOGGER.info("[RPGMobs] Migrated instance rule: " + name + " → instances/" + name + ".yml");
+                        LOGGER.info("Migrated instance rule: " + name + " → instances/" + name + ".yml");
                     }
                 }
             }
 
             Path backup = modDirectory.resolve("instances.yml.migrated");
             Files.move(instancesFile, backup, StandardCopyOption.REPLACE_EXISTING);
-            LOGGER.info("[RPGMobs] Renamed instances.yml → instances.yml.migrated");
+            LOGGER.info("Renamed instances.yml → instances.yml.migrated");
 
         } catch (Exception e) {
-            LOGGER.warning("[RPGMobs] Failed to migrate instances.yml: " + e.getMessage());
+            LOGGER.warning("Failed to migrate instances.yml: " + e.getMessage());
         }
     }
 

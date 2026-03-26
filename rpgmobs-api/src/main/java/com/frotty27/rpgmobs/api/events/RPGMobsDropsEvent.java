@@ -9,13 +9,12 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import java.util.List;
 
 /**
- * Event fired when an RPG mob's drops are about to be spawned into the world.
+ * Fired after an elite dies, before loot items are spawned into the world.
  *
- * <p>Listeners may modify the {@linkplain #getDrops() drop list} (add, remove, or
- * replace items) or {@linkplain #setCancelled(boolean) cancel} the event to suppress
- * all drops entirely.</p>
+ * <p>The drop list is mutable - listeners can add, remove, or replace items.
+ * Cancelling this event prevents all drops from spawning.</p>
  *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsDropsEvent extends RPGMobsEvent implements ICancellable {
 
@@ -24,14 +23,12 @@ public final class RPGMobsDropsEvent extends RPGMobsEvent implements ICancellabl
     private boolean cancelled;
 
     /**
-     * Constructs a new drops event.
-     *
-     * @param world     the world in which the drops are being spawned
-     * @param entityRef the entity reference of the RPG mob whose drops are being spawned
-     * @param tier      the tier index of the RPG mob
-     * @param roleName  the role name of the RPG mob
-     * @param drops     the mutable list of item stacks to drop; listeners may modify this list
-     * @param position  the world position where the drops will be spawned
+     * @param world     the world where the elite died
+     * @param entityRef reference to the dead elite entity
+     * @param tier      tier index (0-based)
+     * @param roleName  the NPC role name
+     * @param drops     mutable list of item drops - listeners may modify this list
+     * @param position  the position where drops will spawn
      */
     public RPGMobsDropsEvent(World world, Ref<EntityStore> entityRef, int tier, String roleName, List<ItemStack> drops,
                              Vector3d position) {
@@ -41,21 +38,14 @@ public final class RPGMobsDropsEvent extends RPGMobsEvent implements ICancellabl
     }
 
     /**
-     * Returns the mutable list of items to be dropped.
-     *
-     * <p>Listeners may add, remove, or replace entries in this list to customize
-     * the drops. Changes are reflected in the final drop output.</p>
-     *
-     * @return the mutable drop list, never {@code null}
+     * @return mutable list of items to drop - add, remove, or replace entries as needed
      */
     public List<ItemStack> getDrops() {
         return drops;
     }
 
     /**
-     * Returns the world position where the drops will be spawned.
-     *
-     * @return the drop position, never {@code null}
+     * @return the position where drops will be spawned
      */
     public Vector3d getPosition() {
         return position;

@@ -21,7 +21,6 @@ public class ConfigPipelineRoundTripTest {
         overlay.enabled = false;
         overlay.enableHealthScaling = true;
         overlay.enableDamageScaling = false;
-        overlay.eliteFriendlyFireDisabled = true;
         overlay.enableNameplates = false;
 
         var restored = writeAndReload(overlay, tempDir);
@@ -29,7 +28,6 @@ public class ConfigPipelineRoundTripTest {
         assertEquals(false, restored.enabled);
         assertEquals(true, restored.enableHealthScaling);
         assertEquals(false, restored.enableDamageScaling);
-        assertEquals(true, restored.eliteFriendlyFireDisabled);
         assertEquals(false, restored.enableNameplates);
     }
 

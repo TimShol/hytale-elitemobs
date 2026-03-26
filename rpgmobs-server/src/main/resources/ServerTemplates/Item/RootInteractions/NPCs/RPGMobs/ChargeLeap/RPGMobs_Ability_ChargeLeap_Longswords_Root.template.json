@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.ChargeLeap.config.templates.entryLongswords}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

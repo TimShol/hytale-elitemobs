@@ -33,6 +33,8 @@ public final class RPGMobsAssetGenerator {
 
     private static final String TEMPLATE_ROOT = "ServerTemplates";
     private static final String OUTPUT_ROOT = "Server";
+    private static final String COMMON_RESOURCE_ROOT = "Common";
+    private static final String COMMON_OUTPUT_ROOT = "Common";
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
     private static final String RAW_PREFIX = "raw.";
 
@@ -54,6 +56,9 @@ public final class RPGMobsAssetGenerator {
             config.populateSummonMarkerEntriesIfEmpty();
 
             DotModelIndex modelIndex = DotModelIndex.build(config);
+
+            int commonAssetsCopied = copyCommonAssets(RPGMobsDirectory);
+            writtenFileCount += commonAssetsCopied;
 
             try (ResourceTree resourceTree = openResourceTreeFromJar()) {
                 for (Path sourcePath : resourceTree.walkResourceRoot()) {
@@ -140,14 +145,14 @@ public final class RPGMobsAssetGenerator {
             writtenFileCount += extraSummonRoleVariants;
             processedJsonFileCount += extraSummonRoleVariants;
 
-            LOGGER.atInfo().log(String.format("[RPGMobs] Generated assets to: %s (files=%d, jsonProcessed=%d)",
+            LOGGER.atInfo().log(String.format("Generated assets to: %s (files=%d, jsonProcessed=%d)",
                                               outputRootDirectory.toAbsolutePath(),
                                               writtenFileCount,
                                               processedJsonFileCount
             ));
 
         } catch (Throwable throwable) {
-            LOGGER.atWarning().log(String.format("[RPGMobs] Asset generation failed: %s", throwable));
+            LOGGER.atWarning().log(String.format("Asset generation failed: %s", throwable));
             throwable.printStackTrace();
         }
     }
@@ -640,6 +645,56 @@ public final class RPGMobsAssetGenerator {
         }
     }
 
+    private static int copyCommonAssets(Path RPGMobsDirectory) throws Exception {
+        Path commonOutputDir = RPGMobsDirectory.resolve(COMMON_OUTPUT_ROOT);
+
+        ClassLoader classLoader = RPGMobsAssetGenerator.class.getClassLoader();
+        URL commonUrl = classLoader.getResource(COMMON_RESOURCE_ROOT);
+        if (commonUrl == null) {
+            Path sourceCommon = Paths.get("src", "main", "resources", COMMON_RESOURCE_ROOT);
+            if (!Files.exists(sourceCommon)) return 0;
+            return copyCommonFromPath(sourceCommon, commonOutputDir);
+        }
+
+        URI commonUri = commonUrl.toURI();
+
+        if ("jar".equalsIgnoreCase(commonUri.getScheme())) {
+            FileSystem fileSystem;
+            try {
+                fileSystem = FileSystems.newFileSystem(commonUri, Map.of());
+            } catch (FileSystemAlreadyExistsException alreadyExists) {
+                fileSystem = FileSystems.getFileSystem(commonUri);
+            }
+
+            Path commonRoot = fileSystem.getPath("/" + COMMON_RESOURCE_ROOT);
+            return copyCommonFromPath(commonRoot, commonOutputDir);
+        }
+
+        Path commonRoot = Paths.get(commonUri);
+        return copyCommonFromPath(commonRoot, commonOutputDir);
+    }
+
+    private static int copyCommonFromPath(Path sourceRoot, Path outputRoot) throws IOException {
+        if (!Files.exists(sourceRoot)) return 0;
+
+        int copiedCount = 0;
+        try (Stream<Path> paths = Files.walk(sourceRoot)) {
+            for (Path sourcePath : paths.toList()) {
+                if (Files.isDirectory(sourcePath)) continue;
+
+                String fileName = sourcePath.getFileName().toString().toLowerCase(Locale.ROOT);
+                if (fileName.endsWith(".ui")) continue;
+
+                Path relativePath = sourceRoot.relativize(sourcePath);
+                Path destPath = outputRoot.resolve(relativePath.toString().replace('\\', '/'));
+                Files.createDirectories(destPath.getParent());
+                Files.copy(sourcePath, destPath, StandardCopyOption.REPLACE_EXISTING);
+                copiedCount++;
+            }
+        }
+        return copiedCount;
+    }
+
     private static int generateSummonRoleAssets(Path outputRootDirectory, RPGMobsConfig config) throws IOException {
         if (config == null || config.abilitiesConfig == null || config.abilitiesConfig.defaultAbilities == null)
             return 0;
@@ -652,9 +707,9 @@ public final class RPGMobsAssetGenerator {
         if (summonConfig.spawnMarkerEntriesByRole == null || summonConfig.spawnMarkerEntriesByRole.isEmpty()) return 0;
 
         String rootTemplateText = readResourceText(
-                "ServerTemplates/Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_UndeadSummon_Root.template.json");
+                "ServerTemplates/Item/RootInteractions/NPCs/RPGMobs/UndeadSummon/RPGMobs_Ability_UndeadSummon_Root.template.json");
         String entryTemplateText = readResourceText(
-                "ServerTemplates/Item/Interactions/NPCs/RPGMobs/RPGMobs_Ability_UndeadSummon_Entry.template.json");
+                "ServerTemplates/Item/Interactions/NPCs/RPGMobs/UndeadSummon/RPGMobs_Ability_UndeadSummon_Entry.template.json");
         if (rootTemplateText == null || entryTemplateText == null) return 0;
 
         int written = 0;

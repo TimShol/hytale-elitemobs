@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.MultiSlashShort.config.templates.entryDaggersV2}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

@@ -22,11 +22,11 @@ public final class RPGMobsVanillaDropsCullSystem extends EntityTickingSystem<Ent
     private static final String WEAPON_PREFIX = "weapon_";
     private static final String ARMOR_PREFIX = "armor_";
 
-    private final RPGMobsPlugin RPGMobsPlugin;
+    private final RPGMobsPlugin plugin;
     private final RPGMobsDropsCullHandler cullHandler = new RPGMobsDropsCullHandler(this);
 
-    public RPGMobsVanillaDropsCullSystem(RPGMobsPlugin RPGMobsPlugin) {
-        this.RPGMobsPlugin = RPGMobsPlugin;
+    public RPGMobsVanillaDropsCullSystem(RPGMobsPlugin plugin) {
+        this.plugin = plugin;
     }
 
     @Override
@@ -51,7 +51,7 @@ public final class RPGMobsVanillaDropsCullSystem extends EntityTickingSystem<Ent
         TransformComponent transformComponent = archetypeChunk.getComponent(entityIndex, transformComponentType);
         if (itemComponent == null || transformComponent == null) return;
 
-        if (!RPGMobsPlugin.getMobDropsCleanupManager().shouldCull(transformComponent.getPosition())) return;
+        if (!plugin.getMobDropsCleanupManager().shouldCull(transformComponent.getPosition())) return;
 
         ItemStack itemStack = itemComponent.getItemStack();
         if (itemStack == null || itemStack.isEmpty()) return;
@@ -64,7 +64,7 @@ public final class RPGMobsVanillaDropsCullSystem extends EntityTickingSystem<Ent
                 ARMOR_PREFIX);
         if (!isWeaponOrArmorDrop) return;
 
-        RPGMobsConfig config = RPGMobsPlugin.getConfig();
+        RPGMobsConfig config = plugin.getConfig();
         if (config != null && config.debugConfig.isDebugModeEnabled) {
             RPGMobsLogger.debug(LOGGER,
                                 "CULLING item=%s pos=%s",

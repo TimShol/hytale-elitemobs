@@ -1,24 +1,18 @@
 package com.frotty27.rpgmobs.api;
 
 /**
- * Thrown when the RPGMobs API is accessed before the mod has completed initialization.
+ * Thrown when the RPGMobs API is accessed before the plugin has initialized.
  *
- * <p>This typically indicates that:</p>
- * <ul>
- *   <li>The RPGMobs mod is not installed on the server.</li>
- *   <li>Your {@code manifest.json} does not declare {@code "Frotty27:RPGMobs": "*"}
- *       under {@code Dependencies}, so load ordering is not guaranteed.</li>
- *   <li>The API is being accessed too early during server startup.</li>
- * </ul>
+ * <p>This typically means your plugin loaded before RPGMobs. Ensure your
+ * {@code manifest.json} declares {@code "Frotty27:RPGMobs": "*"} in
+ * {@code Dependencies}.</p>
  *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsNotInitializedException extends RuntimeException {
 
     /**
-     * Constructs a new exception with the specified detail message.
-     *
-     * @param message the detail message explaining why initialization failed
+     * @param message detail message describing what was accessed before initialization
      */
     public RPGMobsNotInitializedException(String message) {
         super(message);

@@ -36,7 +36,7 @@ public final class ConfigWriter {
         Files.createDirectories(filePath.getParent());
 
         try (BufferedWriter writer = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
-            writer.write("# RPGMobs overlay — only overridden fields are stored here.\n");
+            writer.write("# RPGMobs overlay  - only overridden fields are stored here.\n");
             writer.write("# Fields not present inherit from base config.\n\n");
             if (yamlMap.isEmpty()) {
                 writer.write("# (no overrides)\n");
@@ -45,7 +45,7 @@ public final class ConfigWriter {
             }
         }
 
-        LOGGER.info(String.format("[RPGMobs] Wrote overlay: %s (%d fields)", filePath.getFileName(), yamlMap.size()));
+        LOGGER.info(String.format("Wrote overlay: %s (%d fields)", filePath.getFileName(), yamlMap.size()));
     }
 
     static Map<String, Object> overlayToMap(ConfigOverlay overlay) {

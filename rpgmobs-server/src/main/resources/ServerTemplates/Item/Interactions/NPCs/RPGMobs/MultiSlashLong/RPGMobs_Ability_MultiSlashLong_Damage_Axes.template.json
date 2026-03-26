@@ -1,0 +1,35 @@
+{
+  "Parent": "DamageEntityParent",
+  "DamageCalculator": {
+    "BaseDamage": {
+      "Physical": ${features.MultiSlashLong.config.baseDamagePerHitPerTier}
+    }
+  },
+  "DamageEffects": {
+    "Knockback": {
+      "Type": "Force",
+      "VelocityConfig": {
+        "AirResistance": 0.99,
+        "AirResistanceMax": 0.98,
+        "GroundResistance": 0.94,
+        "GroundResistanceMax": 0.3,
+        "Threshold": 3.0,
+        "Style": "Linear"
+      },
+      "Direction": {
+        "X": 0,
+        "Y": 1.0,
+        "Z": -2.0
+      },
+      "Force": ${features.MultiSlashLong.config.knockbackForcePerTier},
+      "VelocityType": "Set"
+    },
+    "WorldSoundEventId": "SFX_Axe_Iron_Impact",
+    "LocalSoundEventId": "SFX_Axe_Iron_Impact",
+    "WorldParticles": [
+      {
+        "SystemId": "Impact_Sword_Basic"
+      }
+    ]
+  }
+}

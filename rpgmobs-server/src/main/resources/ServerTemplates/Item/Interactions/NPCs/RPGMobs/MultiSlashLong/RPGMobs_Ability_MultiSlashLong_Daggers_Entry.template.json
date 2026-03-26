@@ -1,0 +1,180 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashLong Daggers  - 4-hit lightning assassin flurry (~3.8s total). Uses SFX_Daggers_T2 sounds.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 2.1s flurry stab charge with Daggers_Signature trail on weapon",
+      "RunTime": 0.9,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Daggers",
+        "ItemAnimationId": "PounceStabCharging",
+        "WorldSoundEventId": "SFX_Daggers_T2_Signature_P1",
+        "Trails": [
+          {
+            "TrailId": "Daggers_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - RazorstrikeSlash opener",
+      "RunTime": 0.35,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Daggers",
+        "ItemAnimationId": "RazorstrikeSlash",
+        "WorldSoundEventId": "SFX_Daggers_T2_Swing",
+        "Trails": [
+          {
+            "TrailId": "Daggers_Dash",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionDaggers} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 2  - RazorstrikeSweep",
+      "RunTime": 0.3,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Daggers",
+        "ItemAnimationId": "RazorstrikeSweep",
+        "WorldSoundEventId": "SFX_Daggers_T2_Swing",
+        "Trails": [
+          {
+            "TrailId": "Daggers_Dash",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionDaggers} ]
+      }
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 3  - RazorstrikeLunge with forward drift + dual trails",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.05, "Z": -1.0 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.4,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Daggers",
+            "ItemAnimationId": "RazorstrikeLunge",
+            "WorldSoundEventId": "SFX_Daggers_T2_Swing",
+            "Trails": [
+              {
+                "TrailId": "Daggers_Dash",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Daggers_Signature",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.2 }, "Range": 2.8 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionDaggers} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 4  - KickTornadoRight FINISHER with strong forward lunge + impact VFX",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.08, "Z": -1.5 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.35,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Daggers",
+            "ItemAnimationId": "KickTornadoRight",
+            "WorldSoundEventId": "SFX_Daggers_T2_Swing",
+            "Particles": [
+              {
+                "SystemId": "Block_Break_Dust",
+                "DetachedFromModel": true
+              },
+              {
+                "SystemId": "Mace_Signature_Cast",
+                "DetachedFromModel": true
+              }
+            ],
+            "Trails": [
+              {
+                "TrailId": "Daggers_Dash",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Daggers_Signature",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.5 }, "Range": 3.2 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionDaggers} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery, movement locked",
+      "RunTime": 0.5,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Daggers",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

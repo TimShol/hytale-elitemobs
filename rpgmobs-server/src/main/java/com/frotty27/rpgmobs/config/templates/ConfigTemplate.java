@@ -82,9 +82,7 @@ public final class ConfigTemplate {
         o.modelScalePerTier = new float[]{1f, 1f, 1f, 1f, 1f};
         o.modelScaleVariance = 0f;
 
-        o.eliteFriendlyFireDisabled = false;
         o.eliteFallDamageDisabled = false;
-        o.eliteNoAggroOnElite = false;
 
         o.distancePerTier = 0.0;
         o.distanceBonusInterval = 0.0;

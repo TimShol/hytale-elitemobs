@@ -1,7 +1,7 @@
 package com.frotty27.rpgmobs.utils;
 
-import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
-import com.frotty27.rpgmobs.components.ability.SummonUndeadAbilityComponent;
+import com.frotty27.rpgmobs.components.ability.EnrageAbilityComponent;
+import com.frotty27.rpgmobs.components.ability.WeaponSwappable;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
@@ -11,6 +11,7 @@ import com.hypixel.hytale.server.core.entity.InteractionChain;
 import com.hypixel.hytale.server.core.entity.InteractionManager;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.modules.interaction.InteractionModule;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.RootInteraction;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -33,10 +34,10 @@ public final class AbilityHelpers {
 
     public static boolean isInteractionTypeRunning(Store<EntityStore> entityStore, Ref<EntityStore> npcRef,
                                                    InteractionType interactionType) {
-        ComponentType<EntityStore, InteractionManager> interactionManagerComponentType = InteractionModule.get().getInteractionManagerComponent();
-        InteractionManager interactionManager = entityStore.getComponent(npcRef, interactionManagerComponentType);
-        if (interactionManager == null) return false;
-        var chains = interactionManager.getChains();
+        ComponentType<EntityStore, InteractionManager> managerType = InteractionModule.get().getInteractionManagerComponent();
+        InteractionManager manager = entityStore.getComponent(npcRef, managerType);
+        if (manager == null) return false;
+        var chains = manager.getChains();
         if (chains == null || chains.isEmpty()) return false;
         for (InteractionChain chain : chains.values()) {
             if (chain != null && chain.getType() == interactionType) return true;
@@ -46,26 +47,25 @@ public final class AbilityHelpers {
 
     public static void cancelInteractionType(Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
                                              Ref<EntityStore> npcRef, InteractionType interactionType) {
-        ComponentType<EntityStore, InteractionManager> interactionManagerComponentType = InteractionModule.get().getInteractionManagerComponent();
-        InteractionManager interactionManager = entityStore.getComponent(npcRef, interactionManagerComponentType);
-        if (interactionManager == null) return;
+        ComponentType<EntityStore, InteractionManager> managerType = InteractionModule.get().getInteractionManagerComponent();
+        InteractionManager manager = entityStore.getComponent(npcRef, managerType);
+        if (manager == null) return;
 
-        var chains = interactionManager.getChains();
+        var chains = manager.getChains();
         if (chains == null || chains.isEmpty()) return;
 
         for (InteractionChain chain : chains.values()) {
             if (chain != null && chain.getType() == interactionType) {
-                interactionManager.cancelChains(chain);
+                manager.cancelChains(chain);
             }
         }
-        commandBuffer.replaceComponent(npcRef, interactionManagerComponentType, interactionManager);
+        commandBuffer.replaceComponent(npcRef, managerType, manager);
     }
 
-    public static boolean swapToPotionInHand(NPCEntity npcEntity, HealLeapAbilityComponent healLeapAbility,
-                                             String potionItemId) {
-        if (npcEntity == null || healLeapAbility == null) return false;
-        if (potionItemId == null || potionItemId.isBlank()) return false;
-        if (healLeapAbility.swapActive) return false;
+    public static boolean swapWeaponInHand(NPCEntity npcEntity, WeaponSwappable swappable,
+                                           @Nullable ItemStack replacementItem) {
+        if (npcEntity == null || swappable == null) return false;
+        if (swappable.isSwapActive()) return false;
 
         Inventory inventory = npcEntity.getInventory();
         if (inventory == null) return false;
@@ -75,78 +75,78 @@ public final class AbilityHelpers {
 
         ItemStack previousItem = inventory.getHotbar().getItemStack(activeSlot);
 
-        ItemStack potionItem = new ItemStack(potionItemId, 1);
-        inventory.getHotbar().setItemStackForSlot(activeSlot, potionItem);
+        inventory.getHotbar().setItemStackForSlot(activeSlot, replacementItem);
         inventory.markChanged();
 
-        healLeapAbility.swapActive = true;
-        healLeapAbility.swapSlot = activeSlot;
-        healLeapAbility.swapPreviousItem = previousItem;
+        swappable.setSwapActive(true);
+        swappable.setSwapSlot(activeSlot);
+        swappable.setSwapPreviousItem(previousItem);
 
         return true;
     }
 
-    public static void restorePreviousItemIfNeeded(NPCEntity npcEntity, HealLeapAbilityComponent healLeapAbility) {
-        if (npcEntity == null || healLeapAbility == null) return;
-        if (!healLeapAbility.swapActive) return;
+    public static boolean swapToItemInHand(NPCEntity npcEntity, WeaponSwappable swappable, String itemId) {
+        if (itemId == null || itemId.isBlank()) return false;
+        return swapWeaponInHand(npcEntity, swappable, new ItemStack(itemId, 1));
+    }
+
+    public static boolean unequipWeaponInHand(NPCEntity npcEntity, WeaponSwappable swappable) {
+        return swapWeaponInHand(npcEntity, swappable, null);
+    }
+
+    public static void restoreWeaponIfNeeded(NPCEntity npcEntity, WeaponSwappable swappable) {
+        if (npcEntity == null || swappable == null) return;
+        if (!swappable.isSwapActive()) return;
 
         Inventory inventory = npcEntity.getInventory();
         if (inventory == null) return;
 
-        byte slot = healLeapAbility.swapSlot;
+        byte slot = swappable.getSwapSlot();
         if (slot == Inventory.INACTIVE_SLOT_INDEX) slot = 0;
 
-        ItemStack previous = healLeapAbility.swapPreviousItem;
-        inventory.getHotbar().setItemStackForSlot(slot, previous);
+        inventory.getHotbar().setItemStackForSlot(slot, swappable.getSwapPreviousItem());
         inventory.markChanged();
 
-        healLeapAbility.swapActive = false;
-        healLeapAbility.swapSlot = -1;
-        healLeapAbility.swapPreviousItem = null;
+        swappable.setSwapActive(false);
+        swappable.setSwapSlot((byte) -1);
+        swappable.setSwapPreviousItem(null);
     }
 
-    public static boolean swapToSpellbookInHand(NPCEntity npcEntity, SummonUndeadAbilityComponent summonAbility,
-                                                String spellbookItemId) {
-        if (npcEntity == null || summonAbility == null) return false;
-        if (spellbookItemId == null || spellbookItemId.isBlank()) return false;
-        if (summonAbility.swapActive) return false;
-
-        Inventory inventory = npcEntity.getInventory();
-        if (inventory == null) return false;
-
-        byte activeSlot = inventory.getActiveHotbarSlot();
-        if (activeSlot == Inventory.INACTIVE_SLOT_INDEX) activeSlot = 0;
-
-        ItemStack previousItem = inventory.getHotbar().getItemStack(activeSlot);
-
-        ItemStack spellbook = new ItemStack(spellbookItemId, 1);
-        inventory.getHotbar().setItemStackForSlot(activeSlot, spellbook);
-        inventory.markChanged();
-
-        summonAbility.swapActive = true;
-        summonAbility.swapSlot = activeSlot;
-        summonAbility.swapPreviousItem = previousItem;
-
-        return true;
-    }
-
-    public static void restoreSummonWeaponIfNeeded(NPCEntity npcEntity, SummonUndeadAbilityComponent summonAbility) {
-        if (npcEntity == null || summonAbility == null) return;
-        if (!summonAbility.swapActive) return;
+    public static void unequipUtilitySlotForEnrage(NPCEntity npcEntity, EnrageAbilityComponent enrageAbility) {
+        if (npcEntity == null || enrageAbility == null) return;
+        if (enrageAbility.utilitySwapActive) return;
 
         Inventory inventory = npcEntity.getInventory();
         if (inventory == null) return;
 
-        byte slot = summonAbility.swapSlot;
-        if (slot == Inventory.INACTIVE_SLOT_INDEX) slot = 0;
+        ItemContainer utility = inventory.getUtility();
+        if (utility == null || utility.getCapacity() < 1) return;
 
-        ItemStack previous = summonAbility.swapPreviousItem;
-        inventory.getHotbar().setItemStackForSlot(slot, previous);
+        ItemStack utilItem = utility.getItemStack((short) 0);
+        if (utilItem == null || utilItem.isEmpty()) return;
+
+        utility.setItemStackForSlot((short) 0, null);
         inventory.markChanged();
 
-        summonAbility.swapActive = false;
-        summonAbility.swapSlot = -1;
-        summonAbility.swapPreviousItem = null;
+        enrageAbility.utilitySwapActive = true;
+        enrageAbility.utilitySwapPreviousItem = utilItem;
+    }
+
+    public static void restoreEnrageUtilityIfNeeded(NPCEntity npcEntity, EnrageAbilityComponent enrageAbility) {
+        if (npcEntity == null || enrageAbility == null) return;
+        if (!enrageAbility.utilitySwapActive) return;
+
+        Inventory inventory = npcEntity.getInventory();
+        if (inventory == null) return;
+
+        ItemContainer utility = inventory.getUtility();
+        if (utility == null || utility.getCapacity() < 1) return;
+
+        utility.setItemStackForSlot((short) 0, enrageAbility.utilitySwapPreviousItem);
+        inventory.markChanged();
+
+        enrageAbility.utilitySwapActive = false;
+        enrageAbility.utilitySwapPreviousItem = null;
     }
 
     public static float rollPercentInRange(Random random, float minPercent, float maxPercent, float fallback) {

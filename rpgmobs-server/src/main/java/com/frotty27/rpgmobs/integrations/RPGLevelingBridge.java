@@ -31,7 +31,7 @@ public final class RPGLevelingBridge {
                 }
             });
         } catch (Exception e) {
-            LOGGER.atWarning().log("[RPGMobs] Failed to register RPGLeveling XP listener: %s", e.getMessage());
+            LOGGER.atWarning().log("Failed to register RPGLeveling XP listener: %s", e.getMessage());
         }
     }
 }

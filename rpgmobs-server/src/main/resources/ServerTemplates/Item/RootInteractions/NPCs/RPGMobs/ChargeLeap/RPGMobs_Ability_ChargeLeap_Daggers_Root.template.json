@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.ChargeLeap.config.templates.entryDaggers}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

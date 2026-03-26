@@ -1,0 +1,180 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashLong Longswords  - 4-hit sweeping combo with stab finisher (~5.4s total). Longsword uses wide two-handed swings. Uses SFX_Sword_T2 sounds.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 2.1s two-handed charge with Sword_Distortion trail on weapon",
+      "RunTime": 1.5,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Longsword",
+        "ItemAnimationId": "SwingLeftCharging",
+        "WorldSoundEventId": "SFX_Sword_T2_Signature_Part_1",
+        "Trails": [
+          {
+            "TrailId": "Sword_Distortion",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - SwingLeft wide sweep",
+      "RunTime": 0.45,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Longsword",
+        "ItemAnimationId": "SwingLeft",
+        "WorldSoundEventId": "SFX_Sword_T2_Swing",
+        "Trails": [
+          {
+            "TrailId": "Sword_Distortion",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionLongswords} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 2  - SwingRight wide backhand sweep",
+      "RunTime": 0.45,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Longsword",
+        "ItemAnimationId": "SwingRight",
+        "WorldSoundEventId": "SFX_Sword_T2_Swing",
+        "Trails": [
+          {
+            "TrailId": "Sword_Distortion",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionLongswords} ]
+      }
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 3  - SwingDown overhead chop with forward drift + dual trails",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.05, "Z": -1.0 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.45,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Longsword",
+            "ItemAnimationId": "SwingDown",
+            "WorldSoundEventId": "SFX_Sword_T2_Signature_Part_2",
+            "Trails": [
+              {
+                "TrailId": "Sword_Distortion",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Mace_Signature2",
+                "RotationOffset": { "Roll": 90.0 },
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.2 }, "Range": 3.2 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionLongswords} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 4  - StabCharged FINISHER lunging stab with strong forward + impact VFX",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.05, "Z": -1.5 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.3,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Longsword",
+            "ItemAnimationId": "StabCharged",
+            "WorldSoundEventId": "SFX_Sword_T2_Swing",
+            "Particles": [
+              {
+                "SystemId": "Mace_Signature_Cast",
+                "TargetEntityPart": "Entity",
+                "TargetNodeName": "Hip",
+                "PositionOffset": { "Y": 0.5 }
+              }
+            ],
+            "Trails": [
+              {
+                "TrailId": "Sword_Distortion",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Mace_Signature2",
+                "RotationOffset": { "Roll": 90.0 },
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.5 }, "Range": 3.2 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionLongswords} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery, movement locked",
+      "RunTime": 0.8,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Longsword",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

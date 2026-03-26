@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.ChargeLeap.config.templates.entryClubs}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

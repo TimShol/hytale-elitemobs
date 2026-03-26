@@ -14,7 +14,7 @@ public class AssetConfigHelpersTest {
 
         RPGMobsConfig.AbilityConfig ability = new RPGMobsConfig.AbilityConfig();
         ability.templates.add(RPGMobsConfig.AbilityConfig.TEMPLATE_ROOT_INTERACTION,
-                              "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_ChargeLeap_Root.template.json"
+                              "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Root.template.json"
         );
 
         String id = AssetConfigHelpers.getTieredAssetIdFromTemplateKey(cfg,

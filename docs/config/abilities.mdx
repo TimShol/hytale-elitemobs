@@ -3,7 +3,7 @@ title: Abilities
 description: Configuring the special combat abilities that elites can use.
 ---
 
-`abilities.yml` defines the special combat abilities that make elites more than just stat-boosted mobs. Each ability has its own activation rules, cooldowns, and per-tier scaling.
+`abilities.yml` defines the 10 combat abilities that make elites more than just stat-boosted mobs. Each ability has its own activation rules, cooldowns, per-tier scaling, and personality filtering.
 
 ## Common Fields
 
@@ -125,7 +125,7 @@ undead_summon:
   isEnabled: true
   chancePerTier: [0, 0, 0, 0.5, 1.0]
   cooldownSecondsPerTier: [0, 0, 0, 25, 25]
-  maxAliveMinionsPerSummoner: 7
+  maxAliveMinionsPerSummoner: 4
   skeletonArcherWeight: 100
   zombieWeight: 0
   wraithWeight: 25
@@ -165,3 +165,157 @@ The summon system automatically builds per-faction summon pools from the mob rul
 - **Trork_Shaman** summons other trorks (matching `"Trork_"`), excluding itself via `excludeFromSummonPool`
 
 **Tip:** The summon ability is gated via `linkedMobRuleKeys` to undead mobs, Goblin_Duke, and Trork_Shaman by default. To allow other mob types to summon, add them to the ability's `linkedMobRuleKeys` (either individually or via a category) and add an appropriate prefix to `roleIdentifiers` so the summon system knows which faction pool to build for them.
+
+## Dodge Roll
+
+A reactive and preemptive defensive ability. On damage received (all tiers), the elite has a chance to dodge sideways with a brief invulnerability window. T4+ elites with combat intelligence can also dodge preemptively when they detect their target is attacking or charging.
+
+```yaml
+dodge_roll:
+  isEnabled: true
+  cooldownSecondsPerTier: [12, 10, 8, 6, 5]
+  dodgeChancePerTier: [0.05, 0.08, 0.12, 0.18, 0.25]
+  dodgeForce: 300.0
+  invulnerabilityDurationPerTier: [0.3, 0.3, 0.4, 0.5, 0.6]
+```
+
+| Setting | What it does |
+| :--- | :--- |
+| `dodgeChancePerTier` | Probability that the elite dodges when triggered. T4+ intelligence boosts this by 2.5x for preemptive dodges. |
+| `dodgeForce` | Lateral dash velocity. Higher values mean faster, longer dodges. |
+| `invulnerabilityDurationPerTier` | Duration in seconds of the invulnerability window during the dodge. |
+
+## Multi Slash Short
+
+Quick 1-2 hit strikes with 3 random variations per weapon type. The fastest of the Multi Slash abilities, designed for interrupting player actions. Available to all tiers.
+
+```yaml
+multi_slash_short:
+  isEnabled: true
+  cooldownSecondsPerTier: [10, 8, 6, 5, 4]
+```
+
+Each of the 8 weapon variants (Swords, Longswords, Daggers, Battleaxes, Axes, Maces, Clubs, Spears) has independent config values for trigger chance, cooldown, damage, forward drift, knockback, and melee range. These are configured per-variant in the Admin UI using the variant selector buttons.
+
+## Multi Slash Medium
+
+2-4 hit combos with 2 random variations per weapon type. A balance of damage and recovery time. Available T2+.
+
+```yaml
+multi_slash_medium:
+  isEnabled: true
+  cooldownSecondsPerTier: [0, 12, 10, 8, 6]
+```
+
+Uses the same per-weapon-variant config system as Multi Slash Short.
+
+## Multi Slash Long
+
+4-6 hit full combos with 1 variation per weapon type. High damage output but long wind-up and recovery times give players counter windows. Available T3+.
+
+```yaml
+multi_slash_long:
+  isEnabled: true
+  cooldownSecondsPerTier: [0, 0, 15, 12, 10]
+```
+
+Uses the same per-weapon-variant config system as Multi Slash Short. Wind-up times are standardized at a minimum of 2.1 seconds.
+
+### Weapon Variants
+
+All three Multi Slash abilities support 8 weapon variants, each with unique animations, sounds, trails, and timing:
+
+| Variant | Short (hits) | Medium (hits) | Long (hits) | Signature moves |
+| :--- | :---: | :---: | :---: | :--- |
+| Swords | 1-2 | 3 | 6 | Spins and overhead jump finisher |
+| Longswords | 1-2 | 3 | 4 | Wide sweeps and stab finisher |
+| Daggers | 1-2 | 3 | 4 | Razor strikes and kick finisher |
+| Battleaxes | 1 | 2 | 3 | Whirlwind and downstrike finisher |
+| Axes | 1-2 | 3 | 4 | Charged swings and upswing finisher |
+| Maces | 1-2 | 2 | 3 | Uppercut and falling slam finisher |
+| Clubs | 1-2 | 2 | 3 | Side bashes and overhead slam |
+| Spears | 1-2 | 3 | 5 | Stab and spin sweep finisher |
+
+## War Cry
+
+A staff-channeling AOE ability that buffs nearby allies and debuffs nearby enemies. The mob temporarily swaps to a configurable staff item during the cast. Available T3+ with Strategic and Berserker personalities.
+
+```yaml
+war_cry:
+  isEnabled: true
+  cooldownSecondsPerTier: [0, 0, 30, 25, 20]
+  warCryTriggerChancePerTier: [0, 0, 0.08, 0.12, 0.18]
+  npcStaffItemId: "Staff_Arcane"
+```
+
+| Setting | What it does |
+| :--- | :--- |
+| `warCryTriggerChancePerTier` | Probability of triggering per combat tick evaluation. |
+| `npcStaffItemId` | The staff item the mob holds during the channeling animation. Configurable in the Admin UI via the item picker. |
+
+## Enrage
+
+A berserk transformation where the elite drops its weapon and enters a 20-second rapid punch chain. The mob cycles through 3 random variation patterns of light and heavy punches, then dies from exhaustion with normal loot and XP drops. Available T2+ with Aggressive, Tactical, Strategic, and Berserker personalities.
+
+```yaml
+enrage:
+  isEnabled: true
+  cooldownSecondsPerTier: [0, 60, 60, 60, 60]
+  triggerHealthPercentPerTier: [0, 0.30, 0.25, 0.20, 0.15]
+  lightPunchDamagePerTier: [0, 3, 5, 8, 12]
+  heavyPunchDamagePerTier: [0, 6, 10, 16, 24]
+```
+
+| Setting | What it does |
+| :--- | :--- |
+| `triggerHealthPercentPerTier` | Health threshold below which enrage can trigger. `0.30` means 30% HP. |
+| `lightPunchDamagePerTier` | Damage per light punch (0.45s each, 2.0 range). |
+| `heavyPunchDamagePerTier` | Damage per heavy punch (0.65s each, 2.5 range, with visual trails). |
+
+**Note:** Enrage is restricted to melee mobs only. The mob's weapon is de-equipped at the start and restored if the ability is interrupted (death or deaggro). Enrage can only trigger once per mob (the `enraged` flag persists across chunk unload/reload).
+
+## Volley
+
+A ranged projectile burst for mobs wielding bows, crossbows, or guns. The mob aims upward briefly, then fires a spread of projectiles. Available T3+ with Aggressive and Tactical personalities.
+
+```yaml
+volley:
+  isEnabled: true
+  cooldownSecondsPerTier: [0, 0, 18, 15, 12]
+  volleyTriggerChancePerTier: [0, 0, 0.08, 0.12, 0.18]
+  minRange: 8.0
+  maxRange: 30.0
+  projectileCountPerTier: [0, 0, 3, 4, 5]
+  spreadAnglePerTier: [0, 0, 15, 20, 25]
+  baseDamagePerProjectilePerTier: [0, 0, 5, 8, 12]
+```
+
+| Setting | What it does |
+| :--- | :--- |
+| `volleyTriggerChancePerTier` | Probability of triggering per combat tick evaluation. |
+| `minRange` / `maxRange` | Target must be within this distance range. |
+| `projectileCountPerTier` | Number of projectiles fired in the burst. |
+| `spreadAnglePerTier` | Spread angle in degrees between projectiles. |
+| `baseDamagePerProjectilePerTier` | Damage per individual projectile. |
+
+## Global Ability Cooldown
+
+After any ability completes, a random cooldown of 1-3 seconds prevents the next ability from triggering. This prevents ability spam in group combat.
+
+```yaml
+globalCooldownMinSeconds: 1.0
+globalCooldownMaxSeconds: 3.0
+```
+
+## Personality-Based Ability Filtering
+
+T4+ elites are assigned a combat personality that determines which abilities they receive. This creates coherent ability sets instead of every mob having every ability:
+
+| Personality | Abilities | Style |
+| :--- | :--- | :--- |
+| Aggressive | Charge Leap, Multi Slash, Enrage, Dodge Roll, Volley | Gap-closing and sustained damage |
+| Tactical | Charge Leap, Dodge Roll, Heal Leap, Volley, Multi Slash, Enrage | Balanced and adaptive |
+| Strategic | War Cry, Undead Summon, Heal Leap, Dodge Roll, Enrage | Support and area control |
+| Berserker | Multi Slash, Enrage, Charge Leap, Dodge Roll, War Cry | Relentless offense |
+
+T1-T3 elites (without personalities) receive a limited set based on tier: T1 gets Dodge Roll only, T2 adds Multi Slash, T3 adds Enrage.

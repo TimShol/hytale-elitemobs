@@ -1,0 +1,40 @@
+{
+  "Animations": {
+    "DashFront": {
+      "ThirdPerson": "Characters/Animations/Default/Dash_Front.blockyanim",
+      "Speed": 0.72,
+      "Looping": false,
+      "BlendingDuration": 0.1
+    },
+    "DashBack": {
+      "ThirdPerson": "Characters/Animations/Default/Dash_Back.blockyanim",
+      "Speed": 0.72,
+      "Looping": false,
+      "BlendingDuration": 0.1
+    },
+    "DashLeft": {
+      "ThirdPerson": "Characters/Animations/Default/Dash_Left.blockyanim",
+      "Speed": 0.72,
+      "Looping": false,
+      "BlendingDuration": 0.1
+    },
+    "DashRight": {
+      "ThirdPerson": "Characters/Animations/Default/Dash_Right.blockyanim",
+      "Speed": 0.72,
+      "Looping": false,
+      "BlendingDuration": 0.1
+    }
+  },
+  "WiggleWeights": {
+    "Pitch": 2,
+    "PitchDeceleration": 0.1,
+    "Roll": 0.1,
+    "RollDeceleration": 0.1,
+    "X": 3,
+    "XDeceleration": 0.1,
+    "Y": 0.1,
+    "YDeceleration": 0.1,
+    "Z": 0.1,
+    "ZDeceleration": 0.1
+  }
+}

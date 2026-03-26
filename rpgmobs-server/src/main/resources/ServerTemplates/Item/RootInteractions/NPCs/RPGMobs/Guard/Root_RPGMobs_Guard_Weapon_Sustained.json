@@ -1,0 +1,17 @@
+{
+    "Parent": "Melee_Root",
+    "Interactions": [
+        {
+            "Type": "EffectCondition",
+            "EntityEffectIds": ["Stamina_Broken"],
+            "Match": "None",
+            "Next": "RPGMobs_Guard_Weapon_Sustained"
+        }
+    ],
+    "Tags": {
+        "Attack": ["Block"]
+    },
+    "Rules": {
+        "Interrupting": ["Primary"]
+    }
+}

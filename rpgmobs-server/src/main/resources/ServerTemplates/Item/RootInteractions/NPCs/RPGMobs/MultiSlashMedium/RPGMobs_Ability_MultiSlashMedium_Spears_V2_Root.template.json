@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.MultiSlashMedium.config.templates.entrySpearsV2}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

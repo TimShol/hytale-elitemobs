@@ -1,0 +1,5 @@
+{
+  "Interactions": [
+    ${features.Enrage.config.templates.entryV3}
+  ]
+}

@@ -5,23 +5,17 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
- * Event fired when an RPG mob loses its aggro target.
+ * Fired when an RPGMobs elite loses its combat target and exits combat.
  *
- * <p>This occurs when the RPG mob is no longer actively targeting an entity,
- * for example when the target moves out of range, dies, or disconnects.
- * Listeners can use this event to clean up combat-related state.</p>
- *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsDeaggroEvent extends RPGMobsEvent {
 
     /**
-     * Constructs a new deaggro event.
-     *
-     * @param world    the world in which the deaggro occurred
-     * @param mobRef   the entity reference of the RPG mob that lost its target
-     * @param tier     the tier index of the RPG mob
-     * @param roleName the role name of the RPG mob
+     * @param world    the world where the elite exited combat
+     * @param mobRef   reference to the elite entity
+     * @param tier     tier index (0-based)
+     * @param roleName the NPC role name
      */
     public RPGMobsDeaggroEvent(World world, Ref<EntityStore> mobRef, int tier, String roleName) {
         super(world, mobRef, tier, roleName);

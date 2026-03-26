@@ -4,6 +4,7 @@ import com.frotty27.rpgmobs.assets.AssetConfig;
 import com.frotty27.rpgmobs.assets.AssetType;
 import com.frotty27.rpgmobs.assets.TieredAssetConfig;
 import com.frotty27.rpgmobs.config.schema.*;
+import com.frotty27.rpgmobs.features.AbstractMultiSlashFeature;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
 import com.frotty27.rpgmobs.utils.MobRuleCategoryHelpers;
 import com.google.gson.Gson;
@@ -14,25 +15,25 @@ import static com.frotty27.rpgmobs.utils.Constants.TIERS_AMOUNT;
 
 public final class RPGMobsConfig {
 
-    private static final String CP = "category:";
-    private static final List<String> WEAPON_CATS_MELEE = List.of(CP+"Axes", CP+"Battleaxes", CP+"Clubs",
-            CP+"Daggers", CP+"Longswords", CP+"Maces", CP+"Spears", CP+"Swords");
-    private static final List<String> WEAPON_CATS_SWORDS = List.of(CP+"Swords");
-    private static final List<String> WEAPON_CATS_AXES = List.of(CP+"Axes");
-    private static final List<String> WEAPON_CATS_LONGSWORDS = List.of(CP+"Longswords");
-    private static final List<String> WEAPON_CATS_CLUBS = List.of(CP+"Clubs");
-    private static final List<String> WEAPON_CATS_SPEARS = List.of(CP+"Spears");
-    private static final List<String> WEAPON_CATS_DAGGERS = List.of(CP+"Daggers");
-    private static final List<String> WEAPON_CATS_PICKAXES = List.of(CP+"Pickaxes");
-    private static final List<String> WEAPON_CATS_SHARP = List.of(CP+"Swords", CP+"Axes", CP+"Longswords", CP+"Battleaxes");
-    private static final List<String> WEAPON_CATS_TWO_HANDED_SHARP = List.of(CP+"Longswords", CP+"Battleaxes");
-    private static final List<String> WEAPON_CATS_BOWS = List.of(CP+"Shortbows", CP+"Crossbows");
-    private static final List<String> WEAPON_CATS_STAVES = List.of(CP+"Staves");
-    private static final List<String> WEAPON_CATS_GUNS = List.of(CP+"Guns");
-    private static final List<String> WEAPON_CATS_SPELLBOOKS = List.of(CP+"Spellbooks");
+    private static final String CATEGORY_PREFIX = "category:";
+    private static final List<String> WEAPON_CATS_MELEE = List.of(CATEGORY_PREFIX+"Axes", CATEGORY_PREFIX+"Battleaxes", CATEGORY_PREFIX+"Clubs",
+            CATEGORY_PREFIX+"Daggers", CATEGORY_PREFIX+"Longswords", CATEGORY_PREFIX+"Maces", CATEGORY_PREFIX+"Spears", CATEGORY_PREFIX+"Swords");
+    private static final List<String> WEAPON_CATS_SWORDS = List.of(CATEGORY_PREFIX+"Swords");
+    private static final List<String> WEAPON_CATS_AXES = List.of(CATEGORY_PREFIX+"Axes");
+    private static final List<String> WEAPON_CATS_LONGSWORDS = List.of(CATEGORY_PREFIX+"Longswords");
+    private static final List<String> WEAPON_CATS_CLUBS = List.of(CATEGORY_PREFIX+"Clubs");
+    private static final List<String> WEAPON_CATS_SPEARS = List.of(CATEGORY_PREFIX+"Spears");
+    private static final List<String> WEAPON_CATS_DAGGERS = List.of(CATEGORY_PREFIX+"Daggers");
+    private static final List<String> WEAPON_CATS_PICKAXES = List.of(CATEGORY_PREFIX+"Pickaxes");
+    private static final List<String> WEAPON_CATS_SHARP = List.of(CATEGORY_PREFIX+"Swords", CATEGORY_PREFIX+"Axes", CATEGORY_PREFIX+"Longswords", CATEGORY_PREFIX+"Battleaxes");
+    private static final List<String> WEAPON_CATS_TWO_HANDED_SHARP = List.of(CATEGORY_PREFIX+"Longswords", CATEGORY_PREFIX+"Battleaxes");
+    private static final List<String> WEAPON_CATS_BOWS = List.of(CATEGORY_PREFIX+"Shortbows", CATEGORY_PREFIX+"Crossbows");
+    private static final List<String> WEAPON_CATS_STAVES = List.of(CATEGORY_PREFIX+"Staves");
+    private static final List<String> WEAPON_CATS_GUNS = List.of(CATEGORY_PREFIX+"Guns");
+    private static final List<String> WEAPON_CATS_SPELLBOOKS = List.of(CATEGORY_PREFIX+"Spellbooks");
 
     public static final String SUMMON_ROLE_PREFIX = "RPGMobs_Summon_";
-    public static final int DEFAULT_MAX_ALIVE_MINIONS_PER_SUMMONER = 7;
+    public static final int DEFAULT_MAX_ALIVE_MINIONS_PER_SUMMONER = 5;
     public static final int SUMMON_MAX_ALIVE_MIN = 0;
     public static final int SUMMON_MAX_ALIVE_MAX = 50;
 
@@ -313,6 +314,7 @@ public final class RPGMobsConfig {
         m.put("crude", "common");
         m.put("copper", "common");
 
+        m.put("flail", "epic");
         m.put("iron", "uncommon");
         m.put("stone", "uncommon");
         m.put("steel", "uncommon");
@@ -1100,8 +1102,12 @@ public final class RPGMobsConfig {
                 "Crawler_Void", "Eye_Void", "Spawn_Void", "Spectre_Void"
         ));
 
+        var testMobs = new MobRuleCategory("Test", List.of(
+                "RPGMobs_Test", "RPGMobs_ParryTest"
+        ));
+
         return new MobRuleCategory("All", List.of(),
-                goblins, outlanders, trorks, skeletons, zombies, wraiths, voidMobs
+                goblins, outlanders, trorks, skeletons, zombies, wraiths, voidMobs, testMobs
         );
     }
 
@@ -1151,6 +1157,19 @@ public final class RPGMobsConfig {
     public static final class AbilitiesConfig {
         @Cfg(file = "abilities.yml", comment = "Ability configuration lives here. Say hello.")
         public Map<String, AbilityConfig> defaultAbilities = defaultAbilities();
+
+        @Default
+        @Min(0.0)
+        @Max(30.0)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum seconds of global cooldown between abilities. After one ability completes, the mob waits a random time between min and max before using another.")
+        public float globalCooldownMinSeconds = 2.0f;
+
+        @Default
+        @Min(0.0)
+        @Max(30.0)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum seconds of global cooldown between abilities.")
+        public float globalCooldownMaxSeconds = 4.0f;
+
     }
 
     private static List<String> buildDefaultLinkedKeysAllCategories(MobRuleCategory defaultTree) {
@@ -1196,14 +1215,51 @@ public final class RPGMobsConfig {
         chargeLeap.faceTarget = true;
 
         chargeLeap.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
-                                 "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_ChargeLeap_Root.template.json"
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Root.template.json"
         );
         chargeLeap.templates.add(ChargeLeapAbilityConfig.TEMPLATE_ENTRY_INTERACTION,
-                                 "Item/Interactions/NPCs/RPGMobs/RPGMobs_Ability_ChargeLeap_Entry.template.json"
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Entry.template.json"
         );
         chargeLeap.templates.add(ChargeLeapAbilityConfig.TEMPLATE_DAMAGE_INTERACTION,
-                                 "Item/Interactions/NPCs/RPGMobs/RPGMobs_Ability_ChargeLeap_Damage.template.json"
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Damage.template.json"
         );
+
+        chargeLeap.templates.add("rootSwords",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Swords_Root.template.json");
+        chargeLeap.templates.add("entrySwords",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Swords_Entry.template.json");
+        chargeLeap.templates.add("rootLongswords",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Longswords_Root.template.json");
+        chargeLeap.templates.add("entryLongswords",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Longswords_Entry.template.json");
+        chargeLeap.templates.add("rootDaggers",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Daggers_Root.template.json");
+        chargeLeap.templates.add("entryDaggers",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Daggers_Entry.template.json");
+        chargeLeap.templates.add("rootBattleaxes",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Battleaxes_Root.template.json");
+        chargeLeap.templates.add("entryBattleaxes",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Battleaxes_Entry.template.json");
+        chargeLeap.templates.add("rootAxes",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Axes_Root.template.json");
+        chargeLeap.templates.add("entryAxes",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Axes_Entry.template.json");
+        chargeLeap.templates.add("rootMaces",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Maces_Root.template.json");
+        chargeLeap.templates.add("entryMaces",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Maces_Entry.template.json");
+        chargeLeap.templates.add("rootClubs",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Clubs_Root.template.json");
+        chargeLeap.templates.add("entryClubs",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Clubs_Entry.template.json");
+        chargeLeap.templates.add("rootSpears",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Spears_Root.template.json");
+        chargeLeap.templates.add("entrySpears",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_Spears_Entry.template.json");
+        chargeLeap.templates.add("rootClubsFlail",
+                                 "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_ClubsFlail_Root.template.json");
+        chargeLeap.templates.add("entryClubsFlail",
+                                 "Item/Interactions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_ClubsFlail_Entry.template.json");
 
         chargeLeap.slamRangePerTier = new float[]{0f, 0f, 0f, 3f, 4f};
         chargeLeap.slamBaseDamagePerTier = new int[]{0, 0, 0, 20, 30};
@@ -1232,19 +1288,34 @@ public final class RPGMobsConfig {
         healLeap.applyForcePerTier = new float[]{0f, 0f, 0f, 830f, 930f};
 
         healLeap.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
-                               "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_HealLeap_Root.template.json"
+                               "Item/RootInteractions/NPCs/RPGMobs/HealLeap/RPGMobs_Ability_HealLeap_Root.template.json"
         );
         healLeap.templates.add(AbilityConfig.TEMPLATE_ENTRY_INTERACTION,
-                               "Item/Interactions/NPCs/RPGMobs/RPGMobs_Ability_HealLeap_Entry.template.json"
+                               "Item/Interactions/NPCs/RPGMobs/HealLeap/RPGMobs_Ability_HealLeap_Entry.template.json"
         );
         healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_ROOT_INTERACTION_CANCEL,
-                               "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_HealLeap_Cancel_Root.template.json"
+                               "Item/RootInteractions/NPCs/RPGMobs/HealLeap/RPGMobs_Ability_HealLeap_Cancel_Root.template.json"
         );
         healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_ENTRY_INTERACTION_CANCEL,
-                               "Item/Interactions/NPCs/RPGMobs/RPGMobs_Ability_HealLeap_Cancel_Entry.template.json"
+                               "Item/Interactions/NPCs/RPGMobs/HealLeap/RPGMobs_Ability_HealLeap_Cancel_Entry.template.json"
         );
         healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_EFFECT_INSTANT_HEAL,
                                "Entity/Effects/RPGMobs/RPGMobs_Effect_InstantHeal.template.json"
+        );
+        healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_POTION_ROOT,
+                               "Item/RootInteractions/NPCs/RPGMobs/HealLeap/RPGMobs_Ability_HealPotion_Root.template.json"
+        );
+        healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_POTION_ENTRY,
+                               "Item/Interactions/NPCs/RPGMobs/HealLeap/RPGMobs_Ability_HealPotion_Entry.template.json"
+        );
+        healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_STANDING_HEAL_ROOT,
+                               "Item/RootInteractions/NPCs/RPGMobs/HealLeap/RPGMobs_Ability_StandingHeal_Root.template.json"
+        );
+        healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_STANDING_HEAL_ENTRY,
+                               "Item/Interactions/NPCs/RPGMobs/HealLeap/RPGMobs_Ability_StandingHeal_Entry.template.json"
+        );
+        healLeap.templates.add(HealLeapAbilityConfig.TEMPLATE_EFFECT_STANDING_HEAL,
+                               "Entity/Effects/RPGMobs/RPGMobs_Effect_StandingHeal.template.json"
         );
 
         m.put(AbilityIds.HEAL_LEAP, healLeap);
@@ -1260,16 +1331,275 @@ public final class RPGMobsConfig {
                 "Skeleton_Burnt_Alchemist", "Skeleton_Burnt_Alchemist_Patrol", "Skeleton_Burnt_Alchemist_Wander"));
 
         undeadSummon.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
-                                   "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_UndeadSummon_Root.template.json"
+                                   "Item/RootInteractions/NPCs/RPGMobs/UndeadSummon/RPGMobs_Ability_UndeadSummon_Root.template.json"
         );
         undeadSummon.templates.add(AbilityConfig.TEMPLATE_ENTRY_INTERACTION,
-                                   "Item/Interactions/NPCs/RPGMobs/RPGMobs_Ability_UndeadSummon_Entry.template.json"
+                                   "Item/Interactions/NPCs/RPGMobs/UndeadSummon/RPGMobs_Ability_UndeadSummon_Entry.template.json"
+        );
+        undeadSummon.templates.add("rootV2",
+                                   "Item/RootInteractions/NPCs/RPGMobs/UndeadSummon/RPGMobs_Ability_UndeadSummon_V2_Root.template.json"
+        );
+        undeadSummon.templates.add("entryV2",
+                                   "Item/Interactions/NPCs/RPGMobs/UndeadSummon/RPGMobs_Ability_UndeadSummon_V2_Entry.template.json"
         );
         undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_SUMMON_MARKER,
                                    "NPC/Spawn/Markers/RPGMobs/RPGMobs_UndeadBow_Summon_Marker.template.json"
         );
+        undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_SUMMON_RISE_ROOT,
+                                   "Item/RootInteractions/NPCs/RPGMobs/SummonRise/RPGMobs_SummonRise_Root.template.json"
+        );
+        undeadSummon.templates.add(SummonAbilityConfig.TEMPLATE_SUMMON_RISE_ENTRY,
+                                   "Item/Interactions/NPCs/RPGMobs/SummonRise/RPGMobs_SummonRise_Entry.template.json"
+        );
 
         m.put(AbilityIds.SUMMON_UNDEAD, undeadSummon);
+
+        DodgeRollAbilityConfig dodgeRoll = new DodgeRollAbilityConfig();
+        dodgeRoll.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        dodgeRoll.excludeLinkedMobRuleKeys = new ArrayList<>(List.of(
+                "Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void"));
+        dodgeRoll.isEnabled = true;
+        dodgeRoll.isEnabledPerTier = new boolean[]{true, true, true, true, true};
+        dodgeRoll.chancePerTier = new float[]{0.30f, 0.40f, 0.50f, 1.00f, 1.00f};
+        dodgeRoll.cooldownSecondsPerTier = new float[]{12f, 10f, 8f, 6f, 5f};
+
+        dodgeRoll.templates.add("rootBack",
+                                "Item/RootInteractions/NPCs/RPGMobs/DodgeRoll/RPGMobs_Ability_DodgeRoll_Back_Root.template.json");
+        dodgeRoll.templates.add("entryBack",
+                                "Item/Interactions/NPCs/RPGMobs/DodgeRoll/RPGMobs_Ability_DodgeRoll_Back_Entry.template.json");
+        dodgeRoll.templates.add("rootLeft",
+                                "Item/RootInteractions/NPCs/RPGMobs/DodgeRoll/RPGMobs_Ability_DodgeRoll_Left_Root.template.json");
+        dodgeRoll.templates.add("entryLeft",
+                                "Item/Interactions/NPCs/RPGMobs/DodgeRoll/RPGMobs_Ability_DodgeRoll_Left_Entry.template.json");
+        dodgeRoll.templates.add("rootRight",
+                                "Item/RootInteractions/NPCs/RPGMobs/DodgeRoll/RPGMobs_Ability_DodgeRoll_Right_Root.template.json");
+        dodgeRoll.templates.add("entryRight",
+                                "Item/Interactions/NPCs/RPGMobs/DodgeRoll/RPGMobs_Ability_DodgeRoll_Right_Entry.template.json");
+        dodgeRoll.templates.add("rootForward",
+                                "Item/RootInteractions/NPCs/RPGMobs/DodgeRoll/RPGMobs_Ability_DodgeRoll_Forward_Root.template.json");
+        dodgeRoll.templates.add("entryForward",
+                                "Item/Interactions/NPCs/RPGMobs/DodgeRoll/RPGMobs_Ability_DodgeRoll_Forward_Entry.template.json");
+        dodgeRoll.templates.add(DodgeRollAbilityConfig.TEMPLATE_EFFECT_INVULNERABILITY,
+                                "Entity/Effects/RPGMobs/RPGMobs_Effect_DodgeRoll_Invulnerability.template.json");
+
+        m.put(AbilityIds.DODGE_ROLL, dodgeRoll);
+
+        var defaultExcludes = new ArrayList<>(List.of(
+                "Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void"));
+
+        MultiSlashAbilityConfig msShort = new MultiSlashAbilityConfig();
+        msShort.gate.allowedWeaponCategories = WEAPON_CATS_MELEE;
+        msShort.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        msShort.excludeLinkedMobRuleKeys = new ArrayList<>(defaultExcludes);
+        msShort.isEnabled = true;
+        msShort.isEnabledPerTier = new boolean[]{true, true, true, true, true};
+        msShort.chancePerTier = new float[]{0.40f, 0.50f, 0.60f, 0.80f, 1.00f};
+        msShort.cooldownSecondsPerTier = new float[]{8f, 7f, 6f, 5f, 4f};
+        msShort.slashTriggerChancePerTier = new float[]{0.15f, 0.20f, 0.25f, 0.30f, 0.35f};
+        msShort.baseDamagePerHitPerTier = new int[]{2, 3, 4, 6, 8};
+        msShort.forwardDriftForcePerTier = new float[]{0f, 0f, 2f, 3f, 4f};
+        msShort.knockbackForcePerTier = new float[]{0f, 2f, 3f, 4f, 5f};
+        msShort.meleeRange = 3.5f;
+
+        msShort.templates.add(MultiSlashAbilityConfig.TEMPLATE_DAMAGE_INTERACTION,
+                "Item/Interactions/NPCs/RPGMobs/MultiSlashShort/RPGMobs_Ability_MultiSlashShort_Damage.template.json");
+        MultiSlashAbilityConfig.registerVariantTemplates(msShort, "MultiSlashShort", 3);
+        msShort.templates.add(MultiSlashAbilityConfig.TEMPLATE_DAMAGE_INTERACTION + "ClubsFlail",
+                "Item/Interactions/NPCs/RPGMobs/MultiSlashShort/RPGMobs_Ability_MultiSlashShort_Damage_ClubsFlail.template.json");
+        for (int v = 1; v <= 3; v++) {
+            msShort.templates.add("rootClubsFlailV" + v,
+                    "Item/RootInteractions/NPCs/RPGMobs/MultiSlashShort/RPGMobs_Ability_MultiSlashShort_ClubsFlail_V" + v + "_Root.template.json");
+            msShort.templates.add("entryClubsFlailV" + v,
+                    "Item/Interactions/NPCs/RPGMobs/MultiSlashShort/RPGMobs_Ability_MultiSlashShort_ClubsFlail_V" + v + "_Entry.template.json");
+        }
+
+        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SWORDS, new MultiSlashVariantConfig(
+                new float[]{0.15f, 0.20f, 0.25f, 0.30f, 0.35f}, new float[]{8f, 7f, 6f, 5f, 4f},
+                new int[]{2, 3, 4, 6, 8}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 2f, 3f, 4f, 5f}, 3.5f));
+        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
+                new float[]{0.12f, 0.18f, 0.22f, 0.28f, 0.32f}, new float[]{9f, 8f, 7f, 6f, 5f},
+                new int[]{3, 4, 5, 7, 10}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 3f, 4f, 5f, 7f}, 4.0f));
+        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_DAGGERS, new MultiSlashVariantConfig(
+                new float[]{0.20f, 0.25f, 0.30f, 0.35f, 0.40f}, new float[]{6f, 5f, 5f, 4f, 3f},
+                new int[]{1, 2, 3, 4, 6}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 1f, 2f, 3f, 4f}, 3.0f));
+        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
+                new float[]{0.08f, 0.12f, 0.16f, 0.20f, 0.25f}, new float[]{12f, 10f, 9f, 8f, 7f},
+                new int[]{4, 6, 8, 10, 14}, new float[]{0f, 0f, 3f, 4f, 5f}, new float[]{0f, 4f, 6f, 8f, 10f}, 4.0f));
+        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_AXES, new MultiSlashVariantConfig(
+                new float[]{0.12f, 0.18f, 0.22f, 0.28f, 0.32f}, new float[]{9f, 8f, 7f, 6f, 5f},
+                new int[]{3, 4, 5, 7, 10}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 3f, 4f, 5f, 7f}, 3.5f));
+        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_MACES, new MultiSlashVariantConfig(
+                new float[]{0.10f, 0.15f, 0.20f, 0.25f, 0.30f}, new float[]{10f, 9f, 8f, 7f, 6f},
+                new int[]{3, 5, 7, 10, 14}, new float[]{0f, 0f, 3f, 4f, 5f}, new float[]{0f, 4f, 5f, 7f, 10f}, 3.5f));
+        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_CLUBS, new MultiSlashVariantConfig(
+                new float[]{0.12f, 0.18f, 0.22f, 0.26f, 0.32f}, new float[]{9f, 8f, 7f, 6f, 5f},
+                new int[]{2, 3, 5, 7, 10}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 3f, 5f, 7f, 9f}, 3.5f));
+        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SPEARS, new MultiSlashVariantConfig(
+                new float[]{0.18f, 0.22f, 0.28f, 0.32f, 0.38f}, new float[]{7f, 6f, 5f, 5f, 4f},
+                new int[]{2, 3, 4, 5, 7}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 2f, 3f, 4f, 6f}, 4.5f));
+
+        m.put(AbilityIds.MULTI_SLASH_SHORT, msShort);
+
+        MultiSlashAbilityConfig msMedium = new MultiSlashAbilityConfig();
+        msMedium.gate.allowedWeaponCategories = WEAPON_CATS_MELEE;
+        msMedium.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        msMedium.excludeLinkedMobRuleKeys = new ArrayList<>(defaultExcludes);
+        msMedium.isEnabled = true;
+        msMedium.isEnabledPerTier = new boolean[]{false, true, true, true, true};
+        msMedium.chancePerTier = new float[]{0f, 0.30f, 0.40f, 0.60f, 1.00f};
+        msMedium.cooldownSecondsPerTier = new float[]{0f, 14f, 12f, 10f, 8f};
+        msMedium.slashTriggerChancePerTier = new float[]{0f, 0.10f, 0.14f, 0.18f, 0.25f};
+        msMedium.baseDamagePerHitPerTier = new int[]{0, 4, 6, 9, 14};
+        msMedium.forwardDriftForcePerTier = new float[]{0f, 3f, 4f, 5f, 6f};
+        msMedium.knockbackForcePerTier = new float[]{0f, 4f, 6f, 8f, 10f};
+        msMedium.meleeRange = 4.0f;
+
+        msMedium.templates.add(MultiSlashAbilityConfig.TEMPLATE_DAMAGE_INTERACTION,
+                "Item/Interactions/NPCs/RPGMobs/MultiSlashMedium/RPGMobs_Ability_MultiSlashMedium_Damage.template.json");
+        MultiSlashAbilityConfig.registerVariantTemplates(msMedium, "MultiSlashMedium", 2);
+        msMedium.templates.add(MultiSlashAbilityConfig.TEMPLATE_DAMAGE_INTERACTION + "ClubsFlail",
+                "Item/Interactions/NPCs/RPGMobs/MultiSlashMedium/RPGMobs_Ability_MultiSlashMedium_Damage_ClubsFlail.template.json");
+        for (int v = 1; v <= 2; v++) {
+            msMedium.templates.add("rootClubsFlailV" + v,
+                    "Item/RootInteractions/NPCs/RPGMobs/MultiSlashMedium/RPGMobs_Ability_MultiSlashMedium_ClubsFlail_V" + v + "_Root.template.json");
+            msMedium.templates.add("entryClubsFlailV" + v,
+                    "Item/Interactions/NPCs/RPGMobs/MultiSlashMedium/RPGMobs_Ability_MultiSlashMedium_ClubsFlail_V" + v + "_Entry.template.json");
+        }
+
+        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SWORDS, new MultiSlashVariantConfig(
+                new float[]{0f, 0.10f, 0.14f, 0.18f, 0.25f}, new float[]{0f, 14f, 12f, 10f, 8f},
+                new int[]{0, 4, 6, 9, 14}, new float[]{0f, 3f, 4f, 5f, 6f}, new float[]{0f, 4f, 6f, 8f, 10f}, 4.0f));
+        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
+                new float[]{0f, 0.08f, 0.12f, 0.16f, 0.22f}, new float[]{0f, 16f, 14f, 12f, 10f},
+                new int[]{0, 5, 8, 12, 16}, new float[]{0f, 3f, 4f, 6f, 8f}, new float[]{0f, 5f, 7f, 9f, 12f}, 4.5f));
+        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_DAGGERS, new MultiSlashVariantConfig(
+                new float[]{0f, 0.14f, 0.18f, 0.24f, 0.30f}, new float[]{0f, 10f, 9f, 8f, 6f},
+                new int[]{0, 3, 4, 6, 10}, new float[]{0f, 2f, 3f, 4f, 5f}, new float[]{0f, 2f, 3f, 4f, 6f}, 3.5f));
+        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
+                new float[]{0f, 0.06f, 0.08f, 0.12f, 0.18f}, new float[]{0f, 20f, 18f, 16f, 14f},
+                new int[]{0, 8, 12, 16, 22}, new float[]{0f, 4f, 5f, 7f, 9f}, new float[]{0f, 6f, 8f, 12f, 16f}, 4.5f));
+        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_AXES, new MultiSlashVariantConfig(
+                new float[]{0f, 0.10f, 0.14f, 0.18f, 0.24f}, new float[]{0f, 15f, 13f, 11f, 9f},
+                new int[]{0, 5, 7, 10, 14}, new float[]{0f, 3f, 4f, 5f, 7f}, new float[]{0f, 4f, 6f, 8f, 11f}, 4.0f));
+        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_MACES, new MultiSlashVariantConfig(
+                new float[]{0f, 0.06f, 0.10f, 0.14f, 0.20f}, new float[]{0f, 18f, 16f, 14f, 12f},
+                new int[]{0, 6, 9, 13, 18}, new float[]{0f, 4f, 5f, 6f, 8f}, new float[]{0f, 6f, 8f, 10f, 14f}, 4.0f));
+        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_CLUBS, new MultiSlashVariantConfig(
+                new float[]{0f, 0.08f, 0.12f, 0.16f, 0.22f}, new float[]{0f, 16f, 14f, 12f, 10f},
+                new int[]{0, 4, 7, 10, 14}, new float[]{0f, 3f, 4f, 5f, 7f}, new float[]{0f, 5f, 7f, 10f, 13f}, 3.8f));
+        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SPEARS, new MultiSlashVariantConfig(
+                new float[]{0f, 0.12f, 0.16f, 0.22f, 0.28f}, new float[]{0f, 13f, 11f, 9f, 7f},
+                new int[]{0, 4, 6, 8, 12}, new float[]{0f, 3f, 4f, 5f, 7f}, new float[]{0f, 3f, 5f, 7f, 9f}, 5.0f));
+
+        m.put(AbilityIds.MULTI_SLASH_MEDIUM, msMedium);
+
+        MultiSlashAbilityConfig msLong = new MultiSlashAbilityConfig();
+        msLong.gate.allowedWeaponCategories = WEAPON_CATS_MELEE;
+        msLong.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        msLong.excludeLinkedMobRuleKeys = new ArrayList<>(defaultExcludes);
+        msLong.isEnabled = true;
+        msLong.isEnabledPerTier = new boolean[]{false, false, true, true, true};
+        msLong.chancePerTier = new float[]{0f, 0f, 0.30f, 0.50f, 1.00f};
+        msLong.cooldownSecondsPerTier = new float[]{0f, 0f, 22f, 20f, 18f};
+        msLong.slashTriggerChancePerTier = new float[]{0f, 0f, 0.08f, 0.12f, 0.18f};
+        msLong.baseDamagePerHitPerTier = new int[]{0, 0, 6, 10, 16};
+        msLong.forwardDriftForcePerTier = new float[]{0f, 0f, 4f, 5f, 6f};
+        msLong.knockbackForcePerTier = new float[]{0f, 0f, 6f, 8f, 10f};
+        msLong.meleeRange = 4.0f;
+
+        msLong.templates.add(MultiSlashAbilityConfig.TEMPLATE_DAMAGE_INTERACTION,
+                "Item/Interactions/NPCs/RPGMobs/MultiSlashLong/RPGMobs_Ability_MultiSlashLong_Damage.template.json");
+        MultiSlashAbilityConfig.registerVariantTemplates(msLong, "MultiSlashLong", 1);
+        msLong.templates.add(MultiSlashAbilityConfig.TEMPLATE_DAMAGE_INTERACTION + "ClubsFlail",
+                "Item/Interactions/NPCs/RPGMobs/MultiSlashLong/RPGMobs_Ability_MultiSlashLong_Damage_ClubsFlail.template.json");
+        msLong.templates.add("rootClubsFlail",
+                "Item/RootInteractions/NPCs/RPGMobs/MultiSlashLong/RPGMobs_Ability_MultiSlashLong_ClubsFlail_Root.template.json");
+        msLong.templates.add("entryClubsFlail",
+                "Item/Interactions/NPCs/RPGMobs/MultiSlashLong/RPGMobs_Ability_MultiSlashLong_ClubsFlail_Entry.template.json");
+
+        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SWORDS, new MultiSlashVariantConfig(
+                new float[]{0f, 0f, 0.08f, 0.12f, 0.18f}, new float[]{0f, 0f, 22f, 20f, 18f},
+                new int[]{0, 0, 6, 10, 16}, new float[]{0f, 0f, 4f, 5f, 6f}, new float[]{0f, 0f, 6f, 8f, 10f}, 4.0f));
+        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
+                new float[]{0f, 0f, 0.07f, 0.10f, 0.16f}, new float[]{0f, 0f, 24f, 22f, 20f},
+                new int[]{0, 0, 8, 12, 18}, new float[]{0f, 0f, 4f, 6f, 8f}, new float[]{0f, 0f, 7f, 9f, 12f}, 4.5f));
+        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_DAGGERS, new MultiSlashVariantConfig(
+                new float[]{0f, 0f, 0.10f, 0.14f, 0.22f}, new float[]{0f, 0f, 18f, 16f, 14f},
+                new int[]{0, 0, 4, 7, 12}, new float[]{0f, 0f, 3f, 4f, 5f}, new float[]{0f, 0f, 3f, 5f, 8f}, 3.5f));
+        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
+                new float[]{0f, 0f, 0.05f, 0.08f, 0.14f}, new float[]{0f, 0f, 28f, 25f, 22f},
+                new int[]{0, 0, 10, 16, 24}, new float[]{0f, 0f, 5f, 7f, 9f}, new float[]{0f, 0f, 8f, 12f, 16f}, 4.5f));
+        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_AXES, new MultiSlashVariantConfig(
+                new float[]{0f, 0f, 0.08f, 0.12f, 0.18f}, new float[]{0f, 0f, 22f, 20f, 18f},
+                new int[]{0, 0, 7, 10, 15}, new float[]{0f, 0f, 4f, 5f, 7f}, new float[]{0f, 0f, 6f, 8f, 11f}, 4.0f));
+        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_MACES, new MultiSlashVariantConfig(
+                new float[]{0f, 0f, 0.06f, 0.10f, 0.16f}, new float[]{0f, 0f, 26f, 22f, 20f},
+                new int[]{0, 0, 8, 13, 20}, new float[]{0f, 0f, 5f, 6f, 8f}, new float[]{0f, 0f, 8f, 10f, 14f}, 4.0f));
+        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_CLUBS, new MultiSlashVariantConfig(
+                new float[]{0f, 0f, 0.08f, 0.12f, 0.18f}, new float[]{0f, 0f, 24f, 22f, 20f},
+                new int[]{0, 0, 6, 10, 16}, new float[]{0f, 0f, 4f, 5f, 7f}, new float[]{0f, 0f, 7f, 10f, 13f}, 3.8f));
+        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SPEARS, new MultiSlashVariantConfig(
+                new float[]{0f, 0f, 0.10f, 0.14f, 0.20f}, new float[]{0f, 0f, 20f, 18f, 16f},
+                new int[]{0, 0, 5, 8, 12}, new float[]{0f, 0f, 4f, 5f, 7f}, new float[]{0f, 0f, 5f, 7f, 9f}, 5.0f));
+
+        m.put(AbilityIds.MULTI_SLASH_LONG, msLong);
+
+        EnrageAbilityConfig enrage = new EnrageAbilityConfig();
+        enrage.gate.allowedWeaponCategories = WEAPON_CATS_MELEE;
+        enrage.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        enrage.excludeLinkedMobRuleKeys = new ArrayList<>(List.of(
+                "Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void"));
+        enrage.isEnabled = true;
+        enrage.isEnabledPerTier = new boolean[]{false, true, true, true, true};
+        enrage.chancePerTier = new float[]{0f, 0.30f, 0.50f, 0.70f, 1.00f};
+        enrage.cooldownSecondsPerTier = new float[]{0f, 60f, 60f, 60f, 60f};
+
+        enrage.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
+                             "Item/RootInteractions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_V1_Root.template.json");
+        enrage.templates.add(AbilityConfig.TEMPLATE_ENTRY_INTERACTION,
+                             "Item/Interactions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_V1_Entry.template.json");
+        enrage.templates.add("rootV1",
+                             "Item/RootInteractions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_V1_Root.template.json");
+        enrage.templates.add("entryV1",
+                             "Item/Interactions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_V1_Entry.template.json");
+        enrage.templates.add("rootV2",
+                             "Item/RootInteractions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_V2_Root.template.json");
+        enrage.templates.add("entryV2",
+                             "Item/Interactions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_V2_Entry.template.json");
+        enrage.templates.add("rootV3",
+                             "Item/RootInteractions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_V3_Root.template.json");
+        enrage.templates.add("entryV3",
+                             "Item/Interactions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_V3_Entry.template.json");
+        enrage.templates.add(EnrageAbilityConfig.TEMPLATE_LIGHT_DAMAGE_INTERACTION,
+                             "Item/Interactions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_LightDamage.template.json");
+        enrage.templates.add(EnrageAbilityConfig.TEMPLATE_HEAVY_DAMAGE_INTERACTION,
+                             "Item/Interactions/NPCs/RPGMobs/Enrage/RPGMobs_Ability_Enrage_HeavyDamage.template.json");
+        enrage.templates.add(EnrageAbilityConfig.TEMPLATE_EFFECT_RED_EYES,
+                             "Entity/Effects/RPGMobs/RPGMobs_Effect_Enrage_RedEyes.template.json");
+        m.put(AbilityIds.ENRAGE, enrage);
+
+        VolleyAbilityConfig volley = new VolleyAbilityConfig();
+        volley.gate.allowedWeaponCategories = new ArrayList<>(List.of(CATEGORY_PREFIX+"Shortbows", CATEGORY_PREFIX+"Crossbows", CATEGORY_PREFIX+"Guns"));
+        volley.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        volley.excludeLinkedMobRuleKeys = new ArrayList<>(List.of(
+                "Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void"));
+        volley.isEnabled = true;
+        volley.isEnabledPerTier = new boolean[]{false, false, true, true, true};
+        volley.chancePerTier = new float[]{0f, 0f, 0.40f, 0.60f, 1.00f};
+        volley.cooldownSecondsPerTier = new float[]{0f, 0f, 18f, 15f, 12f};
+
+        volley.templates.add(AbilityConfig.TEMPLATE_ROOT_INTERACTION,
+                             "Item/RootInteractions/NPCs/RPGMobs/Volley/RPGMobs_Ability_Volley_Root.template.json"
+        );
+        volley.templates.add(AbilityConfig.TEMPLATE_ENTRY_INTERACTION,
+                             "Item/Interactions/NPCs/RPGMobs/Volley/RPGMobs_Ability_Volley_Entry.template.json"
+        );
+        volley.templates.add(VolleyAbilityConfig.TEMPLATE_PROJECTILE_DEFINITION,
+                             "Projectiles/NPCs/RPGMobs/RPGMobs_Volley_Arrow.json"
+        );
+
+        m.put(AbilityIds.VOLLEY, volley);
+
         return m;
     }
 
@@ -1320,6 +1650,11 @@ public final class RPGMobsConfig {
         public static final String TEMPLATE_ROOT_INTERACTION_CANCEL = "rootInteractionCancel";
         public static final String TEMPLATE_ENTRY_INTERACTION_CANCEL = "entryInteractionCancel";
         public static final String TEMPLATE_EFFECT_INSTANT_HEAL = "effectInstantHeal";
+        public static final String TEMPLATE_POTION_ROOT = "potionRootInteraction";
+        public static final String TEMPLATE_POTION_ENTRY = "potionEntryInteraction";
+        public static final String TEMPLATE_STANDING_HEAL_ROOT = "rootStandingHeal";
+        public static final String TEMPLATE_STANDING_HEAL_ENTRY = "entryStandingHeal";
+        public static final String TEMPLATE_EFFECT_STANDING_HEAL = "effectStandingHeal";
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum health percent at which the heal can trigger (rolled once per elite on spawn).")
         public float minHealthTriggerPercent = 0.5f;
@@ -1333,17 +1668,55 @@ public final class RPGMobsConfig {
         public float[] instantHealAmountPerTier = {0f, 0f, 0f, 25f, 25f};
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "NPC potion drinking duration in seconds.")
-        public float npcDrinkDurationSeconds = 3.0f;
+        public float npcDrinkDurationSeconds = 4.0f;
+
+        @Default
+        @Min(0.0f)
+        @Max(30.0f)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum distance from target to use stationary heal (potion only, no leap). During retreat, if target is farther than this, NPC stands still and drinks. Set to 0 to disable retreat healing.")
+        public float retreatHealMinDistance = 10.0f;
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Item id shown in NPC hand while drinking.")
         public String npcDrinkItemId = "Potion_Health_Greater";
 
         @FixedArraySize(value = TIERS_AMOUNT)
         public float[] applyForcePerTier = {0f, 0f, 0f, 0f, 0f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Mob rule key prefixes denied from using Heal Leap (case-insensitive). Undead mobs drinking potions looks wrong.")
+        public List<String> deniedMobPrefixes = new ArrayList<>(List.of(
+                "Skeleton", "Zombie", "Wraith"
+        ));
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Exceptions to deniedMobPrefixes  - these mobs CAN use Heal Leap even if they match a denied prefix (e.g. mage-type undead).")
+        public List<String> allowedExceptions = new ArrayList<>(List.of(
+                "Skeleton_Mage", "Skeleton_Archmage", "Skeleton_Frost_Mage",
+                "Skeleton_Sand_Mage", "Skeleton_Incandescent_Mage"
+        ));
+
+        @Default
+        @Min(1)
+        @Max(20)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Number of hits required to interrupt the Heal Leap ability while the NPC is drinking.")
+        public int interruptHitCount = 3;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Fraction of max health healed per tier when using standing heal variant (0.0 to 1.0).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] standingHealPercentPerTier = {0.0f, 0.0f, 0.15f, 0.20f, 0.25f};
+
+        @Default
+        @Min(0.0f)
+        @Max(30.0f)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum distance to target in blocks to trigger standing heal when not retreating/recovering.")
+        public float standingHealMinDistance = 8.0f;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum health percentage to trigger standing heal variant (0.0 to 1.0).")
+        public float standingHealMaxHealthTriggerPercent = 0.60f;
     }
 
     public static final class SummonAbilityConfig extends AbilityConfig {
         public static final String TEMPLATE_SUMMON_MARKER = "summonMarker";
+        public static final String TEMPLATE_SUMMON_RISE_ROOT = "summonRiseRoot";
+        public static final String TEMPLATE_SUMMON_RISE_ENTRY = "summonRiseEntry";
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum number of active summoned minions per summoner (0 disables summoning). Clamped to 0..50.")
         public int maxAliveMinionsPerSummoner = DEFAULT_MAX_ALIVE_MINIONS_PER_SUMMONER;
@@ -1388,7 +1761,219 @@ public final class RPGMobsConfig {
 
         @YamlIgnore
         public Map<String, List<SummonMarkerEntry>> spawnMarkerEntriesByRole = new LinkedHashMap<>();
+
+        @Default
+        @Min(1)
+        @Max(50)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum number of minions to summon per cast.")
+        public int summonMinCount = 2;
+
+        @Default
+        @Min(1)
+        @Max(50)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum number of minions to summon per cast.")
+        public int summonMaxCount = 5;
+
+        @Default
+        @Min(1.0)
+        @Max(30.0)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Radius (in blocks) around the summoner where minions spawn.")
+        public double summonSpawnRadius = 6.0;
+
+        @Default
+        @Min(0)
+        @Max(4)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum tier index (0-based, 0=T1 through 4=T5) for summoned minions.")
+        public int minionMinTier = 0;
+
+        @Default
+        @Min(0)
+        @Max(4)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum tier index (0-based, 0=T1 through 4=T5) for summoned minions.")
+        public int minionMaxTier = 2;
     }
+
+    public static final class DodgeRollAbilityConfig extends AbilityConfig {
+        public static final String TEMPLATE_EFFECT_INVULNERABILITY = "effectInvulnerability";
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Dodge chance per tier (0.0 to 1.0). Rolled on each DAMAGE_RECEIVED event.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] dodgeChancePerTier = {0.20f, 0.30f, 0.40f, 0.50f, 1.00f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Lateral dodge force applied when dodge triggers.")
+        public float dodgeForce = 370.0f;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Invulnerability duration (seconds) applied via effect during dodge.")
+        public float invulnerabilityDuration = 0.9f;
+
+        @Default
+        @Min(0.0f)
+        @Max(20.0f)
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Dodge chance multiplier when T4+ intelligence detects target is attacking or charging (preemptive dodge).")
+        public float chargedAttackDodgeMultiplier = 2.5f;
+    }
+
+    public static final class MultiSlashVariantConfig {
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Chance per tick evaluation to trigger this variant (0.0 to 1.0).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] slashTriggerChancePerTier;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Cooldown per tier (seconds) for this variant.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] cooldownSecondsPerTier;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Base damage per hit per tier for this variant.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public int[] baseDamagePerHitPerTier;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Forward drift force applied on the last hits per tier for this variant.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] forwardDriftForcePerTier;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Knockback force applied to hit targets per tier for this variant.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] knockbackForcePerTier;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum distance to target (blocks) for this variant to trigger.")
+        public float meleeRange;
+
+        public MultiSlashVariantConfig() {
+            this.slashTriggerChancePerTier = new float[]{0f, 0.08f, 0.12f, 0.18f, 0.25f};
+            this.cooldownSecondsPerTier = new float[]{15f, 12f, 10f, 8f, 6f};
+            this.baseDamagePerHitPerTier = new int[]{0, 3, 5, 8, 12};
+            this.forwardDriftForcePerTier = new float[]{0f, 3f, 4f, 5f, 6f};
+            this.knockbackForcePerTier = new float[]{0f, 4f, 6f, 8f, 10f};
+            this.meleeRange = 4.0f;
+        }
+
+        public MultiSlashVariantConfig(float[] triggerChance, float[] cooldown, int[] damage,
+                                       float[] drift, float[] knockback, float range) {
+            this.slashTriggerChancePerTier = triggerChance;
+            this.cooldownSecondsPerTier = cooldown;
+            this.baseDamagePerHitPerTier = damage;
+            this.forwardDriftForcePerTier = drift;
+            this.knockbackForcePerTier = knockback;
+            this.meleeRange = range;
+        }
+    }
+
+    public static final class MultiSlashAbilityConfig extends AbilityConfig {
+        public static final String TEMPLATE_DAMAGE_INTERACTION = "damageInteraction";
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Default trigger chance (used when no variant-specific override). Chance per tick evaluation to trigger Multi Slash (0.0 to 1.0).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] slashTriggerChancePerTier = {0f, 0.08f, 0.12f, 0.18f, 0.25f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Default max melee range (used when no variant-specific override).")
+        public float meleeRange = 4.0f;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Default base damage per hit (used when no variant-specific override).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public int[] baseDamagePerHitPerTier = {0, 3, 5, 8, 12};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Default forward drift force (used when no variant-specific override).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] forwardDriftForcePerTier = {0f, 3f, 4f, 5f, 6f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Default knockback force (used when no variant-specific override).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] knockbackForcePerTier = {0f, 4f, 6f, 8f, 10f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Per-weapon-variant config overrides. Each key is a variant name (swords, daggers, battleaxes, axes, maces, spears, longswords, clubs).")
+        public Map<String, MultiSlashVariantConfig> variantConfigs = new LinkedHashMap<>();
+
+        public MultiSlashVariantConfig getVariantOrDefault(String variant) {
+            if (variant != null && variantConfigs != null) {
+                var vc = variantConfigs.get(variant);
+                if (vc != null) return vc;
+                if (AbstractMultiSlashFeature.VARIANT_CLUBS_FLAIL.equals(variant)) {
+                    var clubsCfg = variantConfigs.get(AbstractMultiSlashFeature.VARIANT_CLUBS);
+                    if (clubsCfg != null) return clubsCfg;
+                }
+            }
+            var fallback = new MultiSlashVariantConfig();
+            fallback.slashTriggerChancePerTier = slashTriggerChancePerTier;
+            fallback.cooldownSecondsPerTier = cooldownSecondsPerTier;
+            fallback.baseDamagePerHitPerTier = baseDamagePerHitPerTier;
+            fallback.forwardDriftForcePerTier = forwardDriftForcePerTier;
+            fallback.knockbackForcePerTier = knockbackForcePerTier;
+            fallback.meleeRange = meleeRange;
+            return fallback;
+        }
+
+        public static void registerVariantTemplates(MultiSlashAbilityConfig config, String abilityFilePrefix,
+                                                     int variationCount) {
+            String[] variants = {"Swords", "Longswords", "Daggers", "Battleaxes", "Axes", "Maces", "Clubs", "ClubsFlail", "Spears"};
+            for (String cap : variants) {
+                String lower = Character.toLowerCase(cap.charAt(0)) + cap.substring(1);
+                String rootCap = Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+                config.templates.add(TEMPLATE_DAMAGE_INTERACTION + rootCap,
+                        "Item/Interactions/NPCs/RPGMobs/" + abilityFilePrefix + "/RPGMobs_Ability_" + abilityFilePrefix + "_Damage_" + cap + ".template.json");
+                if (variationCount == 1) {
+                    config.templates.add("root" + rootCap,
+                            "Item/RootInteractions/NPCs/RPGMobs/" + abilityFilePrefix + "/RPGMobs_Ability_" + abilityFilePrefix + "_" + cap + "_Root.template.json");
+                    config.templates.add("entry" + rootCap,
+                            "Item/Interactions/NPCs/RPGMobs/" + abilityFilePrefix + "/RPGMobs_Ability_" + abilityFilePrefix + "_" + cap + "_Entry.template.json");
+                } else {
+                    for (int v = 1; v <= variationCount; v++) {
+                        config.templates.add("root" + rootCap + "V" + v,
+                                "Item/RootInteractions/NPCs/RPGMobs/" + abilityFilePrefix + "/RPGMobs_Ability_" + abilityFilePrefix + "_" + cap + "_V" + v + "_Root.template.json");
+                        config.templates.add("entry" + rootCap + "V" + v,
+                                "Item/Interactions/NPCs/RPGMobs/" + abilityFilePrefix + "/RPGMobs_Ability_" + abilityFilePrefix + "_" + cap + "_V" + v + "_Entry.template.json");
+                    }
+                }
+            }
+        }
+    }
+
+    public static final class EnrageAbilityConfig extends AbilityConfig {
+        public static final String TEMPLATE_LIGHT_DAMAGE_INTERACTION = "lightDamage";
+        public static final String TEMPLATE_HEAVY_DAMAGE_INTERACTION = "heavyDamage";
+        public static final String TEMPLATE_BREATHING_SFX = "breathingSfx";
+        public static final String TEMPLATE_EFFECT_RED_EYES = "effectRedEyes";
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Health percent threshold (0.0 to 1.0) at which Enrage triggers per tier.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] triggerHealthPercentPerTier = {0f, 0.40f, 0.35f, 0.30f, 0.25f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Per-hit damage for light punches (rapid jabs) per tier.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] lightPunchDamagePerTier = {0f, 2f, 3f, 4f, 6f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Per-hit damage for heavy punches (uppercuts/slams) per tier.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] heavyPunchDamagePerTier = {0f, 6f, 9f, 12f, 18f};
+    }
+
+    public static final class VolleyAbilityConfig extends AbilityConfig {
+        public static final String TEMPLATE_PROJECTILE_DEFINITION = "projectileDefinition";
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Chance per tick evaluation to trigger Volley (0.0 to 1.0).")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] volleyTriggerChancePerTier = {0f, 0f, 0.08f, 0.12f, 0.18f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Minimum distance to target (blocks) for Volley to trigger.")
+        public float minRange = 8.0f;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Maximum distance to target (blocks) for Volley to trigger.")
+        public float maxRange = 30.0f;
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Number of projectiles fired per tier.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public int[] projectileCountPerTier = {0, 0, 2, 3, 5};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Spread angle in degrees for projectile deviation per tier.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public float[] spreadAnglePerTier = {0f, 0f, 15f, 12f, 10f};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Base damage per projectile per tier.")
+        @FixedArraySize(value = TIERS_AMOUNT)
+        public int[] baseDamagePerProjectilePerTier = {0, 0, 6, 10, 15};
+
+        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Item ID of the crossbow the NPC equips during Volley.")
+        public String npcCrossbowItemId = "Weapon_Crossbow_Iron";
+    }
+
 
     public static final class SummonMarkerEntry {
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "NPC id to spawn.")
@@ -1415,6 +2000,30 @@ public final class RPGMobsConfig {
 
     public static Map<String, MobRule> defaultMobRules() {
         Map<String, MobRule> m = new LinkedHashMap<>();
+
+        m.put("RPGMobs_Test",
+              mobRule(true,
+                      List.of(),
+                      List.of(),
+                      List.of("RPGMobs_Test"),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of()
+              )
+        );
+
+        m.put("RPGMobs_ParryTest",
+              mobRule(true,
+                      List.of("RPGMobs_ParryTest", "RPGMobs_ParryTest_NoShield"),
+                      List.of(),
+                      List.of(),
+                      List.of(),
+                      new boolean[]{false, false, false, false, false},
+                      WeaponOverrideMode.NONE,
+                      List.of()
+              )
+        );
 
         m.put("Goblin_Duke",
               mobRule(true,

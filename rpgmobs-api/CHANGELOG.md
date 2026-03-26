@@ -2,14 +2,35 @@
 
 All notable changes to RPGMobs API will be documented in this file.
 
+## [1.1.0] - 2026-03-16
+
+### Added
+
+- Professional Javadoc on all public classes, interfaces, and methods across the entire API surface
+- Usage examples in class-level Javadoc for `RPGMobsAPI`, `IRPGMobsEventListener`, and `IRPGMobsQueryAPI`
+- `@since`, `@param`, and `@return` tags on all public API methods
+- Javadoc on all 12 event classes documenting event semantics, mutability, and cancellation behavior
+
+### Changed
+
+- `RPGMobsAggroEvent.targetRef()` renamed to `getTargetRef()` for consistency with the getter naming convention used by all other event classes
+
+### Removed
+
+- `AbilityType` enum  -  was incomplete (only 3 of 11 abilities) and never referenced by the server plugin. Ability identification should use the string-based ability IDs from `RPGMobsAbilityStartedEvent.getAbilityId()` instead
+- `IRPGMobsQueryAPI.getMigrationVersion(Ref<EntityStore>)`  -  internal migration detail that should not be part of the public API
+- `IRPGMobsQueryAPI.needsMigration(Ref<EntityStore>)`  -  internal migration detail that should not be part of the public API
+- `IRPGMobsQueryAPI.getSupportedTriggerTypes()`  -  returned a hardcoded set that was never kept in sync with actual trigger sources
+- `IRPGMobsQueryAPI.isTriggerTypeSupported(String)`  -  convenience wrapper around the removed `getSupportedTriggerTypes()`
+
 ## [1.0.1] - 2026-02-18
 
 ### Added
 
-- `RPGMobsEvent.getWorld()` — returns the `World` in which the event occurred, available on all event types
-- `RPGMobsEvent.getEntityUuid()` — returns the entity's `UUID`, eagerly resolved at event construction time
-- `RPGMobsDeathEvent.isMinion()` — distinguishes summoned minion deaths from regular RPG mob deaths
-- `IRPGMobsQueryAPI.isMinion(Ref<EntityStore>)` — checks whether an entity is a summoned minion
+- `RPGMobsEvent.getWorld()`  -  returns the `World` in which the event occurred, available on all event types
+- `RPGMobsEvent.getEntityUuid()`  -  returns the entity's `UUID`, eagerly resolved at event construction time
+- `RPGMobsDeathEvent.isMinion()`  -  distinguishes summoned minion deaths from regular RPG mob deaths
+- `IRPGMobsQueryAPI.isMinion(Ref<EntityStore>)`  -  checks whether an entity is a summoned minion
 - Death events now fire for summoned minions (with `isMinion()` returning `true`)
 
 ## [1.0.0] - 2026-02-18

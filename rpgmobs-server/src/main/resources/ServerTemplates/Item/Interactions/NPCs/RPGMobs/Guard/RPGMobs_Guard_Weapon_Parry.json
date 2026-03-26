@@ -1,0 +1,24 @@
+{
+    "Type": "Wielding",
+    "Effects": {
+        "ItemAnimationId": "Guard",
+        "ClearAnimationOnFinish": true
+    },
+    "AngledWielding": {
+        "Angle": 0,
+        "AngleDistance": 90,
+        "DamageModifiers": {
+            "Physical": 0,
+            "Projectile": 0,
+            "Poison": 0
+        },
+        "KnockbackModifiers": {
+            "Physical": 0.25,
+            "Projectile": 0.25
+        }
+    },
+    "CancelOnOtherClick": false,
+    "BlockedEffects": {
+        "WorldSoundEventId": "SFX_Light_Melee_T2_Guard_Hit"
+    }
+}

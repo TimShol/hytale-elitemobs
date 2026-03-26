@@ -24,7 +24,7 @@ RPGMobs has built-in support for [RPGLeveling](https://www.curseforge.com/hytale
 ### XP Scaling
 
 - **Tier multiplier**: XP from elite kills is multiplied by a per-tier value (default: 1x / 1.5x / 2x / 3x / 5x for Tiers 1-5)
-- **Ability bonus**: Elites with active abilities (Charge Leap, Heal Potion, Undead Summon) grant bonus XP per ability
+- **Ability bonus**: Elites with active abilities grant bonus XP per ability (up to 10 abilities: Charge Leap, Heal Leap, Summon, Dodge Roll, Multi Slash Short/Medium/Long, War Cry, Enrage, Volley)
 - **Minion reduction**: Summoned minion kills grant only 5% of the base XP to prevent XP farming
 
 ### Configuration
@@ -45,7 +45,7 @@ XP:
   minionXPMultiplier: 0.05
 ```
 
-XP settings are also **overlayable per-world** — each world or instance can have its own XP multipliers, ability bonus, and minion XP values through the [overlay system](/config/instances).
+XP settings are also **overlayable per-world**  -  each world or instance can have its own XP multipliers, ability bonus, and minion XP values through the [overlay system](/config/instances).
 
 To enable or disable the integration, set `enabled` in `core.yml` under `Integrations.RPGLeveling`:
 

@@ -7,12 +7,12 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Event fired when an RPG mob dies.
+ * Fired when an RPGMobs elite dies.
  *
- * <p>Contains information about who killed the mob (if applicable), the
- * position of death, and whether the mob was a summoned minion.</p>
+ * <p>Provides the killer reference (null for environmental deaths),
+ * the death position, and whether the deceased was a summoned minion.</p>
  *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsDeathEvent extends RPGMobsEvent {
 
@@ -21,16 +21,13 @@ public final class RPGMobsDeathEvent extends RPGMobsEvent {
     private final boolean minion;
 
     /**
-     * Constructs a new death event.
-     *
-     * @param world     the world in which the RPG mob died
-     * @param entityRef the entity reference of the RPG mob that died
-     * @param tier      the tier index of the RPG mob
-     * @param roleName  the role name of the RPG mob
-     * @param killerRef the entity reference of the killer, or {@code null} if the death
-     *                  was not caused by another entity (e.g., environmental damage)
-     * @param position  the world position where the RPG mob died
-     * @param minion    whether the dead RPG mob was a summoned minion
+     * @param world     the world where the elite died
+     * @param entityRef reference to the dead elite entity
+     * @param tier      tier index (0-based)
+     * @param roleName  the NPC role name
+     * @param killerRef reference to the killing entity, or {@code null} for environmental deaths
+     * @param position  the death position
+     * @param minion    {@code true} if the deceased was a summoned minion
      */
     public RPGMobsDeathEvent(World world, Ref<EntityStore> entityRef, int tier, String roleName,
                              @Nullable Ref<EntityStore> killerRef, Vector3d position, boolean minion) {
@@ -41,15 +38,14 @@ public final class RPGMobsDeathEvent extends RPGMobsEvent {
     }
 
     /**
-     * Constructs a new death event for a regular (non-minion) RPG mob.
+     * Convenience constructor that defaults {@code minion} to {@code false}.
      *
-     * @param world     the world in which the RPG mob died
-     * @param entityRef the entity reference of the RPG mob that died
-     * @param tier      the tier index of the RPG mob
-     * @param roleName  the role name of the RPG mob
-     * @param killerRef the entity reference of the killer, or {@code null} if the death
-     *                  was not caused by another entity
-     * @param position  the world position where the RPG mob died
+     * @param world     the world where the elite died
+     * @param entityRef reference to the dead elite entity
+     * @param tier      tier index (0-based)
+     * @param roleName  the NPC role name
+     * @param killerRef reference to the killing entity, or {@code null} for environmental deaths
+     * @param position  the death position
      */
     public RPGMobsDeathEvent(World world, Ref<EntityStore> entityRef, int tier, String roleName,
                              @Nullable Ref<EntityStore> killerRef, Vector3d position) {
@@ -57,33 +53,21 @@ public final class RPGMobsDeathEvent extends RPGMobsEvent {
     }
 
     /**
-     * Returns the entity reference of the killer, if any.
-     *
-     * @return the killer's entity reference, or {@code null} if the death was not
-     * caused by another entity
+     * @return the entity that killed this elite, or {@code null} for environmental deaths
      */
     public @Nullable Ref<EntityStore> getKillerRef() {
         return killerRef;
     }
 
     /**
-     * Returns the world position where the RPG mob died.
-     *
-     * @return the death position, never {@code null}
+     * @return the position where the elite died
      */
     public Vector3d getPosition() {
         return position;
     }
 
     /**
-     * Returns whether the dead RPG mob was a summoned minion.
-     *
-     * <p>Summoned minions die when their summoner dies or when they expire.
-     * Listeners that only care about regular RPG mob deaths can check this
-     * flag and return early.</p>
-     *
-     * @return {@code true} if this death was a minion, {@code false} for regular RPG mobs
-     * @since 1.2.0
+     * @return {@code true} if the deceased was a summoned minion
      */
     public boolean isMinion() {
         return minion;

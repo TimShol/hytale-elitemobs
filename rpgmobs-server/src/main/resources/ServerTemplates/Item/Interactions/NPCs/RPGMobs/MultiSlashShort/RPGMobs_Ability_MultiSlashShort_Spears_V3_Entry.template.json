@@ -1,0 +1,58 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashShort Spears V3  - 1-hit spin sweep (~1.85s total).",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 1.1s quick pull-back with weapon trail",
+      "RunTime": 0.8,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Spear",
+        "ItemAnimationId": "DownstrikeCharging",
+        "WorldSoundEventId": "SFX_Spear_Throw_Charge",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - SpinSwingLeft wider sweep",
+      "RunTime": 0.5,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Spear",
+        "ItemAnimationId": "SpinSwingLeft",
+        "WorldSoundEventId": "SFX_Spear_Lunge",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.8 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashShort.config.templates.damageInteractionSpears} ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery",
+      "RunTime": 0.2,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Spear",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

@@ -59,11 +59,25 @@ public final class ConfigResolver {
             });
         }
 
-        LOGGER.atInfo().log(String.format("[RPGMobs] ConfigResolver loaded: %d world overlays, %d instance overlays",
-                                  worldConfigs.size(), instanceConfigs.size()));
+        LOGGER.atInfo().log(String.format("ConfigResolver loaded: %d world overlays, %d instance overlays, globalEnabled=%s, enabledByDefault=%s",
+                                  worldConfigs.size(), instanceConfigs.size(),
+                                  globalConfig != null ? String.valueOf(globalConfig.globalEnabled) : "null",
+                                  globalConfig != null ? String.valueOf(globalConfig.enabledByDefault) : "null"));
+        for (Map.Entry<String, ResolvedConfig> entry : worldConfigs.entrySet()) {
+            LOGGER.atInfo().log(String.format("  World '%s': enabled=%s, mobRules=%d",
+                                      entry.getKey(), entry.getValue().enabled, entry.getValue().mobRules.size()));
+        }
+        for (Map.Entry<String, ResolvedConfig> entry : instanceConfigs.entrySet()) {
+            LOGGER.atInfo().log(String.format("  Instance '%s': enabled=%s, mobRules=%d",
+                                      entry.getKey(), entry.getValue().enabled, entry.getValue().mobRules.size()));
+        }
     }
 
     public ResolvedConfig getResolvedConfig(@Nullable String worldName) {
+        if (globalConfig != null && !globalConfig.globalEnabled) {
+            return DISABLED;
+        }
+
         if (worldName == null) {
             return globalConfig != null && globalConfig.enabledByDefault ? baseResolved : DISABLED;
         }
@@ -97,6 +111,9 @@ public final class ConfigResolver {
 
         ResolvedConfig fallback = (globalConfig != null && globalConfig.enabledByDefault) ? baseResolved : DISABLED;
         worldConfigs.put(worldName, fallback);
+        LOGGER.atInfo().log(String.format("Registered world '%s': enabled=%s (enabledByDefault=%s)",
+                                  worldName, fallback.enabled,
+                                  globalConfig != null ? String.valueOf(globalConfig.enabledByDefault) : "null"));
     }
 
     private @Nullable String findInstanceKeyIgnoreCase(String template) {
@@ -260,11 +277,11 @@ public final class ConfigResolver {
                           ResolvedConfig resolved = mergeOverlay(baseResolved, overlay);
                           targetMap.put(name, resolved);
                           rawOverlayMap.put(name, overlay);
-                          LOGGER.atInfo().log(String.format("[RPGMobs] Loaded overlay: %s", fileName));
+                          LOGGER.atInfo().log(String.format("Loaded overlay: %s", fileName));
                       }
                   });
         } catch (Exception e) {
-            LOGGER.atWarning().log(String.format("[RPGMobs] Failed to load overlays from %s: %s",
+            LOGGER.atWarning().log(String.format("Failed to load overlays from %s: %s",
                                          directory.toAbsolutePath(), e.getMessage()));
         }
     }
@@ -284,7 +301,7 @@ public final class ConfigResolver {
             applyYamlToOverlay(overlay, toStringKeyMap(yamlMap));
             return overlay;
         } catch (Exception e) {
-            LOGGER.atWarning().log(String.format("[RPGMobs] Failed to parse overlay %s: %s",
+            LOGGER.atWarning().log(String.format("Failed to parse overlay %s: %s",
                                          yamlFile.getFileName(), e.getMessage()));
             return null;
         }
@@ -439,7 +456,7 @@ public final class ConfigResolver {
                 merged.progressionStyle = RPGMobsConfig.ProgressionStyle.valueOf(
                         overlay.progressionStyle.toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
-                LOGGER.atWarning().log("[RPGMobs] Unknown progressionStyle: " + overlay.progressionStyle);
+                LOGGER.atWarning().log("Unknown progressionStyle: " + overlay.progressionStyle);
                 merged.progressionStyle = base.progressionStyle;
             }
         } else {

@@ -52,7 +52,8 @@ public final class AbilityGateEvaluator {
         if (resolvedAbility != null) {
             boolean[] entryTiers = resolvedAbility.linkedMobEntries.get(matchedRuleKey);
             if (entryTiers != null) {
-                return clamped < 0 || clamped >= entryTiers.length || entryTiers[clamped];
+                if (clamped < 0 || clamped >= entryTiers.length) return false;
+                return entryTiers[clamped];
             }
             for (Map.Entry<String, boolean[]> entry : resolvedAbility.linkedMobEntries.entrySet()) {
                 if (MobRuleCategoryHelpers.isCategoryKey(entry.getKey())) {
@@ -60,7 +61,8 @@ public final class AbilityGateEvaluator {
                     if (resolved != null && MobRuleCategoryHelpers.isMobKeyInCategory(
                             resolved.mobRuleCategoryTree, catName, matchedRuleKey)) {
                         boolean[] catTiers = entry.getValue();
-                        return clamped < 0 || clamped >= catTiers.length || catTiers[clamped];
+                        if (clamped < 0 || clamped >= catTiers.length) return false;
+                        return catTiers[clamped];
                     }
                 }
             }

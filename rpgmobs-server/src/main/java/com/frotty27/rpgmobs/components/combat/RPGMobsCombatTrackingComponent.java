@@ -1,6 +1,8 @@
 package com.frotty27.rpgmobs.components.combat;
 
+import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
+import com.hypixel.hytale.codec.codecs.simple.IntegerCodec;
 import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -23,10 +25,15 @@ public final class RPGMobsCombatTrackingComponent implements Component<EntitySto
 
     public long lastTargetUpdateTick;
 
+    public int marker = 1;
+
+    private static final KeyedCodec<Integer> K_MARKER = new KeyedCodec<>("Marker", new IntegerCodec());
+
     public static final BuilderCodec<RPGMobsCombatTrackingComponent> CODEC = BuilderCodec.builder(
             RPGMobsCombatTrackingComponent.class,
             RPGMobsCombatTrackingComponent::new
-    ).build();
+    ).append(K_MARKER, (c, v) -> c.marker = v, c -> c.marker).add()
+     .build();
 
     public RPGMobsCombatTrackingComponent() {
         this.state = CombatState.IDLE;

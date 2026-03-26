@@ -1,0 +1,162 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashLong ClubsFlail - 3-hit combo with charged slam finisher. Direct Selector pattern.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up - 1.2s charging with weapon trail",
+      "RunTime": 1.2,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club_Flail",
+        "ItemAnimationId": "SpinSwingLeftCharging",
+        "WorldSoundEventId": "SFX_Flail_Charge",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1 - SwingLeft",
+      "RunTime": 0.60,
+      "HorizontalSpeedMultiplier": 0.35,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club_Flail",
+        "ItemAnimationId": "SwingLeft",
+        "WorldSoundEventId": "SFX_Flail_Swing",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.8 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionClubsFlail} ]
+      }
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 2 - SwingRight with forward drift",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.05, "Z": -1.0 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "$Comment": "SwingRight backhand",
+          "RunTime": 0.60,
+          "HorizontalSpeedMultiplier": 0.35,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Club_Flail",
+            "ItemAnimationId": "SwingRight",
+            "WorldSoundEventId": "SFX_Flail_Swing",
+            "Trails": [
+              {
+                "TrailId": "Large_Charged",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.8 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionClubsFlail} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 3 FINISHER - SpinSwingLeftCharged with forward drift + impact VFX",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.08, "Z": -1.5 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "$Comment": "SpinSwingLeftCharged slam finisher",
+          "RunTime": 0.55,
+          "HorizontalSpeedMultiplier": 0.35,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Club_Flail",
+            "ItemAnimationId": "SpinSwingLeftCharged",
+            "WorldSoundEventId": "SFX_Flail_Swing",
+            "Particles": [
+              {
+                "SystemId": "Block_Break_Dust",
+                "TargetEntityPart": "Entity",
+                "TargetNodeName": "Hip",
+                "PositionOffset": { "Y": 0.2 }
+              },
+              {
+                "SystemId": "Mace_Signature_Cast",
+                "TargetEntityPart": "Entity",
+                "TargetNodeName": "Hip",
+                "PositionOffset": { "Y": 0.5 }
+              }
+            ],
+            "Trails": [
+              {
+                "TrailId": "Large_Charged",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Mace_Signature2",
+                "RotationOffset": { "Roll": 90.0 },
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.5 }, "Range": 3.0 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionClubsFlail} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery - Idle recovery, movement locked",
+      "RunTime": 0.65,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Club_Flail",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

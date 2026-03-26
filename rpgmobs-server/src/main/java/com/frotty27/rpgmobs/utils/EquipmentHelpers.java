@@ -13,6 +13,13 @@ public final class EquipmentHelpers {
     private static final String ARMOR_PREFIX = "Armor_";
     private static final String[] ARMOR_SLOT_SUFFIXES = {"_Head", "_Chest", "_Hands", "_Legs"};
 
+    private static final String ROOT_ATTACK_PREFIX = "Root_RPGMobs_Attack_";
+    private static final String ROOT_ATTACK_FALLBACK = "Root_RPGMobs_Attack_Melee";
+
+    private static final Set<String> KNOWN_WEAPON_CATEGORIES = Set.of(
+            "Daggers", "Swords", "Longswords", "Axes", "Battleaxes", "Maces", "Clubs", "Spears"
+    );
+
     private EquipmentHelpers() {}
 
     public static @Nullable String identifyArmorSlotType(String itemId) {
@@ -24,34 +31,24 @@ public final class EquipmentHelpers {
     }
 
     public static String classifyWeaponRarity(Map<String, String> weaponRarityRules, String itemId) {
-        if (weaponRarityRules == null || weaponRarityRules.isEmpty()) return DEFAULT_RARITY;
-
-        String lowercaseItemId = itemId.toLowerCase(Locale.ROOT);
-
-        for (Map.Entry<String, String> entry : weaponRarityRules.entrySet()) {
-            String matchFragment = entry.getKey();
-            if (matchFragment == null || matchFragment.isBlank()) continue;
-
-            if (lowercaseItemId.contains(matchFragment.toLowerCase(Locale.ROOT))) {
-                String rarity = entry.getValue();
-                return (rarity == null || rarity.isBlank()) ? DEFAULT_RARITY : rarity;
-            }
-        }
-
-        return DEFAULT_RARITY;
+        return classifyRarityByFragment(weaponRarityRules, itemId);
     }
 
     public static String classifyArmorRarity(Map<String, String> armorRarityRules, String armorMaterial) {
-        if (armorRarityRules == null || armorRarityRules.isEmpty()) return DEFAULT_RARITY;
+        return classifyRarityByFragment(armorRarityRules, armorMaterial);
+    }
 
-        String lowercaseMaterial = armorMaterial.toLowerCase(Locale.ROOT);
+    private static String classifyRarityByFragment(Map<String, String> rarityRules, String identifier) {
+        if (rarityRules == null || rarityRules.isEmpty()) return DEFAULT_RARITY;
 
-        for (Map.Entry<String, String> entry : armorRarityRules.entrySet()) {
-            String matchFragment = entry.getKey();
-            if (matchFragment == null || matchFragment.isBlank()) continue;
+        var lowercaseIdentifier = identifier.toLowerCase(Locale.ROOT);
 
-            if (lowercaseMaterial.contains(matchFragment.toLowerCase(Locale.ROOT))) {
-                String rarity = entry.getValue();
+        for (Map.Entry<String, String> entry : rarityRules.entrySet()) {
+            var fragment = entry.getKey();
+            if (fragment == null || fragment.isBlank()) continue;
+
+            if (lowercaseIdentifier.contains(fragment.toLowerCase(Locale.ROOT))) {
+                var rarity = entry.getValue();
                 return (rarity == null || rarity.isBlank()) ? DEFAULT_RARITY : rarity;
             }
         }
@@ -92,6 +89,52 @@ public final class EquipmentHelpers {
             }
         }
         return false;
+    }
+
+    public static String resolveBasicAttackRootForWeapon(@Nullable String weaponId,
+                                                            RPGMobsConfig.@Nullable GearCategory weaponTree) {
+        if (weaponId == null || weaponId.isBlank() || weaponTree == null) return ROOT_ATTACK_FALLBACK;
+
+        for (RPGMobsConfig.GearCategory category : weaponTree.children) {
+            if (MobRuleCategoryHelpers.collectAllGearItemKeys(category).contains(weaponId)) {
+                if (KNOWN_WEAPON_CATEGORIES.contains(category.name)) {
+                    return ROOT_ATTACK_PREFIX + category.name;
+                }
+                break;
+            }
+        }
+        return ROOT_ATTACK_FALLBACK;
+    }
+
+    public static @Nullable String resolveWeaponCategory(@Nullable String weaponId,
+                                                          RPGMobsConfig.@Nullable GearCategory weaponTree) {
+        if (weaponId == null || weaponId.isBlank() || weaponTree == null) return null;
+
+        for (RPGMobsConfig.GearCategory category : weaponTree.children) {
+            if (MobRuleCategoryHelpers.collectAllGearItemKeys(category).contains(weaponId)) {
+                if (KNOWN_WEAPON_CATEGORIES.contains(category.name)) {
+                    return category.name;
+                }
+                break;
+            }
+        }
+        return null;
+    }
+
+    public static @Nullable String detectFactionFromRoleName(@Nullable String roleName) {
+        if (roleName == null || roleName.isBlank()) return null;
+        String lowerRole = roleName.toLowerCase();
+        if (lowerRole.contains("trork") || lowerRole.contains("chieftain")) return "Trork";
+        if (lowerRole.contains("outlander") || lowerRole.contains("marauder")
+                || lowerRole.contains("berserker") || lowerRole.contains("cultist")
+                || lowerRole.contains("stalker") || lowerRole.contains("peon")
+                || lowerRole.contains("brute")) return "Outlander";
+        if (lowerRole.contains("goblin") || lowerRole.contains("scrapper")
+                || lowerRole.contains("scavenger") || lowerRole.contains("lobber")
+                || lowerRole.contains("hermit") || lowerRole.contains("thief")) return "Goblin";
+        if (lowerRole.contains("skeleton") || lowerRole.contains("risen")
+                || lowerRole.contains("wraith")) return "Skeleton";
+        return null;
     }
 
     public static List<String> filterArmorMaterialsByCategory(List<String> materials,

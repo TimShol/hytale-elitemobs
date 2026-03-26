@@ -3,23 +3,31 @@ package com.frotty27.rpgmobs.api;
 import com.frotty27.rpgmobs.api.query.IRPGMobsQueryAPI;
 
 /**
- * Primary entry point for the RPGMobs API.
+ * Main entry point for the RPGMobs public API.
  *
- * <p>Provides static accessors for registering event listeners and querying RPG mob state.
- * Before calling any method on this class, ensure that the RPGMobs mod is installed and
- * your {@code manifest.json} declares {@code "Frotty27:RPGMobs": "*"} under
- * {@code Dependencies}.</p>
+ * <p>Provides static access to the event bus (for listening to RPGMobs events)
+ * and the query API (for reading mob state). Both are initialized by the RPGMobs
+ * server plugin during startup.</p>
  *
- * <p>Typical usage:</p>
+ * <h3>Quick Start</h3>
  * <pre>{@code
- * // Register a listener
- * RPGMobsAPI.registerListener(myListener);
+ * // Listen for elite mob spawns
+ * RPGMobsAPI.registerListener(new IRPGMobsEventListener() {
+ *     @Override
+ *     public void onRPGMobSpawned(RPGMobsSpawnedEvent event) {
+ *         System.out.println("Elite spawned: " + event.getRoleName() + " tier " + (event.getTier() + 1));
+ *     }
+ * });
  *
- * // Query mob data
+ * // Query mob state
  * Optional<Integer> tier = RPGMobsAPI.query().getTier(entityRef);
  * }</pre>
  *
- * @since 1.1.0
+ * <h3>Dependency</h3>
+ * <p>Your {@code manifest.json} must declare {@code "Frotty27:RPGMobs": "*"} in
+ * {@code Dependencies} to ensure RPGMobs loads before your plugin.</p>
+ *
+ * @since 1.0.0
  */
 public final class RPGMobsAPI {
 
@@ -30,20 +38,18 @@ public final class RPGMobsAPI {
     }
 
     /**
-     * Sets the event bus implementation. This is called internally by the RPGMobs mod
-     * during initialization and should not be called by external consumers.
+     * Sets the event bus implementation. Called internally by RPGMobs during startup.
      *
-     * @param bus the event bus implementation to use
+     * @param bus the event bus implementation
      */
     public static void setEventBus(IRPGMobsEventBus bus) {
         RPGMobsAPI.eventBus = bus;
     }
 
     /**
-     * Sets the query API implementation. This is called internally by the RPGMobs mod
-     * during initialization and should not be called by external consumers.
+     * Sets the query API implementation. Called internally by RPGMobs during startup.
      *
-     * @param api the query API implementation to use
+     * @param api the query API implementation
      */
     public static void setQueryAPI(IRPGMobsQueryAPI api) {
         RPGMobsAPI.queryAPI = api;
@@ -52,12 +58,10 @@ public final class RPGMobsAPI {
     /**
      * Registers an event listener to receive RPGMobs events.
      *
-     * <p>The listener will be notified of all events it has overridden handlers for,
-     * such as spawns, deaths, damage, drops, abilities, and aggro changes.</p>
-     *
-     * @param listener the listener to register; must not be {@code null}
-     * @throws IllegalArgumentException       if {@code listener} is {@code null}
-     * @throws RPGMobsNotInitializedException if the API has not been initialized yet
+     * @param listener the listener to register (must not be null)
+     * @throws IllegalArgumentException if listener is null
+     * @throws RPGMobsNotInitializedException if RPGMobs has not finished loading
+     * @see IRPGMobsEventListener
      */
     public static void registerListener(IRPGMobsEventListener listener) {
         if (listener == null) throw new IllegalArgumentException("listener must not be null");
@@ -67,11 +71,9 @@ public final class RPGMobsAPI {
     /**
      * Unregisters a previously registered event listener.
      *
-     * <p>After this call, the listener will no longer receive any RPGMobs events.</p>
-     *
-     * @param listener the listener to unregister; must not be {@code null}
-     * @throws IllegalArgumentException       if {@code listener} is {@code null}
-     * @throws RPGMobsNotInitializedException if the API has not been initialized yet
+     * @param listener the listener to unregister (must not be null)
+     * @throws IllegalArgumentException if listener is null
+     * @throws RPGMobsNotInitializedException if RPGMobs has not finished loading
      */
     public static void unregisterListener(IRPGMobsEventListener listener) {
         if (listener == null) throw new IllegalArgumentException("listener must not be null");
@@ -79,13 +81,11 @@ public final class RPGMobsAPI {
     }
 
     /**
-     * Returns the query API for inspecting RPG mob state.
+     * Returns the query API for reading RPGMobs entity state.
      *
-     * <p>Use this to look up tier, health multipliers, damage multipliers,
-     * combat status, and other properties of RPG Mobs.</p>
-     *
-     * @return the query API instance, never {@code null}
-     * @throws RPGMobsNotInitializedException if the API has not been initialized yet
+     * @return the query API instance
+     * @throws RPGMobsNotInitializedException if RPGMobs has not finished loading
+     * @see IRPGMobsQueryAPI
      */
     public static IRPGMobsQueryAPI query() {
         IRPGMobsQueryAPI current = queryAPI;
@@ -96,14 +96,12 @@ public final class RPGMobsAPI {
     }
 
     /**
-     * Returns the event bus used for listener registration.
+     * Returns the event bus for advanced listener management.
      *
-     * <p>In most cases, prefer using {@link #registerListener(IRPGMobsEventListener)}
-     * and {@link #unregisterListener(IRPGMobsEventListener)} instead of accessing
-     * the event bus directly.</p>
+     * <p>For simple listener registration, prefer {@link #registerListener(IRPGMobsEventListener)}.</p>
      *
-     * @return the event bus instance, never {@code null}
-     * @throws RPGMobsNotInitializedException if the API has not been initialized yet
+     * @return the event bus instance
+     * @throws RPGMobsNotInitializedException if RPGMobs has not finished loading
      */
     public static IRPGMobsEventBus getEventBus() {
         IRPGMobsEventBus current = eventBus;

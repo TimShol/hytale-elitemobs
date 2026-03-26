@@ -5,26 +5,21 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
- * Event fired when an RPG mob acquires an aggro target.
+ * Fired when an RPGMobs elite acquires a combat target and enters combat. The entityRef
+ * from the parent class is the elite that aggroed.
  *
- * <p>This event is triggered when the RPG mob begins targeting a specific entity,
- * typically a player. It can be used to react to combat initiation or to trigger
- * custom behaviors when an RPG mob locks onto a target.</p>
- *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsAggroEvent extends RPGMobsEvent {
 
     private final Ref<EntityStore> targetRef;
 
     /**
-     * Constructs a new aggro event.
-     *
-     * @param world     the world in which the aggro occurred
-     * @param mobRef    the entity reference of the RPG mob that acquired a target
-     * @param targetRef the entity reference of the entity being targeted
-     * @param tier      the tier index of the RPG mob
-     * @param roleName  the role name of the RPG mob
+     * @param world     the world where the elite entered combat
+     * @param mobRef    reference to the elite entity
+     * @param targetRef reference to the entity being targeted
+     * @param tier      tier index (0-based)
+     * @param roleName  the NPC role name
      */
     public RPGMobsAggroEvent(World world, Ref<EntityStore> mobRef, Ref<EntityStore> targetRef, int tier,
                              String roleName) {
@@ -33,11 +28,11 @@ public final class RPGMobsAggroEvent extends RPGMobsEvent {
     }
 
     /**
-     * Returns the entity reference of the entity being targeted by the RPG mob.
+     * Returns the entity that the elite has targeted.
      *
-     * @return the target's entity reference, never {@code null}
+     * @return the target entity reference
      */
-    public Ref<EntityStore> targetRef() {
+    public Ref<EntityStore> getTargetRef() {
         return targetRef;
     }
 }

@@ -1,0 +1,161 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs Volley - NPC equips crossbow, reloads, fires 5 arrows, then restores original weapon.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up - crossbow reload animation. Player counter window.",
+      "RunTime": 1.8,
+      "MovementEffects": {
+        "DisableAll": true
+      },
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "ReloadCharged",
+        "WorldSoundEventId": "SFX_Hand_Crossbow_T2_Reload_Start",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Reload ready - brief aim up",
+      "RunTime": 0.3,
+      "MovementEffects": {
+        "DisableAll": true
+      },
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "ReloadReady",
+        "WorldSoundEventId": "SFX_Hand_Crossbow_T2_Load"
+      }
+    },
+    {
+      "Type": "LaunchProjectile",
+      "$Comment": "Shot 1",
+      "RunTime": 0.35,
+      "ProjectileId": "RPGMobs_Volley_Arrow",
+      "Tags": {
+        "AimingReference": []
+      },
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "ShootCharged",
+        "WorldSoundEventId": "SFX_Bow_T2_Shoot"
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Re-load between shots",
+      "RunTime": 0.25,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "Reload",
+        "WorldSoundEventId": "SFX_Hand_Crossbow_T1_Raise"
+      }
+    },
+    {
+      "Type": "LaunchProjectile",
+      "$Comment": "Shot 2",
+      "RunTime": 0.35,
+      "ProjectileId": "RPGMobs_Volley_Arrow",
+      "Tags": {
+        "AimingReference": []
+      },
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "ShootCharged",
+        "WorldSoundEventId": "SFX_Bow_T2_Shoot"
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Re-load between shots",
+      "RunTime": 0.25,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "Reload",
+        "WorldSoundEventId": "SFX_Hand_Crossbow_T1_Raise"
+      }
+    },
+    {
+      "Type": "LaunchProjectile",
+      "$Comment": "Shot 3",
+      "RunTime": 0.35,
+      "ProjectileId": "RPGMobs_Volley_Arrow",
+      "Tags": {
+        "AimingReference": []
+      },
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "ShootCharged",
+        "WorldSoundEventId": "SFX_Bow_T2_Shoot"
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Re-load between shots",
+      "RunTime": 0.25,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "Reload",
+        "WorldSoundEventId": "SFX_Hand_Crossbow_T1_Raise"
+      }
+    },
+    {
+      "Type": "LaunchProjectile",
+      "$Comment": "Shot 4",
+      "RunTime": 0.35,
+      "ProjectileId": "RPGMobs_Volley_Arrow",
+      "Tags": {
+        "AimingReference": []
+      },
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "ShootCharged",
+        "WorldSoundEventId": "SFX_Bow_T2_Shoot"
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Re-load between shots",
+      "RunTime": 0.25,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "Reload",
+        "WorldSoundEventId": "SFX_Hand_Crossbow_T1_Raise"
+      }
+    },
+    {
+      "Type": "LaunchProjectile",
+      "$Comment": "Shot 5 - final",
+      "RunTime": 0.35,
+      "ProjectileId": "RPGMobs_Volley_Arrow",
+      "Tags": {
+        "AimingReference": []
+      },
+      "Effects": {
+        "ItemPlayerAnimationsId": "Crossbow",
+        "ItemAnimationId": "Shoot",
+        "WorldSoundEventId": "SFX_Bow_T2_Shoot"
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery - weapon swap back happens in Java",
+      "RunTime": 0.6,
+      "MovementEffects": {
+        "DisableAll": true
+      },
+      "Effects": {
+        "ClearAnimationOnFinish": true
+      }
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 import com.hypixel.hytale.codec.codecs.simple.BooleanCodec;
 import com.hypixel.hytale.codec.codecs.simple.LongCodec;
+import com.hypixel.hytale.codec.codecs.simple.StringCodec;
 import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
@@ -13,10 +14,13 @@ public final class ChargeLeapAbilityComponent implements AbilityEnabledComponent
 
     public long cooldownTicksRemaining;
 
+    public String weaponVariant = "swords";
+
     private static final KeyedCodec<Boolean> K_ABILITY_ENABLED = new KeyedCodec<>("AbilityEnabled", new BooleanCodec());
     private static final KeyedCodec<Long> K_COOLDOWN_TICKS_REMAINING = new KeyedCodec<>("CooldownTicksRemaining",
                                                                                         new LongCodec()
     );
+    private static final KeyedCodec<String> K_WEAPON_VARIANT = new KeyedCodec<>("WeaponVariant", new StringCodec());
 
     public static final BuilderCodec<ChargeLeapAbilityComponent> CODEC = BuilderCodec.builder(ChargeLeapAbilityComponent.class,
                                                                                               ChargeLeapAbilityComponent::new
@@ -24,11 +28,16 @@ public final class ChargeLeapAbilityComponent implements AbilityEnabledComponent
             K_COOLDOWN_TICKS_REMAINING,
             (c, v) -> c.cooldownTicksRemaining = v,
             c -> c.cooldownTicksRemaining
+    ).add().append(
+            K_WEAPON_VARIANT,
+            (c, v) -> c.weaponVariant = v,
+            c -> c.weaponVariant
     ).add().build();
 
     public ChargeLeapAbilityComponent() {
         this.abilityEnabled = false;
         this.cooldownTicksRemaining = 0L;
+        this.weaponVariant = "swords";
     }
 
     @Override
@@ -42,10 +51,16 @@ public final class ChargeLeapAbilityComponent implements AbilityEnabledComponent
     }
 
     @Override
+    public long getCooldownTicksRemaining() {
+        return cooldownTicksRemaining;
+    }
+
+    @Override
     public Component<EntityStore> clone() {
         ChargeLeapAbilityComponent c = new ChargeLeapAbilityComponent();
         c.abilityEnabled = this.abilityEnabled;
         c.cooldownTicksRemaining = this.cooldownTicksRemaining;
+        c.weaponVariant = this.weaponVariant;
         return c;
     }
 }

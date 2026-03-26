@@ -1,0 +1,51 @@
+{
+    "Type": "Wielding",
+    "Effects": {
+        "ItemAnimationId": "Guard",
+        "ClearAnimationOnFinish": true
+    },
+    "AngledWielding": {
+        "Angle": 0,
+        "AngleDistance": 95,
+        "DamageModifiers": {
+            "Physical": 0,
+            "Projectile": 0,
+            "Poison": 0
+        },
+        "KnockbackModifiers": {
+            "Physical": 0.25,
+            "Projectile": 0.25
+        }
+    },
+    "StaminaCost": {
+        "Value": 1,
+        "CostType": "Damage"
+    },
+    "CancelOnOtherClick": false,
+    "BlockedEffects": {
+        "WorldSoundEventId": "SFX_Shield_T2_Impact",
+        "WorldParticles": [
+            {
+                "SystemId": "Shield_Block"
+            }
+        ]
+    },
+    "Failed": {
+        "Type": "Simple",
+        "RunTime": 0.5,
+        "Effects": {
+            "Particles": [
+                {
+                    "SystemId": "Shield_Shatter",
+                    "TargetEntityPart": "SecondaryItem",
+                    "TargetNodeName": "L-Attachment",
+                    "RotationOffset": {
+                        "Yaw": 90.0
+                    }
+                }
+            ],
+            "WorldSoundEventId": "SFX_Light_Melee_T2_Guard_Break",
+            "ClearAnimationOnFinish": true
+        }
+    }
+}

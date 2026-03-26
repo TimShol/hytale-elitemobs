@@ -8,6 +8,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import com.hypixel.hytale.server.npc.util.InventoryHelper;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -17,7 +18,6 @@ import static com.frotty27.rpgmobs.utils.InventoryHelpers.getContainerSizeSafe;
 
 public final class RPGMobsEquipmentService {
 
-    private static final String SHIELD_TOKEN = "weapon_shield";
     private static final String ARMOR_PREFIX = "Armor_";
     private static final int ARMOR_SLOT_COUNT = 4;
 
@@ -75,6 +75,12 @@ public final class RPGMobsEquipmentService {
 
     public void buildAndApply(NPCEntity npcEntity, RPGMobsConfig config, int tierIndex,
                               RPGMobsConfig.MobRule mobRule, double durabilityMin, double durabilityMax) {
+        buildAndApply(npcEntity, config, tierIndex, mobRule, durabilityMin, durabilityMax, null);
+    }
+
+    public void buildAndApply(NPCEntity npcEntity, RPGMobsConfig config, int tierIndex,
+                              RPGMobsConfig.MobRule mobRule, double durabilityMin, double durabilityMax,
+                              @Nullable String weaponCategoryOverride) {
         if (npcEntity == null || config == null || mobRule == null) return;
 
         this.activeDurabilityMin = durabilityMin;
@@ -93,7 +99,9 @@ public final class RPGMobsEquipmentService {
         inventoryChanged |= clearDisallowedArmor(inventory.getArmor(), mobRule.allowedArmorSlots);
         inventoryChanged |= equipArmor(inventory.getArmor(), config, clampedTierIndex, mobRule);
 
-        ItemStack chosenWeapon = maybePickWeapon(inventory, config, clampedTierIndex, mobRule);
+        ItemStack chosenWeapon = weaponCategoryOverride != null
+                ? maybePickWeaponFromCategory(inventory, config, clampedTierIndex, weaponCategoryOverride)
+                : maybePickWeapon(inventory, config, clampedTierIndex, mobRule);
         if (chosenWeapon != null) {
             setInHand(inventory, chosenWeapon);
             inventoryChanged = true;
@@ -265,6 +273,20 @@ public final class RPGMobsEquipmentService {
         return withRandomDurabilityFraction(weapon, activeDurabilityMin, activeDurabilityMax);
     }
 
+    private @Nullable ItemStack maybePickWeaponFromCategory(Inventory inventory, RPGMobsConfig config,
+                                                              int tierIndex, String categoryName) {
+        String weaponItemId = pickWeaponFromCategory(config, tierIndex, categoryName);
+        if (weaponItemId == null || weaponItemId.isBlank()) return null;
+
+        ItemStack weapon = new ItemStack(weaponItemId, 1);
+        return withRandomDurabilityFraction(weapon, activeDurabilityMin, activeDurabilityMax);
+    }
+
+    private @Nullable String pickWeaponFromCategory(RPGMobsConfig config, int tierIndex, String categoryName) {
+        var forcedCategory = List.of("category:" + categoryName);
+        return pickWeaponFiltered(config, tierIndex, forcedCategory, config.gearConfig.weaponCategoryTree, true);
+    }
+
     private boolean applyInHandDurability(Inventory inventory, double minFraction, double maxFraction) {
         ItemStack itemInHand = inventory.getItemInHand();
         if (itemInHand == null || itemInHand.isEmpty()) return false;
@@ -367,19 +389,16 @@ public final class RPGMobsEquipmentService {
     }
 
     private String pickShieldForTier(RPGMobsConfig config, int tierIndex) {
-
         if (config.gearConfig.defaultWeaponCatalog == null || config.gearConfig.defaultWeaponCatalog.isEmpty())
             return null;
 
         String wantedRarity = pickRarityForTier(config, tierIndex);
 
-        ArrayList<String> shieldCandidates = new ArrayList<>();
+        var shieldCandidates = new ArrayList<String>();
         for (String itemId : config.gearConfig.defaultWeaponCatalog) {
             if (itemId == null || itemId.isBlank()) continue;
             if (Item.getAssetMap().getAsset(itemId) == null) continue;
-
-            String lowercaseItemId = itemId.toLowerCase(Locale.ROOT);
-            if (!lowercaseItemId.contains(SHIELD_TOKEN)) continue;
+            if (!isShieldItemId(itemId)) continue;
 
             if (wantedRarity.equals(classifyWeaponRarity(config, itemId))) {
                 shieldCandidates.add(itemId);
@@ -390,7 +409,7 @@ public final class RPGMobsEquipmentService {
             for (String itemId : config.gearConfig.defaultWeaponCatalog) {
                 if (itemId == null || itemId.isBlank()) continue;
                 if (Item.getAssetMap().getAsset(itemId) == null) continue;
-                if (itemId.toLowerCase(Locale.ROOT).contains(SHIELD_TOKEN)) shieldCandidates.add(itemId);
+                if (isShieldItemId(itemId)) shieldCandidates.add(itemId);
             }
         }
 
@@ -399,54 +418,56 @@ public final class RPGMobsEquipmentService {
     }
 
     private String pickWeaponForRuleAndTier(RPGMobsConfig config, RPGMobsConfig.MobRule mobRule, int tierIndex) {
+        var categories = mobRule.allowedWeaponCategories;
+        boolean hasCategories = categories != null && !categories.isEmpty();
+        return pickWeaponFiltered(config, tierIndex, categories, config.gearConfig.weaponCategoryTree, !hasCategories);
+    }
+
+    private @Nullable String pickWeaponFiltered(RPGMobsConfig config, int tierIndex,
+                                                 List<String> categoryFilter,
+                                                 RPGMobsConfig.GearCategory weaponTree,
+                                                 boolean allowAnyRarityFallback) {
         if (config.gearConfig.defaultWeaponCatalog == null || config.gearConfig.defaultWeaponCatalog.isEmpty())
             return null;
 
         String wantedRarity = pickRarityForTier(config, tierIndex);
-
-        List<String> allowedCategories = mobRule.allowedWeaponCategories;
-        RPGMobsConfig.GearCategory weaponTree = config.gearConfig.weaponCategoryTree;
-        boolean hasCategories = allowedCategories != null && !allowedCategories.isEmpty();
-
-        ArrayList<String> weaponCandidates = new ArrayList<>();
+        var candidates = new ArrayList<String>();
 
         for (String itemId : config.gearConfig.defaultWeaponCatalog) {
-            if (itemId == null || itemId.isBlank()) continue;
-            if (Item.getAssetMap().getAsset(itemId) == null) continue;
-            if (isShieldItemId(itemId)) continue;
+            if (!isValidWeaponCandidate(itemId)) continue;
             if (!wantedRarity.equals(classifyWeaponRarity(config, itemId))) continue;
-            if (passesWeaponCategoryFilter(itemId, allowedCategories, weaponTree))
-                weaponCandidates.add(itemId);
+            if (passesWeaponCategoryFilter(itemId, categoryFilter, weaponTree))
+                candidates.add(itemId);
         }
 
-        if (weaponCandidates.isEmpty()) {
+        if (candidates.isEmpty()) {
             for (String allowedRarity : allowedRaritiesForTier(config, tierIndex)) {
                 for (String itemId : config.gearConfig.defaultWeaponCatalog) {
-                    if (itemId == null || itemId.isBlank()) continue;
-                    if (Item.getAssetMap().getAsset(itemId) == null) continue;
-                    if (isShieldItemId(itemId)) continue;
+                    if (!isValidWeaponCandidate(itemId)) continue;
                     if (!allowedRarity.equals(classifyWeaponRarity(config, itemId))) continue;
-                    if (passesWeaponCategoryFilter(itemId, allowedCategories, weaponTree))
-                        weaponCandidates.add(itemId);
+                    if (passesWeaponCategoryFilter(itemId, categoryFilter, weaponTree))
+                        candidates.add(itemId);
                 }
-                if (!weaponCandidates.isEmpty()) break;
+                if (!candidates.isEmpty()) break;
             }
         }
 
-        if (weaponCandidates.isEmpty() && hasCategories) return null;
-
-        if (weaponCandidates.isEmpty()) {
+        if (candidates.isEmpty() && allowAnyRarityFallback) {
             for (String itemId : config.gearConfig.defaultWeaponCatalog) {
-                if (itemId == null || itemId.isBlank()) continue;
-                if (Item.getAssetMap().getAsset(itemId) == null) continue;
-                if (isShieldItemId(itemId)) continue;
-                if (passesWeaponCategoryFilter(itemId, allowedCategories, weaponTree))
-                    weaponCandidates.add(itemId);
+                if (!isValidWeaponCandidate(itemId)) continue;
+                if (passesWeaponCategoryFilter(itemId, categoryFilter, weaponTree))
+                    candidates.add(itemId);
             }
         }
 
-        if (weaponCandidates.isEmpty()) return null;
-        return weaponCandidates.get(random.nextInt(weaponCandidates.size()));
+        if (candidates.isEmpty()) return null;
+        return candidates.get(random.nextInt(candidates.size()));
+    }
+
+    private boolean isValidWeaponCandidate(String itemId) {
+        if (itemId == null || itemId.isBlank()) return false;
+        if (Item.getAssetMap().getAsset(itemId) == null) return false;
+        return !isShieldItemId(itemId);
     }
 
     private static boolean passesWeaponCategoryFilter(String weaponId, List<String> allowedCategories,

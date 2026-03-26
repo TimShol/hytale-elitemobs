@@ -1,10 +1,9 @@
 package com.frotty27.rpgmobs.systems.spawn;
 
 import com.frotty27.rpgmobs.api.events.RPGMobsSpawnedEvent;
+import com.frotty27.rpgmobs.assets.TemplateNameGenerator;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
-import com.frotty27.rpgmobs.components.ability.ChargeLeapAbilityComponent;
-import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
-import com.frotty27.rpgmobs.components.ability.SummonUndeadAbilityComponent;
+import com.frotty27.rpgmobs.components.ability.*;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsMigrationComponent;
 import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
@@ -20,6 +19,7 @@ import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.exceptions.EntityComponentException;
 import com.frotty27.rpgmobs.exceptions.RPGMobsException;
 import com.frotty27.rpgmobs.exceptions.RPGMobsSystemException;
+import com.frotty27.rpgmobs.features.RPGMobsAbilityFeatureHelpers;
 import com.frotty27.rpgmobs.features.RPGMobsFeatureRegistry;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
@@ -27,6 +27,7 @@ import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.rules.MobRuleMatcher;
 import com.frotty27.rpgmobs.services.RPGMobsEquipmentService;
 import com.frotty27.rpgmobs.utils.*;
+import com.hypixel.hytale.builtin.npccombatactionevaluator.NPCCombatActionEvaluatorPlugin;
 import com.hypixel.hytale.component.*;
 import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
@@ -64,9 +65,6 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
     private static final double SUMMON_RISE_VELOCITY_Y = 3.0;
     private static final double SUMMON_RISE_SPAWN_OFFSET_Y = 0.6;
-    private static final double SUMMON_SPAWN_RADIUS = 6.0;
-    private static final int SUMMON_MIN_COUNT = 3;
-    private static final int SUMMON_MAX_COUNT = 7;
     private static final InteractionType ABILITY_INTERACTION_TYPE = InteractionType.Ability2;
 
     private static final long CHAIN_DEATH_STAGGER_TICKS = Constants.TICKS_PER_SECOND / 3;
@@ -75,7 +73,8 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
     private static final ComponentType<EntityStore, Velocity> VELOCITY_COMPONENT_TYPE = Velocity.getComponentType();
     private static final ComponentType<EntityStore, TransformComponent> TRANSFORM_COMPONENT_TYPE = TransformComponent.getComponentType();
-    private final RPGMobsPlugin RPGMobsPlugin;
+
+    private final RPGMobsPlugin plugin;
     private final Random random = new Random();
 
     private final MobRuleMatcher mobRuleMatcher = new MobRuleMatcher();
@@ -101,9 +100,9 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         }
     }
 
-    public RPGMobsSpawnSystem(RPGMobsPlugin RPGMobsPlugin) {
-        this.RPGMobsPlugin = RPGMobsPlugin;
-        this.featureRegistry = RPGMobsPlugin.getFeatureRegistry();
+    public RPGMobsSpawnSystem(RPGMobsPlugin plugin) {
+        this.plugin = plugin;
+        this.featureRegistry = plugin.getFeatureRegistry();
     }
 
     @Override
@@ -131,7 +130,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                              @NonNull Store<EntityStore> entityStore,
                              @NonNull CommandBuffer<EntityStore> commandBuffer) {
 
-        RPGMobsConfig config = RPGMobsPlugin.getConfig();
+        RPGMobsConfig config = plugin.getConfig();
         if (config == null) return;
 
         Ref<EntityStore> npcRef = archetypeChunk.getReferenceTo(entityIndex);
@@ -142,7 +141,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        long currentTick = RPGMobsPlugin.getTickClock().getTick();
+        long currentTick = plugin.getTickClock().getTick();
 
         checkMinionOfDeadSummoner(npcRef, entityStore, commandBuffer, currentTick);
         clearProcessedSummonerDeaths(currentTick);
@@ -153,10 +152,10 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         }
 
         RPGMobsSummonedMinionComponent minionComponent = entityStore.getComponent(npcRef,
-                                                                                  RPGMobsPlugin.getSummonedMinionComponentType()
+                                                                                  plugin.getSummonedMinionComponentType()
         );
         RPGMobsTierComponent existingTierComponent = entityStore.getComponent(npcRef,
-                                                                              RPGMobsPlugin.getRPGMobsComponentType()
+                                                                              plugin.getRPGMobsComponentType()
         );
 
         if (minionComponent != null && (existingTierComponent == null || existingTierComponent.tierIndex < 0 || existingTierComponent.tierIndex > 1)) {
@@ -169,9 +168,15 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                                                                entityStore,
                                                                commandBuffer,
                                                                npcEntity,
-                                                               tierIndex
+                                                               tierIndex,
+                                                               null
             );
-            commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getSummonedMinionComponentType(), minionComponent);
+            commandBuffer.replaceComponent(npcRef, plugin.getSummonedMinionComponentType(), minionComponent);
+
+            if (minionComponent.tierApplied) {
+                startSummonRiseAnimation(config, npcRef, npcEntity, entityStore, commandBuffer, tierIndex);
+            }
+
             logNpcScanSummaryIfDue(config);
             return;
         }
@@ -192,10 +197,25 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
+        // Test variants bypass RPGMobs elite system - CAE handles combat, code handles parry
+        if (roleName.startsWith("RPGMobs_Test_T") || roleName.startsWith("RPGMobs_Parry")) {
+            plugin.getPlayerAttackTracker().registerGuardEntity(npcRef);
+            plugin.getPlayerAttackTracker().tickDelayedGuardRequests(plugin.getTickClock().getTick());
+            processParryRequest(npcRef, npcEntity, entityStore, commandBuffer);
+            logNpcScanSummaryIfDue(config);
+            return;
+        }
+
         mobsSeenCount++;
 
         String spawnWorldNameForMobRule = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-        ResolvedConfig resolvedForMobRule = RPGMobsPlugin.getResolvedConfig(spawnWorldNameForMobRule);
+        ResolvedConfig resolvedForMobRule = plugin.getResolvedConfig(spawnWorldNameForMobRule);
+
+        if (!resolvedForMobRule.enabled) {
+            logNpcScanSummaryIfDue(config);
+            return;
+        }
+
         MobRuleMatcher.MatchResult matchResult = mobRuleMatcher.findBestMatch(resolvedForMobRule.mobRules, roleName);
         if (matchResult == null) {
             logNpcScanSummaryIfDue(config);
@@ -224,7 +244,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         RPGMobsTierComponent newTierComponent = new RPGMobsTierComponent();
         newTierComponent.tierIndex = tierIndex;
         newTierComponent.matchedRuleKey = matchedRuleKey;
-        newTierComponent.lastReconciledAt = RPGMobsPlugin.getConfigReloadCount();
+        newTierComponent.lastReconciledAt = plugin.getConfigReloadCount();
 
         equipmentService.buildAndApply(npcEntity, config, tierIndex, matchResult.mobRule(),
                 resolvedForMobRule.droppedGearDurabilityMin, resolvedForMobRule.droppedGearDurabilityMax);
@@ -236,13 +256,13 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                                                    roleName,
                                                    spawnTransform != null ? spawnTransform.getPosition().clone() : new Vector3d()
         );
-        RPGMobsPlugin.getEventBus().fire(spawnedEvent);
+        plugin.getEventBus().fire(spawnedEvent);
         if (spawnedEvent.isCancelled()) return;
 
-        commandBuffer.putComponent(npcRef, RPGMobsPlugin.getRPGMobsComponentType(), newTierComponent);
+        commandBuffer.putComponent(npcRef, plugin.getRPGMobsComponentType(), newTierComponent);
 
         createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity);
-        featureRegistry.applyAll(RPGMobsPlugin, config, resolvedForMobRule, npcRef, entityStore, commandBuffer, newTierComponent, roleName);
+        featureRegistry.applyAll(plugin, config, resolvedForMobRule, npcRef, entityStore, commandBuffer, newTierComponent, roleName);
 
         if (config.debugConfig.isDebugModeEnabled) {
             RPGMobsLogger.debug(LOGGER,
@@ -265,7 +285,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         if (roleName == null || roleName.isBlank()) return false;
         boolean summonRole = roleName.startsWith(RPGMobsConfig.SUMMON_ROLE_PREFIX);
         RPGMobsSummonedMinionComponent minionComponent = entityStore.getComponent(npcRef,
-                                                                                  RPGMobsPlugin.getSummonedMinionComponentType()
+                                                                                  plugin.getSummonedMinionComponentType()
         );
         boolean trackedSummon = summonRole || minionComponent != null;
         if (!trackedSummon) return false;
@@ -273,7 +293,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         TransformComponent transform = entityStore.getComponent(npcRef, TRANSFORM_COMPONENT_TYPE);
 
         RPGMobsSummonRiseComponent riseComponent = entityStore.getComponent(npcRef,
-                                                                            RPGMobsPlugin.getSummonRiseComponentType()
+                                                                            plugin.getSummonRiseComponentType()
         );
         if (riseComponent != null && riseComponent.applied) return false;
 
@@ -294,7 +314,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         if (riseComponent == null) riseComponent = new RPGMobsSummonRiseComponent();
         riseComponent.applied = true;
-        commandBuffer.putComponent(npcRef, RPGMobsPlugin.getSummonRiseComponentType(), riseComponent);
+        commandBuffer.putComponent(npcRef, plugin.getSummonRiseComponentType(), riseComponent);
         return true;
     }
 
@@ -311,7 +331,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
             if (pendingSummonerDeaths.isEmpty()) return;
         }
         RPGMobsSummonedMinionComponent minion = store.getComponent(npcRef,
-                                                                   RPGMobsPlugin.getSummonedMinionComponentType()
+                                                                   plugin.getSummonedMinionComponentType()
         );
         if (minion == null || minion.summonerId == null) return;
 
@@ -333,9 +353,9 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                                     currentTick
                 );
                 spawnChainDeathExplosion(npcRef, store);
-                killMinion(npcRef, commandBuffer);
+                killMinion(npcRef, store, commandBuffer);
                 minion.chainDeathAtTick = -1L;
-                commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getSummonedMinionComponentType(), minion);
+                commandBuffer.replaceComponent(npcRef, plugin.getSummonedMinionComponentType(), minion);
             }
             return;
         }
@@ -346,7 +366,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                     long scheduledTick = death.deathTick + (death.assignedCount * CHAIN_DEATH_STAGGER_TICKS) + 1;
                     death.assignedCount++;
                     minion.chainDeathAtTick = scheduledTick;
-                    commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getSummonedMinionComponentType(), minion);
+                    commandBuffer.replaceComponent(npcRef, plugin.getSummonedMinionComponentType(), minion);
                     RPGMobsLogger.debug(LOGGER,
                                         "[MinionDespawn] Scheduled chain-death: summoner=%s atTick=%d (index=%d)",
                                         RPGMobsLogLevel.INFO,
@@ -373,9 +393,116 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         ParticleUtil.spawnParticleEffect(CHAIN_DEATH_PARTICLE, pos, store);
     }
 
-    private void killMinion(Ref<EntityStore> npcRef, CommandBuffer<EntityStore> commandBuffer) {
+    private void killMinion(Ref<EntityStore> npcRef, Store<EntityStore> store,
+                            CommandBuffer<EntityStore> commandBuffer) {
+        AbilityHelpers.cancelInteractionType(store, commandBuffer, npcRef, InteractionType.Ability2);
         Damage damage = new Damage(Damage.NULL_SOURCE, DamageCause.ENVIRONMENT, Float.MAX_VALUE);
         DeathComponent.tryAddComponent(commandBuffer, npcRef, damage);
+    }
+
+    private void processParryRequest(Ref<EntityStore> npcRef, @Nullable NPCEntity npcEntity,
+                                     Store<EntityStore> entityStore,
+                                     CommandBuffer<EntityStore> commandBuffer) {
+        if (npcEntity == null) return;
+
+        // Use UUID for stable entity key
+        UUIDComponent uuidComp = entityStore.getComponent(npcRef, UUIDComponent.getComponentType());
+        if (uuidComp == null) return;
+        long entityKey = uuidComp.getUuid().getMostSignificantBits();
+        var tracker = plugin.getPlayerAttackTracker();
+
+        // Auto-expire parry after duration (shouldCancelParry decrements countdown)
+        if (tracker.shouldCancelParry(entityKey)) {
+            tracker.markGuardEnded(entityKey);
+        }
+
+        // Don't start a new parry while one is active or on cooldown
+        if (tracker.isGuarding(entityKey)) return;
+        if (tracker.isOnGuardCooldown(entityKey)) return;
+
+        // Don't parry if CAE sustained guard is already running on Secondary
+        if (AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, InteractionType.Secondary)) return;
+
+        var guardRequest = tracker.consumeGuardRequest(entityKey);
+        if (guardRequest == null) return;
+
+        // Use setCurrentInteraction on the CAE component to force a shield block.
+        // This tells the CAE: "execute this interaction NOW on Secondary for N seconds."
+        // The CAE handles the actual Wielding interaction natively (same as Praetorian).
+        var caeComponentType = NPCCombatActionEvaluatorPlugin.get().getCombatActionEvaluatorComponentType();
+        var caeComponent = entityStore.getComponent(npcRef, caeComponentType);
+        if (caeComponent == null) return;
+
+        String guardRoot = plugin.getPlayerAttackTracker().resolveGuardRoot(npcEntity);
+        caeComponent.setCurrentInteraction(
+                guardRoot,
+                InteractionType.Secondary,
+                0.75f,
+                false,
+                false,
+                false,
+                0f,
+                null
+        );
+        commandBuffer.replaceComponent(npcRef, caeComponentType, caeComponent);
+        tracker.markParryStarted(entityKey);
+
+        RPGMobsLogger.debug(LOGGER, "Parry triggered via CAE setCurrentInteraction for role=%s",
+                RPGMobsLogLevel.INFO, npcEntity.getRoleName());
+    }
+
+    private void processGuardRequest(Ref<EntityStore> npcRef, @Nullable NPCEntity npcEntity,
+                                     Store<EntityStore> entityStore,
+                                     CommandBuffer<EntityStore> commandBuffer) {
+        if (npcEntity == null) return;
+
+        // Use UUID for stable entity key (Ref.hashCode() changes between ticks)
+        UUIDComponent uuidComp = entityStore.getComponent(npcRef, UUIDComponent.getComponentType());
+        if (uuidComp == null) return;
+        long entityKey = uuidComp.getUuid().getMostSignificantBits();
+        var tracker = plugin.getPlayerAttackTracker();
+
+        // Cancel parry after ~0.83s (25 ticks) - short reactive block
+        if (tracker.shouldCancelParry(entityKey)) {
+            AbilityHelpers.cancelInteractionType(entityStore, commandBuffer, npcRef, InteractionType.Ability2);
+            tracker.markGuardEnded(entityKey);
+            RPGMobsLogger.debug(LOGGER, "Parry ended (0.5s) for role=%s",
+                    RPGMobsLogLevel.INFO, npcEntity.getRoleName());
+            return;
+        }
+
+        // Check if a previous guard has ended (Secondary interaction no longer running)
+        if (tracker.isGuarding(entityKey)) {
+            boolean secondaryStillRunning = AbilityHelpers.isInteractionTypeRunning(
+                    entityStore, npcRef, InteractionType.Ability2);
+            if (!secondaryStillRunning) {
+                tracker.markGuardEnded(entityKey);
+            }
+            // Don't consume or start new guards while guarding/on cooldown
+            return;
+        }
+
+        // Don't guard if an ability is active or pending
+        var abilityLock = entityStore.getComponent(npcRef, plugin.getAbilityLockComponentType());
+        if (abilityLock != null && (abilityLock.isLocked() || abilityLock.isChainStartPending())) {
+            // Discard pending guard request - ability takes priority
+            tracker.consumeGuardRequest(entityKey);
+            return;
+        }
+
+        var guardRequest = tracker.consumeGuardRequest(entityKey);
+        if (guardRequest == null) return;
+
+        String guardRoot = tracker.resolveGuardRoot(npcEntity);
+
+        boolean started = RPGMobsAbilityFeatureHelpers.tryStartGuardInteraction(
+                npcRef, entityStore, commandBuffer, guardRoot);
+
+        if (started) {
+            tracker.markParryStarted(entityKey);
+            RPGMobsLogger.debug(LOGGER, "Parry started (%s) for role=%s",
+                    RPGMobsLogLevel.INFO, guardRoot, npcEntity.getRoleName());
+        }
     }
 
     private void deElite(RPGMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
@@ -385,13 +512,13 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
             equipmentService.clearAllEquipment(npcEntity);
         }
 
-        featureRegistry.cleanupAll(RPGMobsPlugin, config, npcRef, entityStore, commandBuffer);
+        featureRegistry.cleanupAll(plugin, config, npcRef, entityStore, commandBuffer);
 
-        commandBuffer.tryRemoveComponent(npcRef, RPGMobsPlugin.getRPGMobsComponentType());
-        commandBuffer.tryRemoveComponent(npcRef, RPGMobsPlugin.getProgressionComponentType());
-        commandBuffer.tryRemoveComponent(npcRef, RPGMobsPlugin.getMigrationComponentType());
-        commandBuffer.tryRemoveComponent(npcRef, RPGMobsPlugin.getSummonedMinionComponentType());
-        commandBuffer.tryRemoveComponent(npcRef, RPGMobsPlugin.getSummonRiseComponentType());
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getRPGMobsComponentType());
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getProgressionComponentType());
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getMigrationComponentType());
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getSummonedMinionComponentType());
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getSummonRiseComponentType());
 
         RPGMobsLogger.debug(LOGGER,
                             "[DeElite] Stripped elite status: role=%s tier=T%d",
@@ -402,7 +529,8 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
     }
 
     public boolean applyTierFromCommand(RPGMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
-                                        CommandBuffer<EntityStore> commandBuffer, NPCEntity npcEntity, int tierIndex) {
+                                        CommandBuffer<EntityStore> commandBuffer, NPCEntity npcEntity, int tierIndex,
+                                        @Nullable String weaponCategoryOverride) {
         if (config == null || npcEntity == null) return false;
 
         String roleName = npcEntity.getRoleName();
@@ -411,12 +539,20 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         int clampedTierIndex = clampTierIndex(tierIndex);
 
         String cmdWorldNameForMobRule = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-        ResolvedConfig resolvedForMobRule = RPGMobsPlugin.getResolvedConfig(cmdWorldNameForMobRule);
+        ResolvedConfig resolvedForMobRule = plugin.getResolvedConfig(cmdWorldNameForMobRule);
+
+        if (!resolvedForMobRule.enabled) {
+            RPGMobsLogger.debug(LOGGER,
+                                "Command spawn blocked  - RPGMobs disabled in world=%s for role=%s",
+                                RPGMobsLogLevel.INFO, String.valueOf(cmdWorldNameForMobRule), roleName);
+            return false;
+        }
+
         MobRuleMatcher.MatchResult matchResult = mobRuleMatcher.findBestMatch(resolvedForMobRule.mobRules, roleName);
 
         if (matchResult == null) {
             RPGMobsLogger.debug(LOGGER,
-                                "Command spawn skipped — no enabled mob rule for role=%s in world=%s",
+                                "Command spawn skipped  - no enabled mob rule for role=%s in world=%s",
                                 RPGMobsLogLevel.INFO, roleName, String.valueOf(cmdWorldNameForMobRule));
             return false;
         }
@@ -424,19 +560,20 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         RPGMobsTierComponent newTierComponent = new RPGMobsTierComponent();
         newTierComponent.tierIndex = clampedTierIndex;
         newTierComponent.matchedRuleKey = matchResult.key();
-        newTierComponent.lastReconciledAt = RPGMobsPlugin.getConfigReloadCount();
+        newTierComponent.lastReconciledAt = plugin.getConfigReloadCount();
 
         equipmentService.buildAndApply(npcEntity, config, clampedTierIndex, matchResult.mobRule(),
-                resolvedForMobRule.droppedGearDurabilityMin, resolvedForMobRule.droppedGearDurabilityMax);
+                resolvedForMobRule.droppedGearDurabilityMin, resolvedForMobRule.droppedGearDurabilityMax,
+                weaponCategoryOverride);
 
-        commandBuffer.putComponent(npcRef, RPGMobsPlugin.getRPGMobsComponentType(), newTierComponent);
+        commandBuffer.putComponent(npcRef, plugin.getRPGMobsComponentType(), newTierComponent);
 
         createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity);
 
-        featureRegistry.applyAll(RPGMobsPlugin, config, resolvedForMobRule, npcRef, entityStore, commandBuffer, newTierComponent, roleName);
+        featureRegistry.applyAll(plugin, config, resolvedForMobRule, npcRef, entityStore, commandBuffer, newTierComponent, roleName);
 
         TransformComponent spawnTransform = entityStore.getComponent(npcRef, TransformComponent.getComponentType());
-        RPGMobsPlugin.getEventBus().fire(new RPGMobsSpawnedEvent(npcEntity.getWorld(),
+        plugin.getEventBus().fire(new RPGMobsSpawnedEvent(npcEntity.getWorld(),
                                                                  npcRef,
                                                                  clampedTierIndex,
                                                                  roleName,
@@ -445,13 +582,14 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         if (config.debugConfig.isDebugModeEnabled) {
             RPGMobsLogger.debug(LOGGER,
-                                "Elite applied (command): role=%s tier=%d ruleKey=%s matchKind=%s score=%d",
+                                "Elite applied (command): role=%s tier=%d ruleKey=%s matchKind=%s score=%d weaponCategory=%s",
                                 RPGMobsLogLevel.INFO,
                                 roleName,
                                 clampedTierIndex,
-                                matchResult == null ? "none" : matchResult.key(),
-                                matchResult == null ? "none" : String.valueOf(matchResult.matchKind()),
-                                matchResult == null ? -1 : matchResult.score()
+                                matchResult.key(),
+                                String.valueOf(matchResult.matchKind()),
+                                matchResult.score(),
+                                weaponCategoryOverride != null ? weaponCategoryOverride : "any"
             );
         }
 
@@ -460,7 +598,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
     private double @Nullable [] resolveSpawnChances(RPGMobsConfig config, NPCEntity npcEntity) {
         String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-        ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(worldName);
+        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
 
         if (config.debugConfig.isDebugModeEnabled) {
             String template = ConfigResolver.resolveInstanceTemplate(worldName);
@@ -483,7 +621,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
     private int applyTierOverride(NPCEntity npcEntity, String matchedRuleKey, int tierIndex) {
         String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-        ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(worldName);
+        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
 
         ConfigOverlay.TierOverride tierOverride = resolved.tierOverrides.get(matchedRuleKey);
 
@@ -518,7 +656,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         }
         if (style == RPGMobsConfig.ProgressionStyle.NONE) {
             String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-            return RPGMobsPlugin.getResolvedConfig(worldName).spawnChancePerTier;
+            return plugin.getResolvedConfig(worldName).spawnChancePerTier;
         }
         return resolveSpawnChancesForEnvironment(config, npcEntity);
     }
@@ -526,7 +664,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
     private double[] resolveSpawnChancesByDistance(NPCEntity npcEntity) {
         double dist = getXZDistance(npcEntity);
         String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-        ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(worldName);
+        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
 
         double distPerTier = Math.max(1.0, resolved.distancePerTier);
         int tier = (int) (dist / distPerTier);
@@ -552,7 +690,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
     }
 
     private String resolveEnvironmentId(NPCEntity npcEntity) {
-        RPGMobsConfig config = RPGMobsPlugin.getConfig();
+        RPGMobsConfig config = plugin.getConfig();
 
         var world = npcEntity.getWorld();
         if (world != null) {
@@ -605,7 +743,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
     private double @Nullable [] resolveSpawnChancesForEnvironment(RPGMobsConfig config, NPCEntity npcEntity) {
         String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-        ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(worldName);
+        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
 
         Map<String, double[]> envRules = resolved.environmentTierRules;
         if (envRules == null || envRules.isEmpty()) return null;
@@ -651,45 +789,59 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         String roleName = null;
         NPCEntity npcEntity = entityStore.getComponent(npcRef, Constants.NPC_COMPONENT_TYPE);
         if (npcEntity != null) roleName = npcEntity.getRoleName();
+        decrementAbilityCooldowns(npcRef, entityStore, commandBuffer);
 
-        if (RPGMobsPlugin.shouldReconcileThisTick() && npcEntity != null) {
-            String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-            ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(worldName);
-            if (!resolved.enabled) {
+        tierComponentChanged |= tryHandlePendingSummon(config, npcRef, npcEntity, entityStore, commandBuffer);
+
+        finalizeWeaponSwap(npcRef, npcEntity, entityStore, commandBuffer,
+                plugin.getHealLeapAbilityComponentType());
+        finalizeWeaponSwap(npcRef, npcEntity, entityStore, commandBuffer,
+                plugin.getSummonUndeadAbilityComponentType());
+        finalizeEnrageSwapIfNeeded(npcRef, npcEntity, entityStore, commandBuffer);
+        finalizeWeaponSwap(npcRef, npcEntity, entityStore, commandBuffer,
+                plugin.getVolleyAbilityComponentType());
+
+        long tick = plugin.getTickClock().getTick();
+
+        // Process parry requests (code-side reactive guard via CAE setCurrentInteraction)
+        plugin.getPlayerAttackTracker().tickDelayedGuardRequests(tick);
+        processParryRequest(npcRef, npcEntity, entityStore, commandBuffer);
+
+        if (tick % 30 == 0) {
+            plugin.getPlayerAttackTracker().tickGuardCooldowns();
+        }
+
+        if (config.debugConfig.isDebugModeEnabled && tick % 30 == 0) {
+            plugin.getNameplateService().updateDebugSegment(
+                    plugin, npcRef, entityStore, commandBuffer, true);
+        }
+
+        boolean needsReconcile = plugin.shouldReconcileThisTick()
+                || tierComponent.lastReconciledAt < plugin.getConfigReloadCount();
+
+        if (needsReconcile) {
+            String reconcileWorldName = npcEntity != null && npcEntity.getWorld() != null
+                    ? npcEntity.getWorld().getName() : null;
+            ResolvedConfig resolvedForReconcile = plugin.getResolvedConfig(reconcileWorldName);
+
+            if (!resolvedForReconcile.enabled) {
                 RPGMobsLogger.debug(LOGGER,
-                                    "[Reconcile] De-eliting NPC in disabled world: role=%s world=%s tier=%d",
+                                    "[Reconcile] De-eliting NPC in disabled world (lazy): role=%s world=%s tier=%d",
                                     RPGMobsLogLevel.INFO,
                                     roleName,
-                                    String.valueOf(worldName),
+                                    String.valueOf(reconcileWorldName),
                                     tierComponent.tierIndex
                 );
                 deElite(config, npcRef, entityStore, commandBuffer, tierComponent, npcEntity);
                 return;
             }
-        }
-
-        decrementAbilityCooldowns(npcRef, entityStore, commandBuffer);
-
-        tierComponentChanged |= tryHandlePendingSummon(config, npcRef, npcEntity, entityStore, commandBuffer);
-
-        tierComponentChanged |= finalizeHealSwapIfNeeded(npcRef, npcEntity, entityStore, commandBuffer);
-
-        finalizeSummonSwapIfNeeded(npcRef, npcEntity, entityStore, commandBuffer);
-
-        boolean needsReconcile = RPGMobsPlugin.shouldReconcileThisTick()
-                || tierComponent.lastReconciledAt < RPGMobsPlugin.getConfigReloadCount();
-
-        if (needsReconcile) {
-            String reconcileWorldName = npcEntity != null && npcEntity.getWorld() != null
-                    ? npcEntity.getWorld().getName() : null;
-            ResolvedConfig resolvedForReconcile = RPGMobsPlugin.getResolvedConfig(reconcileWorldName);
 
             if (npcEntity != null && roleName != null) {
                 MobRuleMatcher.MatchResult newMatch = mobRuleMatcher.findBestMatch(resolvedForReconcile.mobRules, roleName);
 
                 if (newMatch == null) {
                     RPGMobsLogger.debug(LOGGER,
-                                        "[Reconcile] De-eliting NPC — mob rule removed: role=%s oldRuleKey=%s tier=T%d",
+                                        "[Reconcile] De-eliting NPC  - mob rule removed: role=%s oldRuleKey=%s tier=T%d",
                                         RPGMobsLogLevel.INFO,
                                         roleName,
                                         String.valueOf(tierComponent.matchedRuleKey),
@@ -724,7 +876,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                 }
             }
 
-            featureRegistry.reconcileAll(RPGMobsPlugin,
+            featureRegistry.reconcileAll(plugin,
                                          config,
                                          resolvedForReconcile,
                                          npcRef,
@@ -734,35 +886,43 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                                          roleName
             );
 
-            tierComponent.lastReconciledAt = RPGMobsPlugin.getConfigReloadCount();
+            tierComponent.lastReconciledAt = plugin.getConfigReloadCount();
             tierComponentChanged = true;
         }
 
         if (tierComponentChanged) {
-            commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getRPGMobsComponentType(), tierComponent);
+            commandBuffer.replaceComponent(npcRef, plugin.getRPGMobsComponentType(), tierComponent);
         }
     }
 
     private void decrementAbilityCooldowns(Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
                                            CommandBuffer<EntityStore> commandBuffer) {
+        RPGMobsAbilityLockComponent lock = entityStore.getComponent(npcRef,
+                                                                     plugin.getAbilityLockComponentType()
+        );
+        if (lock != null && lock.globalCooldownTicksRemaining > 0) {
+            lock.globalCooldownTicksRemaining--;
+            commandBuffer.replaceComponent(npcRef, plugin.getAbilityLockComponentType(), lock);
+        }
+
         ChargeLeapAbilityComponent chargeLeap = entityStore.getComponent(npcRef,
-                                                                         RPGMobsPlugin.getChargeLeapAbilityComponentType()
+                                                                         plugin.getChargeLeapAbilityComponentType()
         );
         if (chargeLeap != null && chargeLeap.cooldownTicksRemaining > 0) {
             chargeLeap.cooldownTicksRemaining--;
-            commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getChargeLeapAbilityComponentType(), chargeLeap);
+            commandBuffer.replaceComponent(npcRef, plugin.getChargeLeapAbilityComponentType(), chargeLeap);
         }
 
         HealLeapAbilityComponent healLeap = entityStore.getComponent(npcRef,
-                                                                     RPGMobsPlugin.getHealLeapAbilityComponentType()
+                                                                     plugin.getHealLeapAbilityComponentType()
         );
         if (healLeap != null && healLeap.cooldownTicksRemaining > 0) {
             healLeap.cooldownTicksRemaining--;
-            commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getHealLeapAbilityComponentType(), healLeap);
+            commandBuffer.replaceComponent(npcRef, plugin.getHealLeapAbilityComponentType(), healLeap);
         }
 
         SummonUndeadAbilityComponent summon = entityStore.getComponent(npcRef,
-                                                                       RPGMobsPlugin.getSummonUndeadAbilityComponentType()
+                                                                       plugin.getSummonUndeadAbilityComponentType()
         );
         if (summon != null) {
             boolean changed = false;
@@ -775,9 +935,58 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                 changed = true;
             }
             if (changed) {
-                commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getSummonUndeadAbilityComponentType(), summon);
+                commandBuffer.replaceComponent(npcRef, plugin.getSummonUndeadAbilityComponentType(), summon);
             }
         }
+
+        DodgeRollAbilityComponent dodgeRoll = entityStore.getComponent(npcRef,
+                                                                        plugin.getDodgeRollAbilityComponentType()
+        );
+        if (dodgeRoll != null && dodgeRoll.cooldownTicksRemaining > 0) {
+            dodgeRoll.cooldownTicksRemaining--;
+            commandBuffer.replaceComponent(npcRef, plugin.getDodgeRollAbilityComponentType(), dodgeRoll);
+        }
+
+        MultiSlashShortComponent msShort = entityStore.getComponent(npcRef,
+                                                                      plugin.getMultiSlashShortComponentType()
+        );
+        if (msShort != null && msShort.cooldownTicksRemaining > 0) {
+            msShort.cooldownTicksRemaining--;
+            commandBuffer.replaceComponent(npcRef, plugin.getMultiSlashShortComponentType(), msShort);
+        }
+
+        MultiSlashMediumComponent msMedium = entityStore.getComponent(npcRef,
+                                                                        plugin.getMultiSlashMediumComponentType()
+        );
+        if (msMedium != null && msMedium.cooldownTicksRemaining > 0) {
+            msMedium.cooldownTicksRemaining--;
+            commandBuffer.replaceComponent(npcRef, plugin.getMultiSlashMediumComponentType(), msMedium);
+        }
+
+        MultiSlashLongComponent msLong = entityStore.getComponent(npcRef,
+                                                                    plugin.getMultiSlashLongComponentType()
+        );
+        if (msLong != null && msLong.cooldownTicksRemaining > 0) {
+            msLong.cooldownTicksRemaining--;
+            commandBuffer.replaceComponent(npcRef, plugin.getMultiSlashLongComponentType(), msLong);
+        }
+
+        EnrageAbilityComponent enrage = entityStore.getComponent(npcRef,
+                                                                  plugin.getEnrageAbilityComponentType()
+        );
+        if (enrage != null && enrage.cooldownTicksRemaining > 0) {
+            enrage.cooldownTicksRemaining--;
+            commandBuffer.replaceComponent(npcRef, plugin.getEnrageAbilityComponentType(), enrage);
+        }
+
+        VolleyAbilityComponent volley = entityStore.getComponent(npcRef,
+                                                                  plugin.getVolleyAbilityComponentType()
+        );
+        if (volley != null && volley.cooldownTicksRemaining > 0) {
+            volley.cooldownTicksRemaining--;
+            commandBuffer.replaceComponent(npcRef, plugin.getVolleyAbilityComponentType(), volley);
+        }
+
     }
 
     private boolean tryHandlePendingSummon(RPGMobsConfig config, Ref<EntityStore> npcRef, NPCEntity npcEntity,
@@ -788,7 +997,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         if (deathCheck != null) return false;
 
         SummonUndeadAbilityComponent summonAbility = entityStore.getComponent(npcRef,
-                                                                              RPGMobsPlugin.getSummonUndeadAbilityComponentType()
+                                                                              plugin.getSummonUndeadAbilityComponentType()
         );
         if (summonAbility == null) return false;
 
@@ -798,13 +1007,13 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         SummonAbilityConfig summonConfig = getSummonAbilityConfig(config);
         if (summonConfig == null || npcEntity == null) {
             summonAbility.pendingSummonRole = null;
-            commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getSummonUndeadAbilityComponentType(), summonAbility);
+            commandBuffer.replaceComponent(npcRef, plugin.getSummonUndeadAbilityComponentType(), summonAbility);
             return false;
         }
 
         String roleIdentifier = summonAbility.pendingSummonRole;
         summonAbility.pendingSummonRole = null;
-        commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getSummonUndeadAbilityComponentType(), summonAbility);
+        commandBuffer.replaceComponent(npcRef, plugin.getSummonUndeadAbilityComponentType(), summonAbility);
 
         List<SummonMarkerEntry> entries = resolveSummonEntries(summonConfig, roleIdentifier);
         if (entries.isEmpty()) {
@@ -819,7 +1028,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         }
 
         RPGMobsSummonMinionTrackingComponent summonTracking = entityStore.getComponent(npcRef,
-                                                                                       RPGMobsPlugin.getSummonMinionTrackingComponentType()
+                                                                                       plugin.getSummonMinionTrackingComponentType()
         );
         int summonedAliveCount = summonTracking != null ? summonTracking.summonedAliveCount : 0;
 
@@ -841,7 +1050,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         if (transform == null) return changed;
 
         Vector3d center = transform.getPosition();
-        int spawnCount = clampSummonCount(pickFlockSize(entries));
+        int spawnCount = clampSummonCount(pickFlockSize(entries), summonConfig);
         spawnCount = Math.min(spawnCount, remaining);
         if (spawnCount <= 0) {
             if (config.debugConfig.isDebugModeEnabled) {
@@ -879,7 +1088,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         for (int i = 0; i < spawnCount; i++) {
             SummonMarkerEntry entry = pickWeightedEntry(entries);
             if (entry == null || entry.Name == null || entry.Name.isBlank()) continue;
-            Vector3d pos = pickSpawnPosition(center);
+            Vector3d pos = pickSpawnPosition(center, summonConfig.summonSpawnRadius);
             String roleName = entry.Name.trim();
             if (roleName.startsWith(RPGMobsConfig.SUMMON_ROLE_PREFIX)) {
                 roleName = roleName.substring(RPGMobsConfig.SUMMON_ROLE_PREFIX.length()).trim();
@@ -906,16 +1115,16 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
                 StoreHelpers.withEntity(store, spawnedRef, (_, cb, _) -> {
                                             RPGMobsSummonedMinionComponent minion = store.getComponent(spawnedRef,
-                                                                                                       RPGMobsPlugin.getSummonedMinionComponentType()
+                                                                                                       plugin.getSummonedMinionComponentType()
                                             );
                                             if (minion == null) {
                                                 minion = new RPGMobsSummonedMinionComponent();
                                             }
                                             minion.summonerId = summonerId;
-                                            minion.minTierIndex = 0;
-                                            minion.maxTierIndex = 2;
+                                            minion.minTierIndex = summonConfig.minionMinTier;
+                                            minion.maxTierIndex = summonConfig.minionMaxTier;
                                             minion.tierApplied = false;
-                                            cb.putComponent(spawnedRef, RPGMobsPlugin.getSummonedMinionComponentType(), minion);
+                                            cb.putComponent(spawnedRef, plugin.getSummonedMinionComponentType(), minion);
                                         }
                 );
 
@@ -924,12 +1133,12 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                 if (npcRef.isValid()) {
                     StoreHelpers.withEntity(store, npcRef, (_, cb, _) -> {
                                                 RPGMobsSummonMinionTrackingComponent tracking = store.getComponent(npcRef,
-                                                                                                                   RPGMobsPlugin.getSummonMinionTrackingComponentType()
+                                                                                                                   plugin.getSummonMinionTrackingComponentType()
                                                 );
                                                 if (tracking == null) tracking = new RPGMobsSummonMinionTrackingComponent();
                                                 if (tracking.summonedAliveCount < 0) tracking.summonedAliveCount = 0;
                                                 tracking.summonedAliveCount++;
-                                                cb.replaceComponent(npcRef, RPGMobsPlugin.getSummonMinionTrackingComponentType(), tracking);
+                                                cb.replaceComponent(npcRef, plugin.getSummonMinionTrackingComponentType(), tracking);
                                             }
                     );
                 }
@@ -939,50 +1148,82 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         return changed;
     }
 
-    private boolean finalizeHealSwapIfNeeded(Ref<EntityStore> npcRef, NPCEntity npcEntity,
-                                             Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
-        if (npcEntity == null) return false;
-
-        HealLeapAbilityComponent healLeapAbility = entityStore.getComponent(npcRef,
-                                                                            RPGMobsPlugin.getHealLeapAbilityComponentType()
-        );
-        if (healLeapAbility == null || !healLeapAbility.swapActive) return false;
-
-        boolean healChainActive = AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, ABILITY_INTERACTION_TYPE);
-
-        if (!healChainActive && healLeapAbility.swapActive) {
-            AbilityHelpers.restorePreviousItemIfNeeded(npcEntity, healLeapAbility);
-            healLeapAbility.swapActive = false;
-            healLeapAbility.swapSlot = -1;
-            healLeapAbility.swapPreviousItem = null;
-            healLeapAbility.hitsTaken = 0;
-            commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getHealLeapAbilityComponentType(), healLeapAbility);
-            return false;
-        }
-
-        return false;
-    }
-
-    private void finalizeSummonSwapIfNeeded(Ref<EntityStore> npcRef, NPCEntity npcEntity,
-                                            Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void finalizeWeaponSwap(Ref<EntityStore> npcRef, NPCEntity npcEntity,
+                                    Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer,
+                                    ComponentType componentType) {
         if (npcEntity == null) return;
 
-        SummonUndeadAbilityComponent summonAbility = entityStore.getComponent(npcRef,
-                                                                              RPGMobsPlugin.getSummonUndeadAbilityComponentType()
-        );
-        if (summonAbility == null || !summonAbility.swapActive) return;
+        Object component = entityStore.getComponent(npcRef, componentType);
+        if (!(component instanceof WeaponSwappable swappable) || !swappable.isSwapActive()) return;
 
-        boolean summonChainActive = AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, ABILITY_INTERACTION_TYPE);
-
-        if (!summonChainActive) {
-            AbilityHelpers.restoreSummonWeaponIfNeeded(npcEntity, summonAbility);
-            commandBuffer.replaceComponent(npcRef, RPGMobsPlugin.getSummonUndeadAbilityComponentType(), summonAbility);
+        boolean chainActive = AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, ABILITY_INTERACTION_TYPE);
+        if (!chainActive) {
+            AbilityHelpers.restoreWeaponIfNeeded(npcEntity, swappable);
+            ((CommandBuffer) commandBuffer).replaceComponent(npcRef, componentType,
+                    (com.hypixel.hytale.component.Component) component);
         }
     }
 
-    private static int clampSummonCount(int count) {
-        int clamped = Math.max(SUMMON_MIN_COUNT, count);
-        return Math.min(SUMMON_MAX_COUNT, clamped);
+    private void finalizeEnrageSwapIfNeeded(Ref<EntityStore> npcRef, NPCEntity npcEntity,
+                                              Store<EntityStore> entityStore, CommandBuffer<EntityStore> commandBuffer) {
+        if (npcEntity == null) return;
+
+        EnrageAbilityComponent enrage = entityStore.getComponent(npcRef,
+                                                                  plugin.getEnrageAbilityComponentType()
+        );
+        if (enrage == null || (!enrage.swapActive && !enrage.utilitySwapActive)) return;
+
+        boolean chainActive = AbilityHelpers.isInteractionTypeRunning(entityStore, npcRef, ABILITY_INTERACTION_TYPE);
+        if (!chainActive) {
+            AbilityHelpers.restoreWeaponIfNeeded(npcEntity, enrage);
+            AbilityHelpers.restoreEnrageUtilityIfNeeded(npcEntity, enrage);
+            commandBuffer.replaceComponent(npcRef, plugin.getEnrageAbilityComponentType(), enrage);
+        }
+    }
+
+    private void startSummonRiseAnimation(RPGMobsConfig config, Ref<EntityStore> npcRef,
+                                           NPCEntity npcEntity, Store<EntityStore> entityStore,
+                                           CommandBuffer<EntityStore> commandBuffer, int tierIndex) {
+        RPGMobsSummonRiseComponent riseComp = entityStore.getComponent(npcRef,
+                                                                       plugin.getSummonRiseComponentType()
+        );
+        if (riseComp == null || !riseComp.applied || riseComp.animationStarted) return;
+
+        RPGMobsConfig.AbilityConfig summonConfig = config.abilitiesConfig.defaultAbilities.get(SUMMON_UNDEAD);
+        if (summonConfig == null) return;
+
+        String riseRootTemplatePath = summonConfig.templates.getTemplate(
+                RPGMobsConfig.SummonAbilityConfig.TEMPLATE_SUMMON_RISE_ROOT);
+        if (riseRootTemplatePath == null || riseRootTemplatePath.isBlank()) return;
+
+        String riseRootId = TemplateNameGenerator.getTemplateNameWithTierFromPath(
+                riseRootTemplatePath, config, tierIndex);
+        if (riseRootId == null || riseRootId.isBlank()) return;
+
+        riseComp.animationStarted = true;
+        commandBuffer.replaceComponent(npcRef, plugin.getSummonRiseComponentType(), riseComp);
+
+        var world = npcEntity.getWorld();
+        if (world == null) return;
+
+        final String resolvedRiseRootId = riseRootId;
+        world.execute(() -> {
+            if (!npcRef.isValid()) return;
+            EntityStore storeProvider = world.getEntityStore();
+            if (storeProvider == null) return;
+            Store<EntityStore> worldStore = storeProvider.getStore();
+
+            StoreHelpers.withEntity(worldStore, npcRef, (_, cb, _) ->
+                    RPGMobsAbilityFeatureHelpers.tryStartInteraction(
+                            npcRef, worldStore, cb, ABILITY_INTERACTION_TYPE, resolvedRiseRootId)
+            );
+        });
+    }
+
+    private static int clampSummonCount(int count, SummonAbilityConfig summonConfig) {
+        int clamped = Math.max(summonConfig.summonMinCount, count);
+        return Math.min(summonConfig.summonMaxCount, clamped);
     }
 
     private static int clampSummonMaxAlive(int value) {
@@ -1061,12 +1302,12 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         return entries.getLast();
     }
 
-    private Vector3d pickSpawnPosition(Vector3d center) {
+    private Vector3d pickSpawnPosition(Vector3d center, double spawnRadius) {
         double angle = random.nextDouble() * Math.PI * 2.0;
-        double radius = random.nextDouble() * SUMMON_SPAWN_RADIUS;
+        double radius = random.nextDouble() * spawnRadius;
         double dx = Math.cos(angle) * radius;
         double dz = Math.sin(angle) * radius;
-        return new Vector3d(center.getX() + dx, center.getY(), center.getZ() + dz);
+        return new Vector3d(center.getX() + dx, center.getY() + 1.0, center.getZ() + dz);
     }
 
     private void joinMinionToSummonerFlock(Store<EntityStore> store, Ref<EntityStore> summonerRef,
@@ -1081,20 +1322,20 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                 if (summonerNpc == null || summonerNpc.getRole() == null) return;
                 flockRef = FlockPlugin.createFlock(store, summonerNpc.getRole());
                 if (flockRef == null || !flockRef.isValid()) {
-                    LOGGER.atWarning().log("[FlockFollow] Failed to create flock for summoner");
+                    LOGGER.atWarning().log("Failed to create flock for summoner");
                     return;
                 }
                 FlockMembershipSystems.join(summonerRef, flockRef, store);
                 RPGMobsLogger.debug(LOGGER,
-                                    "[FlockFollow] Created flock for summoner, joined as leader",
+                                    "Created flock for summoner, joined as leader",
                                     RPGMobsLogLevel.INFO
                 );
             }
 
             FlockMembershipSystems.join(minionRef, flockRef, store);
-            RPGMobsLogger.debug(LOGGER, "[FlockFollow] Minion joined summoner's flock", RPGMobsLogLevel.INFO);
+            RPGMobsLogger.debug(LOGGER, "Minion joined summoner's flock", RPGMobsLogLevel.INFO);
         } catch (Exception e) {
-            LOGGER.atWarning().log("[FlockFollow] Failed to join minion to flock: %s", e.getMessage());
+            LOGGER.atWarning().log("Failed to join minion to flock: %s", e.getMessage());
         }
     }
 
@@ -1120,14 +1361,14 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                                            CommandBuffer<EntityStore> commandBuffer, NPCEntity npcEntity) {
 
         RPGMobsMigrationComponent migration = new RPGMobsMigrationComponent(2);
-        commandBuffer.putComponent(npcRef, RPGMobsPlugin.getMigrationComponentType(), migration);
+        commandBuffer.putComponent(npcRef, plugin.getMigrationComponentType(), migration);
 
         if (config.spawning.progressionStyle == RPGMobsConfig.ProgressionStyle.DISTANCE_FROM_SPAWN) {
             double dist = getXZDistance(npcEntity);
             String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
-            ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(worldName);
+            ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
             RPGMobsProgressionComponent progression = getProgressionComponent(resolved, dist);
-            commandBuffer.putComponent(npcRef, RPGMobsPlugin.getProgressionComponentType(), progression);
+            commandBuffer.putComponent(npcRef, plugin.getProgressionComponentType(), progression);
         }
     }
 

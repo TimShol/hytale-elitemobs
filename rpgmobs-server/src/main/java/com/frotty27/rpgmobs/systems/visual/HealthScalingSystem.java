@@ -155,7 +155,7 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
 
         float modelScale = 1.0f;
         RPGMobsModelScalingComponent modelComp = store.getComponent(npcRef, plugin.getModelScalingComponentType());
-        if (modelComp != null && modelComp.scaledApplied) {
+        if (modelComp != null && modelComp.scaleApplied) {
             modelScale = modelComp.appliedScale;
         }
 

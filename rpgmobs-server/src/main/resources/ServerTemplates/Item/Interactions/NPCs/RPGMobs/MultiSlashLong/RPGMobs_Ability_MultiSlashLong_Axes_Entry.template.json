@@ -1,0 +1,147 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashLong Axes  - 4-hit relentless chopping (~4.65s total). Uses SFX_Axe_Iron sounds.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 2.1s charging with weapon trail",
+      "RunTime": 1.2,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Axe",
+        "ItemAnimationId": "SwingLeftCharging",
+        "WorldSoundEventId": "SFX_Battleaxe_T1_Raise",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - SwingLeftCharged opener",
+      "RunTime": 0.3,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Axe",
+        "ItemAnimationId": "SwingLeftCharged",
+        "WorldSoundEventId": "SFX_Axe_Iron_Swing"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionAxes} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 2  - SwingUpRight backhand chop",
+      "RunTime": 0.45,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Axe",
+        "ItemAnimationId": "SwingUpRight",
+        "WorldSoundEventId": "SFX_Axe_Iron_Swing"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionAxes} ]
+      }
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 3  - SwingDownLeft with forward drift + dual trails",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.05, "Z": -1.0 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.45,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Axe",
+            "ItemAnimationId": "SwingDownLeft",
+            "WorldSoundEventId": "SFX_Axe_Iron_Swing",
+            "Trails": [
+              {
+                "TrailId": "Mace_Signature",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Mace_Signature2",
+                "RotationOffset": { "Roll": 90.0 },
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.2 }, "Range": 2.8 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionAxes} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 4  - SwingUpLeft FINISHER with strong upward launch + impact burst (no Mace_Signature_Slash  - upward swing)",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.08, "Z": -1.5 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.45,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Axe",
+            "ItemAnimationId": "SwingUpLeft",
+            "WorldSoundEventId": "SFX_Axe_Iron_Swing",
+            "Particles": [
+              {
+                "SystemId": "Mace_Signature_Cast",
+                "DetachedFromModel": true
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.5 }, "Range": 3.2 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionAxes} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery, movement locked",
+      "RunTime": 0.6,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Axe",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

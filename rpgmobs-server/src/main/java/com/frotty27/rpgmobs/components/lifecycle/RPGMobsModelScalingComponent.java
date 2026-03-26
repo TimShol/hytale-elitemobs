@@ -9,7 +9,7 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 public final class RPGMobsModelScalingComponent implements Component<EntityStore> {
 
-    public boolean scaledApplied;
+    public boolean scaleApplied;
 
     public float appliedScale;
 
@@ -24,7 +24,7 @@ public final class RPGMobsModelScalingComponent implements Component<EntityStore
     public static final BuilderCodec<RPGMobsModelScalingComponent> CODEC = BuilderCodec.builder(
             RPGMobsModelScalingComponent.class,
             RPGMobsModelScalingComponent::new
-    ).append(K_SCALED_APPLIED, (c, v) -> c.scaledApplied = v, c -> c.scaledApplied).add()
+    ).append(K_SCALED_APPLIED, (c, v) -> c.scaleApplied = v, c -> c.scaleApplied).add()
      .append(K_APPLIED_SCALE, (c, v) -> c.appliedScale = v, c -> c.appliedScale).add()
      .append(K_CONFIGURED_BASE_SCALE, (c, v) -> c.configuredBaseScale = v, c -> c.configuredBaseScale).add()
      .build();
@@ -35,7 +35,7 @@ public final class RPGMobsModelScalingComponent implements Component<EntityStore
     @Override
     public Component<EntityStore> clone() {
         RPGMobsModelScalingComponent c = new RPGMobsModelScalingComponent();
-        c.scaledApplied = this.scaledApplied;
+        c.scaleApplied = this.scaleApplied;
         c.appliedScale = this.appliedScale;
         c.configuredBaseScale = this.configuredBaseScale;
         return c;

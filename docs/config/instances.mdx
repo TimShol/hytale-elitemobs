@@ -35,10 +35,10 @@ Per-world overlays live in `worlds/` and are matched by exact world name. Per-in
 
 When a world loads, RPGMobs resolves its configuration through the following steps:
 
-1. **Exact world match** — the world name is checked against files in `worlds/`. If a file named `{WorldName}.yml` exists, that overlay is applied on top of the base config.
-2. **Instance template match** — instance worlds are named `instance-{Template}-{UUID}`. The `{Template}` portion is matched case-insensitively against files in `instances/`. For example, `instance-Dungeon_Goblin-a1b2c3d4-...` matches `instances/Dungeon_Goblin.yml`.
-3. **No match, enabled by default** — if no overlay file matches and `enabledByDefault: true` is set in the root `core.yml`, the world uses the base config as-is.
-4. **No match, disabled by default** — if no overlay file matches and `enabledByDefault: false`, RPGMobs is disabled for that world entirely.
+1. **Exact world match**  -  the world name is checked against files in `worlds/`. If a file named `{WorldName}.yml` exists, that overlay is applied on top of the base config.
+2. **Instance template match**  -  instance worlds are named `instance-{Template}-{UUID}`. The `{Template}` portion is matched case-insensitively against files in `instances/`. For example, `instance-Dungeon_Goblin-a1b2c3d4-...` matches `instances/Dungeon_Goblin.yml`.
+3. **No match, enabled by default**  -  if no overlay file matches and `enabledByDefault: true` is set in the root `core.yml`, the world uses the base config as-is.
+4. **No match, disabled by default**  -  if no overlay file matches and `enabledByDefault: false`, RPGMobs is disabled for that world entirely.
 
 Any field set to `null` or omitted in an overlay inherits from the base config.
 
@@ -46,8 +46,8 @@ Any field set to `null` or omitted in an overlay inherits from the base config.
 
 Overlays can be created in two ways:
 
-- **Admin UI (recommended)** — run `/rpgmobs config` in-game. The sidebar lists all worlds and instance templates. Select one and edit its settings visually. Changes are saved to the appropriate overlay file automatically.
-- **Manual YAML** — create a `.yml` file in `worlds/` or `instances/` with the world name or template name as the filename. Only include fields you want to override.
+- **Admin UI (recommended)**  -  run `/rpgmobs config` in-game. The sidebar lists all worlds and instance templates. Select one and edit its settings visually. Changes are saved to the appropriate overlay file automatically.
+- **Manual YAML**  -  create a `.yml` file in `worlds/` or `instances/` with the world name or template name as the filename. Only include fields you want to override.
 
 ![Instance Overlay Editor](../images/admin-ui-instance-overlay.png)
 
@@ -175,12 +175,12 @@ These fields require the [RPGLeveling](https://www.curseforge.com/hytale/mods/rp
 
 Not all fields merge the same way when an overlay is applied on top of the base config:
 
-- **Most fields** — the overlay value is used if non-null, otherwise the base value is inherited. This applies to all scalar fields and most arrays.
-- **`environmentTierRules`** — when an overlay defines any environment tier rules, it **fully replaces** the base rules. This is not additive. If you define one environment rule in an overlay, all base environment rules are removed for that world.
-- **`tierPrefixesByFamily`** — when an overlay defines any family prefixes, it **fully replaces** the base family prefixes.
-- **`tierOverrides`** — **additive merge**. Overlay entries are added to or replace matching entries in the base map.
-- **`lootOverrides`** — **additive merge**. Overlay entries are added to or replace matching entries in the base map.
-- **`abilityOverlays`** — **additive merge**. Overlay entries are added to or replace matching entries in the base map.
+- **Most fields**  -  the overlay value is used if non-null, otherwise the base value is inherited. This applies to all scalar fields and most arrays.
+- **`environmentTierRules`**  -  when an overlay defines any environment tier rules, it **fully replaces** the base rules. This is not additive. If you define one environment rule in an overlay, all base environment rules are removed for that world.
+- **`tierPrefixesByFamily`**  -  when an overlay defines any family prefixes, it **fully replaces** the base family prefixes.
+- **`tierOverrides`**  -  **additive merge**. Overlay entries are added to or replace matching entries in the base map.
+- **`lootOverrides`**  -  **additive merge**. Overlay entries are added to or replace matching entries in the base map.
+- **`abilityOverlays`**  -  **additive merge**. Overlay entries are added to or replace matching entries in the base map.
 
 ## Presets
 
@@ -189,7 +189,7 @@ The [Admin UI](/config/admin-ui) provides two built-in presets that can be appli
 | Preset | What it does |
 | :--- | :--- |
 | **Full** | Enables RPGMobs and inherits all base config values. Only sets `enabled: true`. |
-| **Empty** | Enables RPGMobs but zeroes everything — no spawning, no abilities, no loot, no scaling. A blank slate for building a custom configuration from scratch. |
+| **Empty** | Enables RPGMobs but zeroes everything  -  no spawning, no abilities, no loot, no scaling. A blank slate for building a custom configuration from scratch. |
 
 You can also save a **Custom** preset per overlay. This stores a snapshot of all current overlay settings that can be restored later.
 
@@ -213,11 +213,11 @@ enableNameplates: true
 enableModelScaling: true
 ```
 
-- **Progression set to NONE** — tiers are assigned randomly using the defined weights, since dungeons don't use zone-based or distance-based progression
-- **No Tier 1 spawns** — the first weight is `0`, so all dungeon elites are at least Tier 2
-- **Higher scaling** — health and damage multipliers are increased compared to the base config, making dungeon encounters harder
-- **Elite behavior** — friendly fire and fall damage are disabled so elites don't accidentally kill each other in tight dungeon corridors
-- **Visuals active** — nameplates and model scaling remain enabled so players can identify threat levels
+- **Progression set to NONE**  -  tiers are assigned randomly using the defined weights, since dungeons don't use zone-based or distance-based progression
+- **No Tier 1 spawns**  -  the first weight is `0`, so all dungeon elites are at least Tier 2
+- **Higher scaling**  -  health and damage multipliers are increased compared to the base config, making dungeon encounters harder
+- **Elite behavior**  -  friendly fire and fall damage are disabled so elites don't accidentally kill each other in tight dungeon corridors
+- **Visuals active**  -  nameplates and model scaling remain enabled so players can identify threat levels
 
 You can use this as a starting point for your own dungeon or instance overlays. Open the Admin UI, select the instance in the sidebar, and adjust settings to match your desired difficulty.
 

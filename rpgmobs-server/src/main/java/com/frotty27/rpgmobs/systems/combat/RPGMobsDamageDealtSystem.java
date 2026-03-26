@@ -47,7 +47,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
     private static final ComponentType<EntityStore, PlayerRef> PLAYER_REF_COMPONENT_TYPE = PlayerRef.getComponentType();
     private static final ComponentType<EntityStore, ProjectileComponent> PROJECTILE_COMPONENT_TYPE = ProjectileComponent.getComponentType();
 
-    private final RPGMobsPlugin RPGMobsPlugin;
+    private final RPGMobsPlugin plugin;
     private final Random random = new Random();
     private final RPGMobsDamageScalingHandler damageScalingHandler = new RPGMobsDamageScalingHandler(this);
 
@@ -57,8 +57,8 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
     private long skippedInvalidAttackerRefCount;
     private long skippedAttackerNotEliteCount;
 
-    public RPGMobsDamageDealtSystem(RPGMobsPlugin RPGMobsPlugin) {
-        this.RPGMobsPlugin = RPGMobsPlugin;
+    public RPGMobsDamageDealtSystem(RPGMobsPlugin plugin) {
+        this.plugin = plugin;
     }
 
     @Override
@@ -90,7 +90,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
     void processHandle(int entityIndex, @NonNull ArchetypeChunk<EntityStore> archetypeChunk,
                        @NonNull Store<EntityStore> entityStore, @NonNull CommandBuffer<EntityStore> commandBuffer,
                        @NonNull Damage damage) {
-        RPGMobsConfig config = RPGMobsPlugin.getConfig();
+        RPGMobsConfig config = plugin.getConfig();
         if (config == null) return;
 
         damageEventsSeenCount++;
@@ -148,7 +148,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
         }
 
         RPGMobsTierComponent attackerTierComponent = entityStore.getComponent(attackerEntityRef,
-                                                                              RPGMobsPlugin.getRPGMobsComponentType()
+                                                                              plugin.getRPGMobsComponentType()
         );
         if (attackerTierComponent == null || attackerTierComponent.tierIndex < 0) {
             skippedAttackerNotEliteCount++;
@@ -174,13 +174,13 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
         if (victimRef != null && victimRef.isValid()) {
             com.frotty27.rpgmobs.components.combat.RPGMobsCombatTrackingComponent combatTracking = entityStore.getComponent(
                     attackerEntityRef,
-                    RPGMobsPlugin.getCombatTrackingComponentType()
+                    plugin.getCombatTrackingComponentType()
             );
             if (combatTracking != null) {
-                long currentTick = RPGMobsPlugin.getTickClock().getTick();
+                long currentTick = plugin.getTickClock().getTick();
                 combatTracking.transitionToInCombat(victimRef, currentTick);
                 commandBuffer.replaceComponent(attackerEntityRef,
-                                               RPGMobsPlugin.getCombatTrackingComponentType(),
+                                               plugin.getCombatTrackingComponentType(),
                                                combatTracking
                 );
             }
@@ -193,7 +193,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
         float distanceDamageBonus = 0f;
         com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent progressionComponent = entityStore.getComponent(
                 attackerEntityRef,
-                RPGMobsPlugin.getProgressionComponentType()
+                plugin.getProgressionComponentType()
         );
         if (progressionComponent != null) {
             distanceDamageBonus = progressionComponent.distanceDamageBonus();
@@ -220,7 +220,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
                                                       damageBeforeScaling,
                                                       totalMultiplier
         );
-        RPGMobsPlugin.getEventBus().fire(damageEvent);
+        plugin.getEventBus().fire(damageEvent);
         if (damageEvent.isCancelled()) return;
         totalMultiplier = damageEvent.getMultiplier();
 
@@ -252,7 +252,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
                                                 Ref<EntityStore> attackerRef) {
         NPCEntity npc = entityStore.getComponent(attackerRef, NPC_COMPONENT_TYPE);
         if (npc != null && npc.getWorld() != null) {
-            ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(npc.getWorld().getName());
+            ResolvedConfig resolved = plugin.getResolvedConfig(npc.getWorld().getName());
             return resolved.enableDamageScaling;
         }
         return config.damageConfig.enableMobDamageMultiplier;
@@ -263,7 +263,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
         NPCEntity npc = entityStore.getComponent(attackerRef, NPC_COMPONENT_TYPE);
         if (npc != null && npc.getWorld() != null) {
             String worldName = npc.getWorld().getName();
-            ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(worldName);
+            ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
             if (resolved.damageMultiplierPerTier != null && resolved.damageMultiplierPerTier.length >= TIERS_AMOUNT) {
                 return resolved.damageMultiplierPerTier[clampedTierIndex];
             }
@@ -278,7 +278,7 @@ public final class RPGMobsDamageDealtSystem extends DamageEventSystem {
                                          Ref<EntityStore> attackerRef) {
         NPCEntity npc = entityStore.getComponent(attackerRef, NPC_COMPONENT_TYPE);
         if (npc != null && npc.getWorld() != null) {
-            ResolvedConfig resolved = RPGMobsPlugin.getResolvedConfig(npc.getWorld().getName());
+            ResolvedConfig resolved = plugin.getResolvedConfig(npc.getWorld().getName());
             return resolved.damageRandomVariance;
         }
         return config.damageConfig.mobDamageRandomVariance;

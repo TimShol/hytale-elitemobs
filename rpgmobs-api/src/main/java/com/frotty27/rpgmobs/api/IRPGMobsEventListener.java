@@ -3,127 +3,106 @@ package com.frotty27.rpgmobs.api;
 import com.frotty27.rpgmobs.api.events.*;
 
 /**
- * Listener interface for receiving RPGMobs events.
+ * Listener interface for RPGMobs events.
  *
- * <p>Implement this interface and override the event handlers you are interested in.
- * All handler methods have default no-op implementations, so you only need to override
- * the ones relevant to your mod.</p>
+ * <p>Implement this interface and override only the event callbacks you need.
+ * All methods have default no-op implementations, so you only handle what matters
+ * to your plugin.</p>
  *
- * <p>Register your listener via {@link RPGMobsAPI#registerListener(IRPGMobsEventListener)}.</p>
- *
- * <p>Example:</p>
+ * <h3>Example</h3>
  * <pre>{@code
  * public class MyListener implements IRPGMobsEventListener {
  *     @Override
  *     public void onRPGMobDeath(RPGMobsDeathEvent event) {
- *         // React to RPG mob deaths
+ *         // Custom death handling
+ *     }
+ *
+ *     @Override
+ *     public void onRPGMobDrops(RPGMobsDropsEvent event) {
+ *         // Modify or cancel drops
+ *         event.getDrops().clear();
  *     }
  * }
  * }</pre>
  *
- * @since 1.1.0
+ * @see RPGMobsAPI#registerListener(IRPGMobsEventListener)
+ * @since 1.0.0
  */
 public interface IRPGMobsEventListener {
 
     /**
-     * Called when an RPG mob is spawned into the world.
-     *
-     * @param event the spawn event; may be cancelled to prevent the spawn
+     * Called when an NPC is promoted to an RPGMobs elite.
+     * Cancellable - setting {@code event.setCancelled(true)} prevents the elite from spawning.
      */
     default void onRPGMobSpawned(RPGMobsSpawnedEvent event) {
     }
 
     /**
-     * Called when an RPG mob dies.
-     *
-     * @param event the death event containing the killer reference and death position
+     * Called when an RPGMobs elite dies.
      */
     default void onRPGMobDeath(RPGMobsDeathEvent event) {
     }
 
     /**
-     * Called when an RPG mob's drops are about to be spawned.
-     *
-     * <p>Listeners may modify the drop list or cancel the event to suppress drops entirely.</p>
-     *
-     * @param event the drops event; may be cancelled to suppress all drops
+     * Called after an elite dies, before loot is spawned into the world.
+     * Cancellable - the drop list can be modified or the event cancelled entirely.
      */
     default void onRPGMobDrops(RPGMobsDropsEvent event) {
     }
 
     /**
-     * Called when an RPG mob deals damage to another entity.
-     *
-     * <p>Listeners may modify the damage multiplier or cancel the event.</p>
-     *
-     * @param event the damage dealt event; may be cancelled to prevent the damage
+     * Called when an RPGMobs elite deals damage to another entity.
+     * Cancellable - the damage multiplier can be adjusted or the event cancelled.
      */
     default void onRPGMobDamageDealt(RPGMobsDamageDealtEvent event) {
     }
 
     /**
-     * Called when an RPG mob receives damage from another entity or source.
-     *
-     * @param event the damage received event
+     * Called when an RPGMobs elite receives damage from any source.
+     * Informational only - cannot be cancelled or modified.
      */
     default void onRPGMobDamageReceived(RPGMobsDamageReceivedEvent event) {
     }
 
     /**
-     * Called during a reconciliation pass, allowing listeners to synchronize
-     * their state with the current RPG mob data.
-     *
-     * @param event the reconcile event
+     * Called when RPGMobs configuration is reloaded and entities are reconciled.
      */
     default void onReconcile(RPGMobsReconcileEvent event) {
     }
 
     /**
-     * Called when an RPG mob begins executing an ability.
-     *
-     * <p>This event may be cancelled to prevent the ability from starting.</p>
-     *
-     * @param event the ability started event; may be cancelled
+     * Called when an elite begins an ability chain (e.g. charge_leap, multi_slash_short).
+     * Cancellable - prevents the ability from starting.
      */
     default void onRPGMobAbilityStarted(RPGMobsAbilityStartedEvent event) {
     }
 
     /**
-     * Called when an RPG mob successfully completes an ability.
-     *
-     * @param event the ability completed event
+     * Called when an ability chain finishes successfully.
      */
     default void onRPGMobAbilityCompleted(RPGMobsAbilityCompletedEvent event) {
     }
 
     /**
-     * Called when an RPG mob's ability is interrupted before completion.
-     *
-     * @param event the ability interrupted event, including the interruption reason
+     * Called when an ability chain is interrupted (e.g. by death or deaggro).
      */
     default void onRPGMobAbilityInterrupted(RPGMobsAbilityInterruptedEvent event) {
     }
 
     /**
-     * Called after health, damage, and model scaling have been applied to an RPG mob.
-     *
-     * @param event the scaling applied event containing all computed multipliers
+     * Called after health, damage, and model scaling are applied to an elite.
      */
     default void onScalingApplied(RPGMobsScalingAppliedEvent event) {
     }
 
     /**
-     * Called when an RPG mob acquires an aggro target.
-     *
-     * @param event the aggro event containing the target reference
+     * Called when an RPGMobs elite acquires a combat target (enters combat).
      */
     default void onRPGMobAggro(RPGMobsAggroEvent event) {
     }
 
     /**
-     * Called when an RPG mob loses its aggro target.
-     *
-     * @param event the deaggro event
+     * Called when an RPGMobs elite loses its combat target (leaves combat).
      */
     default void onRPGMobDeaggro(RPGMobsDeaggroEvent event) {
     }

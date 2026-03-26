@@ -14,6 +14,7 @@ import com.hypixel.hytale.component.dependency.Dependency;
 import com.hypixel.hytale.component.dependency.Order;
 import com.hypixel.hytale.component.dependency.SystemGroupDependency;
 import com.hypixel.hytale.component.query.Query;
+import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageModule;
@@ -29,11 +30,14 @@ import static com.frotty27.rpgmobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 public final class RPGMobsAbilityDamageSystem extends DamageEventSystem {
 
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+
     private final RPGMobsPlugin plugin;
 
     public RPGMobsAbilityDamageSystem(RPGMobsPlugin plugin) {
         this.plugin = plugin;
     }
+
 
     @Override
     public Query<EntityStore> getQuery() {

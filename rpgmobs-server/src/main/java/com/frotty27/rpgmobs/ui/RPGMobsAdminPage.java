@@ -8,6 +8,7 @@ import com.frotty27.rpgmobs.config.overlay.ConfigWriter;
 import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.config.schema.YamlSerializer;
 import com.frotty27.rpgmobs.config.templates.ConfigTemplate;
+import com.frotty27.rpgmobs.features.AbstractMultiSlashFeature;
 import com.frotty27.rpgmobs.features.IRPGMobsAbilityFeature;
 import com.frotty27.rpgmobs.generated.HytaleAssetIds;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
@@ -54,10 +55,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private static final int ITEM_PICKER_MOB_RULE_WPN = -14;
     private static final int ITEM_PICKER_MOB_RULE_ARM = -15;
     private static final int ITEM_PICKER_ABILITY_DRINK = -16;
-
     private static final int RENAME_IDX_TWO_HANDED_ADD = -2;
     private static final int RENAME_IDX_RARITY_RULE_ADD = -3;
     private static final int RENAME_IDX_SUMMON_ROLE_ADD = -4;
+    private static final int RENAME_IDX_HL_DENY_ADD = -5;
+    private static final int RENAME_IDX_HL_ALLOW_ADD = -6;
 
     private enum Section { GLOBAL_CORE, GLOBAL_DEBUG, GLOBAL_CONFIG, WORLD, INSTANCE }
 
@@ -85,12 +87,14 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private @Nullable String templateAppliedMessage = null;
 
     private boolean needsFieldRefresh = true;
+    private boolean pendingAssetReloadRequired = false;
 
     private final List<String> worldNames;
     private final List<String> instanceNames;
 
-    private boolean editEnabledByDefault, editDebugMode;
+    private boolean editGlobalEnabled, editEnabledByDefault, editDebugMode;
     private int editDebugScanInterval;
+
 
     private RPGMobsConfig.GearCategory editWeaponCategoryTree = new RPGMobsConfig.GearCategory();
     private RPGMobsConfig.GearCategory savedWeaponCategoryTree = new RPGMobsConfig.GearCategory();
@@ -123,7 +127,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
     private @Nullable ConfigOverlay savedOverlaySnapshot = null;
 
-    private boolean savedEnabledByDefault, savedDebugMode;
+    private boolean savedGlobalEnabled, savedEnabledByDefault, savedDebugMode;
     private int savedDebugScanInterval;
 
     private @Nullable String lastAppliedTemplateKey = null;
@@ -235,6 +239,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private int abilExclPage = 0;
     private int abilSummonRolePage = 0;
     private int abilSummonExclPage = 0;
+    private int multiSlashVariantIdx = 0;
+    private static final String[] MS_VARIANT_KEYS = AbstractMultiSlashFeature.ALL_VARIANT_KEYS;
+    private static final String[] MS_VARIANT_LABELS = AbstractMultiSlashFeature.ALL_VARIANT_LABELS;
 
     private final Map<String, RPGMobsConfig.EntityEffectConfig> editEntityEffects = new LinkedHashMap<>();
     private Map<String, RPGMobsConfig.EntityEffectConfig> savedEntityEffects = new LinkedHashMap<>();
@@ -406,10 +413,13 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private void snapshotGlobalConfig() {
         GlobalConfig gc = plugin.getGlobalConfig();
         if (gc != null) {
+            editGlobalEnabled = gc.globalEnabled;
+            savedGlobalEnabled = editGlobalEnabled;
             editEnabledByDefault = gc.enabledByDefault;
             savedEnabledByDefault = editEnabledByDefault;
         }
     }
+
 
     private void snapshotGearCategories() {
         RPGMobsConfig cfg = plugin.getConfig();
@@ -616,6 +626,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindAction(events, "#NavGlobalConfigActive", "NavGlobalConfig");
         bindAction(events, "#NavGlobalConfigChanged", "NavGlobalConfig");
         bindAction(events, "#NavGlobalConfigChangedActive", "NavGlobalConfig");
+
 
         bindValueChanged(events, "#WpnCatTreeFilter", "@WpnCatTreeFilter");
         bindAction(events, "#WpnCatNavBack", "WpnCatNavBack");
@@ -887,21 +898,18 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             bindAction(events, "#SubTab" + i + "ChangedActive", "SubTab_" + i);
         }
 
+        bindAction(events, "#GlobalEnabledOn", "ToggleGlobalEnabled");
+        bindAction(events, "#GlobalEnabledOff", "ToggleGlobalEnabled");
         bindAction(events, "#EnabledByDefaultOn", "ToggleEnabledByDefault");
         bindAction(events, "#EnabledByDefaultOff", "ToggleEnabledByDefault");
         bindAction(events, "#DebugModeOn", "ToggleDebugMode");
         bindAction(events, "#DebugModeOff", "ToggleDebugMode");
-
         bindValueChanged(events, "#FieldDebugScanInterval", "@DebugScanInterval");
 
         bindAction(events, "#OverlayEnabledOn", "ToggleOverlayEnabled");
         bindAction(events, "#OverlayEnabledOff", "ToggleOverlayEnabled");
-        bindAction(events, "#FriendlyFireOn", "ToggleFriendlyFire");
-        bindAction(events, "#FriendlyFireOff", "ToggleFriendlyFire");
         bindAction(events, "#FallDamageOn", "ToggleFallDamage");
         bindAction(events, "#FallDamageOff", "ToggleFallDamage");
-        bindAction(events, "#NoAggroOnEliteOn", "ToggleNoAggroOnElite");
-        bindAction(events, "#NoAggroOnEliteOff", "ToggleNoAggroOnElite");
         bindAction(events, "#HealthScalingOn", "ToggleHealthScaling");
         bindAction(events, "#HealthScalingOff", "ToggleHealthScaling");
         bindAction(events, "#DamageScalingOn", "ToggleDamageScaling");
@@ -1006,6 +1014,18 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindAction(events, "#AbilCfgSMExclPrevPage", "AbilCfgSMExclPrevPage");
         bindAction(events, "#AbilCfgSMExclNextPage", "AbilCfgSMExclNextPage");
         bindAction(events, "#AbilCfgSMExclLastPage", "AbilCfgSMExclLastPage");
+
+        for (int i = 0; i < MS_VARIANT_KEYS.length; i++) {
+            bindAction(events, "#AbilCfgMSVarBtn" + i, "AbilCfgMSVar_" + i);
+            bindAction(events, "#AbilCfgMSVarBtnActive" + i, "AbilCfgMSVar_" + i);
+        }
+
+        bindAction(events, "#AbilCfgHLDenyAdd", "AbilCfgHLDenyAdd");
+        bindAction(events, "#AbilCfgHLAllowAdd", "AbilCfgHLAllowAdd");
+        for (int i = 0; i < 5; i++) {
+            bindAction(events, "#AbilCfgHLDenyDel" + i, "AbilCfgHLDenyDel_" + i);
+            bindAction(events, "#AbilCfgHLAllowDel" + i, "AbilCfgHLAllowDel_" + i);
+        }
 
         bindAction(events, "#ProgStyleEnv", "SetProgStyle_ENVIRONMENT");
         bindAction(events, "#ProgStyleEnvActive", "SetProgStyle_ENVIRONMENT");
@@ -1270,9 +1290,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 }
             }
 
+            case "ToggleGlobalEnabled" -> editGlobalEnabled = !editGlobalEnabled;
             case "ToggleEnabledByDefault" -> editEnabledByDefault = !editEnabledByDefault;
             case "ToggleDebugMode" -> editDebugMode = !editDebugMode;
-
             case "ToggleOverlayEnabled" -> toggleOverlayBoolean(() -> editOverlay.enabled, v -> editOverlay.enabled = v, r -> r.enabled);
 
             case "AbilMobFirstPage", "AbilMobPrevPage", "AbilMobNextPage", "AbilMobLastPage" ->
@@ -1286,9 +1306,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             case "MobRuleDeleteAll" -> handleMobRuleDeleteAll();
             case "LootDeleteFiltered" -> handleLootDeleteFiltered();
             case "LootDeleteAll" -> handleLootDeleteAll();
-            case "ToggleFriendlyFire" -> toggleOverlayBoolean(() -> editOverlay.eliteFriendlyFireDisabled, v -> editOverlay.eliteFriendlyFireDisabled = v, r -> r.eliteFriendlyFireDisabled);
             case "ToggleFallDamage" -> toggleOverlayBoolean(() -> editOverlay.eliteFallDamageDisabled, v -> editOverlay.eliteFallDamageDisabled = v, r -> r.eliteFallDamageDisabled);
-            case "ToggleNoAggroOnElite" -> toggleOverlayBoolean(() -> editOverlay.eliteNoAggroOnElite, v -> editOverlay.eliteNoAggroOnElite = v, r -> r.eliteNoAggroOnElite);
 
             case "ToggleHealthScaling" -> toggleOverlayBoolean(() -> editOverlay.enableHealthScaling, v -> editOverlay.enableHealthScaling = v, r -> r.enableHealthScaling);
             case "ToggleDamageScaling" -> toggleOverlayBoolean(() -> editOverlay.enableDamageScaling, v -> editOverlay.enableDamageScaling = v, r -> r.enableDamageScaling);
@@ -1369,6 +1387,14 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             handleAbilCfgCLFaceTargetToggle();
         } else if (action.equals("AbilCfgHLDrinkItemPick")) {
             handleAbilCfgHLDrinkItemPick();
+        } else if (action.equals("AbilCfgHLDenyAdd")) {
+            handleAbilCfgHLDenyAdd();
+        } else if (action.startsWith("AbilCfgHLDenyDel_")) {
+            handleAbilCfgHLDenyDel(parseIdx(action, "AbilCfgHLDenyDel_"));
+        } else if (action.equals("AbilCfgHLAllowAdd")) {
+            handleAbilCfgHLAllowAdd();
+        } else if (action.startsWith("AbilCfgHLAllowDel_")) {
+            handleAbilCfgHLAllowDel(parseIdx(action, "AbilCfgHLAllowDel_"));
         } else if (action.equals("AbilCfgSMRoleAdd")) {
             handleAbilCfgSMRoleAdd();
         } else if (action.startsWith("AbilCfgSMRoleDel_")) {
@@ -1385,6 +1411,12 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             RPGMobsConfig.AbilityConfig sac2 = getExpandedAbilityConfig();
             int exclTotal = sac2 instanceof RPGMobsConfig.SummonAbilityConfig sm2 && sm2.excludeFromSummonPool != null ? sm2.excludeFromSummonPool.size() : 0;
             handlePaginationAction(action, "AbilCfgSMExcl", abilSummonExclPage, exclTotal, ABIL_CFG_LIST_PAGE_SIZE, p -> abilSummonExclPage = p);
+        } else if (action.startsWith("AbilCfgMSVar_")) {
+            int varIdx = parseIdx(action, "AbilCfgMSVar_");
+            if (varIdx >= 0 && varIdx < MS_VARIANT_KEYS.length) {
+                multiSlashVariantIdx = varIdx;
+                needsFieldRefresh = true;
+            }
         } else {
             return false;
         }
@@ -1572,11 +1604,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
     private boolean handleOverlayToggleAction(String action) {
         if (action.startsWith("ToggleNameplateTier_")) {
-            int idx = parseIdx(action, "ToggleNameplateTier_");
+            int toggleIndex = parseIdx(action, "ToggleNameplateTier_");
             toggleOverlayBooleanArray(
                     () -> editOverlay.nameplateTierEnabled,
                     v -> editOverlay.nameplateTierEnabled = v,
-                    idx, 5, true,
+                    toggleIndex, 5, true,
                     resolvedForSelected != null ? resolvedForSelected.nameplateTierEnabled : null);
         } else if (action.startsWith("DeleteFamily_")) {
             deleteFamilyRow(parseIdx(action, "DeleteFamily_"));
@@ -1962,9 +1994,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
     private void toggleOverlayBooleanArray(Supplier<boolean @Nullable []> getter,
                                            Consumer<boolean[]> setter,
-                                           int idx, int size, boolean defaultVal,
+                                           int toggleIndex, int size, boolean defaultVal,
                                            boolean @Nullable [] resolvedFallback) {
-        if (editOverlay == null || idx < 0 || idx >= size) return;
+        if (editOverlay == null || toggleIndex < 0 || toggleIndex >= size) return;
         boolean[] arr = getter.get();
         if (arr == null) {
 
@@ -1975,7 +2007,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 Arrays.fill(arr, defaultVal);
             }
         }
-        arr[idx] = !arr[idx];
+        arr[toggleIndex] = !arr[toggleIndex];
         setter.accept(arr);
         needsFieldRefresh = true;
     }
@@ -2196,6 +2228,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         editOverlay.modelScalePerTier = parseFloatArray(ms, editOverlay.modelScalePerTier, resolvedModelScale);
         editOverlay.modelScaleVariance = parseFloatField(data.modelVariance, editOverlay.modelScaleVariance);
 
+        editOverlay.globalCooldownMinSeconds = parseFloatField(data.globalCdMin, editOverlay.globalCooldownMinSeconds);
+        editOverlay.globalCooldownMaxSeconds = parseFloatField(data.globalCdMax, editOverlay.globalCooldownMaxSeconds);
+
         processNameplatePrefixFields(data);
 
         processFamilyRows(data);
@@ -2326,6 +2361,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
             GlobalConfig gc = plugin.getGlobalConfig();
             if (gc != null) {
+                gc.globalEnabled = editGlobalEnabled;
                 gc.enabledByDefault = editEnabledByDefault;
                 gc.isDebugModeEnabled = editDebugMode;
                 gc.debugMobRuleScanIntervalSeconds = editDebugScanInterval;
@@ -2371,7 +2407,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 YamlSerializer.writeOnly(baseDir, saveCfg);
             }
 
-            plugin.reloadConfigOnly();
+            if (pendingAssetReloadRequired) {
+                plugin.reloadConfigAndAssets();
+            } else {
+                plugin.reloadConfigOnly();
+            }
 
             RPGMobsConfig reloadedCfg = plugin.getConfig();
             if (reloadedCfg != null) {
@@ -2452,10 +2492,12 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             armCatFilterPage = 0;
             armCatTreeFilteredKeys.clear();
 
+            boolean didAssetReload = pendingAssetReloadRequired;
             pendingOverlays.clear();
             pendingTemplateKeys.clear();
+            pendingAssetReloadRequired = false;
             needsFieldRefresh = true;
-            saveMessage = "Saved & reloaded successfully!";
+            saveMessage = didAssetReload ? "Saved & assets reloaded successfully!" : "Saved & reloaded successfully!";
             saveMessageSuccess = true;
         } catch (Throwable t) {
             LOGGER.atWarning().withCause(t).log("Failed to save RPGMobs config from admin UI");
@@ -2470,6 +2512,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         snapshotAllData();
         pendingOverlays.clear();
         pendingTemplateKeys.clear();
+        pendingAssetReloadRequired = false;
 
         int savedAbilExpanded = abilityExpandedIdx;
         String savedAbilMobFilter = abilityMobFilter;
@@ -2521,6 +2564,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         setSidebarNav4State(c, "#NavGlobalDebug", activeSection == Section.GLOBAL_DEBUG, hasGlobalDebugChanges());
         setSidebarNav4State(c, "#NavGlobalConfig", isConfig, hasGlobalConfigChanges());
 
+
         fillSidebarSlots(c, worldNames, worldPage, "#NavWorld", Section.WORLD);
         fillSidebarSlots(c, instanceNames, instPage, "#NavInst", Section.INSTANCE);
         setPagination(c, worldNames.size(), worldPage, "#WorldPagination", "#WorldPageLabel",
@@ -2532,6 +2576,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private void renderSubTabs(UICommandBuilder c, boolean isConfig, boolean isOverlay) {
         c.set("#TabGlobalCore.Visible", activeSection == Section.GLOBAL_CORE);
         c.set("#TabGlobalDebug.Visible", activeSection == Section.GLOBAL_DEBUG);
+
         c.set("#TabConfigWeapons.Visible", isConfig && activeSubTab == TAB_CONFIG_WEAPONS);
         c.set("#TabConfigArmor.Visible", isConfig && activeSubTab == TAB_CONFIG_ARMOR);
         c.set("#TabConfigRarityTiers.Visible", isConfig && activeSubTab == TAB_CONFIG_RARITY);
@@ -2591,12 +2636,14 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     }
 
     private void renderGlobalPanels(UICommandBuilder c) {
+        renderToggle(c, "#GlobalEnabled", editGlobalEnabled);
         renderToggle(c, "#EnabledByDefault", editEnabledByDefault);
         renderToggle(c, "#DebugMode", editDebugMode);
 
         if (needsFieldRefresh) {
             c.set("#FieldDebugScanInterval.Value", String.valueOf(editDebugScanInterval));
         }
+
     }
 
     private void renderTabContent(UICommandBuilder c, boolean isConfig, boolean isOverlay) {
@@ -2620,6 +2667,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             populateEntityEffects(c);
         }
         if (isOverlay && activeSubTab == TAB_ABILITIES) {
+            var res = resolvedForSelected != null ? resolvedForSelected : plugin.getConfigResolver().getBaseResolved();
+            c.set("#FieldGlobalCdMin.Value", fmtFloat(editOverlay.globalCooldownMinSeconds != null ? editOverlay.globalCooldownMinSeconds : res.globalCooldownMinSeconds));
+            c.set("#FieldGlobalCdMax.Value", fmtFloat(editOverlay.globalCooldownMaxSeconds != null ? editOverlay.globalCooldownMaxSeconds : res.globalCooldownMaxSeconds));
             populateAbilityOverrides(c);
         }
         if (isOverlay && activeSubTab == TAB_SPAWNING) {
@@ -2647,6 +2697,12 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                     confirmText = "Add Rule";
                 } else if (renameTarget == RenameTarget.WEAPON_CATEGORY && renameRowIdx == RENAME_IDX_SUMMON_ROLE_ADD) {
                     popupTitle = "Add Role Identifier";
+                    confirmText = "Add";
+                } else if (renameTarget == RenameTarget.WEAPON_CATEGORY && renameRowIdx == RENAME_IDX_HL_DENY_ADD) {
+                    popupTitle = "Add Denied Prefix";
+                    confirmText = "Add";
+                } else if (renameTarget == RenameTarget.WEAPON_CATEGORY && renameRowIdx == RENAME_IDX_HL_ALLOW_ADD) {
+                    popupTitle = "Add Allowed Exception";
                     confirmText = "Add";
                 } else if (renameTarget == RenameTarget.ARMOR_CATEGORY && renameRowIdx == RENAME_IDX_RARITY_RULE_ADD) {
                     popupTitle = "Add Armor Rarity Rule";
@@ -2715,12 +2771,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
         c.set("#EnvRulesGroup.Visible", isEnv);
 
-        boolean ffDisabled = editOverlay.eliteFriendlyFireDisabled != null ? editOverlay.eliteFriendlyFireDisabled : res.eliteFriendlyFireDisabled;
-        renderToggle(c, "#FriendlyFire", ffDisabled);
         boolean fdDisabled = editOverlay.eliteFallDamageDisabled != null ? editOverlay.eliteFallDamageDisabled : res.eliteFallDamageDisabled;
         renderToggle(c, "#FallDamage", fdDisabled);
-        boolean noAggro = editOverlay.eliteNoAggroOnElite != null ? editOverlay.eliteNoAggroOnElite : res.eliteNoAggroOnElite;
-        renderToggle(c, "#NoAggroOnElite", noAggro);
 
         if (needsFieldRefresh) {
 
@@ -2781,7 +2833,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#NameplateModeRankedActive.Visible", true);
 
         boolean[] nt = editOverlay.nameplateTierEnabled != null ? editOverlay.nameplateTierEnabled : res.nameplateTierEnabled;
-        for (int i = 0; i < 5; i++) renderToggle(c, "#NameplateTier" + i, nt[i]);
+        for (int i = 0; i < 5; i++) {
+            c.set("#NameplateTierOn" + i + ".Visible", nt[i]);
+            c.set("#NameplateTierOff" + i + ".Visible", !nt[i]);
+        }
 
         updateFieldDiffMarkers(c, editOverlay, res);
 
@@ -2814,6 +2869,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         if (saveMessage != null) {
             c.set("#SaveMessage.Text", (saveMessageSuccess ? "" : "ERROR: ") + saveMessage);
         }
+        c.set("#SaveReloadButton.Text", pendingAssetReloadRequired ? "Save & Reload Assets" : "Save");
     }
 
     private static void setSidebarNav4State(UICommandBuilder c, String base, boolean active, boolean changed) {
@@ -2827,11 +2883,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         int start = page * SIDEBAR_PAGE_SIZE;
         ConfigResolver resolver = plugin.getConfigResolver();
         for (int i = 0; i < SIDEBAR_PAGE_SIZE; i++) {
-            int idx = start + i;
-            boolean vis = idx < names.size();
+            int itemIndex = start + i;
+            boolean vis = itemIndex < names.size();
             c.set(prefix + "Group" + i + ".Visible", vis);
             if (vis) {
-                String name = names.get(idx);
+                String name = names.get(itemIndex);
                 boolean active = activeSection == sectionType && name.equals(selectedName);
                 String stashKey = overlayStashKey(sectionType, name);
 
@@ -3048,6 +3104,14 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         return current;
     }
 
+    private static float parseFloatPrimitive(@Nullable String input, float current) {
+        if (input == null || input.isBlank()) return current;
+        String s = sanitizeNumericInput(input);
+        try { return Float.parseFloat(s); }
+        catch (NumberFormatException ignored) {}
+        return current;
+    }
+
     private static @Nullable Float parseFloatField(@Nullable String input, @Nullable Float current) {
         if (input == null) return current;
         String s = sanitizeNumericInput(input);
@@ -3069,9 +3133,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 || !Arrays.equals(effF(current.xpMultiplierPerTier, b.xpMultiplierPerTier), effF(saved.xpMultiplierPerTier, b.xpMultiplierPerTier))
                 || !Objects.equals(effectiveValue(current.xpBonusPerAbility, b.xpBonusPerAbility), effectiveValue(saved.xpBonusPerAbility, b.xpBonusPerAbility))
                 || !Objects.equals(effectiveValue(current.minionXPMultiplier, b.minionXPMultiplier), effectiveValue(saved.minionXPMultiplier, b.minionXPMultiplier))
-                || !Objects.equals(effectiveValue(current.eliteFriendlyFireDisabled, b.eliteFriendlyFireDisabled), effectiveValue(saved.eliteFriendlyFireDisabled, b.eliteFriendlyFireDisabled))
-                || !Objects.equals(effectiveValue(current.eliteFallDamageDisabled, b.eliteFallDamageDisabled), effectiveValue(saved.eliteFallDamageDisabled, b.eliteFallDamageDisabled))
-                || !Objects.equals(effectiveValue(current.eliteNoAggroOnElite, b.eliteNoAggroOnElite), effectiveValue(saved.eliteNoAggroOnElite, b.eliteNoAggroOnElite));
+                || !Objects.equals(effectiveValue(current.eliteFallDamageDisabled, b.eliteFallDamageDisabled), effectiveValue(saved.eliteFallDamageDisabled, b.eliteFallDamageDisabled));
 
         changed[TAB_MOB_RULES] = hasDefRuleChanges()
                 || !Objects.equals(current.mobRuleCategoryTree, saved.mobRuleCategoryTree);
@@ -3106,7 +3168,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         changed[TAB_ENTITY_EFFECTS] = hasEntityEffectChanges();
 
         changed[TAB_ABILITIES] = !Objects.equals(current.abilityOverlays, saved.abilityOverlays)
-                || hasAbilityConfigChanges();
+                || hasAbilityConfigChanges()
+                || !Objects.equals(effectiveValue(current.globalCooldownMinSeconds, b.globalCooldownMinSeconds), effectiveValue(saved.globalCooldownMinSeconds, b.globalCooldownMinSeconds))
+                || !Objects.equals(effectiveValue(current.globalCooldownMaxSeconds, b.globalCooldownMaxSeconds), effectiveValue(saved.globalCooldownMaxSeconds, b.globalCooldownMaxSeconds));
 
         changed[TAB_VISUALS] = !Objects.equals(effectiveValue(current.enableNameplates, b.enableNameplates), effectiveValue(saved.enableNameplates, b.enableNameplates))
                 || !Objects.equals(effectiveValue(current.nameplateMode, b.nameplateMode), effectiveValue(saved.nameplateMode, b.nameplateMode))
@@ -3120,8 +3184,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     }
 
     private boolean hasGlobalCoreChanges() {
-        return editEnabledByDefault != savedEnabledByDefault;
+        return editGlobalEnabled != savedGlobalEnabled
+                || editEnabledByDefault != savedEnabledByDefault;
     }
+
 
     private boolean hasGlobalDebugChanges() {
         return editDebugMode != savedDebugMode
@@ -3190,8 +3256,32 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                     if (field.hasChanged(editConfig, savedConfig)) return true;
                 }
             }
+            if (editConfig instanceof RPGMobsConfig.MultiSlashAbilityConfig editMs
+                    && savedConfig instanceof RPGMobsConfig.MultiSlashAbilityConfig savedMs) {
+                if (!multiSlashVariantConfigsEqual(editMs.variantConfigs, savedMs.variantConfigs)) return true;
+            }
         }
         return false;
+    }
+
+    private static boolean multiSlashVariantConfigsEqual(
+            Map<String, RPGMobsConfig.MultiSlashVariantConfig> a,
+            Map<String, RPGMobsConfig.MultiSlashVariantConfig> b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        if (a.size() != b.size()) return false;
+        for (var entry : a.entrySet()) {
+            var vc2 = b.get(entry.getKey());
+            if (vc2 == null) return false;
+            var vc1 = entry.getValue();
+            if (!Arrays.equals(vc1.slashTriggerChancePerTier, vc2.slashTriggerChancePerTier)) return false;
+            if (!Arrays.equals(vc1.cooldownSecondsPerTier, vc2.cooldownSecondsPerTier)) return false;
+            if (!Arrays.equals(vc1.baseDamagePerHitPerTier, vc2.baseDamagePerHitPerTier)) return false;
+            if (!Arrays.equals(vc1.forwardDriftForcePerTier, vc2.forwardDriftForcePerTier)) return false;
+            if (!Arrays.equals(vc1.knockbackForcePerTier, vc2.knockbackForcePerTier)) return false;
+            if (Float.compare(vc1.meleeRange, vc2.meleeRange) != 0) return false;
+        }
+        return true;
     }
 
     private static boolean abilityGatesEqual(RPGMobsConfig.AbilityGate a, RPGMobsConfig.AbilityGate b) {
@@ -3202,6 +3292,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
     private boolean computeIsDirty() {
         if (hasGlobalCoreChanges()) return true;
+
         for (var ds : globalDataSources) {
             if (ds.hasChanges()) return true;
         }
@@ -3265,6 +3356,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#ChangedDamage.Visible", !Arrays.equals(effF(edit.damageMultiplierPerTier, res.damageMultiplierPerTier), effF(tmpl.damageMultiplierPerTier, b.damageMultiplierPerTier)));
 
         c.set("#ChangedAbilEnabled.Visible", !Objects.equals(edit.abilityOverlays, tmpl.abilityOverlays));
+        c.set("#ChangedGlobalCdMin.Visible", !Objects.equals(effectiveValue(edit.globalCooldownMinSeconds, res.globalCooldownMinSeconds), effectiveValue(tmpl.globalCooldownMinSeconds, b.globalCooldownMinSeconds)));
+        c.set("#ChangedGlobalCdMax.Visible", !Objects.equals(effectiveValue(edit.globalCooldownMaxSeconds, res.globalCooldownMaxSeconds), effectiveValue(tmpl.globalCooldownMaxSeconds, b.globalCooldownMaxSeconds)));
 
         c.set("#ChangedExtraRolls.Visible", !Arrays.equals(effI(edit.vanillaDroplistExtraRollsPerTier, res.vanillaDroplistExtraRollsPerTier), effI(tmpl.vanillaDroplistExtraRollsPerTier, b.vanillaDroplistExtraRollsPerTier)));
 
@@ -3287,9 +3380,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         double tmplDurMax = effectiveValue(tmpl.droppedGearDurabilityMax, b.droppedGearDurabilityMax);
         c.set("#ChangedLootDurMax.Visible", currentDurMax != tmplDurMax);
 
-        c.set("#ChangedFriendlyFire.Visible", !Objects.equals(effectiveValue(edit.eliteFriendlyFireDisabled, res.eliteFriendlyFireDisabled), effectiveValue(tmpl.eliteFriendlyFireDisabled, b.eliteFriendlyFireDisabled)));
         c.set("#ChangedFallDamage.Visible", !Objects.equals(effectiveValue(edit.eliteFallDamageDisabled, res.eliteFallDamageDisabled), effectiveValue(tmpl.eliteFallDamageDisabled, b.eliteFallDamageDisabled)));
-        c.set("#ChangedNoAggroOnElite.Visible", !Objects.equals(effectiveValue(edit.eliteNoAggroOnElite, res.eliteNoAggroOnElite), effectiveValue(tmpl.eliteNoAggroOnElite, b.eliteNoAggroOnElite)));
     }
 
     private static void setAllDiffMarkers(UICommandBuilder c, boolean visible) {
@@ -3305,15 +3396,15 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#ChangedDamageScaling.Visible", visible);
         c.set("#ChangedDamage.Visible", visible);
         c.set("#ChangedAbilEnabled.Visible", visible);
+        c.set("#ChangedGlobalCdMin.Visible", visible);
+        c.set("#ChangedGlobalCdMax.Visible", visible);
         c.set("#ChangedExtraRolls.Visible", visible);
         c.set("#ChangedDropWeapon.Visible", visible);
         c.set("#ChangedDropArmor.Visible", visible);
         c.set("#ChangedDropOffhand.Visible", visible);
         c.set("#ChangedLootDurMin.Visible", visible);
         c.set("#ChangedLootDurMax.Visible", visible);
-        c.set("#ChangedFriendlyFire.Visible", visible);
         c.set("#ChangedFallDamage.Visible", visible);
-        c.set("#ChangedNoAggroOnElite.Visible", visible);
 
         c.set("#ChangedNameplateMode.Visible", visible);
 
@@ -3348,6 +3439,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#ModifiedDamageVariance.Visible", !Objects.equals(effectiveValue(edit.damageRandomVariance, res.damageRandomVariance), effectiveValue(saved.damageRandomVariance, res.damageRandomVariance)));
 
         c.set("#ModifiedAbilEnabled.Visible", !Objects.equals(edit.abilityOverlays, saved.abilityOverlays));
+        c.set("#ModifiedGlobalCdMin.Visible", !Objects.equals(effectiveValue(edit.globalCooldownMinSeconds, res.globalCooldownMinSeconds), effectiveValue(saved.globalCooldownMinSeconds, res.globalCooldownMinSeconds)));
+        c.set("#ModifiedGlobalCdMax.Visible", !Objects.equals(effectiveValue(edit.globalCooldownMaxSeconds, res.globalCooldownMaxSeconds), effectiveValue(saved.globalCooldownMaxSeconds, res.globalCooldownMaxSeconds)));
 
         c.set("#ModifiedExtraRolls.Visible", !Arrays.equals(effI(edit.vanillaDroplistExtraRollsPerTier, res.vanillaDroplistExtraRollsPerTier), effI(saved.vanillaDroplistExtraRollsPerTier, res.vanillaDroplistExtraRollsPerTier)));
 
@@ -3365,9 +3458,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#ModifiedDistHPCap.Visible", !Objects.equals(effectiveValue(edit.distanceHealthBonusCap, res.distanceHealthBonusCap), effectiveValue(saved.distanceHealthBonusCap, res.distanceHealthBonusCap)));
         c.set("#ModifiedDistDMGCap.Visible", !Objects.equals(effectiveValue(edit.distanceDamageBonusCap, res.distanceDamageBonusCap), effectiveValue(saved.distanceDamageBonusCap, res.distanceDamageBonusCap)));
 
-        c.set("#ModifiedFriendlyFire.Visible", !Objects.equals(effectiveValue(edit.eliteFriendlyFireDisabled, res.eliteFriendlyFireDisabled), effectiveValue(saved.eliteFriendlyFireDisabled, res.eliteFriendlyFireDisabled)));
         c.set("#ModifiedFallDamage.Visible", !Objects.equals(effectiveValue(edit.eliteFallDamageDisabled, res.eliteFallDamageDisabled), effectiveValue(saved.eliteFallDamageDisabled, res.eliteFallDamageDisabled)));
-        c.set("#ModifiedNoAggroOnElite.Visible", !Objects.equals(effectiveValue(edit.eliteNoAggroOnElite, res.eliteNoAggroOnElite), effectiveValue(saved.eliteNoAggroOnElite, res.eliteNoAggroOnElite)));
 
         c.set("#ModifiedEnableNameplates.Visible", !Objects.equals(effectiveValue(edit.enableNameplates, res.enableNameplates), effectiveValue(saved.enableNameplates, res.enableNameplates)));
         c.set("#ModifiedNameplateMode.Visible", !Objects.equals(effectiveValue(edit.nameplateMode, res.nameplateMode), effectiveValue(saved.nameplateMode, res.nameplateMode)));
@@ -3428,9 +3519,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         dst.droppedGearDurabilityMin = src.droppedGearDurabilityMin;
         dst.droppedGearDurabilityMax = src.droppedGearDurabilityMax;
         dst.defaultLootTemplate = src.defaultLootTemplate;
-        dst.eliteFriendlyFireDisabled = src.eliteFriendlyFireDisabled;
         dst.eliteFallDamageDisabled = src.eliteFallDamageDisabled;
-        dst.eliteNoAggroOnElite = src.eliteNoAggroOnElite;
+        dst.globalCooldownMinSeconds = src.globalCooldownMinSeconds;
+        dst.globalCooldownMaxSeconds = src.globalCooldownMaxSeconds;
 
         dst.enableNameplates = src.enableNameplates;
         dst.nameplateMode = src.nameplateMode;
@@ -3699,6 +3790,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 String displayName = abilityDisplayName(abilId);
                 c.set("#AbilRowItm" + i + ".Text", displayName);
                 c.set("#AbilRowItmOff" + i + ".Text", displayName);
+                var feature = abilityFeaturesById.get(abilId);
+                c.set("#AbilRowDesc" + i + ".Text", feature != null ? feature.description() : "");
             } else {
                 c.set("#AbilRow" + i + ".Visible", false);
             }
@@ -3726,11 +3819,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             c.set("#AbilMobDeleteFiltered.Visible", hasMobFilter && totalItems > 0);
 
             for (int j = 0; j < ABIL_MOB_PAGE_SIZE; j++) {
-                int idx = pageStart + j;
-                boolean rowVis = idx < totalItems;
+                int itemIndex = pageStart + j;
+                boolean rowVis = itemIndex < totalItems;
                 c.set("#AbilMobRow" + j + ".Visible", rowVis);
                 if (rowVis) {
-                    String mobKey = abilityMobFiltered.get(idx);
+                    String mobKey = abilityMobFiltered.get(itemIndex);
                     boolean isCat = MobRuleCategoryHelpers.isCategoryKey(mobKey);
                     String displayName = isCat ? "[Category] " + MobRuleCategoryHelpers.fromCategoryKey(mobKey) : mobKey;
                     c.set("#AbilMobNameCat" + j + ".Visible", isCat);
@@ -3882,6 +3975,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             abilExclPage = 0;
             abilSummonRolePage = 0;
             abilSummonExclPage = 0;
+            multiSlashVariantIdx = 0;
             rebuildAbilMobFiltered();
         }
         needsFieldRefresh = true;
@@ -4346,6 +4440,24 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         destination.chancePerTier = Arrays.copyOf(source.chancePerTier, source.chancePerTier.length);
         destination.cooldownSecondsPerTier = Arrays.copyOf(source.cooldownSecondsPerTier, source.cooldownSecondsPerTier.length);
         destination.templates.putAll(source.templates);
+        if (source instanceof RPGMobsConfig.MultiSlashAbilityConfig srcMs
+                && destination instanceof RPGMobsConfig.MultiSlashAbilityConfig dstMs) {
+            dstMs.variantConfigs = new LinkedHashMap<>();
+            if (srcMs.variantConfigs != null) {
+                for (var ve : srcMs.variantConfigs.entrySet()) {
+                    var sv = ve.getValue();
+                    var dv = new RPGMobsConfig.MultiSlashVariantConfig(
+                            Arrays.copyOf(sv.slashTriggerChancePerTier, sv.slashTriggerChancePerTier.length),
+                            Arrays.copyOf(sv.cooldownSecondsPerTier, sv.cooldownSecondsPerTier.length),
+                            Arrays.copyOf(sv.baseDamagePerHitPerTier, sv.baseDamagePerHitPerTier.length),
+                            Arrays.copyOf(sv.forwardDriftForcePerTier, sv.forwardDriftForcePerTier.length),
+                            Arrays.copyOf(sv.knockbackForcePerTier, sv.knockbackForcePerTier.length),
+                            sv.meleeRange
+                    );
+                    dstMs.variantConfigs.put(ve.getKey(), dv);
+                }
+            }
+        }
         return destination;
     }
 
@@ -4910,6 +5022,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#AbilCfgChargeLeap.Visible", ac instanceof RPGMobsConfig.ChargeLeapAbilityConfig);
         c.set("#AbilCfgHealLeap.Visible", ac instanceof RPGMobsConfig.HealLeapAbilityConfig);
         c.set("#AbilCfgSummon.Visible", ac instanceof RPGMobsConfig.SummonAbilityConfig);
+        c.set("#AbilCfgDodgeRoll.Visible", ac instanceof RPGMobsConfig.DodgeRollAbilityConfig);
+        c.set("#AbilCfgMultiSlash.Visible", ac instanceof RPGMobsConfig.MultiSlashAbilityConfig);
+        c.set("#AbilCfgEnrage.Visible", ac instanceof RPGMobsConfig.EnrageAbilityConfig);
+        c.set("#AbilCfgVolley.Visible", ac instanceof RPGMobsConfig.VolleyAbilityConfig);
         if (ac == null) return;
 
         List<String> gateCats = ac.gate != null ? ac.gate.allowedWeaponCategories : List.of();
@@ -4918,11 +5034,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         if (abilGatePage >= gateTotalPages) abilGatePage = gateTotalPages - 1;
         int gateStart = abilGatePage * ABIL_CFG_LIST_PAGE_SIZE;
         for (int i = 0; i < ABIL_CFG_LIST_PAGE_SIZE; i++) {
-            int idx = gateStart + i;
-            boolean vis = idx < gateTotal;
+            int itemIndex = gateStart + i;
+            boolean vis = itemIndex < gateTotal;
             c.set("#AbilCfgGateRow" + i + ".Visible", vis);
             if (vis) {
-                String raw = gateCats.get(idx);
+                String raw = gateCats.get(itemIndex);
                 String display = MobRuleCategoryHelpers.isCategoryKey(raw)
                         ? MobRuleCategoryHelpers.fromCategoryKey(raw) : raw;
                 c.set("#AbilCfgGateName" + i + ".Text", display);
@@ -4944,10 +5060,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         if (abilExclPage >= exclTotalPages) abilExclPage = exclTotalPages - 1;
         int exclStart = abilExclPage * ABIL_CFG_LIST_PAGE_SIZE;
         for (int i = 0; i < ABIL_CFG_LIST_PAGE_SIZE; i++) {
-            int idx = exclStart + i;
-            boolean vis = idx < exclTotal;
+            int itemIndex = exclStart + i;
+            boolean vis = itemIndex < exclTotal;
             c.set("#AbilCfgExclRow" + i + ".Visible", vis);
-            if (vis) c.set("#AbilCfgExclName" + i + ".Text", exclKeys.get(idx));
+            if (vis) c.set("#AbilCfgExclName" + i + ".Text", exclKeys.get(itemIndex));
         }
         boolean exclMultiPage = exclTotalPages > 1;
         c.set("#AbilCfgExclPagination.Visible", exclMultiPage);
@@ -4981,11 +5097,27 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             c.set("#AbilCfgHLInstantChance.Value", fmtFloat(hl.instantHealChance));
             c.set("#AbilCfgHLDrinkDur.Value", fmtFloat(hl.npcDrinkDurationSeconds));
             c.set("#AbilCfgHLDrinkItemLabel.Text", hl.npcDrinkItemId != null ? hl.npcDrinkItemId : "");
+            c.set("#AbilCfgHLInterrupt.Value", String.valueOf(hl.interruptHitCount));
             for (int t = 0; t < 5; t++) {
                 c.set("#AbilCfgHLChance" + t + ".Value", fmtFloat(ac.chancePerTier[t]));
                 c.set("#AbilCfgHLCooldown" + t + ".Value", fmtFloat(ac.cooldownSecondsPerTier[t]));
                 c.set("#AbilCfgHLHeal" + t + ".Value", fmtFloat(hl.instantHealAmountPerTier[t]));
                 c.set("#AbilCfgHLForce" + t + ".Value", fmtFloat(hl.applyForcePerTier[t]));
+            }
+        }
+
+        if (ac instanceof RPGMobsConfig.HealLeapAbilityConfig hl2) {
+            List<String> denyList = hl2.deniedMobPrefixes != null ? hl2.deniedMobPrefixes : List.of();
+            for (int i = 0; i < 5; i++) {
+                boolean vis = i < denyList.size();
+                c.set("#AbilCfgHLDenyRow" + i + ".Visible", vis);
+                if (vis) c.set("#AbilCfgHLDenyName" + i + ".Text", denyList.get(i));
+            }
+            List<String> allowList = hl2.allowedExceptions != null ? hl2.allowedExceptions : List.of();
+            for (int i = 0; i < 5; i++) {
+                boolean vis = i < allowList.size();
+                c.set("#AbilCfgHLAllowRow" + i + ".Visible", vis);
+                if (vis) c.set("#AbilCfgHLAllowName" + i + ".Text", allowList.get(i));
             }
         }
 
@@ -4996,6 +5128,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                     c.set("#AbilCfgSMCooldown" + t + ".Value", fmtFloat(ac.cooldownSecondsPerTier[t]));
                 }
                 c.set("#AbilCfgSMMaxMinions.Value", String.valueOf(sm.maxAliveMinionsPerSummoner));
+                c.set("#AbilCfgSUMinCount.Value", String.valueOf(sm.summonMinCount));
+                c.set("#AbilCfgSUMaxCount.Value", String.valueOf(sm.summonMaxCount));
+                c.set("#AbilCfgSURadius.Value", fmtDouble(sm.summonSpawnRadius));
+                c.set("#AbilCfgSUMinionMin.Value", String.valueOf(sm.minionMinTier + 1));
+                c.set("#AbilCfgSUMinionMax.Value", String.valueOf(sm.minionMaxTier + 1));
                 c.set("#AbilCfgSMSkelW.Value", fmtDouble(sm.skeletonArcherWeight));
                 c.set("#AbilCfgSMZombW.Value", fmtDouble(sm.zombieWeight));
                 c.set("#AbilCfgSMWraithW.Value", fmtDouble(sm.wraithWeight));
@@ -5008,10 +5145,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             if (abilSummonRolePage >= roleTotalPages) abilSummonRolePage = roleTotalPages - 1;
             int roleStart = abilSummonRolePage * ABIL_CFG_LIST_PAGE_SIZE;
             for (int i = 0; i < ABIL_CFG_LIST_PAGE_SIZE; i++) {
-                int idx = roleStart + i;
-                boolean vis = idx < roleTotal;
+                int itemIndex = roleStart + i;
+                boolean vis = itemIndex < roleTotal;
                 c.set("#AbilCfgSMRoleRow" + i + ".Visible", vis);
-                if (vis) c.set("#AbilCfgSMRoleName" + i + ".Text", roles.get(idx));
+                if (vis) c.set("#AbilCfgSMRoleName" + i + ".Text", roles.get(itemIndex));
             }
             boolean roleMultiPage = roleTotalPages > 1;
             c.set("#AbilCfgSMRolePagination.Visible", roleMultiPage);
@@ -5029,10 +5166,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             if (abilSummonExclPage >= epTotalPages) abilSummonExclPage = epTotalPages - 1;
             int epStart = abilSummonExclPage * ABIL_CFG_LIST_PAGE_SIZE;
             for (int i = 0; i < ABIL_CFG_LIST_PAGE_SIZE; i++) {
-                int idx = epStart + i;
-                boolean vis = idx < epTotal;
+                int itemIndex = epStart + i;
+                boolean vis = itemIndex < epTotal;
                 c.set("#AbilCfgSMExclRow" + i + ".Visible", vis);
-                if (vis) c.set("#AbilCfgSMExclName" + i + ".Text", exclPool.get(idx));
+                if (vis) c.set("#AbilCfgSMExclName" + i + ".Text", exclPool.get(itemIndex));
             }
             boolean epMultiPage = epTotalPages > 1;
             c.set("#AbilCfgSMExclPagination.Visible", epMultiPage);
@@ -5042,6 +5179,67 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 c.set("#AbilCfgSMExclPrevPage.Visible", abilSummonExclPage > 0);
                 c.set("#AbilCfgSMExclNextPage.Visible", abilSummonExclPage < epTotalPages - 1);
                 c.set("#AbilCfgSMExclLastPage.Visible", abilSummonExclPage < epTotalPages - 1);
+            }
+        }
+
+        if (ac instanceof RPGMobsConfig.DodgeRollAbilityConfig dr && needsFieldRefresh) {
+            c.set("#AbilCfgDRDodgeForce.Value", fmtFloat(dr.dodgeForce));
+            c.set("#AbilCfgDRInvulnDur.Value", fmtFloat(dr.invulnerabilityDuration));
+            c.set("#AbilCfgDRChargedMult.Value", fmtFloat(dr.chargedAttackDodgeMultiplier));
+            for (int t = 0; t < 5; t++) {
+                c.set("#AbilCfgDRChance" + t + ".Value", fmtFloat(ac.chancePerTier[t]));
+                c.set("#AbilCfgDRCooldown" + t + ".Value", fmtFloat(ac.cooldownSecondsPerTier[t]));
+                c.set("#AbilCfgDRDodgeChance" + t + ".Value", fmtFloat(dr.dodgeChancePerTier[t]));
+            }
+        }
+
+        if (ac instanceof RPGMobsConfig.MultiSlashAbilityConfig ms) {
+            if (multiSlashVariantIdx < 0 || multiSlashVariantIdx >= MS_VARIANT_KEYS.length) {
+                multiSlashVariantIdx = 0;
+            }
+            for (int v = 0; v < MS_VARIANT_KEYS.length; v++) {
+                boolean active = v == multiSlashVariantIdx;
+                c.set("#AbilCfgMSVarBtn" + v + ".Visible", !active);
+                c.set("#AbilCfgMSVarBtnActive" + v + ".Visible", active);
+            }
+            String variantKey = MS_VARIANT_KEYS[multiSlashVariantIdx];
+            c.set("#AbilCfgMSVarLabel.Text", MS_VARIANT_LABELS[multiSlashVariantIdx] + " Variant");
+            RPGMobsConfig.MultiSlashVariantConfig vc = ms.variantConfigs != null
+                    ? ms.variantConfigs.get(variantKey) : null;
+            if (vc == null) vc = ms.getVariantOrDefault(variantKey);
+            if (needsFieldRefresh) {
+                c.set("#AbilCfgMSMeleeRange.Value", fmtFloat(vc.meleeRange));
+                for (int t = 0; t < 5; t++) {
+                    c.set("#AbilCfgMSChance" + t + ".Value", fmtFloat(ac.chancePerTier[t]));
+                    c.set("#AbilCfgMSCooldown" + t + ".Value", fmtFloat(vc.cooldownSecondsPerTier[t]));
+                    c.set("#AbilCfgMSTrigger" + t + ".Value", fmtFloat(vc.slashTriggerChancePerTier[t]));
+                    c.set("#AbilCfgMSDamage" + t + ".Value", String.valueOf(vc.baseDamagePerHitPerTier[t]));
+                    c.set("#AbilCfgMSDrift" + t + ".Value", fmtFloat(vc.forwardDriftForcePerTier[t]));
+                    c.set("#AbilCfgMSKB" + t + ".Value", fmtFloat(vc.knockbackForcePerTier[t]));
+                }
+            }
+        }
+
+        if (ac instanceof RPGMobsConfig.EnrageAbilityConfig en && needsFieldRefresh) {
+            for (int t = 0; t < 5; t++) {
+                c.set("#AbilCfgENChance" + t + ".Value", fmtFloat(ac.chancePerTier[t]));
+                c.set("#AbilCfgENCooldown" + t + ".Value", fmtFloat(ac.cooldownSecondsPerTier[t]));
+                c.set("#AbilCfgENHealthPct" + t + ".Value", fmtFloat(en.triggerHealthPercentPerTier[t]));
+                c.set("#AbilCfgENDmgMult" + t + ".Value", fmtFloat(en.lightPunchDamagePerTier[t]));
+                c.set("#AbilCfgENSpdMult" + t + ".Value", fmtFloat(en.heavyPunchDamagePerTier[t]));
+            }
+        }
+
+        if (ac instanceof RPGMobsConfig.VolleyAbilityConfig vl && needsFieldRefresh) {
+            c.set("#AbilCfgVLMinRange.Value", fmtFloat(vl.minRange));
+            c.set("#AbilCfgVLMaxRange.Value", fmtFloat(vl.maxRange));
+            for (int t = 0; t < 5; t++) {
+                c.set("#AbilCfgVLChance" + t + ".Value", fmtFloat(ac.chancePerTier[t]));
+                c.set("#AbilCfgVLCooldown" + t + ".Value", fmtFloat(ac.cooldownSecondsPerTier[t]));
+                c.set("#AbilCfgVLTrigger" + t + ".Value", fmtFloat(vl.volleyTriggerChancePerTier[t]));
+                c.set("#AbilCfgVLProjectiles" + t + ".Value", String.valueOf(vl.projectileCountPerTier[t]));
+                c.set("#AbilCfgVLSpread" + t + ".Value", fmtFloat(vl.spreadAnglePerTier[t]));
+                c.set("#AbilCfgVLDamage" + t + ".Value", String.valueOf(vl.baseDamagePerProjectilePerTier[t]));
             }
         }
     }
@@ -5076,6 +5274,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 hl.maxHealthTriggerPercent = parseFloatField(data.abilCfgHLMaxHealth, hl.maxHealthTriggerPercent);
                 hl.instantHealChance = parseFloatField(data.abilCfgHLInstantChance, hl.instantHealChance);
                 hl.npcDrinkDurationSeconds = parseFloatField(data.abilCfgHLDrinkDur, hl.npcDrinkDurationSeconds);
+                hl.interruptHitCount = parseIntField(data.abilCfgHLInterrupt, hl.interruptHitCount);
                 for (int t = 0; t < 5; t++) {
                     ac.chancePerTier[t] = parseFloatField(data.abilCfgHLChance[t], ac.chancePerTier[t]);
                     ac.cooldownSecondsPerTier[t] = parseFloatField(data.abilCfgHLCooldown[t],
@@ -5099,6 +5298,77 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 sm.zombieWeight = parseDoubleField(data.abilCfgSMZombW, sm.zombieWeight);
                 sm.wraithWeight = parseDoubleField(data.abilCfgSMWraithW, sm.wraithWeight);
                 sm.aberrantWeight = parseDoubleField(data.abilCfgSMAbrrW, sm.aberrantWeight);
+                sm.summonMinCount = parseIntField(data.abilCfgSUMinCount, sm.summonMinCount);
+                sm.summonMaxCount = parseIntField(data.abilCfgSUMaxCount, sm.summonMaxCount);
+                sm.summonSpawnRadius = parseDoubleField(data.abilCfgSURadius, sm.summonSpawnRadius);
+                var minionMinRaw = parseIntField(data.abilCfgSUMinionMin, sm.minionMinTier + 1);
+                sm.minionMinTier = minionMinRaw - 1;
+                var minionMaxRaw = parseIntField(data.abilCfgSUMinionMax, sm.minionMaxTier + 1);
+                sm.minionMaxTier = minionMaxRaw - 1;
+            }
+            case RPGMobsConfig.DodgeRollAbilityConfig dr -> {
+                dr.dodgeForce = parseFloatField(data.abilCfgDRDodgeForce, dr.dodgeForce);
+                dr.invulnerabilityDuration = parseFloatField(data.abilCfgDRInvulnDur, dr.invulnerabilityDuration);
+                dr.chargedAttackDodgeMultiplier = parseFloatField(data.abilCfgDRChargedMult, dr.chargedAttackDodgeMultiplier);
+                for (int t = 0; t < 5; t++) {
+                    ac.chancePerTier[t] = parseFloatField(data.abilCfgDRChance[t], ac.chancePerTier[t]);
+                    ac.cooldownSecondsPerTier[t] = parseFloatField(data.abilCfgDRCooldown[t],
+                                                                   ac.cooldownSecondsPerTier[t]);
+                    dr.dodgeChancePerTier[t] = parseFloatField(data.abilCfgDRDodgeChance[t], dr.dodgeChancePerTier[t]);
+                }
+            }
+            case RPGMobsConfig.MultiSlashAbilityConfig ms -> {
+                if (multiSlashVariantIdx >= 0 && multiSlashVariantIdx < MS_VARIANT_KEYS.length) {
+                    String variantKey = MS_VARIANT_KEYS[multiSlashVariantIdx];
+                    if (ms.variantConfigs == null) ms.variantConfigs = new LinkedHashMap<>();
+                    RPGMobsConfig.MultiSlashVariantConfig vc = ms.variantConfigs.get(variantKey);
+                    if (vc == null) {
+                        vc = ms.getVariantOrDefault(variantKey);
+                        ms.variantConfigs.put(variantKey, vc);
+                    }
+                    vc.meleeRange = parseFloatField(data.abilCfgMSMeleeRange, vc.meleeRange);
+                    for (int t = 0; t < 5; t++) {
+                        ac.chancePerTier[t] = parseFloatField(data.abilCfgMSChance[t], ac.chancePerTier[t]);
+                        vc.cooldownSecondsPerTier[t] = parseFloatField(data.abilCfgMSCooldown[t],
+                                                                       vc.cooldownSecondsPerTier[t]);
+                        vc.slashTriggerChancePerTier[t] = parseFloatField(data.abilCfgMSTrigger[t],
+                                                                          vc.slashTriggerChancePerTier[t]);
+                        vc.baseDamagePerHitPerTier[t] = parseIntField(data.abilCfgMSDamage[t],
+                                                                       vc.baseDamagePerHitPerTier[t]);
+                        vc.forwardDriftForcePerTier[t] = parseFloatField(data.abilCfgMSDrift[t],
+                                                                         vc.forwardDriftForcePerTier[t]);
+                        vc.knockbackForcePerTier[t] = parseFloatField(data.abilCfgMSKB[t], vc.knockbackForcePerTier[t]);
+                    }
+                }
+            }
+            case RPGMobsConfig.EnrageAbilityConfig en -> {
+                for (int t = 0; t < 5; t++) {
+                    ac.chancePerTier[t] = parseFloatField(data.abilCfgENChance[t], ac.chancePerTier[t]);
+                    ac.cooldownSecondsPerTier[t] = parseFloatField(data.abilCfgENCooldown[t],
+                                                                   ac.cooldownSecondsPerTier[t]);
+                    en.triggerHealthPercentPerTier[t] = parseFloatField(data.abilCfgENHealthPct[t],
+                                                                        en.triggerHealthPercentPerTier[t]);
+                    en.lightPunchDamagePerTier[t] = parseFloatField(data.abilCfgENDmgMult[t],
+                                                                    en.lightPunchDamagePerTier[t]);
+                    en.heavyPunchDamagePerTier[t] = parseFloatField(data.abilCfgENSpdMult[t],
+                                                                     en.heavyPunchDamagePerTier[t]);
+                }
+            }
+            case RPGMobsConfig.VolleyAbilityConfig vl -> {
+                vl.minRange = parseFloatField(data.abilCfgVLMinRange, vl.minRange);
+                vl.maxRange = parseFloatField(data.abilCfgVLMaxRange, vl.maxRange);
+                for (int t = 0; t < 5; t++) {
+                    ac.chancePerTier[t] = parseFloatField(data.abilCfgVLChance[t], ac.chancePerTier[t]);
+                    ac.cooldownSecondsPerTier[t] = parseFloatField(data.abilCfgVLCooldown[t],
+                                                                   ac.cooldownSecondsPerTier[t]);
+                    vl.volleyTriggerChancePerTier[t] = parseFloatField(data.abilCfgVLTrigger[t],
+                                                                       vl.volleyTriggerChancePerTier[t]);
+                    vl.projectileCountPerTier[t] = parseIntField(data.abilCfgVLProjectiles[t],
+                                                                  vl.projectileCountPerTier[t]);
+                    vl.spreadAnglePerTier[t] = parseFloatField(data.abilCfgVLSpread[t], vl.spreadAnglePerTier[t]);
+                    vl.baseDamagePerProjectilePerTier[t] = parseIntField(data.abilCfgVLDamage[t],
+                                                                         vl.baseDamagePerProjectilePerTier[t]);
+                }
             }
             case null, default -> {
             }
@@ -5192,6 +5462,44 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         needsFieldRefresh = true;
     }
 
+    private void handleAbilCfgHLDenyAdd() {
+        RPGMobsConfig.AbilityConfig ac = getExpandedAbilityConfig();
+        if (!(ac instanceof RPGMobsConfig.HealLeapAbilityConfig)) return;
+        renameTarget = RenameTarget.WEAPON_CATEGORY;
+        renameRowIdx = RENAME_IDX_HL_DENY_ADD;
+        renamePopupOpen = true;
+        pendingRenameName = null;
+        needsFieldRefresh = true;
+    }
+
+    private void handleAbilCfgHLDenyDel(int entryIndex) {
+        RPGMobsConfig.AbilityConfig ac = getExpandedAbilityConfig();
+        if (!(ac instanceof RPGMobsConfig.HealLeapAbilityConfig hl)) return;
+        if (hl.deniedMobPrefixes != null && entryIndex >= 0 && entryIndex < hl.deniedMobPrefixes.size()) {
+            hl.deniedMobPrefixes.remove(entryIndex);
+        }
+        needsFieldRefresh = true;
+    }
+
+    private void handleAbilCfgHLAllowAdd() {
+        RPGMobsConfig.AbilityConfig ac = getExpandedAbilityConfig();
+        if (!(ac instanceof RPGMobsConfig.HealLeapAbilityConfig)) return;
+        renameTarget = RenameTarget.WEAPON_CATEGORY;
+        renameRowIdx = RENAME_IDX_HL_ALLOW_ADD;
+        renamePopupOpen = true;
+        pendingRenameName = null;
+        needsFieldRefresh = true;
+    }
+
+    private void handleAbilCfgHLAllowDel(int entryIndex) {
+        RPGMobsConfig.AbilityConfig ac = getExpandedAbilityConfig();
+        if (!(ac instanceof RPGMobsConfig.HealLeapAbilityConfig hl)) return;
+        if (hl.allowedExceptions != null && entryIndex >= 0 && entryIndex < hl.allowedExceptions.size()) {
+            hl.allowedExceptions.remove(entryIndex);
+        }
+        needsFieldRefresh = true;
+    }
+
     private void handleAbilCfgSMRoleAdd() {
         renameTarget = RenameTarget.WEAPON_CATEGORY;
         renameRowIdx = RENAME_IDX_SUMMON_ROLE_ADD;
@@ -5239,6 +5547,30 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         if (!(sm.roleIdentifiers instanceof ArrayList)) sm.roleIdentifiers = new ArrayList<>(sm.roleIdentifiers);
         if (!sm.roleIdentifiers.contains(identifier)) {
             sm.roleIdentifiers.add(identifier);
+        }
+        needsFieldRefresh = true;
+    }
+
+    private void addHealLeapDeniedPrefix(String prefix) {
+        RPGMobsConfig.AbilityConfig ac = getExpandedAbilityConfig();
+        if (!(ac instanceof RPGMobsConfig.HealLeapAbilityConfig hl)) return;
+        if (hl.deniedMobPrefixes == null) hl.deniedMobPrefixes = new ArrayList<>();
+        if (!(hl.deniedMobPrefixes instanceof ArrayList)) hl.deniedMobPrefixes = new ArrayList<>(hl.deniedMobPrefixes);
+        String trimmed = prefix.trim();
+        if (!trimmed.isEmpty() && !hl.deniedMobPrefixes.contains(trimmed)) {
+            hl.deniedMobPrefixes.add(trimmed);
+        }
+        needsFieldRefresh = true;
+    }
+
+    private void addHealLeapAllowedException(String exception) {
+        RPGMobsConfig.AbilityConfig ac = getExpandedAbilityConfig();
+        if (!(ac instanceof RPGMobsConfig.HealLeapAbilityConfig hl)) return;
+        if (hl.allowedExceptions == null) hl.allowedExceptions = new ArrayList<>();
+        if (!(hl.allowedExceptions instanceof ArrayList)) hl.allowedExceptions = new ArrayList<>(hl.allowedExceptions);
+        String trimmed = exception.trim();
+        if (!trimmed.isEmpty() && !hl.allowedExceptions.contains(trimmed)) {
+            hl.allowedExceptions.add(trimmed);
         }
         needsFieldRefresh = true;
     }
@@ -5646,12 +5978,12 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                     cats = new ArrayList<>(cats);
                     if (isWeapon) rule.allowedWeaponCategories = cats; else rule.allowedArmorCategories = cats;
                 }
-                int idx = cats.indexOf(oldName);
-                if (idx >= 0) {
+                int position = cats.indexOf(oldName);
+                if (position >= 0) {
                     if (newName != null) {
-                        cats.set(idx, newName);
+                        cats.set(position, newName);
                     } else {
-                        cats.remove(idx);
+                        cats.remove(position);
                     }
                 }
             }
@@ -5660,16 +5992,16 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             for (RPGMobsConfig.AbilityConfig ac : editAbilityConfigs.values()) {
                 if (ac.gate != null && ac.gate.allowedWeaponCategories != null) {
                     List<String> gateList = ac.gate.allowedWeaponCategories;
-                    int idx = gateList.indexOf(oldName);
-                    if (idx >= 0) {
+                    int position = gateList.indexOf(oldName);
+                    if (position >= 0) {
                         if (!(gateList instanceof ArrayList)) {
                             gateList = new ArrayList<>(gateList);
                             ac.gate.allowedWeaponCategories = gateList;
                         }
                         if (newName != null) {
-                            gateList.set(idx, newName);
+                            gateList.set(position, newName);
                         } else {
-                            gateList.remove(idx);
+                            gateList.remove(position);
                         }
                     }
                 }
@@ -6715,6 +7047,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                     addRarityRule(newName, true);
                 } else if (renameRowIdx == RENAME_IDX_SUMMON_ROLE_ADD) {
                     addSummonRoleIdentifier(newName);
+                } else if (renameRowIdx == RENAME_IDX_HL_DENY_ADD) {
+                    addHealLeapDeniedPrefix(newName);
+                } else if (renameRowIdx == RENAME_IDX_HL_ALLOW_ADD) {
+                    addHealLeapAllowedException(newName);
                 } else {
                     renameGearCategory(renameRowIdx, newName, true);
                 }
@@ -6765,11 +7101,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private void propagateMobRuleKeyRenameToAbilityConfigs(String oldKey, String newKey) {
         for (RPGMobsConfig.AbilityConfig ac : editAbilityConfigs.values()) {
             if (ac.excludeLinkedMobRuleKeys != null) {
-                int idx = ac.excludeLinkedMobRuleKeys.indexOf(oldKey);
-                if (idx >= 0) {
+                int position = ac.excludeLinkedMobRuleKeys.indexOf(oldKey);
+                if (position >= 0) {
                     if (!(ac.excludeLinkedMobRuleKeys instanceof ArrayList))
                         ac.excludeLinkedMobRuleKeys = new ArrayList<>(ac.excludeLinkedMobRuleKeys);
-                    ac.excludeLinkedMobRuleKeys.set(idx, newKey);
+                    ac.excludeLinkedMobRuleKeys.set(position, newKey);
                 }
             }
         }
@@ -7340,10 +7676,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 || npcPickerMode == NpcPickerMode.TIER_RESTRICTION;
         if (npcPickerHiddenCount > 0) {
             String reason = npcPickerMode == NpcPickerMode.MOB_RULE
-                    ? " NPCs not shown — already have mob rules."
+                    ? " NPCs not shown  - already have mob rules."
                     : isMobRuleSource
-                            ? " mob rules not shown — already linked."
-                            : " NPCs not shown — already linked.";
+                            ? " mob rules not shown  - already linked."
+                            : " NPCs not shown  - already linked.";
             c.set("#NpcPickerInfoLabel.Text", npcPickerHiddenCount + reason);
         } else {
             String prompt = npcPickerMode == NpcPickerMode.MOB_RULE
@@ -7440,9 +7776,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             boolean isWeapon = itemPickerDropSlot == ITEM_PICKER_GEAR_WEAPON_SWAP;
             RPGMobsConfig.GearCategory cat = ensureCurrentGearCat(isWeapon);
             if (gearCatSwapOldKey != null) {
-                int idx = cat.itemKeys.indexOf(gearCatSwapOldKey);
-                if (idx >= 0) {
-                    cat.itemKeys.set(idx, selectedItem);
+                int position = cat.itemKeys.indexOf(gearCatSwapOldKey);
+                if (position >= 0) {
+                    cat.itemKeys.set(position, selectedItem);
                 }
             }
             gearCatSwapOldKey = null;
@@ -7570,11 +7906,11 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         int pageStart = categoryPeekPage * CATEGORY_PEEK_PAGE_SIZE;
 
         for (int i = 0; i < CATEGORY_PEEK_PAGE_SIZE; i++) {
-            int idx = pageStart + i;
-            boolean rowVis = idx < totalItems;
+            int itemIndex = pageStart + i;
+            boolean rowVis = itemIndex < totalItems;
             c.set("#CatPeekRow" + i + ".Visible", rowVis);
             if (rowVis) {
-                String itemId = categoryPeekItems.get(idx);
+                String itemId = categoryPeekItems.get(itemIndex);
                 c.set("#CatPeekItem" + i + ".Text", itemId);
                 c.set("#CatPeekIcon" + i + ".Visible", true);
                 c.set("#CatPeekIcon" + i + ".ItemId", itemId);

@@ -10,13 +10,15 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 
 /**
- * Abstract base class for all RPGMobs events.
+ * Base class for RPGMobs events that are tied to a specific world and entity.
  *
- * <p>Every RPG mob event carries the world, entity reference, entity UUID,
- * tier index, and role name of the RPG mob involved. Subclasses add
- * event-specific data such as damage amounts, positions, or target references.</p>
+ * <p>Provides common fields: the world, entity reference, resolved UUID,
+ * tier index (0-4), and NPC role name. The entity UUID is resolved eagerly
+ * in the constructor from the entity's {@link UUIDComponent}.</p>
  *
- * @since 1.1.0
+ * <p>Tier values are 0-based internally (0 = T1, 4 = T5).</p>
+ *
+ * @since 1.0.0
  */
 public abstract class RPGMobsEvent {
 
@@ -27,12 +29,10 @@ public abstract class RPGMobsEvent {
     private final String roleName;
 
     /**
-     * Constructs a new RPG mob event.
-     *
-     * @param world     the world in which this event occurred
-     * @param entityRef the entity reference of the RPG mob involved in this event
-     * @param tier      the tier index of the RPG mob
-     * @param roleName  the role name (NPC type identifier) of the RPG mob
+     * @param world     the world where the event occurred
+     * @param entityRef ECS reference to the entity
+     * @param tier      tier index (0-4)
+     * @param roleName  NPC role identifier (e.g. "Skeleton_Guard")
      */
     protected RPGMobsEvent(World world, Ref<EntityStore> entityRef, int tier, String roleName) {
         this.world = world;
@@ -54,56 +54,45 @@ public abstract class RPGMobsEvent {
     }
 
     /**
-     * Returns the world in which this event occurred.
+     * Returns the world where this event occurred.
      *
-     * @return the world, never {@code null}
-     * @since 1.2.0
+     * @return the world instance
      */
     public World getWorld() {
         return world;
     }
 
     /**
-     * Returns the entity reference of the RPG mob involved in this event.
+     * Returns the ECS entity reference for the mob involved in this event.
      *
-     * @return the entity reference, never {@code null}
+     * @return the entity reference
      */
     public Ref<EntityStore> getEntityRef() {
         return entityRef;
     }
 
     /**
-     * Returns the UUID of the RPG mob involved in this event, if available.
+     * Returns the entity's persistent UUID, or null if it could not be resolved.
      *
-     * <p>Resolved eagerly from the entity's {@link UUIDComponent} at event
-     * construction time.</p>
-     *
-     * @return the entity UUID, or {@code null} if not available
-     * @since 1.2.0
+     * @return the entity UUID, or null
      */
     public @Nullable UUID getEntityUuid() {
         return entityUuid;
     }
 
     /**
-     * Returns the tier index of the RPG mob.
+     * Returns the mob's tier index (0-based: 0 = T1, 4 = T5).
      *
-     * <p>Tier determines the mob's difficulty level, affecting health, damage,
-     * model scale, and available abilities.</p>
-     *
-     * @return the zero-based tier index
+     * @return tier index in range [0, 4]
      */
     public int getTier() {
         return tier;
     }
 
     /**
-     * Returns the role name of the RPG mob.
+     * Returns the NPC role name (e.g. "Skeleton_Guard", "Trork_Warrior").
      *
-     * <p>The role name identifies the NPC type (e.g., {@code "zombie"}, {@code "skeleton"})
-     * and is used for rule matching and asset resolution.</p>
-     *
-     * @return the role name, never {@code null}
+     * @return the NPC role identifier
      */
     public String getRoleName() {
         return roleName;

@@ -333,6 +333,68 @@ class OverlayFieldRegistryTest {
     }
 
     @Test
+    void globalCooldownRoundTrip() {
+        var config = new RPGMobsConfig();
+        var baseResolved = new ResolvedConfig();
+        OverlayFieldRegistry.buildAllBase(config, baseResolved);
+
+        assertEquals(config.abilitiesConfig.globalCooldownMinSeconds, baseResolved.globalCooldownMinSeconds);
+        assertEquals(config.abilitiesConfig.globalCooldownMaxSeconds, baseResolved.globalCooldownMaxSeconds);
+
+        var overlay = new ConfigOverlay();
+        overlay.globalCooldownMinSeconds = 2.0f;
+        overlay.globalCooldownMaxSeconds = 5.0f;
+
+        Map<String, Object> map = new LinkedHashMap<>();
+        OverlayFieldRegistry.writeAll(overlay, map);
+        assertTrue(map.containsKey("globalCooldownMinSeconds"));
+        assertTrue(map.containsKey("globalCooldownMaxSeconds"));
+        assertInstanceOf(Double.class, map.get("globalCooldownMinSeconds"));
+        assertEquals(2.0, (Double) map.get("globalCooldownMinSeconds"), 0.001);
+        assertEquals(5.0, (Double) map.get("globalCooldownMaxSeconds"), 0.001);
+
+        var restoredOverlay = new ConfigOverlay();
+        OverlayFieldRegistry.applyAllYaml(map, restoredOverlay);
+        assertEquals(2.0f, restoredOverlay.globalCooldownMinSeconds);
+        assertEquals(5.0f, restoredOverlay.globalCooldownMaxSeconds);
+
+        var result = new ResolvedConfig();
+        OverlayFieldRegistry.mergeAll(restoredOverlay, baseResolved, result);
+        assertEquals(2.0f, result.globalCooldownMinSeconds, 0.001f);
+        assertEquals(5.0f, result.globalCooldownMaxSeconds, 0.001f);
+    }
+
+    @Test
+    void globalCooldownNullFallsBackToBase() {
+        var overlay = new ConfigOverlay();
+        assertNull(overlay.globalCooldownMinSeconds);
+        assertNull(overlay.globalCooldownMaxSeconds);
+
+        var base = new ResolvedConfig();
+        base.globalCooldownMinSeconds = 1.0f;
+        base.globalCooldownMaxSeconds = 3.0f;
+
+        var result = new ResolvedConfig();
+        OverlayFieldRegistry.mergeAll(overlay, base, result);
+
+        assertEquals(1.0f, result.globalCooldownMinSeconds);
+        assertEquals(3.0f, result.globalCooldownMaxSeconds);
+    }
+
+    @Test
+    void globalCooldownEffectivelyEqualWhenNullMatchesBase() {
+        var a = new ConfigOverlay();
+        a.globalCooldownMinSeconds = 1.0f;
+
+        var b = new ConfigOverlay();
+
+        var base = new ResolvedConfig();
+        base.globalCooldownMinSeconds = 1.0f;
+
+        assertTrue(OverlayFieldRegistry.allEffectivelyEqual(a, b, base));
+    }
+
+    @Test
     void eachFieldHasUniqueYamlKey() {
         var overlay = buildFullyPopulatedOverlay();
         Map<String, Object> map = new LinkedHashMap<>();
@@ -367,9 +429,7 @@ class OverlayFieldRegistryTest {
         assertTrue(map.containsKey("droppedGearDurabilityMin"));
         assertTrue(map.containsKey("droppedGearDurabilityMax"));
         assertTrue(map.containsKey("defaultLootTemplate"));
-        assertTrue(map.containsKey("eliteFriendlyFireDisabled"));
         assertTrue(map.containsKey("eliteFallDamageDisabled"));
-        assertTrue(map.containsKey("eliteNoAggroOnElite"));
         assertTrue(map.containsKey("enableNameplates"));
         assertTrue(map.containsKey("nameplateMode"));
         assertTrue(map.containsKey("nameplateTierEnabled"));
@@ -381,6 +441,8 @@ class OverlayFieldRegistryTest {
         assertTrue(map.containsKey("xpMultiplierPerTier"));
         assertTrue(map.containsKey("xpBonusPerAbility"));
         assertTrue(map.containsKey("minionXPMultiplier"));
+        assertTrue(map.containsKey("globalCooldownMinSeconds"));
+        assertTrue(map.containsKey("globalCooldownMaxSeconds"));
 
         assertEquals(34, map.size());
     }
@@ -407,9 +469,7 @@ class OverlayFieldRegistryTest {
         overlay.droppedGearDurabilityMin = 0.3;
         overlay.droppedGearDurabilityMax = 0.8;
         overlay.defaultLootTemplate = "default";
-        overlay.eliteFriendlyFireDisabled = true;
         overlay.eliteFallDamageDisabled = true;
-        overlay.eliteNoAggroOnElite = true;
         overlay.enableNameplates = true;
         overlay.nameplateMode = "RANKED_ROLE";
         overlay.nameplateTierEnabled = new boolean[]{true, true, true, true, true};
@@ -421,6 +481,8 @@ class OverlayFieldRegistryTest {
         overlay.xpMultiplierPerTier = new float[]{1f, 2f, 3f, 4f, 5f};
         overlay.xpBonusPerAbility = 2500.0;
         overlay.minionXPMultiplier = 0.05;
+        overlay.globalCooldownMinSeconds = 1.5f;
+        overlay.globalCooldownMaxSeconds = 4.0f;
         return overlay;
     }
 }

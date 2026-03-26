@@ -69,9 +69,9 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
 
         if (!resolved.enableModelScaling) {
 
-            if (modelComp != null && modelComp.scaledApplied && Math.abs(modelComp.appliedScale - 1.0f) > 0.001f) {
+            if (modelComp != null && modelComp.scaleApplied && Math.abs(modelComp.appliedScale - 1.0f) > 0.001f) {
                 tryScaleModelComponent(npcRef, store, commandBuffer, 1.0f, false);
-                modelComp.scaledApplied = false;
+                modelComp.scaleApplied = false;
                 modelComp.appliedScale = 1.0f;
                 modelComp.configuredBaseScale = 1.0f;
                 modelComp.resyncVerified = true;
@@ -88,7 +88,7 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
             boolean scaled = tryScaleModelComponent(npcRef, store, commandBuffer, scaleWithVariance, false);
             if (scaled) {
                 RPGMobsModelScalingComponent newComp = new RPGMobsModelScalingComponent();
-                newComp.scaledApplied = true;
+                newComp.scaleApplied = true;
                 newComp.appliedScale = scaleWithVariance;
                 newComp.configuredBaseScale = targetBaseScale;
                 newComp.resyncVerified = true;
@@ -114,7 +114,7 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
                         : clampFloat(maxValid, MODEL_SCALE_MIN, MODEL_SCALE_MAX);
                 boolean scaled = tryScaleModelComponent(npcRef, store, commandBuffer, newScale, false);
                 if (scaled) {
-                    modelComp.scaledApplied = true;
+                    modelComp.scaleApplied = true;
                     modelComp.appliedScale = newScale;
                     modelComp.configuredBaseScale = targetBaseScale;
                     modelComp.resyncVerified = true;
@@ -124,7 +124,7 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
             return;
         }
 
-        if (!modelComp.resyncVerified && modelComp.scaledApplied && modelComp.appliedScale > 0.001f) {
+        if (!modelComp.resyncVerified && modelComp.scaleApplied && modelComp.appliedScale > 0.001f) {
             tryScaleModelComponent(npcRef, store, commandBuffer, modelComp.appliedScale, false);
             modelComp.resyncVerified = true;
             commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelComp);
@@ -223,7 +223,7 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
 
         if (tierComponent == null) return;
 
-        if (modelScalingComponent != null && modelScalingComponent.scaledApplied) return;
+        if (modelScalingComponent != null && modelScalingComponent.scaleApplied) return;
 
         int tierIndex = tierComponent.tierIndex;
         float baseScale = getBaseScaleMultiplier(resolved, tierIndex);
@@ -239,7 +239,7 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
         if (!scaled) return;
 
         if (modelScalingComponent != null) {
-            modelScalingComponent.scaledApplied = true;
+            modelScalingComponent.scaleApplied = true;
             modelScalingComponent.appliedScale = scaleMultiplier;
             modelScalingComponent.configuredBaseScale = baseScale;
             commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelScalingComponent);
@@ -256,9 +256,12 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
         NPCEntity npcEntity = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
         if (npcEntity == null || npcEntity.getWorld() == null) return;
 
-        npcEntity.getWorld().execute(() -> {
+        var world = npcEntity.getWorld();
+        world.execute(() -> {
+            if (npcEntity.getWorld() == null) return;
             EntityStore entityStoreProvider = npcEntity.getWorld().getEntityStore();
             if (entityStoreProvider == null) return;
+            if (!npcRef.isValid()) return;
             Store<EntityStore> entityStore = entityStoreProvider.getStore();
 
             StoreHelpers.withEntity(entityStore,

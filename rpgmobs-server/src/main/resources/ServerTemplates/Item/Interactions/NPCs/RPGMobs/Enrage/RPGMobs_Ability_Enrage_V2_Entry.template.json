@@ -1,0 +1,333 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs Enrage V2  - ~10s berserk fist-fighting. More heavies, grouped in pairs. 18 punches (10L + 8H). Mob dies from exhaustion after.",
+  "Interactions": [
+    {
+      "Type": "ApplyEffect",
+      "$Comment": "Apply red eyes trail effect for the duration of enrage.",
+      "EffectId": ${features.Enrage.config.templates.effectRedEyes}
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Phase 1  - ROAR. Mob screams in rage before the frenzy begins. 1.5s.",
+      "RunTime": 1.5,
+      "HorizontalSpeedMultiplier": 0.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_RPGMobs_Enrage_Scream",
+        "Particles": [
+          { "SystemId": "Angry", "DetachedFromModel": false },
+          { "SystemId": "Effect_Fire", "DetachedFromModel": false },
+          { "SystemId": "Effect_Fire", "TargetEntityPart": "Entity", "TargetNodeName": "L-Hand", "Scale": 0.5 },
+          { "SystemId": "Effect_Fire", "TargetEntityPart": "Entity", "TargetNodeName": "R-Hand", "Scale": 0.5 }
+        ]
+      }
+    },
+
+    {
+      "Type": "Selector",
+      "$Comment": "Round 1, Punch 1  - L (breathing SFX)",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingLeft",
+        "WorldSoundEventId": "SFX_RPGMobs_Enrage_HeavyBreathing"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 1, Punch 2  - L",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingRight"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 1, Punch 3  - HEAVY",
+      "RunTime": 0.65,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_Mace_T2_Impact",
+        "Particles": [
+          { "SystemId": "Mace_Signature_Cast", "DetachedFromModel": true }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.heavyDamage} ]
+      }
+    },
+
+    {
+      "Type": "Selector",
+      "$Comment": "Round 2, Punch 4  - L (punch SFX)",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingLeft",
+        "WorldSoundEventId": "SFX_Mace_T1_Swing"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 2, Punch 5  - L",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingRight"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 2, Punch 6  - HEAVY",
+      "RunTime": 0.65,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_Mace_T2_Impact",
+        "Particles": [
+          { "SystemId": "Mace_Signature_Cast", "DetachedFromModel": true }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.heavyDamage} ]
+      }
+    },
+
+    {
+      "Type": "Selector",
+      "$Comment": "Round 3, Punch 7  - L (Angry particle)",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingLeft",
+        "Particles": [
+          { "SystemId": "Angry", "DetachedFromModel": false }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 3, Punch 8  - L (heavy breathing SFX)",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingRight",
+        "WorldSoundEventId": "SFX_RPGMobs_Enrage_HeavyBreathing"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 3, Punch 9  - HEAVY",
+      "RunTime": 0.65,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_Mace_T2_Impact",
+        "Particles": [
+          { "SystemId": "Mace_Signature_Cast", "DetachedFromModel": true }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.heavyDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 3, Punch 10  - HEAVY",
+      "RunTime": 0.65,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_RPGMobs_Enrage_HeavyBreathing",
+        "Particles": [
+          { "SystemId": "Mace_Signature_Cast", "DetachedFromModel": true }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.heavyDamage} ]
+      }
+    },
+
+    {
+      "Type": "Selector",
+      "$Comment": "Round 4, Punch 11  - L (Angry+Fire particles)",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingLeft",
+        "Particles": [
+          { "SystemId": "Angry", "DetachedFromModel": false },
+          { "SystemId": "Effect_Fire", "DetachedFromModel": false }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 4, Punch 12  - L",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingRight"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 4, Punch 13  - HEAVY",
+      "RunTime": 0.65,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_Mace_T2_Impact",
+        "Particles": [
+          { "SystemId": "Mace_Signature_Cast", "DetachedFromModel": true }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.heavyDamage} ]
+      }
+    },
+
+    {
+      "Type": "Selector",
+      "$Comment": "Round 5, Punch 14  - L (punch SFX)",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingLeft",
+        "WorldSoundEventId": "SFX_Mace_T1_Swing"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 5, Punch 15  - L",
+      "RunTime": 0.33,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingRight"
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.lightDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 5, Punch 16  - HEAVY (Angry+Fire particles)",
+      "RunTime": 0.65,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_Mace_T2_Impact",
+        "Particles": [
+          { "SystemId": "Mace_Signature_Cast", "DetachedFromModel": true },
+          { "SystemId": "Angry", "DetachedFromModel": false },
+          { "SystemId": "Effect_Fire", "DetachedFromModel": false }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.heavyDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 5, Punch 17  - HEAVY FINISHER (all particles)",
+      "RunTime": 0.65,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_Mace_T2_Impact",
+        "Particles": [
+          { "SystemId": "Mace_Signature_Cast", "DetachedFromModel": true },
+          { "SystemId": "Block_Break_Dust", "DetachedFromModel": true },
+          { "SystemId": "Effect_Fire", "DetachedFromModel": false }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.heavyDamage} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Round 5, Punch 18  - HEAVY FINISHER (breathing + dust)",
+      "RunTime": 0.65,
+      "HorizontalSpeedMultiplier": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Default",
+        "ItemAnimationId": "SwingUpLeft",
+        "WorldSoundEventId": "SFX_RPGMobs_Enrage_HeavyBreathing",
+        "Particles": [
+          { "SystemId": "Mace_Signature_Cast", "DetachedFromModel": true },
+          { "SystemId": "Block_Break_Dust", "DetachedFromModel": true }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.Enrage.config.templates.heavyDamage} ]
+      }
+    }
+  ]
+}

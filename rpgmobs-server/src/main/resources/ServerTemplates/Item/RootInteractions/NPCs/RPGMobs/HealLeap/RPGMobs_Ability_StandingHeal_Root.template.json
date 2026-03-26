@@ -1,0 +1,10 @@
+{
+  "Interactions": [
+    ${features.HealLeap.config.templates.entryStandingHeal}
+  ],
+  "Tags": {
+    "Attack": [
+      "Melee"
+    ]
+  }
+}

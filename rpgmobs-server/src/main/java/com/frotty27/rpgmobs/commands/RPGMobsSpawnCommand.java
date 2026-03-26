@@ -10,6 +10,7 @@ import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
+import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
@@ -23,25 +24,51 @@ import com.hypixel.hytale.server.npc.commands.NPCCommand;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import it.unimi.dsi.fastutil.Pair;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.frotty27.rpgmobs.utils.Constants.NPC_COMPONENT_TYPE;
 
 public final class RPGMobsSpawnCommand extends AbstractPlayerCommand {
 
+    private static final Map<String, String> WEAPON_CATEGORY_ALIASES = Map.ofEntries(
+            Map.entry("sword", "Swords"),
+            Map.entry("swords", "Swords"),
+            Map.entry("longsword", "Longswords"),
+            Map.entry("longswords", "Longswords"),
+            Map.entry("dagger", "Daggers"),
+            Map.entry("daggers", "Daggers"),
+            Map.entry("axe", "Axes"),
+            Map.entry("axes", "Axes"),
+            Map.entry("battleaxe", "Battleaxes"),
+            Map.entry("battleaxes", "Battleaxes"),
+            Map.entry("mace", "Maces"),
+            Map.entry("maces", "Maces"),
+            Map.entry("club", "Clubs"),
+            Map.entry("clubs", "Clubs"),
+            Map.entry("spear", "Spears"),
+            Map.entry("spears", "Spears")
+    );
+
     private final RPGMobsPlugin plugin;
     private final RequiredArg<BuilderInfo> roleArg;
     private final RequiredArg<Integer> tierArg;
+    private final OptionalArg<String> weaponCategoryArg;
 
     public RPGMobsSpawnCommand(RPGMobsPlugin plugin) {
-        super("spawn", "Spawn a specific NPC role at a chosen RPGMobs tier.");
+        super("spawn", "Spawn a specific NPC role at a chosen RPGMobs tier, optionally forcing a weapon category.");
         this.plugin = plugin;
 
         requirePermission(RPGMobsPermissions.RPGMobs_SPAWN);
 
         roleArg = withRequiredArg("npcRole", "NPC role name.", NPCCommand.NPC_ROLE);
         tierArg = withRequiredArg("tier", "RPGMobs tier (1-5).", ArgTypes.INTEGER).addValidator(Validators.range(1, 5));
+        weaponCategoryArg = withOptionalArg("weaponCategory",
+                "Weapon category: sword, longsword, dagger, axe, battleaxe, mace, club, spear.",
+                ArgTypes.STRING);
     }
 
     @Override
@@ -65,6 +92,13 @@ public final class RPGMobsSpawnCommand extends AbstractPlayerCommand {
 
         int tierNumber = tierArg.get(ctx);
         int tierIndex = Math.max(0, Math.min(4, tierNumber - 1));
+
+        @Nullable String weaponCategoryOverride = resolveWeaponCategory(weaponCategoryArg.get(ctx));
+        if (weaponCategoryArg.get(ctx) != null && weaponCategoryOverride == null) {
+            ctx.sendMessage(Message.raw("[RPGMobs] Unknown weapon category: " + weaponCategoryArg.get(ctx)
+                    + ". Valid: sword, longsword, dagger, axe, battleaxe, mace, club, spear."));
+            return;
+        }
 
         TransformComponent transform = entityStore.getComponent(playerRef, TransformComponent.getComponentType());
         if (transform == null) {
@@ -103,7 +137,8 @@ public final class RPGMobsSpawnCommand extends AbstractPlayerCommand {
                                              entityStore,
                                              commandBuffer,
                                              npcEntity,
-                                             tierIndex
+                                             tierIndex,
+                                             weaponCategoryOverride
             );
             applied.set(true);
             return false;
@@ -114,6 +149,12 @@ public final class RPGMobsSpawnCommand extends AbstractPlayerCommand {
             return;
         }
 
-        ctx.sendMessage(Message.raw(String.format("[RPGMobs] Spawned %s at tier %d.", roleName, tierIndex + 1)));
+        String suffix = weaponCategoryOverride != null ? " with " + weaponCategoryOverride + " weapon" : "";
+        ctx.sendMessage(Message.raw(String.format("[RPGMobs] Spawned %s at tier %d%s.", roleName, tierIndex + 1, suffix)));
+    }
+
+    private static @Nullable String resolveWeaponCategory(@Nullable String input) {
+        if (input == null || input.isBlank()) return null;
+        return WEAPON_CATEGORY_ALIASES.get(input.toLowerCase(Locale.ROOT));
     }
 }

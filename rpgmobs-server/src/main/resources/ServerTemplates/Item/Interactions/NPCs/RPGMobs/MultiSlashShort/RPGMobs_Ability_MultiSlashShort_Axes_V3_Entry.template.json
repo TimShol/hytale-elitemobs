@@ -1,0 +1,58 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashShort Axes V3  - 1-hit upward slash (~1.8s total).",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 1.1s charging with weapon trail",
+      "RunTime": 0.8,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Axe",
+        "ItemAnimationId": "SwingLeftCharging",
+        "WorldSoundEventId": "SFX_Battleaxe_T1_Raise",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - SwingUpRight",
+      "RunTime": 0.45,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Axe",
+        "ItemAnimationId": "SwingUpRight",
+        "WorldSoundEventId": "SFX_Axe_Iron_Swing",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashShort.config.templates.damageInteractionAxes} ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery",
+      "RunTime": 0.3,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Axe",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

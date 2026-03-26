@@ -1,19 +1,30 @@
 package com.frotty27.rpgmobs.features;
 
 import com.frotty27.rpgmobs.components.ability.ChargeLeapAbilityComponent;
+import com.frotty27.rpgmobs.components.combat.RPGMobsCombatTrackingComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
+import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
+import com.frotty27.rpgmobs.systems.ability.AbilityTriggerSource;
+import com.frotty27.rpgmobs.systems.ability.TriggerContext;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.math.vector.Vector3d;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 public final class RPGMobsChargeLeapAbilityFeature
         extends AbstractGatedAbilityFeature<ChargeLeapAbilityComponent, RPGMobsConfig.ChargeLeapAbilityConfig> {
+
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
     @Override
     public String id() {
@@ -23,6 +34,96 @@ public final class RPGMobsChargeLeapAbilityFeature
     @Override
     public String displayName() {
         return "Charge Leap";
+    }
+
+    @Override
+    public String description() {
+        return "Gap-closing charge + aerial slam attack";
+    }
+
+    @Override
+    public Set<AbilityTriggerSource> triggerSources() {
+        return Set.of(AbilityTriggerSource.AGGRO);
+    }
+
+    @Override
+    public boolean canTrigger(TriggerContext context) {
+        var chargeLeap = RPGMobsAbilityFeatureHelpers.getReadyAbilityComponent(
+                context, context.plugin().getChargeLeapAbilityComponentType());
+        if (chargeLeap == null) return false;
+
+        RPGMobsCombatTrackingComponent combat = context.store().getComponent(
+                context.entityRef(), context.plugin().getCombatTrackingComponentType()
+        );
+        if (combat == null || !combat.isInCombat()) return false;
+
+        Ref<EntityStore> targetRef = combat.getBestTarget();
+        if (targetRef == null || !targetRef.isValid()) return false;
+        if (combat.aiTarget == null || !combat.aiTarget.isValid()) return false;
+
+        RPGMobsConfig.AbilityConfig rawConfig = context.config().abilitiesConfig.defaultAbilities.get(id());
+        if (!(rawConfig instanceof RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig)) return false;
+
+        float distance = calculateDistance(context.entityRef(), targetRef, context.store());
+        boolean inRange = distance >= abilityConfig.minRange && distance <= abilityConfig.maxRange;
+        RPGMobsLogger.debug(LOGGER,
+                "[ChargeLeap] canTrigger: distance=%.1f minRange=%.1f maxRange=%.1f inRange=%b",
+                RPGMobsLogLevel.INFO, distance, abilityConfig.minRange, abilityConfig.maxRange, inRange);
+        return inRange;
+    }
+
+    @Override
+    protected void populateComponent(ChargeLeapAbilityComponent component, RPGMobsPlugin plugin,
+                                     Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                                     int tierIndex) {
+        component.weaponVariant = resolveWeaponVariant(plugin, npcRef, entityStore);
+    }
+
+    @Override
+    public String resolveRootTemplateKey(TriggerContext context) {
+        String variant = resolveWeaponVariant(context.plugin(), context.entityRef(), context.store());
+        String cap = Character.toUpperCase(variant.charAt(0)) + variant.substring(1);
+        return "root" + cap;
+    }
+
+    private String resolveWeaponVariant(RPGMobsPlugin plugin, Ref<EntityStore> npcRef,
+                                        Store<EntityStore> entityStore) {
+        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
+        if (weaponId.isEmpty()) return AbstractMultiSlashFeature.VARIANT_SWORDS;
+
+        RPGMobsConfig config = plugin.getConfig();
+        if (config == null || config.gearConfig == null || config.gearConfig.weaponCategoryTree == null) {
+            return AbstractMultiSlashFeature.VARIANT_SWORDS;
+        }
+
+        RPGMobsConfig.GearCategory weaponTree = config.gearConfig.weaponCategoryTree;
+        for (RPGMobsConfig.GearCategory category : weaponTree.children) {
+            if (category.itemKeys.contains(weaponId)) {
+                String mapped = AbstractMultiSlashFeature.CATEGORY_TO_VARIANT.get(category.name);
+                if (mapped != null) {
+                    if (AbstractMultiSlashFeature.VARIANT_CLUBS.equals(mapped)
+                            && weaponId.toLowerCase().contains("flail")) {
+                        return AbstractMultiSlashFeature.VARIANT_CLUBS_FLAIL;
+                    }
+                    return mapped;
+                }
+            }
+        }
+
+        return AbstractMultiSlashFeature.VARIANT_SWORDS;
+    }
+
+    private float calculateDistance(Ref<EntityStore> entityRef, Ref<EntityStore> targetRef, Store<EntityStore> store) {
+        TransformComponent mobTransform = store.getComponent(entityRef, TransformComponent.getComponentType());
+        TransformComponent targetTransform = store.getComponent(targetRef, TransformComponent.getComponentType());
+        if (mobTransform == null || targetTransform == null) return Float.MAX_VALUE;
+
+        Vector3d mobPos = mobTransform.getPosition();
+        Vector3d targetPos = targetTransform.getPosition();
+        double dx = targetPos.getX() - mobPos.getX();
+        double dy = targetPos.getY() - mobPos.getY();
+        double dz = targetPos.getZ() - mobPos.getZ();
+        return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     @Override

@@ -1,0 +1,106 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs DodgeRoll RIGHT  - right roll to evade (~0.9s). 0.15s telegraph, rightward ApplyForce, 0.35s slide, 0.4s recovery.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Crouch frame  - brief telegraph + wind trail on weapon. No HorizontalSpeedMultiplier so ApplyForce can move the NPC.",
+      "RunTime": 0.15,
+      "Effects": {
+        "ItemPlayerAnimationsId": "RPGMobs_DodgeRoll",
+        "ItemAnimationId": "DashRight",
+        "Particles": [
+          {
+            "SystemId": "Block_Break_Dust",
+            "DetachedFromModel": true
+          }
+        ],
+        "Trails": [
+          {
+            "TrailId": "Wind",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      }
+    },
+    {
+      "Type": "ApplyForce",
+      "$Comment": "Right dash  - strafe right. Exact HealLeap pattern with dodge effects.",
+      "Effects": {
+        "ItemPlayerAnimationsId": "RPGMobs_DodgeRoll",
+        "ItemAnimationId": "DashRight",
+        "ClearAnimationOnFinish": true,
+        "WorldSoundEventId": "SFX_Daggers_T1_Pounce",
+        "Particles": [
+          {
+            "SystemId": "Block_Break_Dust",
+            "DetachedFromModel": true
+          }
+        ],
+        "Trails": [
+          {
+            "TrailId": "Daggers_Dash",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          },
+          {
+            "TrailId": "Wind",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Force": ${features.DodgeRoll.config.dodgeForce},
+      "Direction": {
+        "X": 4.5,
+        "Y": 0.1,
+        "Z": 0
+      },
+      "WaitForGround": false,
+      "ChangeVelocityType": "Add",
+      "VelocityConfig": {
+        "AirResistance": 0.97,
+        "AirResistanceMax": 0.96,
+        "GroundResistance": 0.94,
+        "GroundResistanceMax": 0.82,
+        "Threshold": 0.1,
+        "Style": "Exp"
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Mid-dodge slide  - still in dash animation while momentum carries.",
+      "RunTime": 0.35,
+      "Effects": {
+        "Trails": [
+          {
+            "TrailId": "Wind",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - landing dust, clear animation.",
+      "RunTime": 0.4,
+      "HorizontalSpeedMultiplier": 0.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "RPGMobs_DodgeRoll",
+        "ClearAnimationOnFinish": true,
+        "Particles": [
+          {
+            "SystemId": "Block_Break_Dust",
+            "DetachedFromModel": true
+          }
+        ]
+      }
+    }
+  ]
+}

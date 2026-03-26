@@ -1,0 +1,22 @@
+{
+  "Layers": [
+    {
+      "Files": [
+        "Sounds/NPC/Intelligent/Trork/Trork_Alerted_04.ogg",
+        "Sounds/NPC/Intelligent/Trork/Trork_Alerted_06.ogg",
+        "Sounds/NPC/Intelligent/Trork/Trork_Alerted_10.ogg"
+      ],
+      "RandomSettings": {
+        "MinPitch": -1,
+        "MaxPitch": 1,
+        "MinVolume": -1
+      },
+      "Probability": 100
+    }
+  ],
+  "MaxInstance": 2,
+  "Volume": 2.5,
+  "PreventSoundInterruption": true,
+  "AudioCategory": "AudioCat_NPC_Trork",
+  "Parent": "SFX_Attn_Moderate"
+}

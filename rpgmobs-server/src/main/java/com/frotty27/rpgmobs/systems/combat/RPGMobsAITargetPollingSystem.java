@@ -5,7 +5,6 @@ import com.frotty27.rpgmobs.api.events.RPGMobsDeaggroEvent;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.combat.RPGMobsCombatTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
-import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
@@ -63,10 +62,7 @@ public final class RPGMobsAITargetPollingSystem extends EntityTickingSystem<Enti
                 Ref<EntityStore> aiTarget = getAITarget(npc);
 
                 if (aiTarget != null && isOwnMinion(store, mobRef, aiTarget)) {
-                    aiTarget = null;
-                }
-
-                if (aiTarget != null && isEliteTargetBlocked(store, npc, aiTarget)) {
+                    clearAllAITargets(npc);
                     aiTarget = null;
                 }
 
@@ -144,16 +140,19 @@ public final class RPGMobsAITargetPollingSystem extends EntityTickingSystem<Enti
         return null;
     }
 
-    private boolean isEliteTargetBlocked(Store<EntityStore> store, NPCEntity npc, Ref<EntityStore> targetRef) {
-        RPGMobsTierComponent targetTier = store.getComponent(targetRef, plugin.getRPGMobsComponentType());
-        if (targetTier == null) return false;
+    private void clearAllAITargets(NPCEntity npc) {
+        Role role = npc.getRole();
+        if (role == null) return;
 
-        if (npc.getWorld() == null) return false;
+        MarkedEntitySupport markedEntitySupport = role.getMarkedEntitySupport();
+        if (markedEntitySupport == null) return;
 
-        String worldName = npc.getWorld().getName();
-        ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
-
-        return resolved.eliteFriendlyFireDisabled || resolved.eliteNoAggroOnElite;
+        int slotCount = markedEntitySupport.getMarkedEntitySlotCount();
+        for (int i = 0; i < slotCount; i++) {
+            if (markedEntitySupport.hasMarkedEntityInSlot(i)) {
+                markedEntitySupport.clearMarkedEntity(i);
+            }
+        }
     }
 
     private boolean isOwnMinion(Store<EntityStore> store, Ref<EntityStore> mobRef, Ref<EntityStore> targetRef) {

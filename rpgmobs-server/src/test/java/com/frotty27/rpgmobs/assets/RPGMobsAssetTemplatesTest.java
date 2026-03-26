@@ -9,7 +9,7 @@ public class RPGMobsAssetTemplatesTest {
     @Test
     void deriveKeyFromTemplatePath() {
         String key1 = RPGMobsAssetTemplates.deriveKeyFromTemplatePath(
-                "Item/RootInteractions/NPCs/RPGMobs/RPGMobs_Ability_ChargeLeap_RootInteraction.template.json");
+                "Item/RootInteractions/NPCs/RPGMobs/ChargeLeap/RPGMobs_Ability_ChargeLeap_RootInteraction.template.json");
         String key2 = RPGMobsAssetTemplates.deriveKeyFromTemplatePath(
                 "Entity/Effects/RPGMobs/RPGMobs_EntityEffect_ProjectileResistance.template.json");
         String key3 = RPGMobsAssetTemplates.deriveKeyFromTemplatePath("  ");

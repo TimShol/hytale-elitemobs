@@ -8,4 +8,6 @@ public interface AbilityEnabledComponent extends Component<EntityStore> {
     boolean isAbilityEnabled();
 
     void setAbilityEnabled(boolean enabled);
+
+    long getCooldownTicksRemaining();
 }

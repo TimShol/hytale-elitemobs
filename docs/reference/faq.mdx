@@ -7,7 +7,7 @@ description: "Frequently asked questions and troubleshooting."
 
 ### Why aren't elites spawning?
 
-1. Check `core.yml` → `enabledByDefault`. If set to `false`, the world needs a specific overlay file in `worlds/` or `instances/` with `enabled: true`.
+1. Check `core.yml` → `globalEnabled`. If set to `false`, RPGMobs is disabled in ALL worlds regardless of overlay settings. Then check `enabledByDefault`  -  if set to `false`, each world needs a specific overlay file in `worlds/` or `instances/` with `enabled: true`.
 2. Check `spawning.yml` → `spawnChancePerTier`. If all weights are `0`, no elites will spawn.
 3. If using `ENVIRONMENT` progression, make sure you are in a supported zone (Zone 1-4).
 4. Check `mobrules.yml` to confirm the NPC type has a matching mob rule with `enabled: true`.
@@ -19,7 +19,7 @@ Check `stats.yml` → `mobDamageMultiplierPerTier`. The default Tier 5 multiplie
 
 ### Why do some mobs have abilities and others don't?
 
-Abilities are linked to specific mob rules with per-tier toggles. By default, most mob categories (Skeletons, Zombies, Goblins, Trorks, Outlanders, Wraiths) have abilities enabled for Tier 4 and 5. Additionally, each ability has weapon category restrictions — for example, Charge Leap is disabled for mobs with ranged weapons (staves, bows). Void mobs are excluded by default.
+RPGMobs has 10 abilities, but not every mob gets all of them. Abilities are linked to specific mob rules with per-tier toggles and weapon category gates. Additionally, T4+ elites are assigned a combat personality (Aggressive, Tactical, Strategic, Berserker) that filters which abilities they receive  -  each personality gets a coherent set of 3-6 abilities. T1-T3 elites get a limited set: T1 gets Dodge Roll only, T2 adds Multi Slash, T3 adds Enrage.
 
 You can configure which mob rules are linked to each ability through the [Admin UI](/config/admin-ui) or in `abilities.yml`.
 
@@ -36,7 +36,7 @@ If you skip step 1, you may have leftover entities with broken behavior until th
 
 ### Is there an in-game configuration UI?
 
-Yes. Use `/rpgmobs config` to open the Admin UI. It requires the `rpgmobs.config` permission. The Admin UI provides visual editors for every setting — base config, per-world overlays, per-instance overlays, weapon/armor categories, and more. See the [Admin UI guide](/config/admin-ui).
+Yes. Use `/rpgmobs config` to open the Admin UI. It requires the `rpgmobs.config` permission. The Admin UI provides visual editors for every setting  -  base config, per-world overlays, per-instance overlays, weapon/armor categories, and more. See the [Admin UI guide](/config/admin-ui).
 
 ### Can I make elites spawn everywhere?
 
@@ -76,4 +76,4 @@ The flat `instances.yml` file was replaced by the overlay system in v3. Per-worl
 
 ### What happened to minTierInclusive/maxTierInclusive on drops?
 
-These were replaced by `enabledPerTier` — a boolean array with one entry per tier (T1 through T5). This gives you finer control over which tiers can drop each item. For example, `enabledPerTier: [false, false, true, true, false]` means only Tier 3 and 4 elites can drop the item. See [Loot](/config/loot) for details.
+These were replaced by `enabledPerTier`  -  a boolean array with one entry per tier (T1 through T5). This gives you finer control over which tiers can drop each item. For example, `enabledPerTier: [false, false, true, true, false]` means only Tier 3 and 4 elites can drop the item. See [Loot](/config/loot) for details.

@@ -1,0 +1,17 @@
+{
+  "Parent": "Arrow_FullCharge",
+  "Appearance": "Arrow_Iron",
+  "MuzzleVelocity": 40,
+  "Gravity": 8,
+  "TimeToLive": 10,
+  "Damage": 10,
+  "HorizontalCenterShot": 0.15,
+  "VerticalCenterShot": 0.3,
+  "DepthShot": 0.8,
+  "PitchAdjustShot": true,
+  "HitSoundEventId": "SFX_Arrow_FullCharge_Hit",
+  "MissSoundEventId": "SFX_Arrow_FullCharge_Miss",
+  "HitParticles": {
+    "SystemId": "Impact_Blade_01"
+  }
+}

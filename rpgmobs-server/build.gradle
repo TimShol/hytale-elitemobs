@@ -3,7 +3,7 @@ plugins {
     id 'com.gradleup.shadow' version '9.3.0'
 }
 
-def mod_build = 1
+def mod_build = 2
 
 group = rootProject.property('group')
 version = rootProject.ext.computeVersion(mod_build)
@@ -14,6 +14,7 @@ def generatedDir = file("${projectDir}/src/generated/java")
 sourceSets {
     main {
         java.srcDirs += generatedDir
+        resources.srcDirs += file("${projectDir}/src/generated/resources")
     }
 }
 
@@ -27,6 +28,7 @@ tasks.register('generateAssetIds') {
     def outputFile = new File(generatedDir, 'com/frotty27/rpgmobs/generated/HytaleAssetIds.java')
 
     outputs.file(outputFile)
+    outputs.upToDateWhen { false }
 
     doLast {
         def npcIds = [] as Set
@@ -52,9 +54,1327 @@ tasks.register('generateAssetIds') {
         }
         itemIds.sort(String.CASE_INSENSITIVE_ORDER)
 
+        def npcRolePaths = [:]
+        if (npcRolesDir.exists()) {
+            def rolesRoot = npcRolesDir.toPath()
+            npcRolesDir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+                if (file.name.endsWith('.json')) {
+                    def id = file.name.replaceAll(/\.json$/, '')
+                    if (!npcExcludePatterns.any { id ==~ it }) {
+                        def relativePath = rolesRoot.relativize(file.toPath()).toString().replace('\\', '/')
+                        npcRolePaths[id] = relativePath
+                    }
+                }
+            }
+        }
+
         outputFile.parentFile.mkdirs()
         def npcLiterals = npcIdsSorted.collect { '        "' + it + '"' }.join(',\n')
         def itemLiterals = itemIds.collect { '        "' + it + '"' }.join(',\n')
+        def generatedResDir = new File(projectDir, 'src/generated/resources')
+        def genRolesDir = new File(generatedResDir, 'Server/NPC/Roles')
+        if (genRolesDir.exists()) genRolesDir.deleteDir()
+        def genBalancingDir = new File(generatedResDir, 'Server/NPC/Balancing')
+        if (genBalancingDir.exists()) genBalancingDir.deleteDir()
+        def genInteractionsDir = new File(generatedResDir, 'Server/Item/Interactions/NPCs/RPGMobs/BasicAttacks')
+        if (genInteractionsDir.exists()) genInteractionsDir.deleteDir()
+        def genRootInteractionsDir = new File(generatedResDir, 'Server/Item/RootInteractions/NPCs/RPGMobs/BasicAttacks')
+        if (genRootInteractionsDir.exists()) genRootInteractionsDir.deleteDir()
+
+        def conditionalParams = [
+            CombatBackwardsRelativeSpeed: 1.0,
+            CombatStrafeWeight: 15.0,
+            KnockbackScale: 0.4,
+            LeashDistance: 40.0,
+            CombatBackOffAfterAttack: true,
+            BlockProbability: 20.0
+        ]
+
+        // Per-weapon hitbox parameters: EndDistance = how far the damage arc reaches.
+        // Vanilla Skeleton_Knight reference: EndDistance 2.5, Length 60, RollOffset 30, YawStartOffset -30
+        // Daggers short range but wide fast arc, Spears long range but narrow thrust.
+        // MaxSpeed per weapon: affects how fast the NPC moves in combat (daggers = agile, battleaxes = heavy)
+        // windUp = time before damage Selector fires. Must be long enough for parry
+        // to cancel the attack before damage. If parry triggers during windUp, the Next
+        // (damage Selector) never fires. Minimum ~0.15s for parry to react.
+        def weaponHitboxParams = [
+            Daggers:    [endDistance: 2.2, coneLength: 55, coneYaw: 30, windUp: 0.15, recovery: 0.12, combatSpeed: 9],
+            Swords:     [endDistance: 2.8, coneLength: 60, coneYaw: 30, windUp: 0.20, recovery: 0.17, combatSpeed: 8],
+            Longswords: [endDistance: 3.0, coneLength: 65, coneYaw: 30, windUp: 0.25, recovery: 0.20, combatSpeed: 8],
+            Axes:       [endDistance: 2.8, coneLength: 55, coneYaw: 25, windUp: 0.20, recovery: 0.17, combatSpeed: 8],
+            Battleaxes: [endDistance: 2.8, coneLength: 70, coneYaw: 35, windUp: 0.35, recovery: 0.30, combatSpeed: 7],
+            Maces:      [endDistance: 2.8, coneLength: 60, coneYaw: 30, windUp: 0.50, recovery: 0.25, combatSpeed: 7],
+            Clubs:      [endDistance: 2.8, coneLength: 55, coneYaw: 25, windUp: 0.22, recovery: 0.17, combatSpeed: 8],
+            ClubsFlail: [endDistance: 2.8, coneLength: 60, coneYaw: 30, windUp: 0.25, recovery: 0.20, combatSpeed: 7],
+            Spears:     [endDistance: 3.0, coneLength: 70, coneYaw: 15, windUp: 0.25, recovery: 0.20, combatSpeed: 8]
+        ]
+
+        // Player weapon animation set names - always use these so the animation
+        // matches the HELD WEAPON regardless of NPC race. These are the same animation
+        // sets players use from Server/Item/Animations/*.json.
+        def weaponAnimationIds = [
+            Daggers: 'Daggers', Swords: 'Sword', Longswords: 'Longsword', Axes: 'Axe',
+            Battleaxes: 'Battleaxe', Maces: 'Mace', Clubs: 'Club', ClubsFlail: 'Club_Flail', Spears: 'Spear'
+        ]
+
+        // Per-weapon trail and sound IDs (verified Hytale asset IDs)
+        def weaponTrails = [
+            Swords: 'Medium_Default', Longswords: 'Sword_Distortion', Daggers: 'Daggers_Dash',
+            Battleaxes: 'Large_Charged_Red', Axes: 'Medium_Default', Maces: 'Medium_Mace_Charged',
+            Clubs: 'Large_Charged', ClubsFlail: 'Large_Charged', Spears: 'Medium_Default'
+        ]
+        // T1 sounds for basic attacks (lighter, standard swings)
+        // T2 sounds are reserved for MultiSlash special abilities (heavier, more impactful)
+        def weaponSounds = [
+            Swords: 'SFX_Sword_T1_Swing', Longswords: 'SFX_Sword_T1_Swing',
+            Daggers: 'SFX_Daggers_T1_Swing', Battleaxes: 'SFX_Battleaxe_T1_Swing',
+            Axes: 'SFX_Axe_Iron_Swing', Maces: 'SFX_Mace_T1_Swing',
+            Clubs: 'SFX_Mace_T1_Swing', ClubsFlail: 'SFX_Flail_Swing', Spears: 'SFX_Spear_Lunge'
+        ]
+
+        // Per-weapon impact sounds (played when hit lands on target)
+        def weaponImpactSounds = [
+            Swords: 'SFX_Sword_T2_Impact', Longswords: 'SFX_Longsword_Steel_Impact',
+            Daggers: 'SFX_Daggers_T2_Slash_Impact', Battleaxes: 'SFX_Battleaxe_T2_Impact',
+            Axes: 'SFX_Axe_Iron_Impact', Maces: 'SFX_Mace_T2_Impact',
+            Clubs: 'SFX_T1_Impact_Blunt', ClubsFlail: 'SFX_T1_Impact_Blunt',
+            Spears: 'SFX_Spear_Impact'
+        ]
+
+        // Per-weapon impact particles (played on hit target)
+        def weaponImpactParticles = [
+            Swords: 'Impact_Sword_Basic', Longswords: 'Impact_Sword_Basic',
+            Daggers: 'Impact_Dagger_Slash', Battleaxes: 'Impact_Battleaxe_Bash',
+            Axes: 'Impact_Sword_Basic', Maces: 'Impact_Mace_Basic',
+            Clubs: 'Impact_Mace_Basic', ClubsFlail: 'Impact_Mace_Basic',
+            Spears: 'Impact_Sword_Basic'
+        ]
+
+        // Per-weapon attack chains (unique swing directions per weapon)
+        // Using only SwingLeft, SwingRight, SwingDownLeft, SwingDownRight where available
+        // Other directions reserved for Multi Slash abilities
+        def weaponAttackChains = [
+            Swords:     ['SwingLeft', 'SwingRight', 'SwingLeft', 'SwingRight'],
+            Longswords: ['SwingLeft', 'SwingRight', 'SwingLeft', 'SwingRight'],
+            Axes:       ['SwingLeft', 'SwingRight', 'SwingDownLeft', 'SwingRight', 'SwingLeft'],
+            Battleaxes: ['SwingLeft', 'SwingRight', 'SwingDownLeft', 'SwingDownRight', 'SwingLeft'],
+            Maces:      ['SwingLeft', 'SwingRight', 'SwingLeft', 'SwingRight'],
+            Clubs:      ['SwingLeft', 'SwingRight', 'SwingLeft', 'SwingRight'],
+            ClubsFlail: ['SwingLeft', 'SwingRight', 'SwingLeft', 'SwingRight'],
+            Daggers:    ['SwingLeft', 'SwingRight', 'SwingLeft', 'SwingRight'],
+            Spears:     ['SwingLeft', 'SwingRight', 'SwingLeft', 'SwingRight']
+        ]
+
+        def weaponNames = ['Daggers', 'Swords', 'Longswords', 'Axes', 'Battleaxes', 'Maces', 'Clubs', 'ClubsFlail', 'Spears']
+
+        // Generate per-weapon attack interactions
+        def attackFileCount = 0
+        genInteractionsDir.mkdirs()
+        genRootInteractionsDir.mkdirs()
+
+        // Selector direction mapping:
+        // SwingLeft, SwingDownLeft -> Direction: ToLeft
+        // SwingRight, SwingDownRight -> Direction: ToRight
+        // YawStartOffset is ALWAYS negative (vanilla pattern: -30 for all swings)
+        def generateSwingInteraction = { String weapon, String swingDirection, Map hitbox, String animationId, String trailId, String soundId, String impactSound ->
+            Boolean isLeft = swingDirection == 'SwingLeft' || swingDirection == 'SwingDownLeft'
+            String selectorDirection = isLeft ? 'ToLeft' : 'ToRight'
+            Integer yawOffset = -(hitbox.coneYaw as Integer)
+            return [
+                Type: 'Simple',
+                Effects: [ItemPlayerAnimationsId: animationId, ItemAnimationId: swingDirection],
+                RunTime: hitbox.windUp,
+                Next: [
+                    Type: 'Parallel',
+                    Interactions: [
+                        [
+                            Interactions: [[
+                                Type: 'Selector', RunTime: 0.10,
+                                Selector: [
+                                    Id: 'Horizontal', Direction: selectorDirection,
+                                    TestLineOfSight: true, ExtendTop: 0.5, ExtendBottom: 0.5,
+                                    StartDistance: 0.5, EndDistance: hitbox.endDistance,
+                                    Length: hitbox.coneLength, RollOffset: 30,
+                                    YawStartOffset: yawOffset
+                                ],
+                                HitEntity: [Interactions: ["RPGMobs_Damage_${weapon}"]],
+                                Next: [Type: 'Simple', RunTime: hitbox.recovery]
+                            ]]
+                        ],
+                        [
+                            Interactions: [[
+                                Type: 'Simple', RunTime: hitbox.recovery,
+                                Effects: [
+                                    Trails: [[
+                                        PositionOffset: [X: 0.8, Y: 0, Z: 0],
+                                        RotationOffset: [Pitch: 0, Roll: 90, Yaw: 0],
+                                        TargetNodeName: 'Handle',
+                                        TrailId: trailId
+                                    ]],
+                                    WorldSoundEventId: soundId
+                                ]
+                            ]]
+                        ]
+                    ]
+                ]
+            ]
+        }
+
+        // Generate per-weapon attack files with full Parallel structure (hitbox + trail + sound)
+        // Animation IDs use player weapon sets so animations match the HELD weapon
+        weaponNames.each { String weapon ->
+            def hitbox = weaponHitboxParams[weapon]
+            String animId = weaponAnimationIds[weapon] ?: 'Default'
+            String trailId = weaponTrails[weapon] ?: 'Medium_Default'
+            String soundId = weaponSounds[weapon] ?: 'SFX_Sword_T1_Swing'
+            String impactSoundId = weaponImpactSounds[weapon] ?: 'SFX_Sword_T2_Impact'
+            def chain = weaponAttackChains[weapon]
+
+            // Generate per-weapon damage interaction (with weapon-specific impact sound + particle)
+            String impactParticle = weaponImpactParticles[weapon] ?: 'Impact_Sword_Basic'
+            def damageInteraction = [
+                Parent: 'DamageEntityParent',
+                DamageCalculator: [BaseDamage: [Physical: 5]],
+                DamageEffects: [
+                    Knockback: [Force: 1, RelativeX: 0, RelativeZ: -1, VelocityY: 3, VelocityType: 'Set'],
+                    WorldSoundEventId: impactSoundId,
+                    LocalSoundEventId: impactSoundId,
+                    WorldParticles: [[SystemId: impactParticle]]
+                ]
+            ]
+            new File(genInteractionsDir, "RPGMobs_Damage_${weapon}.json").text =
+                new groovy.json.JsonBuilder(damageInteraction).toPrettyString()
+            attackFileCount++
+
+            // Collect unique swing directions needed for this weapon
+            def uniqueSwings = chain.toUnique() as List<String>
+
+            // Generate one interaction file per unique swing direction
+            uniqueSwings.each { String swingDir ->
+                def interaction = generateSwingInteraction(weapon, swingDir, hitbox, animId, trailId, soundId, impactSoundId)
+                new File(genInteractionsDir, "RPGMobs_Attack_${weapon}_${swingDir}.json").text =
+                    new groovy.json.JsonBuilder(interaction).toPrettyString()
+                attackFileCount++
+            }
+
+            // Generate root interaction with the weapon's full attack chain
+            def chainInteractionIds = chain.collect { String swingDir -> "RPGMobs_Attack_${weapon}_${swingDir}" as String }
+            def root = [
+                Interactions: [[
+                    Type: 'Chaining', ChainId: "RPGMobs_Combo_${weapon}",
+                    ChainingAllowance: 15,
+                    Next: chainInteractionIds
+                ]],
+                Tags: [Attack: ['Melee']]
+            ]
+            new File(genRootInteractionsDir, "Root_RPGMobs_Attack_${weapon}.json").text =
+                new groovy.json.JsonBuilder(root).toPrettyString()
+            attackFileCount++
+        }
+
+        // Generic fallback (Default animation, EndDistance 2.5) for NPCs with unknown faction/weapon
+        def defaultHitbox = weaponHitboxParams['Swords']
+        // Generic damage interaction (fallback - uses generic melee impact, not sword-specific)
+        def genericDamage = [
+            Parent: 'DamageEntityParent',
+            DamageCalculator: [BaseDamage: [Physical: 5]],
+            DamageEffects: [
+                Knockback: [Force: 1, RelativeX: 0, RelativeZ: -1, VelocityY: 3, VelocityType: 'Set'],
+                WorldSoundEventId: 'SFX_Light_Melee_T1_Impact',
+                LocalSoundEventId: 'SFX_Light_Melee_T1_Impact',
+                WorldParticles: [[SystemId: 'Impact_Mace_Basic']]
+            ]
+        ]
+        new File(genInteractionsDir, 'RPGMobs_Damage_Generic.json').text =
+            new groovy.json.JsonBuilder(genericDamage).toPrettyString()
+        attackFileCount++
+
+        def genericSwingLeft = generateSwingInteraction('Generic', 'SwingLeft', defaultHitbox, 'Default', 'Medium_Default', 'SFX_Sword_T1_Swing', 'SFX_Sword_T2_Impact')
+        new File(genInteractionsDir, 'RPGMobs_Attack_SwingLeft.json').text =
+            new groovy.json.JsonBuilder(genericSwingLeft).toPrettyString()
+        attackFileCount++
+
+        def genericSwingRight = generateSwingInteraction('Generic', 'SwingRight', defaultHitbox, 'Default', 'Medium_Default', 'SFX_Sword_T1_Swing', 'SFX_Sword_T2_Impact')
+        new File(genInteractionsDir, 'RPGMobs_Attack_SwingRight.json').text =
+            new groovy.json.JsonBuilder(genericSwingRight).toPrettyString()
+        attackFileCount++
+
+        def genericRoot = [
+            Interactions: [[
+                Type: 'Chaining', ChainId: 'RPGMobs_MeleeCombo',
+                ChainingAllowance: 15,
+                Next: ['RPGMobs_Attack_SwingLeft', 'RPGMobs_Attack_SwingRight',
+                       'RPGMobs_Attack_SwingLeft', 'RPGMobs_Attack_SwingRight']
+            ]],
+            Tags: [Attack: ['Melee']]
+        ]
+        new File(genRootInteractionsDir, 'Root_RPGMobs_Attack_Melee.json').text =
+            new groovy.json.JsonBuilder(genericRoot).toPrettyString()
+        attackFileCount++
+
+        println "Generated ${attackFileCount} per-weapon attack files (${weaponNames.size()} weapons + generic fallback)"
+
+        // Phase 1: Scan all role files to build combat capability map and store parsed JSON
+        def combatCapableTemplates = new HashSet<String>()
+        def allRoleRefs = [:]
+        def allRoleJsons = [:]
+        npcRolesDir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+            if (file.name.endsWith('.json')) {
+                try {
+                    def j = new groovy.json.JsonSlurper().parse(file)
+                    def id = file.name.replaceAll(/\.json$/, '')
+                    allRoleJsons[id] = j
+                    if (j?.Reference) allRoleRefs[id] = j.Reference as String
+                    if (j?.Parameters instanceof Map && j.Parameters.containsKey('CombatBackwardsRelativeSpeed')) {
+                        combatCapableTemplates.add(id)
+                    }
+                    if (j?.Type == 'Abstract') {
+                        def text = file.text
+                        if (text.contains('Template_Intelligent') || text.contains('CombatBackwardsRelativeSpeed')) {
+                            combatCapableTemplates.add(id)
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        boolean changed = true
+        while (changed) {
+            changed = false
+            allRoleRefs.each { id, ref ->
+                if (!combatCapableTemplates.contains(id) && combatCapableTemplates.contains(ref)) {
+                    combatCapableTemplates.add(id)
+                    changed = true
+                }
+            }
+        }
+        println "Found ${combatCapableTemplates.size()} combat-capable templates"
+
+        // Phase 2: Resolve each NPC's Attack field by walking the reference chain
+        def resolveAttackField
+        resolveAttackField = { String npcId ->
+            def json = allRoleJsons[npcId]
+            if (!json) return 'Root_NPC_Attack_Melee'
+            def attack = json?.Modify?.Attack
+            if (attack instanceof String) return attack
+            if (attack instanceof Map && attack?.Compute == 'Attack') {
+                def paramValue = json?.Parameters?.Attack?.Value
+                if (paramValue) return paramValue as String
+            }
+            def ref = allRoleRefs[npcId]
+            if (ref && allRoleJsons.containsKey(ref)) {
+                return resolveAttackField(ref)
+            }
+            return 'Root_NPC_Attack_Melee'
+        }
+
+        // Detect ranged NPCs by their attack interaction name
+        def rangedKeywords = ['Bow', 'Shoot', 'Blast', 'Orb', 'Throw', 'Gun', 'Projectile', 'Wand', 'Ranged']
+        def isRangedAttack = { String attackId ->
+            def lowerAttack = attackId.toLowerCase()
+            return rangedKeywords.any { lowerAttack.contains(it.toLowerCase()) }
+        }
+
+        // Detect faction from NPC ID for per-faction CAE assignment
+        def detectFaction = { String npcId ->
+            def lowerNpc = npcId.toLowerCase()
+            if (lowerNpc.contains('trork')) return 'Trork'
+            if (lowerNpc.contains('outlander')) return 'Outlander'
+            if (lowerNpc.contains('goblin')) return 'Goblin'
+            if (lowerNpc.contains('skeleton') || lowerNpc.contains('risen') || lowerNpc.contains('wraith')) return 'Skeleton'
+            if (lowerNpc.contains('feran') || lowerNpc.contains('kweebec')) return 'Skeleton'
+            return 'Skeleton'
+        }
+
+        // NPCs that should be fully excluded from CAE (non-humanoid fighters)
+        def shouldExcludeFromCae = { String npcId ->
+            def lower = npcId.toLowerCase()
+            return lower.contains('golem') || lower.contains('firesteel') ||
+                   lower.contains('scarak') || lower.contains('cactee')
+        }
+
+        // Phase 3: Generate role overrides with per-NPC CAE references
+        def roleOverrideCount = 0
+        def skippedCount = 0
+        def preservedVanillaCaeCount = 0
+        def rangedAttackToNpcIds = [:].withDefault { [] }
+        def meleeFactionNpcIds = [:].withDefault { [] }
+
+        // Factions that should get CAE by having their template changed to Template_Intelligent.
+        // These NPCs use Abstract templates that don't have the CAE conditional branch.
+        def caeConvertTemplates = [
+            'Template_Trork_Melee', 'Template_Trork_Hybrid', 'Template_Trork_Ranger',
+            'Template_Trork_Mage', 'Template_Trork_Companion', 'Template_Trork_Chieftain',
+            'Template_Goblin_Scrapper', 'Template_Goblin_Scavenger',
+            'Template_Goblin_Lobber', 'Template_Goblin_Ogre', 'Template_Goblin_Thief',
+            'Template_Goblin_Miner', 'Template_Goblin_Ogre_Tutorial'
+        ] as Set
+
+        // Walk reference chain to find the root template for an NPC
+        def findRootTemplate
+        findRootTemplate = { String npcId ->
+            def ref = allRoleRefs[npcId]
+            if (ref && allRoleJsons.containsKey(ref)) {
+                return findRootTemplate(ref)
+            }
+            return npcId
+        }
+
+        npcIdsSorted.findAll { npcRolePaths.containsKey(it) }.each { npcId ->
+            def roleFile = new File(npcRolesDir, npcRolePaths[npcId])
+            if (roleFile.exists()) {
+                try {
+                    def json = new groovy.json.JsonSlurper().parse(roleFile)
+                    def ref = json?.Reference as String
+                    def modify = json?.Modify
+                    boolean hasAnyCombatParam = modify instanceof Map && (
+                        modify.containsKey('CombatStrafeWeight') ||
+                        modify.containsKey('CombatBackwardsRelativeSpeed') ||
+                        modify.containsKey('CombatBackOffAfterAttack') ||
+                        modify.containsKey('AttackDistance') ||
+                        modify.containsKey('CombatBehaviorDistance') ||
+                        modify.containsKey('DesiredAttackDistanceRange') ||
+                        modify.containsKey('Attack')
+                    )
+                    boolean isCombatCapable = ref && combatCapableTemplates.contains(ref)
+                    boolean isCaeExcluded = shouldExcludeFromCae(npcId)
+                    boolean needsTemplateConversion = !isCaeExcluded && ref && caeConvertTemplates.contains(ref)
+                    // Skip Wander/Patrol variants - they inherit combat params from the base
+                    // role. Adding params directly to these variants causes validation errors
+                    // because they reference another variant, not Template_Intelligent directly.
+                    boolean isSubVariant = npcId.endsWith('_Wander') || npcId.endsWith('_Patrol')
+                    boolean canAddNewParams = (isCombatCapable || needsTemplateConversion) && !isSubVariant && !isCaeExcluded
+                    if (!canAddNewParams && !hasAnyCombatParam) {
+                        skippedCount++
+                        return
+                    }
+                    boolean modified = false
+                    if (json.Modify instanceof Map) {
+                        conditionalParams.each { key, val ->
+                            if (json.Modify.containsKey(key)) {
+                                if (key == '_CombatConfig' && json.Modify[key] instanceof Map) {
+                                    return
+                                }
+                                json.Modify[key] = val
+                                modified = true
+                            }
+                        }
+                        // Convert Abstract template NPCs (Trork/Outlander/Goblin) to Template_Intelligent
+                        // so they can use the CAE branch. Their faction-specific attack chains are replaced
+                        // by our generic Root_RPGMobs_Attack_Melee (Default animations adapt to any weapon).
+                        if (needsTemplateConversion && canAddNewParams) {
+                            json.Reference = 'Template_Intelligent'
+                            def templateJson = allRoleJsons[ref]
+                            def templateParams = templateJson?.Parameters ?: [:]
+                            if (!json.Modify.containsKey('Attack')) {
+                                json.Modify['Attack'] = 'Root_RPGMobs_Attack_Melee'
+                            }
+                            if (!json.Modify.containsKey('AttackDistance')) {
+                                def templateAttackDist = templateParams?.AttackDistance?.Value
+                                json.Modify['AttackDistance'] = templateAttackDist ?: 3
+                            }
+                            def paramsToCopy = ['ViewRange', 'ViewSector', 'HearingRange', 'AlertedRange',
+                                                'LeashDistance', 'LeashMinPlayerDistance', 'HardLeashDistance',
+                                                'MaxSpeed', 'LeashTimer']
+                            paramsToCopy.each { paramName ->
+                                if (!json.Modify.containsKey(paramName) && templateParams?.containsKey(paramName)) {
+                                    def val = templateParams[paramName]?.Value
+                                    if (val != null) json.Modify[paramName] = val
+                                }
+                            }
+                            // Strip Parameters that don't exist in Template_Intelligent.
+                            // Template_Intelligent only supports: WanderRadius, FollowPatrolPath,
+                            // Patrol, FlockArray, ApplySeparation, NameTranslationKey, ChaseRelativeSpeed
+                            def validTemplateIntelligentParams = [
+                                'WanderRadius', 'FollowPatrolPath', 'Patrol', 'FlockArray',
+                                'ApplySeparation', 'NameTranslationKey', 'ChaseRelativeSpeed'
+                            ] as Set
+                            if (json.Parameters instanceof Map) {
+                                def invalidParams = json.Parameters.keySet().findAll { !validTemplateIntelligentParams.contains(it) }
+                                invalidParams.each { json.Parameters.remove(it) }
+                            }
+                            // Strip Modify fields that are specific to Abstract templates and
+                            // don't exist in Template_Intelligent. These cause "Parameter does not
+                            // exist or is private" errors when the Reference is changed.
+                            // Strip ALL Modify fields that don't exist in Template_Intelligent.
+                            // Instead of a deny-list (which keeps missing fields), use an ALLOW-list
+                            // of fields that Template_Intelligent supports. Everything else gets removed.
+                            def allowedTemplateIntelligentModifyFields = [
+                                // Identity
+                                'Appearance', 'DropList', 'Weapons', 'OffHand', 'NameTranslationKey',
+                                // Stats
+                                'MaxHealth', 'MaxSpeed', 'RunThreshold',
+                                // Perception
+                                'ViewRange', 'ViewSector', 'HearingRange', 'AlertedRange', 'AlertedTime',
+                                // Combat
+                                'Attack', 'AttackDistance', 'DefaultOffHandSlot',
+                                // Leash
+                                'LeashDistance', 'HardLeashDistance', 'LeashMinPlayerDistance', 'LeashTimer',
+                                // Faction
+                                'CombatMessageTargetGroups', 'IsMemory', 'MemoriesCategory', 'MemoriesNameOverride',
+                                // Scheduling
+                                'WakingPeriod', 'BreathesInWater',
+                                // Template params (Compute references)
+                                'FlockArray', 'FollowPatrolPath', 'Patrol', 'WanderRadius', 'ApplySeparation',
+                                'ChaseRelativeSpeed',
+                                // CAE
+                                'UseCombatActionEvaluator', '_CombatConfig',
+                                // Interaction vars (damage override)
+                                '_InteractionVars'
+                            ] as Set
+                            def keysToRemove = json.Modify.keySet().findAll { !allowedTemplateIntelligentModifyFields.contains(it) }
+                            keysToRemove.each { json.Modify.remove(it) }
+                            modified = true
+                        }
+                        if (canAddNewParams) {
+                            if (!json.Modify.containsKey('UseCombatActionEvaluator')) {
+                                def resolvedAttack = resolveAttackField(npcId)
+                                boolean isRanged = isRangedAttack(resolvedAttack)
+                                def faction = detectFaction(npcId)
+                                def caeConfigName = isRanged
+                                    ? "CAE_RPGMobs_${resolvedAttack}"
+                                    : "CAE_RPGMobs_Melee_${faction}"
+                                json.Modify['UseCombatActionEvaluator'] = true
+                                json.Modify['_CombatConfig'] = caeConfigName
+                                def combatParamsToRemove = [
+                                    'AttackPauseRange',
+                                    'CombatAttackPreDelay', 'CombatRelativeTurnSpeed',
+                                    'CombatBehaviorDistance', 'CombatDirectWeight',
+                                    'CombatAlwaysMovingWeight', 'CombatStrafeWeight',
+                                    'CombatBackwardsRelativeSpeed', 'CombatBackOffAfterAttack',
+                                    'CombatBackOffDistanceRange',
+                                    'BlockProbability'
+                                ]
+                                combatParamsToRemove.each { param ->
+                                    json.Modify.remove(param)
+                                }
+                                if (isRanged) {
+                                    rangedAttackToNpcIds[resolvedAttack] << npcId
+                                } else {
+                                    meleeFactionNpcIds[faction] << npcId
+                                }
+                                modified = true
+                            } else {
+                                preservedVanillaCaeCount++
+                            }
+                        }
+                    }
+                    if (!modified) {
+                        skippedCount++
+                        return
+                    }
+                    def outFile = new File(generatedResDir, 'Server/NPC/Roles/' + npcRolePaths[npcId])
+                    outFile.parentFile.mkdirs()
+                    outFile.text = new groovy.json.JsonBuilder(json).toPrettyString()
+                    roleOverrideCount++
+                } catch (Exception e) {
+                    println "Warning: Failed to process role ${npcId}: ${e.message}"
+                }
+            }
+        }
+
+        // Phase 4A: Generate per-faction melee CAE configs with distinct combat styles
+        def caeConfigCount = 0
+        def meleeCount = 0
+        def rangedCount = 0
+
+        def factionCaeParams = [
+            Skeleton: [
+                description: 'Disciplined soldier',
+                cooldownRange: [1.0, 2.0],
+                shieldChargeFor: 1.5, shieldSwitchPoint: 0.5,
+                backOffDistance: [5, 8], backOffSwitchPoint: 6,
+                healthRetreatDistance: [10, 15], healthRetreatWeight: 5.0,
+                reEngageXRange: [0, 10], reEngageRandomiser: [0.4, 0.6],
+                strafeCooldownRange: [1.5, 3.0]
+            ],
+            Trork: [
+                description: 'Aggressive berserker',
+                cooldownRange: [0.5, 0.8],
+                shieldChargeFor: 2.0, shieldSwitchPoint: 3.0,
+                backOffDistance: [3, 5], backOffSwitchPoint: 12,
+                healthRetreatDistance: [6, 8], healthRetreatWeight: 1.5,
+                reEngageXRange: [0, 4], reEngageRandomiser: [0.6, 0.9],
+                strafeCooldownRange: [0.8, 1.5]
+            ],
+            Outlander: [
+                description: 'Tactical survivalist',
+                cooldownRange: [0.8, 1.2],
+                shieldChargeFor: 1.0, shieldSwitchPoint: 0.3,
+                backOffDistance: [6, 10], backOffSwitchPoint: 4,
+                healthRetreatDistance: [12, 18], healthRetreatWeight: 8.0,
+                reEngageXRange: [0, 12], reEngageRandomiser: [0.3, 0.5],
+                strafeCooldownRange: [1.2, 2.5]
+            ],
+            Goblin: [
+                description: 'Chaotic unpredictable',
+                cooldownRange: [0.5, 2.0],
+                shieldChargeFor: 0.8, shieldSwitchPoint: 1.0,
+                backOffDistance: [3, 12], backOffSwitchPoint: 3,
+                healthRetreatDistance: [8, 20], healthRetreatWeight: 4.0,
+                reEngageXRange: [0, 6], reEngageRandomiser: [0.2, 0.9],
+                strafeCooldownRange: [0.5, 2.5]
+            ]
+        ]
+
+        factionCaeParams.each { faction, params ->
+            def caeActions = [:]
+            caeActions.SelectTarget = [Type: 'SelectBasicAttackTarget', Description: 'Select attack target',
+                Conditions: [[Type: 'Randomiser', MinValue: 0.9, MaxValue: 1.0]]]
+
+            // ShieldBlock: reactive guard on hit, sustained hold on continuous damage.
+            // ChargeFor = how long the block holds. After it expires, TimeSinceLastUsed
+            // cooldown prevents re-blocking (simulates shield break recovery).
+            // WeightCoefficient 2.5 = high priority when taking damage.
+            caeActions.ShieldBlock = [Type: 'Ability', Description: 'Reactive shield block on damage',
+                Target: 'Hostile', AbilityType: 'Secondary', OffhandSlot: 0,
+                Ability: 'Root_RPGMobs_Guard_Shield_Sustained', SubState: 'Default',
+                AttackDistanceRange: [0.5, 10], PostExecuteDistanceRange: [1.5, 3.0],
+                ChargeFor: params.shieldChargeFor, WeightCoefficient: 2.5,
+                Conditions: [
+                    [Type: 'Randomiser', MinValue: 0.7, MaxValue: 1.0],
+                    [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: params.shieldSwitchPoint]],
+                    [Type: 'RecentSustainedDamage', Curve: [ResponseCurve: 'InverseExponential', XRange: [0, 1]]]
+                ]]
+
+            caeActions.BackOff = [Type: 'State', Description: 'Back off after sustained damage',
+                State: 'Combat', SubState: 'Strafe',
+                PostExecuteDistanceRange: params.backOffDistance,
+                Target: 'Hostile', WeightCoefficient: 1.5,
+                Conditions: [
+                    [Type: 'RecentSustainedDamage', Curve: [ResponseCurve: 'InverseExponential', XRange: [0, 2]]],
+                    [Type: 'Randomiser', MinValue: 0.5, MaxValue: 1.0],
+                    [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: params.backOffSwitchPoint]]
+                ]]
+
+            caeActions.HealthRetreat = [Type: 'State', Description: 'Retreat when health is low',
+                State: 'Combat', SubState: 'Strafe',
+                PostExecuteDistanceRange: params.healthRetreatDistance,
+                Target: 'Hostile', WeightCoefficient: params.healthRetreatWeight,
+                Conditions: [
+                    [Type: 'OwnStatPercent', Stat: 'Health', Curve: 'ReverseLinear'],
+                    [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 12]]
+                ]]
+
+            // Group tactics - observe when allies are engaging (Goblins are too chaotic)
+            if (faction != 'Goblin') {
+                // Determine NPC group name for NearbyCount based on faction
+                def npcGroupName = faction == 'Trork' ? 'Trork' :
+                                   faction == 'Outlander' ? 'Outlander' : 'Skeleton'
+                caeActions.GroupObserve = [Type: 'State', Description: 'Observe when allies are engaging',
+                    State: 'Combat', SubState: 'Strafe',
+                    PostExecuteDistanceRange: [8, 12],
+                    Target: 'Hostile', WeightCoefficient: 1.2,
+                    Conditions: [
+                        [Type: 'NearbyCount', NPCGroup: npcGroupName, Range: 10,
+                         Curve: [ResponseCurve: 'Linear', XRange: [1, 4]]],
+                        [Type: 'Randomiser', MinValue: 0.6, MaxValue: 1.0],
+                        [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 8]]
+                    ]]
+            }
+
+            // Flanking for Outlanders
+            if (faction == 'Outlander') {
+                caeActions.FlankPosition = [Type: 'Ability', Description: 'Flank behind target before attacking',
+                    Target: 'Hostile',
+                    Positioning: 'Flank',
+                    PositionFirst: true,
+                    WeaponSlot: 0,
+                    Ability: 'Root_RPGMobs_Attack_Melee',
+                    SubState: 'Default',
+                    AttackDistanceRange: [1.5, 3.0],
+                    PostExecuteDistanceRange: [2, 4],
+                    WeightCoefficient: 1.3,
+                    Conditions: [
+                        [Type: 'Randomiser', MinValue: 0.5, MaxValue: 1.0],
+                        [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 15]]
+                    ]]
+            }
+
+            caeActions.ReEngageFromStrafe = [Type: 'State', Description: 'Return to combat from strafe',
+                State: 'Combat', SubState: 'Default',
+                PostExecuteDistanceRange: [2, 3],
+                Target: 'Hostile',
+                Conditions: [
+                    [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: params.reEngageXRange]],
+                    [Type: 'Randomiser', MinValue: params.reEngageRandomiser[0], MaxValue: params.reEngageRandomiser[1]]
+                ]]
+
+            // MaxRange must be conservative enough that hits actually land.
+            // With UseProjectedDistance: true, edge-to-edge distance is used.
+            // Weapon EndDistances: Daggers 1.8, Swords/Axes/Clubs 2.5, Maces 2.8, Longswords 3.0, Battleaxes 3.2, Spears 3.5.
+            // setCurrentBasicAttack() swaps the root at runtime but MaxRange stays fixed.
+            // Use 2.0 so NPCs close to proper melee range before swinging.
+            // The 0.15s wind-up animation lets them close the last bit of distance.
+            def defaultBasicAttacks = [Attacks: ['Root_RPGMobs_Attack_Melee'], Randomise: true,
+                UseProjectedDistance: true, MaxRange: 2.0,
+                Timeout: 2, CooldownRange: params.cooldownRange]
+
+            def strafeBasicAttacks = [Attacks: ['Root_RPGMobs_Attack_Melee'], Randomise: true,
+                UseProjectedDistance: true, MaxRange: 2.5,
+                Timeout: 2, CooldownRange: params.strafeCooldownRange]
+
+            def defaultActions = ['SelectTarget', 'ShieldBlock', 'BackOff', 'HealthRetreat']
+            if (faction != 'Goblin') {
+                defaultActions.add('GroupObserve')
+            }
+            if (faction == 'Outlander') {
+                defaultActions.add('FlankPosition')
+            }
+
+            def caeActionSets = [:]
+            caeActionSets.Default = [BasicAttacks: defaultBasicAttacks, Actions: defaultActions]
+            caeActionSets.Strafe = [
+                BasicAttacks: strafeBasicAttacks,
+                Actions: ['SelectTarget', 'ReEngageFromStrafe', 'HealthRetreat']
+            ]
+
+            def caeJson = [Type: 'CombatActionEvaluator', TargetMemoryDuration: 10,
+                CombatActionEvaluator: [
+                    RunConditions: [
+                        [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: [0, 3]]],
+                        [Type: 'Randomiser', MinValue: 0.8, MaxValue: 1.0]
+                    ],
+                    MinRunUtility: 0.5, MinActionUtility: 0.01,
+                    AvailableActions: caeActions, ActionSets: caeActionSets
+                ]]
+
+            def caeFileName = "CAE_RPGMobs_Melee_${faction}.json"
+            def caeOutFile = new File(generatedResDir, "Server/NPC/Balancing/RPGMobs/" + caeFileName)
+            caeOutFile.parentFile.mkdirs()
+            caeOutFile.text = new groovy.json.JsonBuilder(caeJson).toPrettyString()
+            caeConfigCount++
+            meleeCount++
+        }
+
+        // Phase 4A-2: Generate per-faction-per-weapon CAE configs (32 total: 4 factions x 8 weapons)
+        // Identical to the generic faction CAE except BasicAttacks.Attacks references the weapon-specific root
+        def perWeaponCaeCount = 0
+        factionCaeParams.each { faction, params ->
+            weaponNames.each { weapon ->
+                def caeActions = [:]
+                caeActions.SelectTarget = [Type: 'SelectBasicAttackTarget', Description: 'Select attack target',
+                    Conditions: [[Type: 'Randomiser', MinValue: 0.9, MaxValue: 1.0]]]
+
+                caeActions.ShieldBlock = [Type: 'Ability', Description: 'Reactive shield block on damage',
+                    Target: 'Hostile', AbilityType: 'Secondary', OffhandSlot: 0,
+                    Ability: 'Root_RPGMobs_Guard_Shield_Sustained', SubState: 'Default',
+                    AttackDistanceRange: [0.5, 10], PostExecuteDistanceRange: [1.5, 3.0],
+                    ChargeFor: params.shieldChargeFor, WeightCoefficient: 2.5,
+                    Conditions: [
+                        [Type: 'Randomiser', MinValue: 0.7, MaxValue: 1.0],
+                        [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: params.shieldSwitchPoint]],
+                        [Type: 'RecentSustainedDamage', Curve: [ResponseCurve: 'InverseExponential', XRange: [0, 1]]]
+                    ]]
+
+                caeActions.BackOff = [Type: 'State', Description: 'Back off after sustained damage',
+                    State: 'Combat', SubState: 'Strafe',
+                    PostExecuteDistanceRange: params.backOffDistance,
+                    Target: 'Hostile', WeightCoefficient: 1.5,
+                    Conditions: [
+                        [Type: 'RecentSustainedDamage', Curve: [ResponseCurve: 'InverseExponential', XRange: [0, 2]]],
+                        [Type: 'Randomiser', MinValue: 0.5, MaxValue: 1.0],
+                        [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: params.backOffSwitchPoint]]
+                    ]]
+
+                caeActions.HealthRetreat = [Type: 'State', Description: 'Retreat when health is low',
+                    State: 'Combat', SubState: 'Strafe',
+                    PostExecuteDistanceRange: params.healthRetreatDistance,
+                    Target: 'Hostile', WeightCoefficient: params.healthRetreatWeight,
+                    Conditions: [
+                        [Type: 'OwnStatPercent', Stat: 'Health', Curve: 'ReverseLinear'],
+                        [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 12]]
+                    ]]
+
+                if (faction != 'Goblin') {
+                    def npcGroupName = faction == 'Trork' ? 'Trork' :
+                                       faction == 'Outlander' ? 'Outlander' : 'Skeleton'
+                    caeActions.GroupObserve = [Type: 'State', Description: 'Observe when allies are engaging',
+                        State: 'Combat', SubState: 'Strafe',
+                        PostExecuteDistanceRange: [8, 12],
+                        Target: 'Hostile', WeightCoefficient: 1.2,
+                        Conditions: [
+                            [Type: 'NearbyCount', NPCGroup: npcGroupName, Range: 10,
+                             Curve: [ResponseCurve: 'Linear', XRange: [1, 4]]],
+                            [Type: 'Randomiser', MinValue: 0.6, MaxValue: 1.0],
+                            [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 8]]
+                        ]]
+                }
+
+                if (faction == 'Outlander') {
+                    caeActions.FlankPosition = [Type: 'Ability', Description: 'Flank behind target before attacking',
+                        Target: 'Hostile',
+                        Positioning: 'Flank',
+                        PositionFirst: true,
+                        WeaponSlot: 0,
+                        Ability: "Root_RPGMobs_Attack_${weapon}",
+                        SubState: 'Default',
+                        AttackDistanceRange: [1.5, 3.0],
+                        PostExecuteDistanceRange: [2, 4],
+                        WeightCoefficient: 1.3,
+                        Conditions: [
+                            [Type: 'Randomiser', MinValue: 0.5, MaxValue: 1.0],
+                            [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 15]]
+                        ]]
+                }
+
+                caeActions.ReEngageFromStrafe = [Type: 'State', Description: 'Return to combat from strafe',
+                    State: 'Combat', SubState: 'Default',
+                    PostExecuteDistanceRange: [2, 3],
+                    Target: 'Hostile',
+                    Conditions: [
+                        [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: params.reEngageXRange]],
+                        [Type: 'Randomiser', MinValue: params.reEngageRandomiser[0], MaxValue: params.reEngageRandomiser[1]]
+                    ]]
+
+                // Use weapon-specific MaxRange based on EndDistance
+                def weaponEndDist = weaponHitboxParams[weapon]?.endDistance ?: 2.5
+                // MaxRange should be close to EndDistance so the NPC starts attacking
+                // when it can actually hit. Slightly less than EndDistance because
+                // UseProjectedDistance uses edge-to-edge distance (shorter than center-to-center).
+                def weaponMaxRange = Math.max(2.5, weaponEndDist - 0.2)
+
+                def defaultBasicAttacks = [Attacks: ["Root_RPGMobs_Attack_${weapon}"], Randomise: true,
+                    UseProjectedDistance: true, MaxRange: weaponMaxRange,
+                    Timeout: 2, CooldownRange: params.cooldownRange]
+
+                def strafeBasicAttacks = [Attacks: ["Root_RPGMobs_Attack_${weapon}"], Randomise: true,
+                    UseProjectedDistance: true, MaxRange: weaponMaxRange + 0.5,
+                    Timeout: 2, CooldownRange: params.strafeCooldownRange]
+
+                def defaultActions = ['SelectTarget', 'ShieldBlock', 'BackOff', 'HealthRetreat']
+                if (faction != 'Goblin') {
+                    defaultActions.add('GroupObserve')
+                }
+                if (faction == 'Outlander') {
+                    defaultActions.add('FlankPosition')
+                }
+
+                def caeActionSets = [:]
+                caeActionSets.Default = [BasicAttacks: defaultBasicAttacks, Actions: defaultActions]
+                caeActionSets.Strafe = [
+                    BasicAttacks: strafeBasicAttacks,
+                    Actions: ['SelectTarget', 'ReEngageFromStrafe', 'HealthRetreat']
+                ]
+
+                def caeJson = [Type: 'CombatActionEvaluator', TargetMemoryDuration: 10,
+                    CombatActionEvaluator: [
+                        RunConditions: [
+                            [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: [0, 3]]],
+                            [Type: 'Randomiser', MinValue: 0.8, MaxValue: 1.0]
+                        ],
+                        MinRunUtility: 0.5, MinActionUtility: 0.01,
+                        AvailableActions: caeActions, ActionSets: caeActionSets
+                    ]]
+
+                def caeFileName = "CAE_RPGMobs_Melee_${faction}_${weapon}.json"
+                def caeOutFile = new File(generatedResDir, "Server/NPC/Balancing/RPGMobs/" + caeFileName)
+                caeOutFile.parentFile.mkdirs()
+                caeOutFile.text = new groovy.json.JsonBuilder(caeJson).toPrettyString()
+                caeConfigCount++
+                perWeaponCaeCount++
+            }
+        }
+        println "Generated ${perWeaponCaeCount} per-faction-per-weapon CAE configs (${factionCaeParams.size()} factions x ${weaponNames.size()} weapons)"
+
+        // Per-weapon attack speed multipliers (lower = faster attacks)
+        // Daggers are lightning fast, battleaxes are slow but devastating
+        def weaponSpeedMultipliers = [
+            Daggers: 0.5, Swords: 0.8, Longswords: 1.0, Axes: 0.9,
+            Battleaxes: 1.3, Maces: 1.1, Clubs: 1.0, ClubsFlail: 1.1, Spears: 0.85
+        ]
+
+        // Phase 4A-2b: Generate per-tier-per-weapon CAE configs (40 total: 5 tiers x 8 weapons)
+        // Each tier gets progressively smarter combat behavior
+        def tierCaeParams = [
+            1: [cooldownRange: [1.5, 2.5], strafeCooldownRange: [2.5, 4.0],
+                hasShield: false, hasRetreat: false, hasBackOff: false, hasGroupObserve: false, hasFlanking: false,
+                shieldChargeFor: 0, shieldSwitchPoint: 0,
+                backOffDistance: [0, 0], backOffSwitchPoint: 0,
+                retreatHealthThreshold: 0, retreatDistance: [0, 0], retreatSwitchPoint: 0,
+                reengageXRange: [0, 0], reengageRandomiser: [0, 0]],
+            2: [cooldownRange: [1.0, 2.0], strafeCooldownRange: [2.0, 3.5],
+                hasShield: true, hasRetreat: false, hasBackOff: true, hasGroupObserve: false, hasFlanking: false,
+                shieldChargeFor: 2.0, shieldSwitchPoint: 8.0,
+                backOffDistance: [4, 6], backOffSwitchPoint: 10,
+                retreatHealthThreshold: 0, retreatDistance: [0, 0], retreatSwitchPoint: 0,
+                reengageXRange: [0, 2], reengageRandomiser: [0.6, 0.9]],
+            3: [cooldownRange: [0.8, 1.5], strafeCooldownRange: [1.5, 3.0],
+                hasShield: true, hasRetreat: true, hasBackOff: true, hasGroupObserve: true, hasFlanking: false,
+                shieldChargeFor: 3.0, shieldSwitchPoint: 6.0,
+                backOffDistance: [5, 8], backOffSwitchPoint: 8,
+                retreatHealthThreshold: 0.30, retreatDistance: [8, 12], retreatSwitchPoint: 15,
+                reengageXRange: [0, 3], reengageRandomiser: [0.5, 0.8]],
+            4: [cooldownRange: [0.6, 1.2], strafeCooldownRange: [1.2, 2.5],
+                hasShield: true, hasRetreat: true, hasBackOff: true, hasGroupObserve: true, hasFlanking: false,
+                shieldChargeFor: 4.0, shieldSwitchPoint: 5.0,
+                backOffDistance: [5, 9], backOffSwitchPoint: 6,
+                retreatHealthThreshold: 0.25, retreatDistance: [10, 15], retreatSwitchPoint: 12,
+                reengageXRange: [0, 4], reengageRandomiser: [0.5, 0.7]],
+            5: [cooldownRange: [0.4, 1.0], strafeCooldownRange: [1.0, 2.0],
+                hasShield: true, hasRetreat: true, hasBackOff: true, hasGroupObserve: true, hasFlanking: true,
+                shieldChargeFor: 5.0, shieldSwitchPoint: 4.0,
+                backOffDistance: [6, 10], backOffSwitchPoint: 4,
+                retreatHealthThreshold: 0.20, retreatDistance: [12, 18], retreatSwitchPoint: 10,
+                reengageXRange: [0, 5], reengageRandomiser: [0.5, 0.7]]
+        ]
+
+        def perTierCaeCount = 0
+        tierCaeParams.each { int tier, Map tp ->
+            weaponNames.each { weapon ->
+                def caeActions = [:]
+                caeActions.SelectTarget = [Type: 'SelectBasicAttackTarget', Description: 'Select attack target',
+                    Conditions: [[Type: 'Randomiser', MinValue: 0.9, MaxValue: 1.0]]]
+
+                // Guard: Uses custom Root_RPGMobs_Guard_Shield (no Replace/Var issues).
+                // ChargeFor controls guard duration depending on tier.
+                if (tp.hasShield) {
+                    caeActions.ShieldBlock = [Type: 'Ability', Description: 'Shield block on sustained damage',
+                        Target: 'Hostile', AbilityType: 'Secondary', OffhandSlot: 0,
+                        Ability: 'Root_RPGMobs_Guard_Shield_Sustained', SubState: 'Default',
+                        AttackDistanceRange: [0.5, 10], PostExecuteDistanceRange: [1.5, 2],
+                        ChargeFor: tp.shieldChargeFor, WeightCoefficient: 1.25,
+                        Conditions: [
+                            [Type: 'Randomiser', MinValue: 0.4, MaxValue: 1],
+                            [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: tp.shieldSwitchPoint]],
+                            [Type: 'RecentSustainedDamage', Curve: [ResponseCurve: 'InverseExponential', XRange: [0, 3]]]
+                        ]]
+                }
+
+                if (tp.hasBackOff) {
+                    // Matched to Praetorian's proven BackOff conditions:
+                    // RecentSustainedDamage XRange [0, 3] = same sensitivity
+                    // Randomiser [0.6, 1.0] = same as Praetorian
+                    // WeightCoefficient 1.25 = same as Praetorian
+                    caeActions.BackOff = [Type: 'State', Description: 'Back off after sustained damage',
+                        State: 'Combat', SubState: 'Strafe',
+                        PostExecuteDistanceRange: tp.backOffDistance,
+                        Target: 'Hostile', WeightCoefficient: 1.25,
+                        Conditions: [
+                            [Type: 'RecentSustainedDamage', Curve: [ResponseCurve: 'InverseExponential', XRange: [0, 3]]],
+                            [Type: 'Randomiser', MinValue: 0.6, MaxValue: 1.0],
+                            [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: tp.backOffSwitchPoint]]
+                        ]]
+                }
+
+                if (tp.hasRetreat) {
+                    caeActions.HealthRetreat = [Type: 'State', Description: 'Retreat when health is low',
+                        State: 'Combat', SubState: 'Strafe',
+                        PostExecuteDistanceRange: tp.retreatDistance,
+                        Target: 'Hostile', WeightCoefficient: 5.0,
+                        Conditions: [
+                            [Type: 'OwnStatPercent', Stat: 'Health', Curve: 'ReverseLinear'],
+                            [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: tp.retreatSwitchPoint]]
+                        ]]
+                }
+
+                if (tp.hasBackOff || tp.hasRetreat) {
+                    caeActions.ReEngageFromStrafe = [Type: 'State', Description: 'Return to combat from strafe',
+                        State: 'Combat', SubState: 'Default',
+                        PostExecuteDistanceRange: [2, 3],
+                        Target: 'Hostile',
+                        Conditions: [
+                            [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: tp.reengageXRange]],
+                            [Type: 'Randomiser', MinValue: tp.reengageRandomiser[0], MaxValue: tp.reengageRandomiser[1]]
+                        ]]
+                }
+
+                if (tp.hasGroupObserve) {
+                    caeActions.GroupObserve = [Type: 'State', Description: 'Observe when allies are engaging',
+                        State: 'Combat', SubState: 'Strafe',
+                        PostExecuteDistanceRange: [8, 12],
+                        Target: 'Hostile', WeightCoefficient: 1.2,
+                        Conditions: [
+                            [Type: 'NearbyCount', NPCGroup: 'Skeleton', Range: 10,
+                             Curve: [ResponseCurve: 'Linear', XRange: [1, 4]]],
+                            [Type: 'Randomiser', MinValue: 0.6, MaxValue: 1.0],
+                            [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 8]]
+                        ]]
+                }
+
+                if (tp.hasFlanking) {
+                    caeActions.FlankPosition = [Type: 'Ability', Description: 'Flank behind target before attacking',
+                        Target: 'Hostile',
+                        Positioning: 'Flank',
+                        PositionFirst: true,
+                        WeaponSlot: 0,
+                        Ability: "Root_RPGMobs_Attack_${weapon}",
+                        SubState: 'Default',
+                        AttackDistanceRange: [1.5, 3.0],
+                        PostExecuteDistanceRange: [2, 4],
+                        Timeout: 5,
+                        FailureTimeout: 3,
+                        WeightCoefficient: 1.3,
+                        Conditions: [
+                            [Type: 'Randomiser', MinValue: 0.5, MaxValue: 1.0],
+                            [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 15]]
+                        ]]
+                }
+
+                // Use weapon-specific MaxRange based on EndDistance
+                def weaponEndDist = weaponHitboxParams[weapon]?.endDistance ?: 2.5
+                def weaponMaxRange = Math.max(2.5, weaponEndDist - 0.2)
+
+                // Apply per-weapon speed multiplier (daggers fast, battleaxes slow)
+                def speedMult = weaponSpeedMultipliers[weapon] ?: 1.0
+                def weaponCooldownRange = [tp.cooldownRange[0] * speedMult, tp.cooldownRange[1] * speedMult]
+                def weaponStrafeCooldownRange = [tp.strafeCooldownRange[0] * speedMult, tp.strafeCooldownRange[1] * speedMult]
+
+                def defaultBasicAttacks = [Attacks: ["Root_RPGMobs_Attack_${weapon}"], Randomise: true,
+                    UseProjectedDistance: true, MaxRange: weaponMaxRange,
+                    Timeout: 2, CooldownRange: weaponCooldownRange]
+
+                def strafeBasicAttacks = [Attacks: ["Root_RPGMobs_Attack_${weapon}"], Randomise: true,
+                    UseProjectedDistance: true, MaxRange: weaponMaxRange + 0.5,
+                    Timeout: 2, CooldownRange: weaponStrafeCooldownRange]
+
+                def defaultActionsList = ['SelectTarget']
+                if (tp.hasShield) {
+                    defaultActionsList.add('ShieldBlock')
+                }
+                if (tp.hasBackOff) defaultActionsList.add('BackOff')
+                if (tp.hasRetreat) defaultActionsList.add('HealthRetreat')
+                if (tp.hasGroupObserve) defaultActionsList.add('GroupObserve')
+                if (tp.hasFlanking) defaultActionsList.add('FlankPosition')
+
+                def strafeActionsList = ['SelectTarget']
+                if (tp.hasBackOff || tp.hasRetreat) strafeActionsList.add('ReEngageFromStrafe')
+                if (tp.hasRetreat) strafeActionsList.add('HealthRetreat')
+                if (tp.hasFlanking) strafeActionsList.add('FlankPosition')
+
+                def caeActionSets = [:]
+                caeActionSets.Default = [BasicAttacks: defaultBasicAttacks, Actions: defaultActionsList]
+                caeActionSets.Strafe = [BasicAttacks: strafeBasicAttacks, Actions: strafeActionsList]
+
+                def caeJson = [Type: 'CombatActionEvaluator', TargetMemoryDuration: 10,
+                    CombatActionEvaluator: [
+                        RunConditions: [
+                            [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: [0, 3]]],
+                            [Type: 'Randomiser', MinValue: 0.8, MaxValue: 1.0]
+                        ],
+                        MinRunUtility: 0.5, MinActionUtility: 0.01,
+                        AvailableActions: caeActions, ActionSets: caeActionSets
+                    ]]
+
+                def caeFileName = "CAE_RPGMobs_T${tier}_${weapon}.json"
+                def caeOutFile = new File(generatedResDir, "Server/NPC/Balancing/RPGMobs/" + caeFileName)
+                caeOutFile.parentFile.mkdirs()
+                caeOutFile.text = new groovy.json.JsonBuilder(caeJson).toPrettyString()
+                caeConfigCount++
+                perTierCaeCount++
+            }
+        }
+        println "Generated ${perTierCaeCount} per-tier-per-weapon CAE configs (5 tiers x ${weaponNames.size()} weapons)"
+
+        // Phase 4A-3: Generate per-faction-per-weapon role variants (32 total)
+        // These are tiny Variant roles that setRoleName() switches to at runtime
+        def roleVariantCount = 0
+        def genRpgMobsRolesDir = new File(generatedResDir, 'Server/NPC/Roles/RPGMobs')
+        genRpgMobsRolesDir.mkdirs()
+
+        def factionNames = ['Skeleton', 'Trork', 'Outlander', 'Goblin']
+        factionNames.each { faction ->
+            weaponNames.each { weapon ->
+                def variantJson = [
+                    Type: 'Variant',
+                    Reference: 'Template_Intelligent',
+                    Modify: [
+                        UseCombatActionEvaluator: true,
+                        _CombatConfig: "CAE_RPGMobs_Melee_${faction}_${weapon}"
+                    ]
+                ]
+                def variantFile = new File(genRpgMobsRolesDir, "RPGMobs_Elite_${faction}_${weapon}.json")
+                variantFile.text = new groovy.json.JsonBuilder(variantJson).toPrettyString()
+                roleVariantCount++
+            }
+        }
+        println "Generated ${roleVariantCount} per-faction-per-weapon role variants"
+
+        // Phase 4A-4: Generate per-tier-per-weapon test variants (40 total: 5 tiers x 8 weapons)
+        // Each is a Variant of Template_Intelligent with Skeleton_Fighter appearance,
+        // a specific weapon, tier-appropriate health, and per-tier CAE config.
+        // Spawn manually via /npc spawn RPGMobs_Test_T{1-5}_{Weapon} to test tier-specific CAE.
+        def testWeapons = [
+            Swords:     'Weapon_Sword_Iron',
+            Longswords: 'Weapon_Longsword_Iron',
+            Daggers:    'Weapon_Daggers_Iron',
+            Axes:       'Weapon_Axe_Iron',
+            Battleaxes: 'Weapon_Battleaxe_Iron',
+            Maces:      'Weapon_Mace_Iron',
+            Clubs:      'Weapon_Club_Iron',
+            ClubsFlail: 'Weapon_Club_Steel_Flail_Rusty',
+            Spears:     'Weapon_Spear_Iron'
+        ]
+        def tierHealthValues = [1: 50, 2: 80, 3: 120, 4: 180, 5: 250]
+        def testVariantCount = 0
+        (1..5).each { int tier ->
+            testWeapons.each { weaponCat, weaponItemId ->
+                def attackRoot = "Root_RPGMobs_Attack_${weaponCat}"
+                def attackDist = weaponHitboxParams[weaponCat]?.endDistance ?: 2.5
+                def tierHealth = tierHealthValues[tier]
+                def combatSpeed = weaponHitboxParams[weaponCat]?.combatSpeed ?: 7
+                def testVariantJson = [
+                    Type: 'Variant',
+                    Reference: 'Template_Intelligent',
+                    Modify: [
+                        Appearance: 'Skeleton_Fighter',
+                        MaxHealth: tierHealth,
+                        MaxSpeed: combatSpeed,
+                        ViewRange: 30,
+                        ViewSector: 270,
+                        HearingRange: 10,
+                        AlertedRange: 30,
+                        LeashDistance: 40,
+                        Attack: attackRoot,
+                        AttackDistance: attackDist,
+                        DesiredAttackDistanceRange: [attackDist - 0.5, attackDist],
+                        Weapons: [weaponItemId],
+                        OffHand: [],
+                        DropList: 'Drop_Skeleton_Fighter',
+                        UseCombatActionEvaluator: true,
+                        _CombatConfig: "CAE_RPGMobs_T${tier}_${weaponCat}",
+                        IsMemory: true,
+                        MemoriesCategory: 'Undead',
+                        BreathesInWater: true,
+                        WakingPeriod: [0, 24]
+                    ]
+                ]
+                // Shield variant
+                def testVariantFile = new File(genRpgMobsRolesDir, "RPGMobs_Test_T${tier}_${weaponCat}.json")
+                testVariantFile.text = new groovy.json.JsonBuilder(testVariantJson).toPrettyString()
+                testVariantCount++
+
+                // Two-handed weapons: no shield variant only (no shield version of the above)
+                // One-handed weapons: also generate a no-shield variant for testing
+                def twoHandedWeapons = ['Longswords', 'Battleaxes', 'Spears'] as Set
+                boolean isTwoHanded = twoHandedWeapons.contains(weaponCat)
+
+                if (isTwoHanded) {
+                    // Two-handed: remove shield from the main variant too
+                    testVariantJson.Modify.remove('DefaultOffHandSlot')
+                    testVariantJson.Modify.OffHand = []
+                    testVariantJson.Modify.Appearance = 'Skeleton_Fighter'
+                    testVariantFile.text = new groovy.json.JsonBuilder(testVariantJson).toPrettyString()
+                } else {
+                    // One-handed: also generate a no-shield variant
+                    def noShieldJson = new groovy.json.JsonSlurper().parseText(new groovy.json.JsonBuilder(testVariantJson).toString())
+                    noShieldJson.Modify.remove('DefaultOffHandSlot')
+                    noShieldJson.Modify.OffHand = []
+                    noShieldJson.Modify.Appearance = 'Skeleton_Fighter'
+                    def noShieldFile = new File(genRpgMobsRolesDir, "RPGMobs_Test_T${tier}_${weaponCat}_NoShield.json")
+                    noShieldFile.text = new groovy.json.JsonBuilder(noShieldJson).toPrettyString()
+                    testVariantCount++
+                }
+            }
+        }
+        println "Generated ${testVariantCount} per-tier-per-weapon test variants (shield + no-shield per tier per weapon)"
+
+        // Phase 4A-5: ParryTest NPC - minimal CAE with ONLY ShieldBlock (exact Praetorian copy)
+        // ParryTest: ONLY ShieldBlock, nothing else. Pure parry testing.
+        def parryTestCae = [
+            Type: 'CombatActionEvaluator',
+            TargetMemoryDuration: 10,
+            CombatActionEvaluator: [
+                RunConditions: [
+                    [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: [0, 5]]],
+                    [Type: 'Randomiser', MinValue: 0.75, MaxValue: 1]
+                ],
+                MinRunUtility: 0.5,
+                MinActionUtility: 0.01,
+                // No CAE guard actions - parry is purely code-side via setCurrentInteraction
+                AvailableActions: [
+                    SelectTarget: [Type: 'SelectBasicAttackTarget', Description: 'Select target',
+                        Conditions: [[Type: 'Randomiser', MinValue: 0.9, MaxValue: 1.0]]]
+                ],
+                ActionSets: [
+                    Default: [
+                        BasicAttacks: [Attacks: ['Root_RPGMobs_Attack_Swords'], Randomise: true,
+                            UseProjectedDistance: true, MaxRange: 3, Timeout: 2, CooldownRange: [2.0, 3.0]],
+                        Actions: ['SelectTarget']
+                    ]
+                ]
+            ]
+        ]
+        new File(generatedResDir, 'Server/NPC/Balancing/RPGMobs/CAE_RPGMobs_ParryTest.json').text = new groovy.json.JsonBuilder(parryTestCae).toPrettyString()
+
+        def parryTestRole = [
+            Type: 'Variant',
+            Reference: 'Template_Intelligent',
+            Modify: [
+                Appearance: 'Skeleton_Knight',
+                MaxHealth: 500,
+                MaxSpeed: 6,
+                ViewRange: 30,
+                ViewSector: 270,
+                HearingRange: 10,
+                AlertedRange: 30,
+                LeashDistance: 40,
+                DefaultOffHandSlot: 0,
+                Weapons: ['Weapon_Sword_Iron'],
+                OffHand: ['Weapon_Shield_Rusty'],
+                UseCombatActionEvaluator: true,
+                _CombatConfig: 'CAE_RPGMobs_ParryTest',
+                IsMemory: true,
+                MemoriesCategory: 'Undead',
+                BreathesInWater: true,
+                WakingPeriod: [0, 24]
+            ]
+        ]
+        new File(genRpgMobsRolesDir, 'RPGMobs_ParryTest.json').text = new groovy.json.JsonBuilder(parryTestRole).toPrettyString()
+
+        // ParryTest_NoShield: same but weapon-only (no shield, tests weapon parry sound)
+        def parryTestNoShieldRole = [
+            Type: 'Variant',
+            Reference: 'Template_Intelligent',
+            Modify: [
+                Appearance: 'Skeleton_Fighter',
+                MaxHealth: 500,
+                MaxSpeed: 6,
+                ViewRange: 30,
+                ViewSector: 270,
+                HearingRange: 10,
+                AlertedRange: 30,
+                LeashDistance: 40,
+                Weapons: ['Weapon_Sword_Iron'],
+                OffHand: [],
+                UseCombatActionEvaluator: true,
+                _CombatConfig: 'CAE_RPGMobs_ParryTest',
+                IsMemory: true,
+                MemoriesCategory: 'Undead',
+                BreathesInWater: true,
+                WakingPeriod: [0, 24]
+            ]
+        ]
+        new File(genRpgMobsRolesDir, 'RPGMobs_ParryTest_NoShield.json').text = new groovy.json.JsonBuilder(parryTestNoShieldRole).toPrettyString()
+        println "Generated ParryTest NPCs (shield + no shield variants)"
+
+        // Phase 4B: Generate per-attack-root CAE configs for ranged NPCs
+        rangedAttackToNpcIds.each { attackId, npcList ->
+            def caeActions = [:]
+            caeActions.SelectTarget = [Type: 'SelectBasicAttackTarget', Description: 'Select attack target',
+                Conditions: [[Type: 'Randomiser', MinValue: 0.9, MaxValue: 1.0]]]
+
+            caeActions.BackOff = [Type: 'State', Description: 'Back off after sustained damage',
+                State: 'Combat', SubState: 'Strafe',
+                PostExecuteDistanceRange: [10, 14],
+                Target: 'Hostile', WeightCoefficient: 1.5,
+                Conditions: [
+                    [Type: 'RecentSustainedDamage', Curve: [ResponseCurve: 'InverseExponential', XRange: [0, 2]]],
+                    [Type: 'Randomiser', MinValue: 0.5, MaxValue: 1.0],
+                    [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 6]]
+                ]]
+
+            caeActions.HealthRetreat = [Type: 'State', Description: 'Retreat when health is low',
+                State: 'Combat', SubState: 'Strafe',
+                PostExecuteDistanceRange: [14, 20],
+                Target: 'Hostile', WeightCoefficient: 5.0,
+                Conditions: [
+                    [Type: 'OwnStatPercent', Stat: 'Health', Curve: 'ReverseLinear'],
+                    [Type: 'TimeSinceLastUsed', Curve: [Type: 'Switch', SwitchPoint: 12]]
+                ]]
+
+            caeActions.ReEngageFromStrafe = [Type: 'State', Description: 'Return to combat from strafe',
+                State: 'Combat', SubState: 'Default',
+                PostExecuteDistanceRange: [8, 12],
+                Target: 'Hostile',
+                Conditions: [
+                    [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: [0, 10]]],
+                    [Type: 'Randomiser', MinValue: 0.5, MaxValue: 0.8]
+                ]]
+
+            def rangedBasicAttacks = [Attacks: [attackId], Randomise: true,
+                UseProjectedDistance: true, MaxRange: 20,
+                Timeout: 2, CooldownRange: [0.8, 1.5]]
+
+            def rangedStrafeBasicAttacks = [Attacks: [attackId], Randomise: true,
+                UseProjectedDistance: true, MaxRange: 20,
+                Timeout: 2, CooldownRange: [1.0, 2.0]]
+
+            def caeActionSets = [:]
+            caeActionSets.Default = [
+                BasicAttacks: rangedBasicAttacks,
+                Actions: ['SelectTarget', 'BackOff', 'HealthRetreat']
+            ]
+            caeActionSets.Strafe = [
+                BasicAttacks: rangedStrafeBasicAttacks,
+                Actions: ['SelectTarget', 'ReEngageFromStrafe', 'HealthRetreat']
+            ]
+
+            def caeJson = [Type: 'CombatActionEvaluator', TargetMemoryDuration: 10,
+                CombatActionEvaluator: [
+                    RunConditions: [
+                        [Type: 'TimeSinceLastUsed', Curve: [ResponseCurve: 'Linear', XRange: [0, 3]]],
+                        [Type: 'Randomiser', MinValue: 0.8, MaxValue: 1.0]
+                    ],
+                    MinRunUtility: 0.5, MinActionUtility: 0.01,
+                    AvailableActions: caeActions, ActionSets: caeActionSets
+                ]]
+
+            def caeFileName = "CAE_RPGMobs_${attackId}.json"
+            def caeOutFile = new File(generatedResDir, "Server/NPC/Balancing/RPGMobs/" + caeFileName)
+            caeOutFile.parentFile.mkdirs()
+            caeOutFile.text = new groovy.json.JsonBuilder(caeJson).toPrettyString()
+            caeConfigCount++
+            rangedCount++
+        }
+
+        // Phase 5: Patch Template_Intelligent with Flee instruction for setBackingAway support
+        def templateIntelligentFile = new File(npcRolesDir, '_Core/Templates/Template_Intelligent.json')
+        if (templateIntelligentFile.exists()) {
+            def templateJson = new groovy.json.JsonSlurper().parse(templateIntelligentFile)
+
+            // Add flee parameters
+            if (templateJson.Parameters instanceof Map) {
+                templateJson.Parameters['RPGMobsFleeStopDistance'] = [Value: 12, Description: 'RPGMobs - stop fleeing when target is this far away']
+                templateJson.Parameters['RPGMobsFleeSlowDownDistance'] = [Value: 8, Description: 'RPGMobs - start slowing down during flee at this distance']
+            }
+
+            // Find the Combat state and inject Flee instruction before the attack instruction
+            def states = templateJson?.Content?.States
+            if (states instanceof Map) {
+                def combatState = states['Combat']
+                if (combatState?.Content?.Instructions instanceof List) {
+                    def instructions = combatState.Content.Instructions
+                    def fleeInstruction = [
+                        '$Comment': 'RPGMobs - Flee when setBackingAway is true',
+                        Continue: true,
+                        Sensor: [
+                            Type: 'And',
+                            Sensors: [
+                                [Type: 'IsBackingAway'],
+                                [Type: 'Target', Range: 100]
+                            ]
+                        ],
+                        BodyMotion: [
+                            Type: 'Flee',
+                            StopDistance: [Compute: 'RPGMobsFleeStopDistance'],
+                            SlowDownDistance: [Compute: 'RPGMobsFleeSlowDownDistance']
+                        ],
+                        HeadMotion: [Type: 'Watch']
+                    ]
+                    // Insert at beginning of instructions so flee takes priority
+                    instructions.add(0, fleeInstruction)
+                }
+            }
+
+            def templateOutFile = new File(generatedResDir, 'Server/NPC/Roles/_Core/Templates/Template_Intelligent.json')
+            templateOutFile.parentFile.mkdirs()
+            templateOutFile.text = new groovy.json.JsonBuilder(templateJson).toPrettyString()
+            println "Patched Template_Intelligent with RPGMobs Flee instruction"
+        }
+
+        // NOTE: Chase component is NOT patched. The Flee instruction in Template_Intelligent
+        // fires at the Combat state level (above Chase) when IsBackingAway is true.
+        // Chase naturally exits when the NPC's target changes or navigation updates.
+
+        println "Generated ${roleOverrideCount} role overrides (${skippedCount} skipped non-intelligent)"
+        println "Generated ${caeConfigCount} CAE configs (${meleeCount} melee factions + ${perWeaponCaeCount} per-faction-per-weapon + ${perTierCaeCount} per-tier-per-weapon, ${rangedCount} ranged)"
+        println "Generated ${roleVariantCount} per-faction-per-weapon role variants"
+        println "Generated ${testVariantCount} per-tier-per-weapon test variants"
+        println "Preserved ${preservedVanillaCaeCount} vanilla CAE configs (not overridden)"
+        meleeFactionNpcIds.each { faction, npcList ->
+            println "  Faction ${faction}: ${npcList.size()} melee NPCs"
+        }
+
         outputFile.text = """\
 package com.frotty27.rpgmobs.generated;
 
@@ -70,9 +1390,10 @@ ${npcLiterals}
     public static final List<String> ALL_ITEM_ICON_IDS = List.of(
 ${itemLiterals}
     );
+
 }
 """
-        println "Generated HytaleAssetIds: ${npcIdsSorted.size()} NPCs, ${itemIds.size()} item icons"
+        println "Generated HytaleAssetIds: ${npcIdsSorted.size()} NPCs, ${itemIds.size()} item icons, ${roleOverrideCount} role overrides, ${caeConfigCount} CAE configs, ${roleVariantCount} role variants"
     }
 }
 
@@ -112,7 +1433,7 @@ tasks.processResources {
 tasks.shadowJar {
     archiveClassifier = ''
     relocate 'org.yaml.snakeyaml', 'com.frotty27.rpgmobs.shaded.snakeyaml'
-    // Explicitly include rpgmobs-api classes — shadow may skip them due to
+    // Explicitly include rpgmobs-api classes  -  shadow may skip them due to
     // split-package overlap (server has implementation classes in the api namespace).
     from project(':rpgmobs-api').sourceSets.main.output
 }

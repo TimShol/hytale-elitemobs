@@ -1,10 +1,10 @@
 # RPGMobs
 
-### Adds tiered elite variants to every _configured_ NPC — with <span style="color:#3598db">scaling</span>, <span style="color:#2dc26b">abilities</span>, <span style="color:#f1c40f">loot</span> and <span style="color:#e67e23">equipment</span> to your world!
+### Adds tiered elite variants to every _configured_ NPC  -  with <span style="color:#3598db">scaling</span>, <span style="color:#2dc26b">abilities</span>, <span style="color:#f1c40f">loot</span> and <span style="color:#e67e23">equipment</span> to your world!
 
 ![RPGMobs Ability](https://media.forgecdn.net/attachments/1495/784/eliteleapability-gif.gif)
 
-Currently enhancing <span style="color:#2dc26b">165 NPC types</span> — and more to come!
+Currently enhancing <span style="color:#2dc26b">165 NPC types</span>  -  and more to come!
 
 ## Documentation / Guide
 
@@ -21,7 +21,7 @@ If you wish to support me and this project, you can simply download and play thi
 
 ## Required Dependencies
 
-*   **[NameplateBuilder](https://www.curseforge.com/hytale/mods/nameplatebuilder)** — Handles nameplate rendering for elite mobs. Must be installed alongside RPGMobs.
+*   **[NameplateBuilder](https://www.curseforge.com/hytale/mods/nameplatebuilder)**  -  Handles nameplate rendering for elite mobs. Must be installed alongside RPGMobs.
 
 ***
 
@@ -30,19 +30,19 @@ If you wish to support me and this project, you can simply download and play thi
 *   5 power tiers (Common to Legendary) with independent health and damage scaling
 *   Random damage and health variance for less predictable encounters
 *   Ability gating per mob rule with per-tier toggles and weapon category restrictions
-*   Per-mob armor slot restrictions — mobs whose models don't support full armor won't equip it
+*   Per-mob armor slot restrictions  -  mobs whose models don't support full armor won't equip it
 *   Entity effects system (projectile resistance and more)
 *   Elite-vs-elite aggro prevention toggle
 
 ### Abilities
 
-Elites use an event-driven ability system — abilities trigger contextually based on combat state, not on a timer. There are currently 3 abilities:
+Elites use an event-driven ability system  -  abilities trigger contextually based on combat state, not on a timer. There are currently 3 abilities:
 
-*   **Charge Leap** — Gap-closing attack. Triggers when a target is within range.
-*   **Heal Leap** — Defensive retreat with self-heal. Triggers when health drops below a threshold.
-*   **Undead Summon** — Spawns faction-appropriate reinforcements (goblins summon goblins, trorks summon trorks, undead summon undead). Triggers periodically during sustained combat. Configurable summon pool exclusion prevents certain roles from being summoned.
+*   **Charge Leap**  -  Gap-closing attack. Triggers when a target is within range.
+*   **Heal Leap**  -  Defensive retreat with self-heal. Triggers when health drops below a threshold.
+*   **Undead Summon**  -  Spawns faction-appropriate reinforcements (goblins summon goblins, trorks summon trorks, undead summon undead). Triggers periodically during sustained combat. Configurable summon pool exclusion prevents certain roles from being summoned.
 
-Each ability is linked to specific mob rules with per-tier enablement toggles and weapon category restrictions — for example, staff-wielding mobs cannot use Charge Leap. By default, most mob categories have abilities enabled for Tier 4 and 5.
+Each ability is linked to specific mob rules with per-tier enablement toggles and weapon category restrictions  -  for example, staff-wielding mobs cannot use Charge Leap. By default, most mob categories have abilities enabled for Tier 4 and 5.
 
 More abilities and new AI behaviours are actively in development, including conditional combos, environmental awareness, and tier-exclusive mechanics that will make each encounter feel distinct.
 
@@ -53,7 +53,7 @@ More abilities and new AI behaviours are actively in development, including cond
 *   Category-based weapon and armor organization with hierarchical category trees
 *   Rarity-weighted equipment assigned by weapon and armor categories per mob rule
 *   Tiered loot tables with configurable drop multipliers (0x to 6x)
-*   Per-tier drop enablement — control exactly which tiers can drop each item
+*   Per-tier drop enablement  -  control exactly which tiers can drop each item
 *   Loot templates with linked mob rules for targeted drop tables (e.g., Goblin Boss loot)
 *   Chance to drop equipped items on death with configurable durability range
 *   Consumable drops including food, potions, gems, and materials
@@ -113,17 +113,17 @@ Optionally, you can also configure RPGMobs by editing the YAML files directly. R
 *   Layered config: `base/` (9 YAML files) + `worlds/` (per-world overlays) + `instances/` (per-instance overlays)
 *   Live reload via `/rpgmobs reload` with automatic reconciliation of existing elites
 *   Every feature is independently toggleable
-*   Config format version migration — automatically regenerates config when the architecture changes, preserves custom changes on regular updates
-*   Missing keys are regenerated automatically — no need to start fresh after a content update
+*   Config format version migration  -  automatically regenerates config when the architecture changes, preserves custom changes on regular updates
+*   Missing keys are regenerated automatically  -  no need to start fresh after a content update
 
 ## Asset Generation
 
-*   The generated `Server` folder inside the mod directory is the runtime asset pack — no need to edit it manually
+*   The generated `Server` folder inside the mod directory is the runtime asset pack  -  no need to edit it manually
 
 ## Permissions
 
-*   **`rpgmobs.reload`** — Allows the player to reload RPGMobs configuration at runtime
-*   **`rpgmobs.config`** — Allows the player to open the in-game Admin UI
+*   **`rpgmobs.reload`**  -  Allows the player to reload RPGMobs configuration at runtime
+*   **`rpgmobs.config`**  -  Allows the player to open the in-game Admin UI
 
 ***
 
@@ -137,7 +137,7 @@ Optionally, you can also configure RPGMobs by editing the YAML files directly. R
 
 ## Uninstalling
 
-If you remove the mod, leftover elite NPCs can remain with modified stats and equipment. Do **not** try to kill them — the game will crash since it can no longer find the mod's code.
+If you remove the mod, leftover elite NPCs can remain with modified stats and equipment. Do **not** try to kill them  -  the game will crash since it can no longer find the mod's code.
 
 Instead, use `/npc clean --confirm` and repeat until all remaining elite NPCs are removed.
 
@@ -149,9 +149,9 @@ Custom weapons and armor from other mods can be added to the appropriate weapon 
 
 ✅ **Strongly recommended to play alongside:**
 
-**[Perfect Parries](https://www.curseforge.com/hytale/mods/perfect-parries)** — Adds more depth and skill-based combat, especially against elite enemies.
+**[Perfect Parries](https://www.curseforge.com/hytale/mods/perfect-parries)**  -  Adds more depth and skill-based combat, especially against elite enemies.
 
-**[RPGLeveling](https://www.curseforge.com/hytale/mods/rpg-leveling-and-stats)** — Adds experience, levels, zones, (even more) difficulty scaling and stat-based progression. RPGMobs auto-generates a `rpgleveling.yml` config with tier-scaled XP multipliers, ability-based XP bonuses, and minion XP reduction. XP settings are overlayable per-world.
+**[RPGLeveling](https://www.curseforge.com/hytale/mods/rpg-leveling-and-stats)**  -  Adds experience, levels, zones, (even more) difficulty scaling and stat-based progression. RPGMobs auto-generates a `rpgleveling.yml` config with tier-scaled XP multipliers, ability-based XP bonuses, and minion XP reduction. XP settings are overlayable per-world.
 
 ***
 
@@ -163,7 +163,7 @@ Custom weapons and armor from other mods can be added to the appropriate weapon 
 *   Feedback and suggestions are very welcome
 *   Balancing and content will continue to evolve
 
-Solo developer project — this mod is developed and maintained by one person (me), alongside a full-time job.
+Solo developer project  -  this mod is developed and maintained by one person (me), alongside a full-time job.
 
 ***
 
@@ -179,15 +179,15 @@ Solo developer project — this mod is developed and maintained by one person (m
 
 <span style="color:#843fa1"><strong>Is there an in-game configuration UI?</strong></span>
 
-<span style="color:#2dc26b"><em>Yes. Use <code>/rpgmobs config</code> to open the Admin UI. It requires the <code>rpgmobs.config</code> permission. The Admin UI provides visual editors for every setting — base config, per-world overlays, per-instance overlays, weapon/armor categories, and more.</em></span>
+<span style="color:#2dc26b"><em>Yes. Use <code>/rpgmobs config</code> to open the Admin UI. It requires the <code>rpgmobs.config</code> permission. The Admin UI provides visual editors for every setting  -  base config, per-world overlays, per-instance overlays, weapon/armor categories, and more.</em></span>
 
 <span style="color:#843fa1"><strong>Can I configure what I don't like?</strong></span>
 
-<span style="color:#2dc26b"><em>Yes. Almost everything is configurable — either through the in-game Admin UI (<code>/rpgmobs config</code>) or by editing YAML files directly.</em></span>
+<span style="color:#2dc26b"><em>Yes. Almost everything is configurable  -  either through the in-game Admin UI (<code>/rpgmobs config</code>) or by editing YAML files directly.</em></span>
 
 <span style="color:#843fa1"><strong>Can I reload the config?</strong></span>
 
-<span style="color:#2dc26b"><em>Yes — use <code>/rpgmobs reload</code>. Existing elites are reconciled on their next tick.</em></span>
+<span style="color:#2dc26b"><em>Yes  -  use <code>/rpgmobs reload</code>. Existing elites are reconciled on their next tick.</em></span>
 
 <span style="color:#843fa1"><strong>Is the source code available?</strong></span>
 
@@ -202,12 +202,12 @@ RPGMobs ships a separate `rpgmobs-api` artifact for mod developers. Add it as a 
 *   Event-driven API with 12 event types (spawn, death, damage, abilities, aggro, loot)
 *   Read-only Query API for inspecting any RPG mob's tier, scaling, combat state, and more
 *   Cancellable events for spawn blocking, damage modification, and loot customization
-*   Lightweight API artifact — no dependency on the full plugin
+*   Lightweight API artifact  -  no dependency on the full plugin
 
 See the [API documentation](https://docs.rpgmobs.frotty27.com/api/overview) for setup instructions and integration examples.
 
 ### Damage System Overview
 
-RPGMobs is compatible with other damage-modifying mods. Multipliers stack, so balance may need tuning — but as long as you know how to read and edit config files, you're in the clear.
+RPGMobs is compatible with other damage-modifying mods. Multipliers stack, so balance may need tuning  -  but as long as you know how to read and edit config files, you're in the clear.
 
 <div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/description/1444529/description_2c56d0ab-f22e-4ae9-a7d0-b65e6134caab.png" alt="Damage Pipeline"></p></div>

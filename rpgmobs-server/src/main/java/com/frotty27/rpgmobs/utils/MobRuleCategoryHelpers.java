@@ -5,6 +5,7 @@ import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 public final class MobRuleCategoryHelpers {
 
@@ -34,132 +35,114 @@ public final class MobRuleCategoryHelpers {
     public static void renameCategoryInLinkedKeys(List<String> linkedKeys, String oldName, String newName) {
         String oldKey = toCategoryKey(oldName);
         String newKey = toCategoryKey(newName);
-        int idx = linkedKeys.indexOf(oldKey);
-        if (idx >= 0) {
-            linkedKeys.set(idx, newKey);
+        int position = linkedKeys.indexOf(oldKey);
+        if (position >= 0) {
+            linkedKeys.set(position, newKey);
         }
     }
 
     public static List<String> collectAllMobRuleKeys(RPGMobsConfig.MobRuleCategory category) {
-        List<String> keys = new ArrayList<>(category.mobRuleKeys);
-        for (RPGMobsConfig.MobRuleCategory child : category.children) {
-            keys.addAll(collectAllMobRuleKeys(child));
-        }
-        return keys;
+        return collectAllKeys(category, c -> c.mobRuleKeys, c -> c.children);
     }
 
     public static RPGMobsConfig.MobRuleCategory findCategoryByName(RPGMobsConfig.MobRuleCategory root, String name) {
-        if (root.name.equals(name)) return root;
-        for (RPGMobsConfig.MobRuleCategory child : root.children) {
-            RPGMobsConfig.MobRuleCategory found = findCategoryByName(child, name);
-            if (found != null) return found;
-        }
-        return null;
+        return findByName(root, name, c -> c.name, c -> c.children);
     }
 
     public static List<String> searchMobRuleKeysRecursive(RPGMobsConfig.MobRuleCategory root, String filter) {
-        List<String> result = new ArrayList<>();
-        String lowerFilter = filter.toLowerCase();
-        for (String key : root.mobRuleKeys) {
-            if (key.toLowerCase().contains(lowerFilter)) {
-                result.add(key);
-            }
-        }
-        for (RPGMobsConfig.MobRuleCategory child : root.children) {
-            result.addAll(searchMobRuleKeysRecursive(child, filter));
-        }
-        return result;
+        return searchKeysRecursive(root, filter, c -> c.mobRuleKeys, c -> c.children);
     }
 
     public static boolean renameMobRuleKeyRecursive(RPGMobsConfig.MobRuleCategory root, String oldKey, String newKey) {
-        int idx = root.mobRuleKeys.indexOf(oldKey);
-        if (idx >= 0) {
-            root.mobRuleKeys.set(idx, newKey);
-            return true;
-        }
-        for (RPGMobsConfig.MobRuleCategory child : root.children) {
-            if (renameMobRuleKeyRecursive(child, oldKey, newKey)) return true;
-        }
-        return false;
+        return renameKeyRecursive(root, oldKey, newKey, c -> c.mobRuleKeys, c -> c.children);
     }
 
     public static boolean removeMobRuleKeyRecursive(RPGMobsConfig.MobRuleCategory root, String key) {
-        if (root.mobRuleKeys.remove(key)) return true;
-        for (RPGMobsConfig.MobRuleCategory child : root.children) {
-            if (removeMobRuleKeyRecursive(child, key)) return true;
-        }
-        return false;
+        return removeKeyRecursive(root, key, c -> c.mobRuleKeys, c -> c.children);
     }
 
     public static List<String> searchLootTemplateKeysRecursive(RPGMobsConfig.LootTemplateCategory root, String filter) {
-        List<String> result = new ArrayList<>();
-        String lowerFilter = filter.toLowerCase();
-        for (String key : root.templateKeys) {
-            if (key.toLowerCase().contains(lowerFilter)) {
-                result.add(key);
-            }
-        }
-        for (RPGMobsConfig.LootTemplateCategory child : root.children) {
-            result.addAll(searchLootTemplateKeysRecursive(child, filter));
-        }
-        return result;
+        return searchKeysRecursive(root, filter, c -> c.templateKeys, c -> c.children);
     }
 
     public static boolean removeLootTemplateKeyRecursive(RPGMobsConfig.LootTemplateCategory root, String key) {
-        if (root.templateKeys.remove(key)) return true;
-        for (RPGMobsConfig.LootTemplateCategory child : root.children) {
-            if (removeLootTemplateKeyRecursive(child, key)) return true;
-        }
-        return false;
+        return removeKeyRecursive(root, key, c -> c.templateKeys, c -> c.children);
     }
 
     public static List<String> collectAllGearItemKeys(RPGMobsConfig.GearCategory category) {
-        List<String> keys = new ArrayList<>(category.itemKeys);
-        for (RPGMobsConfig.GearCategory child : category.children) {
-            keys.addAll(collectAllGearItemKeys(child));
+        return collectAllKeys(category, c -> c.itemKeys, c -> c.children);
+    }
+
+    public static RPGMobsConfig.GearCategory findGearCategoryByName(RPGMobsConfig.GearCategory root, String name) {
+        return findByName(root, name, c -> c.name, c -> c.children);
+    }
+
+    public static List<String> searchGearItemKeysRecursive(RPGMobsConfig.GearCategory root, String filter) {
+        return searchKeysRecursive(root, filter, c -> c.itemKeys, c -> c.children);
+    }
+
+    public static boolean removeGearItemKeyRecursive(RPGMobsConfig.GearCategory root, String key) {
+        return removeKeyRecursive(root, key, c -> c.itemKeys, c -> c.children);
+    }
+
+    public static boolean renameGearItemKeyRecursive(RPGMobsConfig.GearCategory root, String oldKey, String newKey) {
+        return renameKeyRecursive(root, oldKey, newKey, c -> c.itemKeys, c -> c.children);
+    }
+
+    private static <T> List<String> collectAllKeys(T node, Function<T, List<String>> getKeys,
+                                                    Function<T, List<T>> getChildren) {
+        var keys = new ArrayList<>(getKeys.apply(node));
+        for (T child : getChildren.apply(node)) {
+            keys.addAll(collectAllKeys(child, getKeys, getChildren));
         }
         return keys;
     }
 
-    public static RPGMobsConfig.GearCategory findGearCategoryByName(RPGMobsConfig.GearCategory root, String name) {
-        if (root.name.equals(name)) return root;
-        for (RPGMobsConfig.GearCategory child : root.children) {
-            RPGMobsConfig.GearCategory found = findGearCategoryByName(child, name);
+    private static <T> T findByName(T node, String name, Function<T, String> getName,
+                                     Function<T, List<T>> getChildren) {
+        if (getName.apply(node).equals(name)) return node;
+        for (T child : getChildren.apply(node)) {
+            T found = findByName(child, name, getName, getChildren);
             if (found != null) return found;
         }
         return null;
     }
 
-    public static List<String> searchGearItemKeysRecursive(RPGMobsConfig.GearCategory root, String filter) {
-        List<String> result = new ArrayList<>();
-        String lowerFilter = filter.toLowerCase();
-        for (String key : root.itemKeys) {
+    private static <T> List<String> searchKeysRecursive(T node, String filter, Function<T, List<String>> getKeys,
+                                                         Function<T, List<T>> getChildren) {
+        var result = new ArrayList<String>();
+        var lowerFilter = filter.toLowerCase();
+        for (String key : getKeys.apply(node)) {
             if (key.toLowerCase().contains(lowerFilter)) {
                 result.add(key);
             }
         }
-        for (RPGMobsConfig.GearCategory child : root.children) {
-            result.addAll(searchGearItemKeysRecursive(child, filter));
+        for (T child : getChildren.apply(node)) {
+            result.addAll(searchKeysRecursive(child, filter, getKeys, getChildren));
         }
         return result;
     }
 
-    public static boolean removeGearItemKeyRecursive(RPGMobsConfig.GearCategory root, String key) {
-        if (root.itemKeys.remove(key)) return true;
-        for (RPGMobsConfig.GearCategory child : root.children) {
-            if (removeGearItemKeyRecursive(child, key)) return true;
+    private static <T> boolean removeKeyRecursive(T node, String key, Function<T, List<String>> getKeys,
+                                                   Function<T, List<T>> getChildren) {
+        if (getKeys.apply(node).remove(key)) return true;
+        for (T child : getChildren.apply(node)) {
+            if (removeKeyRecursive(child, key, getKeys, getChildren)) return true;
         }
         return false;
     }
 
-    public static boolean renameGearItemKeyRecursive(RPGMobsConfig.GearCategory root, String oldKey, String newKey) {
-        int idx = root.itemKeys.indexOf(oldKey);
-        if (idx >= 0) {
-            root.itemKeys.set(idx, newKey);
+    private static <T> boolean renameKeyRecursive(T node, String oldKey, String newKey,
+                                                   Function<T, List<String>> getKeys,
+                                                   Function<T, List<T>> getChildren) {
+        var keys = getKeys.apply(node);
+        int position = keys.indexOf(oldKey);
+        if (position >= 0) {
+            keys.set(position, newKey);
             return true;
         }
-        for (RPGMobsConfig.GearCategory child : root.children) {
-            if (renameGearItemKeyRecursive(child, oldKey, newKey)) return true;
+        for (T child : getChildren.apply(node)) {
+            if (renameKeyRecursive(child, oldKey, newKey, getKeys, getChildren)) return true;
         }
         return false;
     }

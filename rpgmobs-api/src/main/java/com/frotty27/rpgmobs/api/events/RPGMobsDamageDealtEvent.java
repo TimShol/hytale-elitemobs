@@ -5,15 +5,12 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
- * Event fired when an RPG mob deals damage to another entity.
+ * Fired when an RPGMobs elite deals damage to another entity. Cancellable - the damage
+ * multiplier can be adjusted via {@link #setMultiplier(float)} or the event cancelled to
+ * prevent damage entirely. The entityRef from the parent class is the attacker.
+ * Final damage = baseDamage * multiplier.
  *
- * <p>Listeners can modify the damage {@linkplain #setMultiplier(float) multiplier}
- * to scale the outgoing damage, or {@linkplain #setCancelled(boolean) cancel} the
- * event to prevent the damage entirely.</p>
- *
- * <p>The final damage dealt is computed as {@code baseDamage * multiplier}.</p>
- *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsDamageDealtEvent extends RPGMobsEvent implements ICancellable {
 
@@ -23,15 +20,13 @@ public final class RPGMobsDamageDealtEvent extends RPGMobsEvent implements ICanc
     private boolean cancelled;
 
     /**
-     * Constructs a new damage dealt event.
-     *
-     * @param world       the world in which the damage occurred
-     * @param attackerRef the entity reference of the attacking RPG mob
-     * @param tier        the tier index of the attacking RPG mob
-     * @param roleName    the role name of the attacking RPG mob
-     * @param victimRef   the entity reference of the entity being damaged
-     * @param baseDamage  the base (unscaled) damage amount
-     * @param multiplier  the initial damage multiplier applied by the RPG mob's tier
+     * @param world       the world where the damage occurred
+     * @param attackerRef reference to the attacking elite (same as {@link #getEntityRef()})
+     * @param tier        tier index (0-based)
+     * @param roleName    the attacker's NPC role name
+     * @param victimRef   reference to the entity receiving damage
+     * @param baseDamage  the unscaled damage amount
+     * @param multiplier  the initial damage multiplier (final damage = baseDamage * multiplier)
      */
     public RPGMobsDamageDealtEvent(World world, Ref<EntityStore> attackerRef, int tier, String roleName,
                                    Ref<EntityStore> victimRef, float baseDamage, float multiplier) {
@@ -42,39 +37,28 @@ public final class RPGMobsDamageDealtEvent extends RPGMobsEvent implements ICanc
     }
 
     /**
-     * Returns the entity reference of the entity being damaged.
-     *
-     * @return the victim's entity reference, never {@code null}
+     * @return reference to the entity receiving damage
      */
     public Ref<EntityStore> getVictimRef() {
         return victimRef;
     }
 
     /**
-     * Returns the base (unscaled) damage amount before the multiplier is applied.
-     *
-     * @return the base damage value
+     * @return the unscaled damage amount before the multiplier is applied
      */
     public float getBaseDamage() {
         return baseDamage;
     }
 
     /**
-     * Returns the current damage multiplier.
-     *
-     * <p>The final damage is computed as {@code baseDamage * multiplier}.</p>
-     *
-     * @return the damage multiplier
+     * @return the current damage multiplier
      */
     public float getMultiplier() {
         return multiplier;
     }
 
     /**
-     * Sets the damage multiplier.
-     *
-     * <p>Modify this value to scale the damage dealt by the RPG mob.
-     * The final damage is computed as {@code baseDamage * multiplier}.</p>
+     * Adjusts the damage multiplier. Final damage = {@link #getBaseDamage()} * multiplier.
      *
      * @param multiplier the new damage multiplier
      */

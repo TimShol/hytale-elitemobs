@@ -36,6 +36,12 @@ public final class RPGMobsFeatureRegistry {
         register(new RPGMobsChargeLeapAbilityFeature());
         register(new RPGMobsHealLeapAbilityFeature());
         register(new RPGMobsUndeadSummonAbilityFeature());
+        register(new RPGMobsDodgeRollAbilityFeature());
+        register(new RPGMobsMultiSlashShortFeature());
+        register(new RPGMobsMultiSlashMediumFeature());
+        register(new RPGMobsMultiSlashLongFeature());
+        register(new RPGMobsEnrageAbilityFeature());
+        register(new RPGMobsVolleyAbilityFeature());
         register(new RPGMobsHealthScalingFeature());
         register(new RPGMobsModelScalingFeature());
     }

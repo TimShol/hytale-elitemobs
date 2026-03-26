@@ -6,7 +6,6 @@ import com.hypixel.hytale.codec.codecs.simple.IntegerCodec;
 import com.hypixel.hytale.codec.codecs.simple.StringCodec;
 import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-
 public final class RPGMobsTierComponent implements Component<EntityStore> {
 
     public int tierIndex = -1;

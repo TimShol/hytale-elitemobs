@@ -18,7 +18,7 @@ enabledByDefault: true
 | Setting | What it does | Default |
 | :--- | :--- | :--- |
 | `configVersion` | Managed automatically by the mod. Do not edit. Tracks which plugin version last wrote the config. | Auto |
-| `configFormatVersion` | Config layout version. When this value is lower than the version expected by the mod, **all config files** (base, world overlays, instance overlays) are wiped and regenerated with fresh defaults. This is not tied to plugin versions — it only changes when the config architecture breaks. Do not edit. | `3` |
+| `configFormatVersion` | Config layout version. When this value is lower than the version expected by the mod, **all config files** (base, world overlays, instance overlays) are wiped and regenerated with fresh defaults. This is not tied to plugin versions  -  it only changes when the config architecture breaks. Do not edit. | `3` |
 | `enabledByDefault` | When `true`, worlds without a specific overlay file use the base config. When `false`, RPGMobs is disabled for unmatched worlds. | `true` |
 
 ## System Config (base/core.yml)
@@ -27,7 +27,7 @@ enabledByDefault: true
 
 ### Reconcile
 
-When you reload configuration with `/rpgmobs reload` or save from the [Admin UI](/config/admin-ui), existing elites in the world are automatically reconciled to match the new settings. Each elite re-evaluates its mob rule on its next tick — if the rule was removed, the elite is despawned; if the rule changed, equipment is re-applied. Mobs loaded from saved chunks after a config change are reconciled when they load.
+When you reload configuration with `/rpgmobs reload` or save from the [Admin UI](/config/admin-ui), existing elites in the world are automatically reconciled to match the new settings. Each elite re-evaluates its mob rule on its next tick  -  if the rule was removed, the elite is despawned; if the rule changed, equipment is re-applied. Mobs loaded from saved chunks after a config change are reconciled when they load.
 
 ### Debug
 
@@ -54,4 +54,4 @@ Integrations:
 | :--- | :--- | :--- |
 | `RPGLeveling.enabled` | Enables the RPGLeveling integration for tier-scaled XP and minion XP reduction. Requires [RPGLeveling](https://www.curseforge.com/hytale/mods/rpgleveling) to be installed. When active, a separate `rpgleveling.yml` file is generated with XP balance settings. XP settings are also overlayable per-world. | `true` |
 
-See [Compatibility — RPGLeveling](/reference/compatibility#rpgleveling) for full configuration details.
+See [Compatibility  -  RPGLeveling](/reference/compatibility#rpgleveling) for full configuration details.

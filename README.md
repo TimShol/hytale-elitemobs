@@ -43,7 +43,7 @@ Full configuration guides, developer API reference, and troubleshooting:
 
 - 5 power tiers (Common to Legendary) with independent health and damage scaling
 - Combat abilities: Charge Leap, Heal Potion, Undead Summon
-- Faction-based summoning — goblins summon goblins, trorks summon trorks, undead summon undead
+- Faction-based summoning  -  goblins summon goblins, trorks summon trorks, undead summon undead
 - Random damage and health variance for less predictable encounters
 - Ability gating per mob rule with per-tier toggles and weapon category restrictions
 - Per-mob armor slot restrictions for mobs whose models don't support full armor
@@ -55,7 +55,7 @@ Full configuration guides, developer API reference, and troubleshooting:
 - Category-based weapon and armor organization with hierarchical category trees
 - Rarity-weighted equipment assigned by weapon and armor categories per mob rule
 - Tiered loot tables with configurable drop multipliers (up to 6x for Tier 5)
-- Per-tier drop enablement — control exactly which tiers can drop each item
+- Per-tier drop enablement  -  control exactly which tiers can drop each item
 - Loot templates with linked mob rules for targeted drop tables (e.g., Goblin Boss loot)
 - Chance to drop equipped items on death with configurable durability range
 - Consumable drops including food, potions, gems, and materials
@@ -100,7 +100,7 @@ RPGMobs includes a full in-game configuration panel accessible via `/rpgmobs con
 ### Integrations
 
 - Built-in RPGLeveling support with tier-scaled XP, ability-based XP bonuses, and minion XP reduction
-- XP settings are overlayable per-world — each world or instance can have its own XP multipliers
+- XP settings are overlayable per-world  -  each world or instance can have its own XP multipliers
 - Standalone `rpgleveling.yml` config auto-generated when RPGLeveling is detected
 
 ### For Developers
@@ -156,7 +156,7 @@ RPGMobs uses a layered configuration system with a base config directory, per-wo
 ```
 
 Reloads all YAML configuration from disk. Spawn logic updates immediately. Existing elites are reconciled on their
-next tick — mob rules are re-evaluated and equipment is re-applied as needed.
+next tick  -  mob rules are re-evaluated and equipment is re-applied as needed.
 
 ## Commands
 
@@ -197,7 +197,7 @@ Repeat until all remaining elite NPCs are removed. Do not kill them directly as 
 RPGMobs works alongside other Hytale mods. Nameplate rendering is handled by
 [NameplateBuilder](https://github.com/TimShol/hytale-nameplate-builder), which provides the tiered nameplate
 display used by RPGMobs. Mod developers looking to extend or interact with RPGMobs should use the
-`rpgmobs-api` artifact — see the [API documentation](https://docs.RPGMobs.frotty27.com/api/overview) for
+`rpgmobs-api` artifact  -  see the [API documentation](https://docs.RPGMobs.frotty27.com/api/overview) for
 integration details.
 
 [![GitHub](https://img.shields.io/badge/GitHub-NameplateBuilder-7C3AED?style=for-the-badge&logo=github&logoColor=white)](https://github.com/TimShol/hytale-nameplate-builder)

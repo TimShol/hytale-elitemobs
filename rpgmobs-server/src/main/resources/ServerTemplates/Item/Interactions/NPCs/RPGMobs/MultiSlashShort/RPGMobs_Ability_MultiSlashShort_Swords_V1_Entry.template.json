@@ -1,0 +1,58 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashShort Swords V1  - 1-hit charged slash (~1.8s total).",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up  - 1.1s charging with weapon trail",
+      "RunTime": 0.9,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Sword",
+        "ItemAnimationId": "SwingLeftCharging",
+        "WorldSoundEventId": "SFX_Sword_T2_Signature_Part_1",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1  - SwingLeftCharged",
+      "RunTime": 0.25,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Sword",
+        "ItemAnimationId": "SwingLeftCharged",
+        "WorldSoundEventId": "SFX_Sword_T2_Swing",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.5 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashShort.config.templates.damageInteractionSwords} ]
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery  - Idle recovery",
+      "RunTime": 0.2,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Sword",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}

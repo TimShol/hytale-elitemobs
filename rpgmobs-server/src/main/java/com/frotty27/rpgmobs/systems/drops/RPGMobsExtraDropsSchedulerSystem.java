@@ -12,17 +12,15 @@ import org.jspecify.annotations.NonNull;
 
 public final class RPGMobsExtraDropsSchedulerSystem extends EntityTickingSystem<EntityStore> {
 
-    private final RPGMobsPlugin RPGMobsPlugin;
+    private static final long NEW_ENGINE_TICK_THRESHOLD_NS = 1_000_000L;
 
+    private final RPGMobsPlugin plugin;
     private long lastProcessedTick = Long.MIN_VALUE;
-
     private boolean advancedThisEngineTick = false;
     private long lastAdvanceNanos = 0L;
 
-    private static final long NEW_ENGINE_TICK_THRESHOLD_NS = 1_000_000L;
-
-    public RPGMobsExtraDropsSchedulerSystem(RPGMobsPlugin RPGMobsPlugin) {
-        this.RPGMobsPlugin = RPGMobsPlugin;
+    public RPGMobsExtraDropsSchedulerSystem(RPGMobsPlugin plugin) {
+        this.plugin = plugin;
     }
 
     @Override
@@ -35,23 +33,23 @@ public final class RPGMobsExtraDropsSchedulerSystem extends EntityTickingSystem<
                      @NonNull Store<EntityStore> entityStore, @NonNull CommandBuffer<EntityStore> commandBuffer) {
         long nowNanos = System.nanoTime();
         if (advancedThisEngineTick && (nowNanos - lastAdvanceNanos) < NEW_ENGINE_TICK_THRESHOLD_NS) {
-            long currentTick = RPGMobsPlugin.getTickClock().getTick();
+            long currentTick = plugin.getTickClock().getTick();
             if (currentTick == lastProcessedTick) return;
             lastProcessedTick = currentTick;
-            RPGMobsPlugin.onWorldTick();
-            RPGMobsPlugin.getExtraDropsScheduler().flushDue(entityStore, commandBuffer);
+            plugin.onWorldTick();
+            plugin.getExtraDropsScheduler().flushDue(entityStore, commandBuffer);
             return;
         }
 
-        RPGMobsPlugin.getTickClock().advance(deltaTimeSeconds);
+        plugin.getTickClock().advance(deltaTimeSeconds);
         advancedThisEngineTick = true;
         lastAdvanceNanos = nowNanos;
 
-        long currentTick = RPGMobsPlugin.getTickClock().getTick();
+        long currentTick = plugin.getTickClock().getTick();
         if (currentTick == lastProcessedTick) return;
         lastProcessedTick = currentTick;
 
-        RPGMobsPlugin.onWorldTick();
-        RPGMobsPlugin.getExtraDropsScheduler().flushDue(entityStore, commandBuffer);
+        plugin.onWorldTick();
+        plugin.getExtraDropsScheduler().flushDue(entityStore, commandBuffer);
     }
 }

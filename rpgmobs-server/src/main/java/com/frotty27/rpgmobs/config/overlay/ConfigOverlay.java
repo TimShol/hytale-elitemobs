@@ -13,9 +13,7 @@ public final class ConfigOverlay {
     public @Nullable Boolean enabled = null;
 
     public @Nullable String progressionStyle = null;
-
     public double @Nullable [] spawnChancePerTier = null;
-
     public @Nullable Map<String, double[]> environmentTierRules = null;
 
     public @Nullable Double distancePerTier = null;
@@ -26,14 +24,15 @@ public final class ConfigOverlay {
     public @Nullable Float distanceDamageBonusCap = null;
 
     public @Nullable Boolean enableHealthScaling = null;
-
     public float @Nullable [] healthMultiplierPerTier = null;
-
+    public @Nullable Float healthRandomVariance = null;
     public @Nullable Boolean enableDamageScaling = null;
-
     public float @Nullable [] damageMultiplierPerTier = null;
+    public @Nullable Float damageRandomVariance = null;
 
     public @Nullable Map<String, AbilityOverlay> abilityOverlays = null;
+    public @Nullable Float globalCooldownMinSeconds = null;
+    public @Nullable Float globalCooldownMaxSeconds = null;
 
     public int @Nullable [] vanillaDroplistExtraRollsPerTier = null;
     public @Nullable Double dropWeaponChance = null;
@@ -41,51 +40,30 @@ public final class ConfigOverlay {
     public @Nullable Double dropOffhandItemChance = null;
     public @Nullable Double droppedGearDurabilityMin = null;
     public @Nullable Double droppedGearDurabilityMax = null;
-
     public @Nullable String defaultLootTemplate = null;
+    public @Nullable Map<String, RPGMobsConfig.LootTemplate> lootTemplates = null;
+    public RPGMobsConfig.@Nullable LootTemplateCategory lootTemplateCategoryTree = null;
 
-    public @Nullable Float healthRandomVariance = null;
-
-    public @Nullable Float damageRandomVariance = null;
-
-    public @Nullable Boolean eliteFriendlyFireDisabled = null;
     public @Nullable Boolean eliteFallDamageDisabled = null;
 
-    public @Nullable Boolean eliteNoAggroOnElite = null;
-
     public @Nullable Boolean enableNameplates = null;
-
     public @Nullable String nameplateMode = null;
-
     public boolean @Nullable [] nameplateTierEnabled = null;
-
     public @Nullable String[] nameplatePrefixPerTier = null;
-
     public @Nullable Map<String, List<String>> tierPrefixesByFamily = null;
 
     public @Nullable Boolean enableModelScaling = null;
-
     public float @Nullable [] modelScalePerTier = null;
-
     public @Nullable Float modelScaleVariance = null;
 
     public @Nullable Boolean rpgLevelingEnabled = null;
-
     public float @Nullable [] xpMultiplierPerTier = null;
-
     public @Nullable Double xpBonusPerAbility = null;
-
     public @Nullable Double minionXPMultiplier = null;
 
     public @Nullable Map<String, TierOverride> tierOverrides = null;
-
     public @Nullable Map<String, RPGMobsConfig.MobRule> mobRules = null;
-
     public RPGMobsConfig.@Nullable MobRuleCategory mobRuleCategoryTree = null;
-
-    public @Nullable Map<String, RPGMobsConfig.LootTemplate> lootTemplates = null;
-
-    public RPGMobsConfig.@Nullable LootTemplateCategory lootTemplateCategoryTree = null;
 
     public @Nullable ConfigOverlay customPreset = null;
 

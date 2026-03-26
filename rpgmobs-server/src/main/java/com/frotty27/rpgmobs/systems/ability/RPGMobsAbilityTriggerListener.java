@@ -4,35 +4,33 @@ import com.frotty27.rpgmobs.api.IRPGMobsEventListener;
 import com.frotty27.rpgmobs.api.events.*;
 import com.frotty27.rpgmobs.assets.TemplateNameGenerator;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
-import com.frotty27.rpgmobs.components.ability.ChargeLeapAbilityComponent;
-import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
-import com.frotty27.rpgmobs.components.ability.RPGMobsAbilityLockComponent;
-import com.frotty27.rpgmobs.components.ability.SummonUndeadAbilityComponent;
+import com.frotty27.rpgmobs.components.ability.*;
 import com.frotty27.rpgmobs.components.combat.RPGMobsCombatTrackingComponent;
-import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.features.IRPGMobsAbilityFeature;
 import com.frotty27.rpgmobs.features.RPGMobsAbilityFeatureHelpers;
+import com.frotty27.rpgmobs.features.RPGMobsFeatureRegistry;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.utils.AbilityHelpers;
 import com.frotty27.rpgmobs.utils.Constants;
 import com.frotty27.rpgmobs.utils.StoreHelpers;
+import com.hypixel.hytale.component.CommandBuffer;
+import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.protocol.InteractionType;
-import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
+import com.hypixel.hytale.server.core.modules.entity.damage.Damage;
+import com.hypixel.hytale.server.core.modules.entity.damage.DamageCause;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathComponent;
-import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
-import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
-import org.jspecify.annotations.NonNull;
+import com.hypixel.hytale.server.npc.role.Role;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Locale;
+import java.util.Map;
 
 import static com.frotty27.rpgmobs.utils.ClampingHelpers.clampTierIndex;
 import static com.frotty27.rpgmobs.utils.Constants.NPC_COMPONENT_TYPE;
@@ -40,11 +38,24 @@ import static com.frotty27.rpgmobs.utils.Constants.NPC_COMPONENT_TYPE;
 public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListener {
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+    private static final long SUMMON_SPAWN_DELAY_TICKS = 66;
 
     private final RPGMobsPlugin plugin;
+    private final Map<String, ComponentType<EntityStore, ?>> abilityComponentTypes;
 
     public RPGMobsAbilityTriggerListener(RPGMobsPlugin plugin) {
         this.plugin = plugin;
+        this.abilityComponentTypes = Map.ofEntries(
+                Map.entry(AbilityIds.CHARGE_LEAP, plugin.getChargeLeapAbilityComponentType()),
+                Map.entry(AbilityIds.HEAL_LEAP, plugin.getHealLeapAbilityComponentType()),
+                Map.entry(AbilityIds.SUMMON_UNDEAD, plugin.getSummonUndeadAbilityComponentType()),
+                Map.entry(AbilityIds.DODGE_ROLL, plugin.getDodgeRollAbilityComponentType()),
+                Map.entry(AbilityIds.MULTI_SLASH_SHORT, plugin.getMultiSlashShortComponentType()),
+                Map.entry(AbilityIds.MULTI_SLASH_MEDIUM, plugin.getMultiSlashMediumComponentType()),
+                Map.entry(AbilityIds.MULTI_SLASH_LONG, plugin.getMultiSlashLongComponentType()),
+                Map.entry(AbilityIds.ENRAGE, plugin.getEnrageAbilityComponentType()),
+                Map.entry(AbilityIds.VOLLEY, plugin.getVolleyAbilityComponentType())
+        );
     }
 
     public void reevaluateAbilitiesForCombatEntity(Ref<EntityStore> entityRef) {
@@ -53,14 +64,13 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
 
     @Override
     public void onRPGMobAggro(RPGMobsAggroEvent event) {
-        RPGMobsLogger.debug(LOGGER, "[Aggro] Mob aggro'd tier=%d", RPGMobsLogLevel.INFO, event.getTier());
+        RPGMobsLogger.debug(LOGGER, "Mob aggro'd tier=%d", RPGMobsLogLevel.INFO, event.getTier());
         evaluateAbilitiesForEntity(event.getEntityRef(), AbilityTriggerSource.AGGRO);
     }
 
     @Override
     public void onRPGMobDamageReceived(RPGMobsDamageReceivedEvent event) {
         if (checkHealLeapInterrupt(event)) return;
-
         evaluateAbilitiesForEntity(event.getEntityRef(), AbilityTriggerSource.DAMAGE_RECEIVED);
     }
 
@@ -79,7 +89,7 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         handleDeaggroInterrupt(event);
     }
 
-    private void evaluateAbilitiesForEntity(Ref<EntityStore> entityRef, AbilityTriggerSource source) {
+    public void evaluateAbilitiesForEntity(Ref<EntityStore> entityRef, AbilityTriggerSource source) {
         if (entityRef == null || !entityRef.isValid()) return;
 
         Store<EntityStore> store = entityRef.getStore();
@@ -92,194 +102,330 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         if (tier == null || tier.tierIndex < 0) return;
 
         RPGMobsAbilityLockComponent lock = store.getComponent(entityRef, plugin.getAbilityLockComponentType());
+        boolean interruptingAbility = false;
         if (lock != null && (lock.isLocked() || lock.isChainStartPending())) {
-            return;
+            if ((source == AbilityTriggerSource.PLAYER_ATTACK_NEARBY
+                    || source == AbilityTriggerSource.PLAYER_CHARGED_ATTACK_NEARBY)
+                    && AbilityIds.MULTI_SLASH_SHORT.equals(lock.activeAbilityId)) {
+                interruptingAbility = true;
+            } else {
+                return;
+            }
         }
 
         RPGMobsConfig config = plugin.getConfig();
         if (config == null) return;
 
         int tierIndex = clampTierIndex(tier.tierIndex);
+        Ref<EntityStore> targetRef = getAggroTarget(entityRef, store);
 
-        if (source == AbilityTriggerSource.DAMAGE_RECEIVED) {
-            if (tryTriggerHealLeap(entityRef, store, config, tierIndex)) return;
-        }
+        TriggerContext context = new TriggerContext(
+                plugin, entityRef, store, config, null, tierIndex, source, targetRef
+        );
 
-        if (source == AbilityTriggerSource.AGGRO) {
-            if (tryTriggerChargeLeap(entityRef, store, config, tierIndex)) return;
-            tryTriggerSummonUndead(entityRef, store, config, tierIndex);
+        RPGMobsFeatureRegistry registry = RPGMobsFeatureRegistry.getInstance();
+        if (registry == null) return;
+
+        for (IRPGMobsAbilityFeature feature : registry.getAbilityFeatures()) {
+            if (!feature.triggerSources().contains(source)) continue;
+            if (!feature.canTrigger(context)) continue;
+            if (tryTriggerAbility(context, feature, interruptingAbility)) return;
         }
     }
 
-    private boolean tryTriggerHealLeap(Ref<EntityStore> entityRef, Store<EntityStore> store, RPGMobsConfig config,
-                                       int tierIndex) {
-        HealLeapAbilityComponent healLeap = store.getComponent(entityRef, plugin.getHealLeapAbilityComponentType());
-        if (healLeap == null || !healLeap.abilityEnabled) return false;
+    private boolean tryTriggerAbility(TriggerContext context, IRPGMobsAbilityFeature feature,
+                                      boolean interruptingAbility) {
+        String abilityId = feature.id();
 
-        if (healLeap.cooldownTicksRemaining > 0) return false;
-
-        float healthPercent = calculateHealthPercent(entityRef, store);
-        if (healthPercent >= healLeap.triggerHealthPercent) return false;
-
-        Ref<EntityStore> targetRef = getAggroTarget(entityRef, store);
-        RPGMobsAbilityStartedEvent startedEvent = new RPGMobsAbilityStartedEvent(entityRef,
-                                                                                 AbilityIds.HEAL_LEAP,
-                                                                                 tierIndex,
-                                                                                 targetRef
+        RPGMobsAbilityStartedEvent startedEvent = new RPGMobsAbilityStartedEvent(
+                context.entityRef(), abilityId, context.tierIndex(), context.targetRef()
         );
         plugin.getEventBus().fire(startedEvent);
         if (startedEvent.isCancelled()) return false;
 
-        boolean started = startAbilityChain(entityRef, store, AbilityIds.HEAL_LEAP, tierIndex, config);
+        boolean started = startAbilityChain(context, feature, interruptingAbility);
         if (!started) {
             RPGMobsLogger.debug(LOGGER,
-                                "[AbilityTrigger] heal_leap chain failed to start for tier %d",
-                                RPGMobsLogLevel.WARNING,
-                                tierIndex
-            );
+                    "%s chain failed to start for tier %d",
+                    RPGMobsLogLevel.WARNING, abilityId, context.tierIndex());
             return false;
         }
 
-        RPGMobsConfig.HealLeapAbilityConfig abilityConfig = getHealLeapConfig(config);
-        if (abilityConfig != null) {
-            healLeap.cooldownTicksRemaining = getCooldownTicks(abilityConfig.cooldownSecondsPerTier, tierIndex);
-        }
-
-        lockAbility(entityRef, store, AbilityIds.HEAL_LEAP);
-
         RPGMobsLogger.debug(LOGGER,
-                            "[AbilityTrigger] heal_leap triggered at %.0f%% health (threshold=%.0f%%) tier=%d",
-                            RPGMobsLogLevel.INFO,
-                            healthPercent * 100f,
-                            healLeap.triggerHealthPercent * 100f,
-                            tierIndex
-        );
+                "%s TRIGGERED tier=%d",
+                RPGMobsLogLevel.INFO, abilityId, context.tierIndex());
 
         return true;
     }
 
-    private boolean tryTriggerChargeLeap(Ref<EntityStore> entityRef, Store<EntityStore> store, RPGMobsConfig config,
-                                         int tierIndex) {
-        ChargeLeapAbilityComponent chargeLeap = store.getComponent(entityRef,
-                                                                   plugin.getChargeLeapAbilityComponentType()
-        );
-        if (chargeLeap == null || !chargeLeap.abilityEnabled) {
-            return false;
-        }
+    private boolean startAbilityChain(TriggerContext context, IRPGMobsAbilityFeature feature,
+                                      boolean interruptingAbility) {
+        String abilityId = feature.id();
+        RPGMobsConfig config = context.config();
+        int tierIndex = context.tierIndex();
 
-        if (chargeLeap.cooldownTicksRemaining > 0) return false;
-
-        RPGMobsCombatTrackingComponent combat = store.getComponent(entityRef, plugin.getCombatTrackingComponentType());
-        if (combat == null || !combat.isInCombat()) return false;
-
-        Ref<EntityStore> targetRef = combat.getBestTarget();
-        if (targetRef == null || !targetRef.isValid()) return false;
-
-        if (combat.aiTarget == null || !combat.aiTarget.isValid()) return false;
-
-        RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig = getChargeLeapConfig(config);
-        if (abilityConfig == null) return false;
-
-        float distance = calculateDistance(entityRef, targetRef, store);
-        if (distance < abilityConfig.minRange || distance > abilityConfig.maxRange) return false;
-
-        RPGMobsAbilityStartedEvent startedEvent = new RPGMobsAbilityStartedEvent(entityRef,
-                                                                                 AbilityIds.CHARGE_LEAP,
-                                                                                 tierIndex,
-                                                                                 targetRef
-        );
-        plugin.getEventBus().fire(startedEvent);
-        if (startedEvent.isCancelled()) return false;
-
-        boolean started = startAbilityChain(entityRef, store, AbilityIds.CHARGE_LEAP, tierIndex, config);
-        if (!started) {
+        RPGMobsConfig.AbilityConfig abilityConfig = getAbilityConfig(config, abilityId);
+        if (abilityConfig == null) {
             RPGMobsLogger.debug(LOGGER,
-                                "[ChargeLeap] chain failed to start for tier %d",
-                                RPGMobsLogLevel.INFO,
-                                tierIndex
-            );
+                    "No AbilityConfig found for abilityId=%s",
+                    RPGMobsLogLevel.WARNING, abilityId);
             return false;
         }
 
-        long cooldownTicks = getCooldownTicks(abilityConfig.cooldownSecondsPerTier, tierIndex);
-        chargeLeap.cooldownTicksRemaining = cooldownTicks;
+        String templateKey = feature.resolveRootTemplateKey(context);
+        String rootTemplatePath = abilityConfig.templates.getTemplate(templateKey);
+        if (rootTemplatePath == null || rootTemplatePath.isBlank()) {
+            rootTemplatePath = abilityConfig.templates.getTemplate(
+                    RPGMobsConfig.AbilityConfig.TEMPLATE_ROOT_INTERACTION);
+        }
+        if (rootTemplatePath == null || rootTemplatePath.isBlank()) {
+            RPGMobsLogger.debug(LOGGER,
+                    "No rootInteraction template for abilityId=%s key=%s",
+                    RPGMobsLogLevel.WARNING, abilityId, templateKey);
+            return false;
+        }
 
-        lockAbility(entityRef, store, AbilityIds.CHARGE_LEAP);
+        String rootInteractionId = TemplateNameGenerator.getTemplateNameWithTierFromPath(
+                rootTemplatePath, config, tierIndex);
+        if (rootInteractionId == null || rootInteractionId.isBlank()) {
+            RPGMobsLogger.debug(LOGGER,
+                    "Failed to resolve root interaction id for abilityId=%s tier=%d",
+                    RPGMobsLogLevel.WARNING, abilityId, tierIndex);
+            return false;
+        }
 
-        RPGMobsLogger.debug(LOGGER,
-                            "[ChargeLeap] TRIGGERED: dist=%.1f (range=%.1f-%.1f) tier=%d cooldown=%d ticks (%.1f sec)",
-                            RPGMobsLogLevel.INFO,
-                            distance,
-                            abilityConfig.minRange,
-                            abilityConfig.maxRange,
-                            tierIndex,
-                            cooldownTicks,
-                            cooldownTicks / (float) Constants.TICKS_PER_SECOND
-        );
+        NPCEntity npcEntity = context.store().getComponent(context.entityRef(), NPC_COMPONENT_TYPE);
+        if (npcEntity == null || npcEntity.getWorld() == null) {
+            RPGMobsLogger.debug(LOGGER,
+                    "NPCEntity or World is null for abilityId=%s",
+                    RPGMobsLogLevel.WARNING, abilityId);
+            return false;
+        }
+
+        RPGMobsAbilityLockComponent evalLock = context.store().getComponent(
+                context.entityRef(), plugin.getAbilityLockComponentType());
+        if (evalLock != null) {
+            evalLock.lock(abilityId);
+        }
+
+        final String resolvedRootId = rootInteractionId;
+        npcEntity.getWorld().execute(() -> {
+            if (!context.entityRef().isValid()) return;
+
+            EntityStore entityStoreProvider = npcEntity.getWorld().getEntityStore();
+            if (entityStoreProvider == null) return;
+            Store<EntityStore> worldStore = entityStoreProvider.getStore();
+
+            TriggerContext deferredCtx = new TriggerContext(
+                    context.plugin(), context.entityRef(), worldStore, context.config(),
+                    context.resolved(), context.tierIndex(), context.source(),
+                    context.targetRef()
+            );
+
+            StoreHelpers.withEntity(worldStore, context.entityRef(), (_, commandBuffer, _) -> {
+                RPGMobsAbilityLockComponent lock = worldStore.getComponent(
+                        context.entityRef(), plugin.getAbilityLockComponentType());
+
+                if (!interruptingAbility && lock != null
+                        && lock.activeAbilityId != null && !lock.isChainStartPending()) {
+                    RPGMobsLogger.debug(LOGGER,
+                            "Deferred %s aborted - chain already running for %s",
+                            RPGMobsLogLevel.INFO, abilityId, lock.activeAbilityId);
+                    return;
+                }
+
+                if (interruptingAbility && lock != null && lock.activeAbilityId != null) {
+                    RPGMobsLogger.debug(LOGGER,
+                            "Interrupting %s with %s",
+                            RPGMobsLogLevel.INFO, lock.activeAbilityId, abilityId);
+                    AbilityHelpers.cancelInteractionType(worldStore, commandBuffer,
+                            context.entityRef(), InteractionType.Ability2);
+                    plugin.getEventBus().fire(new RPGMobsAbilityInterruptedEvent(
+                            context.entityRef(), lock.activeAbilityId, context.tierIndex(),
+                            "dodge_interrupt"));
+                    lock.unlock();
+                }
+
+                feature.onPreChainStart(deferredCtx, npcEntity);
+
+                boolean chainStarted;
+                try {
+                    chainStarted = RPGMobsAbilityFeatureHelpers.tryStartInteraction(
+                            context.entityRef(), worldStore, commandBuffer,
+                            InteractionType.Ability2, resolvedRootId);
+                } catch (Exception e) {
+                    LOGGER.atWarning().log(
+                            "Chain start threw exception for rootId=%s: %s",
+                            resolvedRootId, e.getMessage());
+                    chainStarted = false;
+                }
+
+                if (!chainStarted) {
+                    feature.onChainStartFailed(deferredCtx, npcEntity);
+
+                    if (lock != null && lock.isLocked()) {
+                        lock.unlock();
+                        commandBuffer.replaceComponent(context.entityRef(),
+                                plugin.getAbilityLockComponentType(), lock);
+                    }
+
+                    RPGMobsLogger.debug(LOGGER,
+                            "Deferred chain start failed for rootId=%s",
+                            RPGMobsLogLevel.WARNING, resolvedRootId);
+                } else {
+                    applyPostTriggerEffects(deferredCtx, feature);
+                    commitAbilityComponent(abilityId, worldStore, context.entityRef(),
+                            commandBuffer);
+
+                    if (lock != null) {
+                        long tick = plugin.getTickClock().getTick();
+                        lock.lockWithTimestamp(abilityId, tick);
+                        lock.markChainStarted(tick);
+
+                        commandBuffer.replaceComponent(context.entityRef(),
+                                plugin.getAbilityLockComponentType(), lock);
+                    }
+
+                    activateFleeIfStandingHeal(abilityId, templateKey, npcEntity);
+                    updateDebugNameplateIfEnabled(context.entityRef(), worldStore, commandBuffer);
+
+                    RPGMobsLogger.debug(LOGGER,
+                            "Deferred chain started for rootId=%s tick=%d",
+                            RPGMobsLogLevel.INFO, resolvedRootId,
+                            plugin.getTickClock().getTick());
+                }
+            });
+        });
 
         return true;
     }
 
-    private static final long SUMMON_SPAWN_DELAY_TICKS = 66;
-
-    private void tryTriggerSummonUndead(Ref<EntityStore> entityRef, Store<EntityStore> store, RPGMobsConfig config,
-                                        int tierIndex) {
-        SummonUndeadAbilityComponent summon = store.getComponent(entityRef,
-                                                                 plugin.getSummonUndeadAbilityComponentType()
-        );
-        if (summon == null || !summon.abilityEnabled) return;
-
-        if (summon.cooldownTicksRemaining > 0) return;
-
-        RPGMobsConfig.SummonAbilityConfig abilityConfig = getSummonConfig(config);
-        if (abilityConfig == null) return;
-
-        RPGMobsSummonMinionTrackingComponent tracking = store.getComponent(entityRef,
-                                                                           plugin.getSummonMinionTrackingComponentType()
-        );
-        if (tracking != null) {
-            int maxAlive = Math.max(0, Math.min(50, abilityConfig.maxAliveMinionsPerSummoner));
-            if (!tracking.canSummonMore(maxAlive)) return;
+    private void updateDebugNameplateIfEnabled(Ref<EntityStore> entityRef, Store<EntityStore> store,
+                                                CommandBuffer<EntityStore> commandBuffer) {
+        RPGMobsConfig config = plugin.getConfig();
+        if (config != null && config.debugConfig.isDebugModeEnabled) {
+            plugin.getNameplateService().updateDebugSegment(plugin, entityRef, store, commandBuffer, true);
         }
+    }
 
-        String roleIdentifier = resolveSummonRole(entityRef, store, config);
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void commitAbilityComponent(String abilityId, Store<EntityStore> store,
+                                        Ref<EntityStore> entityRef,
+                                        CommandBuffer<EntityStore> commandBuffer) {
+        ComponentType componentType = abilityComponentTypes.get(abilityId);
+        if (componentType == null) return;
 
-        Ref<EntityStore> targetRef = getAggroTarget(entityRef, store);
-        RPGMobsAbilityStartedEvent startedEvent = new RPGMobsAbilityStartedEvent(entityRef,
-                                                                                 AbilityIds.SUMMON_UNDEAD,
-                                                                                 tierIndex,
-                                                                                 targetRef
-        );
-        plugin.getEventBus().fire(startedEvent);
-        if (startedEvent.isCancelled()) return;
-
-        boolean started = startAbilityChain(entityRef, store, AbilityIds.SUMMON_UNDEAD, tierIndex, config);
-        if (!started) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[AbilityTrigger] summon_undead chain failed to start for tier %d",
-                                RPGMobsLogLevel.WARNING,
-                                tierIndex
-            );
-            return;
+        Object component = store.getComponent(entityRef, componentType);
+        if (component != null) {
+            ((CommandBuffer) commandBuffer).replaceComponent(entityRef, componentType,
+                    (com.hypixel.hytale.component.Component) component);
         }
+    }
 
-        summon.pendingSummonRole = roleIdentifier;
-        summon.pendingSummonTicksRemaining = SUMMON_SPAWN_DELAY_TICKS;
+    private void applyPostTriggerEffects(TriggerContext context, IRPGMobsAbilityFeature feature) {
+        String abilityId = feature.id();
+        RPGMobsConfig config = context.config();
+        int tierIndex = context.tierIndex();
 
-        long cooldownTicks = getCooldownTicks(abilityConfig.cooldownSecondsPerTier, tierIndex);
-        summon.cooldownTicksRemaining = cooldownTicks;
+        if (AbilityIds.HEAL_LEAP.equals(abilityId)) {
+            HealLeapAbilityComponent healLeap = context.store().getComponent(
+                    context.entityRef(), plugin.getHealLeapAbilityComponentType());
+            if (healLeap != null) {
+                RPGMobsConfig.AbilityConfig rawCfg = getAbilityConfig(config, abilityId);
+                if (rawCfg instanceof RPGMobsConfig.HealLeapAbilityConfig healCfg) {
+                    healLeap.cooldownTicksRemaining = getCooldownTicks(
+                            healCfg.cooldownSecondsPerTier, tierIndex);
+                }
+            }
+        } else if (AbilityIds.CHARGE_LEAP.equals(abilityId)) {
+            ChargeLeapAbilityComponent chargeLeap = context.store().getComponent(
+                    context.entityRef(), plugin.getChargeLeapAbilityComponentType());
+            if (chargeLeap != null) {
+                RPGMobsConfig.AbilityConfig rawCfg = getAbilityConfig(config, abilityId);
+                if (rawCfg instanceof RPGMobsConfig.ChargeLeapAbilityConfig leapCfg) {
+                    chargeLeap.cooldownTicksRemaining = getCooldownTicks(
+                            leapCfg.cooldownSecondsPerTier, tierIndex);
+                }
+            }
+        } else if (AbilityIds.SUMMON_UNDEAD.equals(abilityId)) {
+            SummonUndeadAbilityComponent summon = context.store().getComponent(
+                    context.entityRef(), plugin.getSummonUndeadAbilityComponentType());
+            if (summon != null) {
+                NPCEntity npc = context.store().getComponent(context.entityRef(), NPC_COMPONENT_TYPE);
+                String roleName = (npc != null) ? npc.getRoleName() : null;
+                RPGMobsConfig.AbilityConfig rawCfg = getAbilityConfig(config, abilityId);
+                String roleIdentifier = RPGMobsAbilityFeatureHelpers.resolveSummonRoleIdentifier(
+                        rawCfg, roleName);
+                summon.pendingSummonRole = roleIdentifier;
+                summon.pendingSummonTicksRemaining = SUMMON_SPAWN_DELAY_TICKS;
 
-        lockAbility(entityRef, store, AbilityIds.SUMMON_UNDEAD);
-
-        RPGMobsLogger.debug(LOGGER,
-                            "[SummonUndead] TRIGGERED: tier=%d role=%s spawnDelay=%d cooldown=%d ticks",
-                            RPGMobsLogLevel.INFO,
-                            tierIndex,
-                            roleIdentifier,
-                            SUMMON_SPAWN_DELAY_TICKS,
-                            cooldownTicks
-        );
-
+                if (rawCfg instanceof RPGMobsConfig.SummonAbilityConfig summonCfg) {
+                    summon.cooldownTicksRemaining = getCooldownTicks(
+                            summonCfg.cooldownSecondsPerTier, tierIndex);
+                }
+            }
+        } else if (AbilityIds.DODGE_ROLL.equals(abilityId)) {
+            DodgeRollAbilityComponent dodgeRoll = context.store().getComponent(
+                    context.entityRef(), plugin.getDodgeRollAbilityComponentType());
+            if (dodgeRoll != null) {
+                RPGMobsConfig.AbilityConfig rawCfg = getAbilityConfig(config, abilityId);
+                if (rawCfg instanceof RPGMobsConfig.DodgeRollAbilityConfig dodgeCfg) {
+                    dodgeRoll.cooldownTicksRemaining = getCooldownTicks(
+                            dodgeCfg.cooldownSecondsPerTier, tierIndex);
+                }
+            }
+        } else if (AbilityIds.MULTI_SLASH_SHORT.equals(abilityId)) {
+            MultiSlashShortComponent msShort = context.store().getComponent(
+                    context.entityRef(), plugin.getMultiSlashShortComponentType());
+            if (msShort != null) {
+                var ac = config.abilitiesConfig.defaultAbilities.get(AbilityIds.MULTI_SLASH_SHORT);
+                if (ac instanceof RPGMobsConfig.MultiSlashAbilityConfig msCfg) {
+                    var vc = msCfg.getVariantOrDefault(msShort.weaponVariant);
+                    msShort.cooldownTicksRemaining = getCooldownTicks(
+                            vc.cooldownSecondsPerTier, tierIndex);
+                }
+            }
+        } else if (AbilityIds.MULTI_SLASH_MEDIUM.equals(abilityId)) {
+            MultiSlashMediumComponent msMedium = context.store().getComponent(
+                    context.entityRef(), plugin.getMultiSlashMediumComponentType());
+            if (msMedium != null) {
+                var ac = config.abilitiesConfig.defaultAbilities.get(AbilityIds.MULTI_SLASH_MEDIUM);
+                if (ac instanceof RPGMobsConfig.MultiSlashAbilityConfig msCfg) {
+                    var vc = msCfg.getVariantOrDefault(msMedium.weaponVariant);
+                    msMedium.cooldownTicksRemaining = getCooldownTicks(
+                            vc.cooldownSecondsPerTier, tierIndex);
+                }
+            }
+        } else if (AbilityIds.MULTI_SLASH_LONG.equals(abilityId)) {
+            MultiSlashLongComponent msLong = context.store().getComponent(
+                    context.entityRef(), plugin.getMultiSlashLongComponentType());
+            if (msLong != null) {
+                var ac = config.abilitiesConfig.defaultAbilities.get(AbilityIds.MULTI_SLASH_LONG);
+                if (ac instanceof RPGMobsConfig.MultiSlashAbilityConfig msCfg) {
+                    var vc = msCfg.getVariantOrDefault(msLong.weaponVariant);
+                    msLong.cooldownTicksRemaining = getCooldownTicks(
+                            vc.cooldownSecondsPerTier, tierIndex);
+                }
+            }
+        } else if (AbilityIds.ENRAGE.equals(abilityId)) {
+            EnrageAbilityComponent enrage = context.store().getComponent(
+                    context.entityRef(), plugin.getEnrageAbilityComponentType());
+            if (enrage != null) {
+                enrage.enraged = true;
+                enrage.cooldownTicksRemaining = getCooldownTicks(
+                        config.abilitiesConfig.defaultAbilities.get(abilityId).cooldownSecondsPerTier, tierIndex);
+            }
+        } else if (AbilityIds.VOLLEY.equals(abilityId)) {
+            VolleyAbilityComponent volley = context.store().getComponent(
+                    context.entityRef(), plugin.getVolleyAbilityComponentType());
+            if (volley != null) {
+                RPGMobsConfig.AbilityConfig rawCfg = getAbilityConfig(config, abilityId);
+                if (rawCfg instanceof RPGMobsConfig.VolleyAbilityConfig volleyCfg) {
+                    volley.cooldownTicksRemaining = getCooldownTicks(
+                            volleyCfg.cooldownSecondsPerTier, tierIndex);
+                }
+            }
+        }
     }
 
     private void handleAbilityCompletionRetrigger(RPGMobsAbilityCompletedEvent event) {
@@ -293,34 +439,20 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
 
         if (AbilityIds.CHARGE_LEAP.equals(abilityId)) {
             ChargeLeapAbilityComponent chargeLeap = store.getComponent(entityRef,
-                                                                       plugin.getChargeLeapAbilityComponentType()
-            );
+                    plugin.getChargeLeapAbilityComponentType());
             if (chargeLeap != null) {
                 RPGMobsLogger.debug(LOGGER,
-                                    "[ChargeLeap] COMPLETED: cooldownRemaining=%d ticks (%.1f sec)",
-                                    RPGMobsLogLevel.INFO,
-                                    chargeLeap.cooldownTicksRemaining,
-                                    chargeLeap.cooldownTicksRemaining / (float) Constants.TICKS_PER_SECOND
-                );
+                        "[ChargeLeap] COMPLETED: cooldownRemaining=%d ticks (%.1f sec)",
+                        RPGMobsLogLevel.INFO,
+                        chargeLeap.cooldownTicksRemaining,
+                        chargeLeap.cooldownTicksRemaining / (float) Constants.TICKS_PER_SECOND);
             }
         }
 
-        unlockAbility(entityRef, store);
-
-        if (AbilityIds.SUMMON_UNDEAD.equals(abilityId)) {
-            RPGMobsTierComponent tier = store.getComponent(entityRef, plugin.getRPGMobsComponentType());
-            if (tier != null && tier.tierIndex >= 0) {
-                RPGMobsCombatTrackingComponent combat = store.getComponent(entityRef,
-                                                                           plugin.getCombatTrackingComponentType()
-                );
-                if (combat != null && combat.isInCombat()) {
-                    RPGMobsConfig config = plugin.getConfig();
-                    if (config != null) {
-                        int tierIndex = clampTierIndex(tier.tierIndex);
-                        tryTriggerSummonUndead(entityRef, store, config, tierIndex);
-                    }
-                }
-            }
+        RPGMobsCombatTrackingComponent combat = store.getComponent(entityRef,
+                plugin.getCombatTrackingComponentType());
+        if (combat != null && combat.isInCombat()) {
+            evaluateAbilitiesForEntity(entityRef, AbilityTriggerSource.ABILITY_COMPLETED);
         }
     }
 
@@ -338,20 +470,34 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         int tierIndex = clampTierIndex(event.getTier());
 
         RPGMobsAbilityInterruptedEvent interruptedEvent = new RPGMobsAbilityInterruptedEvent(entityRef,
-                                                                                             activeAbilityId,
-                                                                                             tierIndex,
-                                                                                             "death"
-        );
+                activeAbilityId, tierIndex, "death");
         plugin.getEventBus().fire(interruptedEvent);
 
-        unlockAbility(entityRef, store);
+        NPCEntity npcEntity = store.getComponent(entityRef, NPC_COMPONENT_TYPE);
+        if (npcEntity != null && npcEntity.getWorld() != null) {
+            npcEntity.getWorld().execute(() -> {
+                if (!entityRef.isValid()) return;
+                var entityStoreProvider = npcEntity.getWorld().getEntityStore();
+                if (entityStoreProvider == null) return;
+                Store<EntityStore> worldStore = entityStoreProvider.getStore();
+                StoreHelpers.withEntity(worldStore, entityRef, (_, commandBuffer, _) -> {
+                    RPGMobsAbilityLockComponent worldLock = worldStore.getComponent(
+                            entityRef, plugin.getAbilityLockComponentType());
+                    if (worldLock != null && worldLock.isLocked()) {
+                        worldLock.unlock();
+                        worldLock.globalCooldownTicksRemaining = 0;
+                        commandBuffer.replaceComponent(entityRef,
+                                plugin.getAbilityLockComponentType(), worldLock);
+                    }
+                    restoreSwappedWeaponIfNeeded(activeAbilityId, npcEntity, worldStore, entityRef, commandBuffer);
+                    deactivateFleeIfHealLeap(activeAbilityId, npcEntity);
+                });
+            });
+        }
 
         RPGMobsLogger.debug(LOGGER,
-                            "[AbilityTrigger] %s interrupted by death tier=%d",
-                            RPGMobsLogLevel.INFO,
-                            activeAbilityId,
-                            tierIndex
-        );
+                "%s interrupted by death tier=%d",
+                RPGMobsLogLevel.INFO, activeAbilityId, tierIndex);
     }
 
     private void handleDeaggroInterrupt(RPGMobsDeaggroEvent event) {
@@ -361,7 +507,7 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         Store<EntityStore> store = entityRef.getStore();
         if (store == null) return;
 
-        RPGMobsLogger.debug(LOGGER, "[Deaggro] Mob deaggro'd tier=%d", RPGMobsLogLevel.INFO, event.getTier());
+        RPGMobsLogger.debug(LOGGER, "Mob deaggro'd tier=%d", RPGMobsLogLevel.INFO, event.getTier());
 
         RPGMobsAbilityLockComponent lock = store.getComponent(entityRef, plugin.getAbilityLockComponentType());
         if (lock == null || !lock.isLocked()) return;
@@ -372,23 +518,86 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         int tierIndex = (tier != null) ? clampTierIndex(tier.tierIndex) : 0;
 
         RPGMobsAbilityInterruptedEvent interruptedEvent = new RPGMobsAbilityInterruptedEvent(entityRef,
-                                                                                             activeAbilityId,
-                                                                                             tierIndex,
-                                                                                             "deaggro"
-        );
+                activeAbilityId, tierIndex, "deaggro");
         plugin.getEventBus().fire(interruptedEvent);
 
-        unlockAbility(entityRef, store);
+        NPCEntity npcEntity = store.getComponent(entityRef, NPC_COMPONENT_TYPE);
+        if (npcEntity != null && npcEntity.getWorld() != null) {
+            npcEntity.getWorld().execute(() -> {
+                if (!entityRef.isValid()) return;
+                var entityStoreProvider = npcEntity.getWorld().getEntityStore();
+                if (entityStoreProvider == null) return;
+                Store<EntityStore> worldStore = entityStoreProvider.getStore();
+                StoreHelpers.withEntity(worldStore, entityRef, (_, commandBuffer, _) -> {
+                    RPGMobsAbilityLockComponent worldLock = worldStore.getComponent(
+                            entityRef, plugin.getAbilityLockComponentType());
+                    if (worldLock != null && worldLock.isLocked()) {
+                        worldLock.unlock();
+                        worldLock.globalCooldownTicksRemaining = 0;
+                        commandBuffer.replaceComponent(entityRef,
+                                plugin.getAbilityLockComponentType(), worldLock);
+                    }
+                    restoreSwappedWeaponIfNeeded(activeAbilityId, npcEntity, worldStore, entityRef, commandBuffer);
+                    deactivateFleeIfHealLeap(activeAbilityId, npcEntity);
+
+                    // Enrage exhaustion death: an enraged mob is too far gone to stop.
+                    // Even if the target dies/disappears, the mob dies from exhaustion.
+                    if (AbilityIds.ENRAGE.equals(activeAbilityId)) {
+                        EnrageAbilityComponent enrageComponent = worldStore.getComponent(
+                                entityRef, plugin.getEnrageAbilityComponentType());
+                        if (enrageComponent != null && enrageComponent.enraged) {
+                            Damage exhaustionDamage = new Damage(Damage.NULL_SOURCE,
+                                    DamageCause.ENVIRONMENT, Float.MAX_VALUE);
+                            DeathComponent.tryAddComponent(commandBuffer, entityRef, exhaustionDamage);
+                            RPGMobsLogger.debug(LOGGER,
+                                    "Enrage exhaustion death on deaggro interrupt",
+                                    RPGMobsLogLevel.INFO);
+                        }
+                    }
+                });
+            });
+        }
 
         RPGMobsLogger.debug(LOGGER,
-                            "[AbilityTrigger] %s interrupted by deaggro tier=%d",
-                            RPGMobsLogLevel.INFO,
-                            activeAbilityId,
-                            tierIndex
-        );
+                "%s interrupted by deaggro tier=%d",
+                RPGMobsLogLevel.INFO, activeAbilityId, tierIndex);
     }
 
-    private static final int HEAL_LEAP_INTERRUPT_HITS = 3;
+    private void restoreSwappedWeaponIfNeeded(String activeAbilityId, NPCEntity npcEntity,
+                                               Store<EntityStore> worldStore, Ref<EntityStore> entityRef,
+                                               CommandBuffer<EntityStore> commandBuffer) {
+        if (AbilityIds.HEAL_LEAP.equals(activeAbilityId)) {
+            restoreIfSwapped(npcEntity, worldStore, entityRef, commandBuffer,
+                    plugin.getHealLeapAbilityComponentType());
+        } else if (AbilityIds.SUMMON_UNDEAD.equals(activeAbilityId)) {
+            restoreIfSwapped(npcEntity, worldStore, entityRef, commandBuffer,
+                    plugin.getSummonUndeadAbilityComponentType());
+        } else if (AbilityIds.ENRAGE.equals(activeAbilityId)) {
+            EnrageAbilityComponent enrage = worldStore.getComponent(entityRef,
+                    plugin.getEnrageAbilityComponentType());
+            if (enrage != null && (enrage.isSwapActive() || enrage.utilitySwapActive)) {
+                AbilityHelpers.restoreWeaponIfNeeded(npcEntity, enrage);
+                AbilityHelpers.restoreEnrageUtilityIfNeeded(npcEntity, enrage);
+                commandBuffer.replaceComponent(entityRef,
+                        plugin.getEnrageAbilityComponentType(), enrage);
+            }
+        } else if (AbilityIds.VOLLEY.equals(activeAbilityId)) {
+            restoreIfSwapped(npcEntity, worldStore, entityRef, commandBuffer,
+                    plugin.getVolleyAbilityComponentType());
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void restoreIfSwapped(NPCEntity npcEntity, Store<EntityStore> store, Ref<EntityStore> entityRef,
+                                  CommandBuffer<EntityStore> commandBuffer,
+                                  ComponentType componentType) {
+        Object component = store.getComponent(entityRef, componentType);
+        if (component instanceof WeaponSwappable swappable && swappable.isSwapActive()) {
+            AbilityHelpers.restoreWeaponIfNeeded(npcEntity, swappable);
+            ((CommandBuffer) commandBuffer).replaceComponent(entityRef, componentType,
+                    (com.hypixel.hytale.component.Component) component);
+        }
+    }
 
     private boolean checkHealLeapInterrupt(RPGMobsDamageReceivedEvent event) {
         Ref<EntityStore> entityRef = event.getEntityRef();
@@ -404,32 +613,32 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         HealLeapAbilityComponent healLeap = store.getComponent(entityRef, plugin.getHealLeapAbilityComponentType());
         if (healLeap == null) return false;
 
+        RPGMobsConfig config = plugin.getConfig();
+        RPGMobsConfig.HealLeapAbilityConfig hlConfig = config != null
+                ? (RPGMobsConfig.HealLeapAbilityConfig) config.abilitiesConfig.defaultAbilities.get(AbilityIds.HEAL_LEAP)
+                : null;
+        int interruptHits = hlConfig != null ? hlConfig.interruptHitCount : 3;
+
         healLeap.hitsTaken++;
         RPGMobsLogger.debug(LOGGER,
-                            "[HealLeap] Hit taken during ability: hitsTaken=%d/%d",
-                            RPGMobsLogLevel.INFO,
-                            healLeap.hitsTaken,
-                            HEAL_LEAP_INTERRUPT_HITS
-        );
+                "[HealLeap] Hit taken during ability: hitsTaken=%d/%d",
+                RPGMobsLogLevel.INFO, healLeap.hitsTaken, interruptHits);
 
-        if (healLeap.hitsTaken < HEAL_LEAP_INTERRUPT_HITS) {
+        if (healLeap.hitsTaken < interruptHits) {
             return true;
         }
 
         RPGMobsLogger.debug(LOGGER,
-                            "[HealLeap] INTERRUPTED by %d hits, cancelling chain",
-                            RPGMobsLogLevel.INFO,
-                            healLeap.hitsTaken
-        );
+                "[HealLeap] INTERRUPTED by %d hits, cancelling chain",
+                RPGMobsLogLevel.INFO, healLeap.hitsTaken);
 
         NPCEntity npcEntity = store.getComponent(entityRef, NPC_COMPONENT_TYPE);
         if (npcEntity != null) {
-            AbilityHelpers.restorePreviousItemIfNeeded(npcEntity, healLeap);
+            AbilityHelpers.restoreWeaponIfNeeded(npcEntity, healLeap);
         }
 
         healLeap.hitsTaken = 0;
 
-        RPGMobsConfig config = plugin.getConfig();
         RPGMobsTierComponent tier2 = store.getComponent(entityRef, plugin.getRPGMobsComponentType());
         int cancelTierIndex = (tier2 != null) ? clampTierIndex(tier2.tierIndex) : 0;
 
@@ -440,23 +649,24 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
                 if (entityStoreProvider == null) return;
                 Store<EntityStore> worldStore = entityStoreProvider.getStore();
                 StoreHelpers.withEntity(worldStore, entityRef, (_, commandBuffer, _) -> {
-                                            String cancelRootId = resolveCancelRootInteractionId(config, cancelTierIndex);
-                                            if (cancelRootId != null) {
-                                                RPGMobsAbilityFeatureHelpers.tryStartInteraction(entityRef,
-                                                                                                 worldStore,
-                                                                                                 commandBuffer,
-                                                                                                 InteractionType.Ability2,
-                                                                                                 cancelRootId
-                                                );
-                                            } else {
-                                                AbilityHelpers.cancelInteractionType(worldStore,
-                                                                                     commandBuffer,
-                                                                                     entityRef,
-                                                                                     InteractionType.Ability2
-                                                );
-                                            }
-                                        }
-                );
+                    String cancelRootId = resolveCancelRootInteractionId(config, cancelTierIndex);
+                    if (cancelRootId != null) {
+                        RPGMobsAbilityFeatureHelpers.tryStartInteraction(entityRef,
+                                worldStore, commandBuffer, InteractionType.Ability2, cancelRootId);
+                    } else {
+                        AbilityHelpers.cancelInteractionType(worldStore, commandBuffer,
+                                entityRef, InteractionType.Ability2);
+                    }
+
+                    RPGMobsAbilityLockComponent worldLock = worldStore.getComponent(
+                            entityRef, plugin.getAbilityLockComponentType());
+                    if (worldLock != null && worldLock.isLocked()) {
+                        worldLock.unlock();
+                        worldLock.globalCooldownTicksRemaining = 0;
+                        commandBuffer.replaceComponent(entityRef,
+                                plugin.getAbilityLockComponentType(), worldLock);
+                    }
+                });
             });
         }
 
@@ -464,202 +674,16 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         int tierIndex = (tier != null) ? clampTierIndex(tier.tierIndex) : 0;
 
         RPGMobsAbilityInterruptedEvent interruptedEvent = new RPGMobsAbilityInterruptedEvent(entityRef,
-                                                                                             AbilityIds.HEAL_LEAP,
-                                                                                             tierIndex,
-                                                                                             "hit_cancel"
-        );
+                AbilityIds.HEAL_LEAP, tierIndex, "hit_cancel");
         plugin.getEventBus().fire(interruptedEvent);
 
-        unlockAbility(entityRef, store);
-
         return true;
-    }
-
-    private boolean startAbilityChain(Ref<EntityStore> entityRef, Store<EntityStore> store, String abilityId,
-                                      int tierIndex, RPGMobsConfig config) {
-        RPGMobsConfig.AbilityConfig abilityConfig = getAbilityConfig(config, abilityId);
-        if (abilityConfig == null) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[AbilityTrigger] No AbilityConfig found for abilityId=%s",
-                                RPGMobsLogLevel.WARNING,
-                                abilityId
-            );
-            return false;
-        }
-
-        String rootInteractionTemplatePath = abilityConfig.templates.getTemplate(RPGMobsConfig.AbilityConfig.TEMPLATE_ROOT_INTERACTION);
-        if (rootInteractionTemplatePath == null || rootInteractionTemplatePath.isBlank()) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[AbilityTrigger] No rootInteraction template for abilityId=%s",
-                                RPGMobsLogLevel.WARNING,
-                                abilityId
-            );
-            return false;
-        }
-
-        String rootInteractionId = TemplateNameGenerator.getTemplateNameWithTierFromPath(rootInteractionTemplatePath,
-                                                                                         config,
-                                                                                         tierIndex
-        );
-        if (rootInteractionId == null || rootInteractionId.isBlank()) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[AbilityTrigger] Failed to resolve root interaction id for abilityId=%s tier=%d",
-                                RPGMobsLogLevel.WARNING,
-                                abilityId,
-                                tierIndex
-            );
-            return false;
-        }
-
-        NPCEntity npcEntity = store.getComponent(entityRef, NPC_COMPONENT_TYPE);
-        if (npcEntity == null || npcEntity.getWorld() == null) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[AbilityTrigger] NPCEntity or World is null for abilityId=%s",
-                                RPGMobsLogLevel.WARNING,
-                                abilityId
-            );
-            return false;
-        }
-
-        final String resolvedRootId = rootInteractionId;
-        npcEntity.getWorld().execute(() -> {
-            if (!entityRef.isValid()) return;
-
-            EntityStore entityStoreProvider = npcEntity.getWorld().getEntityStore();
-            if (entityStoreProvider == null) return;
-            Store<EntityStore> worldStore = entityStoreProvider.getStore();
-
-            StoreHelpers.withEntity(worldStore, entityRef, (_, commandBuffer, _) -> {
-                                        RPGMobsAbilityLockComponent lock = worldStore.getComponent(entityRef,
-                                                                                                   plugin.getAbilityLockComponentType()
-                                        );
-
-                                        if (AbilityIds.HEAL_LEAP.equals(abilityId)) {
-                                            performHealLeapWeaponSwap(entityRef, worldStore, npcEntity);
-                                        }
-                                        if (AbilityIds.SUMMON_UNDEAD.equals(abilityId)) {
-                                            performSummonSpellbookSwap(entityRef, worldStore, npcEntity);
-                                        }
-
-                                        boolean started;
-                                        try {
-                                            started = RPGMobsAbilityFeatureHelpers.tryStartInteraction(entityRef,
-                                                                                                       worldStore,
-                                                                                                       commandBuffer,
-                                                                                                       InteractionType.Ability2,
-                                                                                                       resolvedRootId
-                                            );
-                                        } catch (Exception e) {
-                                            LOGGER.atWarning().log("[AbilityTrigger] Chain start threw exception for rootId=%s: %s",
-                                                                   resolvedRootId,
-                                                                   e.getMessage()
-                                            );
-                                            started = false;
-                                        }
-
-                                        if (!started) {
-                                            if (lock != null && lock.isLocked()) {
-                                                lock.unlock();
-                                                commandBuffer.replaceComponent(entityRef, plugin.getAbilityLockComponentType(), lock);
-                                            }
-                                            if (AbilityIds.HEAL_LEAP.equals(abilityId)) {
-                                                HealLeapAbilityComponent healComp = worldStore.getComponent(entityRef,
-                                                        plugin.getHealLeapAbilityComponentType());
-                                                AbilityHelpers.restorePreviousItemIfNeeded(npcEntity, healComp);
-                                                if (healComp != null) {
-                                                    commandBuffer.replaceComponent(entityRef, plugin.getHealLeapAbilityComponentType(), healComp);
-                                                }
-                                            }
-                                            if (AbilityIds.SUMMON_UNDEAD.equals(abilityId)) {
-                                                SummonUndeadAbilityComponent summonComp = worldStore.getComponent(entityRef,
-                                                        plugin.getSummonUndeadAbilityComponentType());
-                                                AbilityHelpers.restoreSummonWeaponIfNeeded(npcEntity, summonComp);
-                                                if (summonComp != null) {
-                                                    summonComp.pendingSummonRole = null;
-                                                    summonComp.pendingSummonTicksRemaining = 0L;
-                                                    commandBuffer.replaceComponent(entityRef, plugin.getSummonUndeadAbilityComponentType(), summonComp);
-                                                }
-                                            }
-                                            RPGMobsLogger.debug(LOGGER,
-                                                                "[AbilityTrigger] Deferred chain start failed for rootId=%s",
-                                                                RPGMobsLogLevel.WARNING,
-                                                                resolvedRootId
-                                            );
-                                        } else {
-                                            if (lock != null) {
-                                                lock.markChainStarted(plugin.getTickClock().getTick());
-                                                commandBuffer.replaceComponent(entityRef, plugin.getAbilityLockComponentType(), lock);
-                                            }
-                                            if (AbilityIds.SUMMON_UNDEAD.equals(abilityId)) {
-                                                SummonUndeadAbilityComponent summonComp = worldStore.getComponent(entityRef,
-                                                        plugin.getSummonUndeadAbilityComponentType());
-                                                if (summonComp != null) {
-                                                    commandBuffer.replaceComponent(entityRef, plugin.getSummonUndeadAbilityComponentType(), summonComp);
-                                                }
-                                            }
-
-                                            RPGMobsLogger.debug(LOGGER,
-                                                                "[AbilityTrigger] Deferred chain started for rootId=%s tick=%d",
-                                                                RPGMobsLogLevel.INFO,
-                                                                resolvedRootId,
-                                                                plugin.getTickClock().getTick()
-                                            );
-                                        }
-                                    }
-            );
-        });
-
-        return true;
-    }
-
-    private float calculateHealthPercent(Ref<EntityStore> entityRef, Store<EntityStore> store) {
-        EntityStatMap entityStats = store.getComponent(entityRef, EntityStatMap.getComponentType());
-        if (entityStats == null) return 1.0f;
-
-        int healthStatId = DefaultEntityStatTypes.getHealth();
-        var healthStatValue = entityStats.get(healthStatId);
-        if (healthStatValue == null) return 1.0f;
-
-        float current = healthStatValue.get();
-        float max = healthStatValue.getMax();
-        if (max <= 0) return 1.0f;
-
-        return current / max;
-    }
-
-    private float calculateDistance(Ref<EntityStore> entityRef, Ref<EntityStore> targetRef, Store<EntityStore> store) {
-        TransformComponent mobTransform = store.getComponent(entityRef, TransformComponent.getComponentType());
-        TransformComponent targetTransform = store.getComponent(targetRef, TransformComponent.getComponentType());
-
-        if (mobTransform == null || targetTransform == null) return Float.MAX_VALUE;
-
-        Vector3d mobPos = mobTransform.getPosition();
-        Vector3d targetPos = targetTransform.getPosition();
-
-        double dx = targetPos.getX() - mobPos.getX();
-        double dy = targetPos.getY() - mobPos.getY();
-        double dz = targetPos.getZ() - mobPos.getZ();
-        return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     private @Nullable Ref<EntityStore> getAggroTarget(Ref<EntityStore> entityRef, Store<EntityStore> store) {
         RPGMobsCombatTrackingComponent combat = store.getComponent(entityRef, plugin.getCombatTrackingComponentType());
         if (combat == null) return null;
         return combat.getBestTarget();
-    }
-
-    private void lockAbility(Ref<EntityStore> entityRef, Store<EntityStore> store, String abilityId) {
-        RPGMobsAbilityLockComponent lock = store.getComponent(entityRef, plugin.getAbilityLockComponentType());
-        if (lock != null) {
-            lock.lock(abilityId);
-        }
-    }
-
-    private void unlockAbility(Ref<EntityStore> entityRef, Store<EntityStore> store) {
-        RPGMobsAbilityLockComponent lock = store.getComponent(entityRef, plugin.getAbilityLockComponentType());
-        if (lock != null) {
-            lock.unlock();
-        }
     }
 
     private long getCooldownTicks(float[] cooldownSecondsPerTier, int tierIndex) {
@@ -671,106 +695,39 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
         return (long) (seconds * Constants.TICKS_PER_SECOND);
     }
 
-    private void performHealLeapWeaponSwap(Ref<EntityStore> entityRef, Store<EntityStore> store, NPCEntity npcEntity) {
-        HealLeapAbilityComponent healLeap = store.getComponent(entityRef, plugin.getHealLeapAbilityComponentType());
-        if (healLeap == null) return;
-
-        RPGMobsConfig config = plugin.getConfig();
-        RPGMobsConfig.HealLeapAbilityConfig healConfig = getHealLeapConfig(config);
-        if (healConfig == null) return;
-
-        String potionItemId = healConfig.npcDrinkItemId;
-        if (potionItemId == null || potionItemId.isBlank()) {
-            potionItemId = "Potion_Health_Greater";
-        }
-
-        boolean swapped = AbilityHelpers.swapToPotionInHand(npcEntity, healLeap, potionItemId);
-        if (swapped) {
-            RPGMobsLogger.debug(LOGGER, "[HealLeap] Weapon swapped to potion '%s'", RPGMobsLogLevel.INFO, potionItemId);
-        } else {
-            RPGMobsLogger.debug(LOGGER,
-                                "[HealLeap] Weapon swap failed (itemId=%s)",
-                                RPGMobsLogLevel.INFO,
-                                potionItemId
-            );
-        }
-    }
-
-    private void performSummonSpellbookSwap(Ref<EntityStore> entityRef, Store<EntityStore> store, NPCEntity npcEntity) {
-        SummonUndeadAbilityComponent summon = store.getComponent(entityRef,
-                                                                 plugin.getSummonUndeadAbilityComponentType()
-        );
-        if (summon == null) return;
-
-        String staffItemId = "Weapon_Staff_Bone";
-
-        boolean swapped = AbilityHelpers.swapToSpellbookInHand(npcEntity, summon, staffItemId);
-        if (swapped) {
-            RPGMobsLogger.debug(LOGGER,
-                                "[SummonUndead] Weapon swapped to staff '%s'",
-                                RPGMobsLogLevel.INFO,
-                                staffItemId
-            );
-        } else {
-            RPGMobsLogger.debug(LOGGER,
-                                "[SummonUndead] Weapon swap failed (itemId=%s)",
-                                RPGMobsLogLevel.INFO,
-                                staffItemId
-            );
-        }
-    }
-
     private RPGMobsConfig.@Nullable AbilityConfig getAbilityConfig(RPGMobsConfig config, String abilityId) {
         if (config.abilitiesConfig == null || config.abilitiesConfig.defaultAbilities == null) return null;
         return config.abilitiesConfig.defaultAbilities.get(abilityId);
     }
 
-    private RPGMobsConfig.@Nullable ChargeLeapAbilityConfig getChargeLeapConfig(RPGMobsConfig config) {
-        RPGMobsConfig.AbilityConfig raw = getAbilityConfig(config, AbilityIds.CHARGE_LEAP);
-        return (raw instanceof RPGMobsConfig.ChargeLeapAbilityConfig c) ? c : null;
-    }
-
-    private RPGMobsConfig.@Nullable HealLeapAbilityConfig getHealLeapConfig(RPGMobsConfig config) {
-        RPGMobsConfig.AbilityConfig raw = getAbilityConfig(config, AbilityIds.HEAL_LEAP);
-        return (raw instanceof RPGMobsConfig.HealLeapAbilityConfig c) ? c : null;
-    }
-
-    private RPGMobsConfig.@Nullable SummonAbilityConfig getSummonConfig(RPGMobsConfig config) {
-        RPGMobsConfig.AbilityConfig raw = getAbilityConfig(config, AbilityIds.SUMMON_UNDEAD);
-        return (raw instanceof RPGMobsConfig.SummonAbilityConfig c) ? c : null;
-    }
-
-    private @NonNull String resolveSummonRole(Ref<EntityStore> entityRef, Store<EntityStore> store,
-                                              RPGMobsConfig config) {
-        NPCEntity npc = store.getComponent(entityRef, NPC_COMPONENT_TYPE);
-        if (npc == null) return "default";
-
-        String roleName = npc.getRoleName();
-        if (roleName == null || roleName.isBlank()) return "default";
-
-        RPGMobsConfig.SummonAbilityConfig summonConfig = getSummonConfig(config);
-        if (summonConfig == null || summonConfig.roleIdentifiers == null) return "default";
-
-        String roleNameLower = roleName.toLowerCase(Locale.ROOT);
-        for (String identifier : summonConfig.roleIdentifiers) {
-            if (identifier == null || identifier.isBlank()) continue;
-            if (roleNameLower.contains(identifier.toLowerCase(Locale.ROOT))) {
-                return identifier;
-            }
-        }
-        return "default";
-    }
-
     private @Nullable String resolveCancelRootInteractionId(RPGMobsConfig config, int tierIndex) {
         if (config == null) return null;
-        RPGMobsConfig.HealLeapAbilityConfig healConfig = getHealLeapConfig(config);
-        if (healConfig == null) return null;
-        String cancelTemplatePath = healConfig.templates.getTemplate(RPGMobsConfig.HealLeapAbilityConfig.TEMPLATE_ROOT_INTERACTION_CANCEL);
+        RPGMobsConfig.AbilityConfig raw = getAbilityConfig(config, AbilityIds.HEAL_LEAP);
+        if (!(raw instanceof RPGMobsConfig.HealLeapAbilityConfig healConfig)) return null;
+        String cancelTemplatePath = healConfig.templates.getTemplate(
+                RPGMobsConfig.HealLeapAbilityConfig.TEMPLATE_ROOT_INTERACTION_CANCEL);
         if (cancelTemplatePath == null || cancelTemplatePath.isBlank()) return null;
         return TemplateNameGenerator.getTemplateNameWithTierFromPath(cancelTemplatePath, config, tierIndex);
     }
-}
 
-enum AbilityTriggerSource {
-    AGGRO, DAMAGE_RECEIVED
+    private void activateFleeIfStandingHeal(String abilityId, String templateKey, NPCEntity npcEntity) {
+        if (!AbilityIds.HEAL_LEAP.equals(abilityId)) return;
+        if (!RPGMobsConfig.HealLeapAbilityConfig.TEMPLATE_STANDING_HEAL_ROOT.equals(templateKey)) return;
+
+        Role role = npcEntity.getRole();
+        if (role != null) {
+            role.setBackingAway(true);
+            RPGMobsLogger.debug(LOGGER, "Activated flee for standing heal",
+                                RPGMobsLogLevel.INFO);
+        }
+    }
+
+    private void deactivateFleeIfHealLeap(String activeAbilityId, NPCEntity npcEntity) {
+        if (!AbilityIds.HEAL_LEAP.equals(activeAbilityId)) return;
+
+        Role role = npcEntity.getRole();
+        if (role != null) {
+            role.setBackingAway(false);
+        }
+    }
 }

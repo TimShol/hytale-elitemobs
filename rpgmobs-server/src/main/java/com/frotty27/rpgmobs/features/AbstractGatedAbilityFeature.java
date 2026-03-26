@@ -2,6 +2,7 @@ package com.frotty27.rpgmobs.features;
 
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.AbilityEnabledComponent;
+import com.frotty27.rpgmobs.components.summon.RPGMobsSummonedMinionComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
@@ -29,6 +30,11 @@ public abstract class AbstractGatedAbilityFeature<
     protected abstract C getComponent(Store<EntityStore> store, Ref<EntityStore> ref, RPGMobsPlugin plugin);
 
     protected abstract C createComponent(A abilityConfig, int tierIndex, boolean enabled, Random random);
+
+    protected void populateComponent(C component, RPGMobsPlugin plugin,
+                                     Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
+                                     int tierIndex) {
+    }
 
     protected void onDisable(C component) {
     }
@@ -64,12 +70,19 @@ public abstract class AbstractGatedAbilityFeature<
 
         if (!AbilityGateEvaluator.isAllowed(abilityConfig, id(), weaponId, tierIndex, matchedRuleKey, resolved)) return;
 
+        if (!isAllowedForMinions()) {
+            RPGMobsSummonedMinionComponent minion = entityStore.getComponent(
+                    npcRef, plugin.getSummonedMinionComponentType());
+            if (minion != null) return;
+        }
+
         float spawnChance = tierIndex < abilityConfig.chancePerTier.length
                 ? abilityConfig.chancePerTier[tierIndex] : 0f;
 
         boolean enabled = random.nextFloat() < spawnChance;
 
         C component = createComponent(abilityConfig, tierIndex, enabled, random);
+        populateComponent(component, plugin, npcRef, entityStore, tierIndex);
         commandBuffer.putComponent(npcRef, componentType(plugin), component);
 
         afterApply(plugin, npcRef, entityStore, commandBuffer);
@@ -101,6 +114,12 @@ public abstract class AbstractGatedAbilityFeature<
         boolean allowed = AbilityGateEvaluator.isAllowed(
                 abilityConfig, id(), weaponId, tierIndex, matchedRuleKey, resolved);
 
+        if (allowed && !isAllowedForMinions()) {
+            RPGMobsSummonedMinionComponent minion = entityStore.getComponent(
+                    npcRef, plugin.getSummonedMinionComponentType());
+            if (minion != null) allowed = false;
+        }
+
         if (component == null) {
             if (allowed) {
                 apply(plugin, config, resolved, npcRef, entityStore, commandBuffer, tierComponent, roleName);
@@ -114,6 +133,8 @@ public abstract class AbstractGatedAbilityFeature<
             commandBuffer.replaceComponent(npcRef, componentType(plugin), component);
         } else if (allowed && !component.isAbilityEnabled()) {
             apply(plugin, config, resolved, npcRef, entityStore, commandBuffer, tierComponent, roleName);
+        } else if (allowed && component.isAbilityEnabled()) {
+            afterApply(plugin, npcRef, entityStore, commandBuffer);
         }
     }
 }

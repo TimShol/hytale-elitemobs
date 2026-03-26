@@ -1,28 +1,27 @@
 package com.frotty27.rpgmobs.api.events;
 
 /**
- * Interface for events that can be cancelled by listeners.
+ * Marker interface for events that can be cancelled by listeners.
  *
- * <p>When an event is cancelled, the action it represents will not be carried out.
- * For example, cancelling an {@link RPGMobsSpawnedEvent} prevents the RPG mob
- * from spawning, and cancelling an {@link RPGMobsDamageDealtEvent} prevents the
- * damage from being applied.</p>
+ * <p>When an event is cancelled, the action that triggered it is prevented.
+ * For example, cancelling a {@link RPGMobsSpawnedEvent} prevents the NPC
+ * from becoming an elite.</p>
  *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public interface ICancellable {
 
     /**
      * Returns whether this event has been cancelled.
      *
-     * @return {@code true} if the event is cancelled, {@code false} otherwise
+     * @return true if cancelled
      */
     boolean isCancelled();
 
     /**
-     * Sets whether this event should be cancelled.
+     * Sets the cancellation state of this event.
      *
-     * @param cancelled {@code true} to cancel the event, {@code false} to allow it
+     * @param cancelled true to cancel, false to un-cancel
      */
     void setCancelled(boolean cancelled);
 }

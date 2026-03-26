@@ -1,0 +1,16 @@
+{
+  "Type": "Simple",
+  "RunTime": 1.2,
+  "HorizontalSpeedMultiplier": 0.0,
+  "Effects": {
+    "ItemPlayerAnimationsId": "RPGMobs_SummonRise",
+    "ItemAnimationId": "MantleUp",
+    "ClearAnimationOnFinish": true,
+    "Particles": [
+      {
+        "SystemId": "Block_Break_Dust",
+        "DetachedFromModel": true
+      }
+    ]
+  }
+}

@@ -6,7 +6,6 @@ import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.systems.combat.RPGMobsDamageDealtSystem;
-import com.frotty27.rpgmobs.systems.combat.RPGMobsFriendlyFireSystem;
 import com.frotty27.rpgmobs.systems.death.RPGMobsDeathSystem;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.Ref;
@@ -45,6 +44,5 @@ public final class RPGMobsDamageFeature implements IRPGMobsFeature {
     public void registerSystems(RPGMobsPlugin plugin) {
         plugin.registerSystem(new RPGMobsDeathSystem(plugin));
         plugin.registerSystem(new RPGMobsDamageDealtSystem(plugin));
-        plugin.registerSystem(new RPGMobsFriendlyFireSystem(plugin));
     }
 }

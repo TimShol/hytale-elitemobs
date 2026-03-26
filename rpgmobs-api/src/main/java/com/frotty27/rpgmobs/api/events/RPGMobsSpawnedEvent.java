@@ -6,12 +6,12 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 /**
- * Event fired when an RPG mob is spawned into the world.
+ * Fired when an NPC is promoted to an RPGMobs elite.
  *
- * <p>This event implements {@link ICancellable}. Cancelling it will prevent the
- * RPG mob from completing its spawn initialization.</p>
+ * <p>This event is cancellable. Setting {@code setCancelled(true)} prevents
+ * the NPC from becoming an elite - it remains a normal NPC.</p>
  *
- * @since 1.1.0
+ * @since 1.0.0
  */
 public final class RPGMobsSpawnedEvent extends RPGMobsEvent implements ICancellable {
 
@@ -19,13 +19,11 @@ public final class RPGMobsSpawnedEvent extends RPGMobsEvent implements ICancella
     private boolean cancelled;
 
     /**
-     * Constructs a new spawned event.
-     *
-     * @param world     the world in which the RPG mob spawned
-     * @param entityRef the entity reference of the spawned RPG mob
-     * @param tier      the tier index of the RPG mob
-     * @param roleName  the role name of the RPG mob
-     * @param position  the world position where the RPG mob spawned
+     * @param world     the world in which the elite spawned
+     * @param entityRef reference to the NPC entity
+     * @param tier      tier index (0-based, 0 = T1 through 4 = T5)
+     * @param roleName  the NPC role name (e.g. "Skeleton_Warrior")
+     * @param position  the spawn position
      */
     public RPGMobsSpawnedEvent(World world, Ref<EntityStore> entityRef, int tier, String roleName, Vector3d position) {
         super(world, entityRef, tier, roleName);
@@ -33,9 +31,7 @@ public final class RPGMobsSpawnedEvent extends RPGMobsEvent implements ICancella
     }
 
     /**
-     * Returns the world position where the RPG mob spawned.
-     *
-     * @return the spawn position, never {@code null}
+     * @return the position where the elite spawned
      */
     public Vector3d getPosition() {
         return position;

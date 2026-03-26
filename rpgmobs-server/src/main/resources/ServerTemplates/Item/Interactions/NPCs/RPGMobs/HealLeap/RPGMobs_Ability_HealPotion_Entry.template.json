@@ -1,0 +1,47 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs HealPotion (retreat variant) - NPC stands still and drinks potion without leaping. Used when retreating and far enough from target. 4 second drink time gives player a window to close distance and interrupt.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Brief preparation - NPC reaches for potion.",
+      "RunTime": 0.3,
+      "HorizontalSpeedMultiplier": 0.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Item",
+        "ItemAnimationId": "Consume",
+        "WorldSoundEventId": "SFX_Health_Potion_Low_Drink"
+      }
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Stand still and drink the potion. 4 seconds - player must close distance to interrupt.",
+      "RunTime": ${features.HealLeap.config.npcDrinkDurationSeconds},
+      "HorizontalSpeedMultiplier": 0.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Item",
+        "ItemAnimationId": "Consume",
+        "Particles": [
+          {
+            "SystemId": "Potion_Health_Heal",
+            "TargetEntityPart": "Entity",
+            "TargetNodeName": "Pelvis"
+          },
+          {
+            "SystemId": "Potion_Health_Implosion",
+            "TargetEntityPart": "Entity",
+            "PositionOffset": {
+              "Y": 1.0
+            }
+          }
+        ],
+        "ClearAnimationOnFinish": true,
+        "ClearSoundEventOnFinish": true
+      }
+    },
+    {
+      "Type": "ApplyEffect",
+      "EffectId": ${features.HealLeap.config.templates.effectInstantHeal}
+    }
+  ]
+}

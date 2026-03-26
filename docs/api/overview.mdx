@@ -13,7 +13,7 @@ Add the API JAR as a compile-only dependency in your `build.gradle`:
 
 ```groovy
 dependencies {
-    compileOnly files('libs/RPGMobs-API-1.0.0.jar')
+    compileOnly files('libs/RPGMobs-API-1.1.0.jar')
 }
 ```
 
@@ -21,7 +21,7 @@ Or if published to a Maven repository:
 
 ```groovy
 dependencies {
-    compileOnly 'Frotty27:RPGMobs-api:1.0.0'
+    compileOnly 'Frotty27:RPGMobs-api:1.1.0'
 }
 ```
 
@@ -99,28 +99,28 @@ RPGMobsAPI.registerListener(new MyEliteListener());
 
 | Event                            | Fired when                  | Cancellable | Mutable fields                |
 | :------------------------------- | :-------------------------- | :---------: | :---------------------------- |
-| `RPGMobsSpawnedEvent`            | Elite enters the world      | Yes         | —                             |
+| `RPGMobsSpawnedEvent`            | Elite enters the world      | Yes         |  -                              |
 | `RPGMobsDeathEvent`              | Elite or minion dies        | No          | `isMinion()`                  |
 | `RPGMobsDropsEvent`              | Loot is about to spawn      | Yes         | `getDrops()` (live list)      |
 | `RPGMobsDamageDealtEvent`        | Elite deals outgoing damage | Yes         | `setMultiplier(float)`        |
-| `RPGMobsDamageReceivedEvent`     | Elite takes incoming damage | No          | —                             |
-| `RPGMobsAbilityStartedEvent`     | Ability execution begins    | Yes         | —                             |
-| `RPGMobsAbilityCompletedEvent`   | Ability finishes normally   | No          | —                             |
+| `RPGMobsDamageReceivedEvent`     | Elite takes incoming damage | No          |  -                              |
+| `RPGMobsAbilityStartedEvent`     | Ability execution begins    | Yes         |  -                              |
+| `RPGMobsAbilityCompletedEvent`   | Ability finishes normally   | No          |  -                              |
 | `RPGMobsAbilityInterruptedEvent` | Ability was interrupted     | No          | `getReason()`                 |
-| `RPGMobsAggroEvent`              | Elite targets an entity     | No          | `targetRef()`                 |
-| `RPGMobsDeaggroEvent`            | Elite loses its target      | No          | —                             |
+| `RPGMobsAggroEvent`              | Elite targets an entity     | No          | `getTargetRef()`              |
+| `RPGMobsDeaggroEvent`            | Elite loses its target      | No          |  -                              |
 | `RPGMobsScalingAppliedEvent`     | Scaling parameters computed | No          | All fields (read-only record) |
-| `RPGMobsReconcileEvent`          | Config reconciliation pass  | No          | —                             |
+| `RPGMobsReconcileEvent`          | Config reconciliation pass  | No          |  -                              |
 
 ### Base Event Fields
 
 Every event extends `RPGMobsEvent` which provides:
 
-- `getWorld()` — the `World` in which the event occurred *(since 1.1.0)*
-- `getEntityRef()` — the RPG mob's `Ref<EntityStore>`
-- `getEntityUuid()` — the entity's `UUID`, or `null` if unavailable *(since 1.1.0)*
-- `getTier()` — zero-based tier index (0 = Tier 1, 4 = Tier 5)
-- `getRoleName()` — the NPC role identifier (e.g. `"Skeleton_Frost_Knight"`)
+- `getWorld()`  -  the `World` in which the event occurred *(since 1.1.0)*
+- `getEntityRef()`  -  the RPG mob's `Ref<EntityStore>`
+- `getEntityUuid()`  -  the entity's `UUID`, or `null` if unavailable *(since 1.1.0)*
+- `getTier()`  -  zero-based tier index (0 = Tier 1, 4 = Tier 5)
+- `getRoleName()`  -  the NPC role identifier (e.g. `"Skeleton_Frost_Knight"`)
 
 ### Cancelling Events
 
@@ -186,13 +186,6 @@ IRPGMobsQueryAPI query = RPGMobsAPI.query();
 | :---------------------------- | :------------------ | :-------------------------------- |
 | `getSummonedMinionCount(ref)` | `Optional<Integer>` | Number of active summoned minions |
 
-### Abilities
-
-| Method                       | Returns       | Description                                   |
-| :--------------------------- | :------------ | :-------------------------------------------- |
-| `getSupportedTriggerTypes()` | `Set<String>` | All registered ability trigger type IDs       |
-| `isTriggerTypeSupported(id)` | `boolean`     | Whether a specific trigger type is registered |
-
 ### Query Examples
 
 #### Check if an entity is an elite and read its tier
@@ -202,7 +195,7 @@ IRPGMobsQueryAPI query = RPGMobsAPI.query();
 
 if (query.isRPGMob(entityRef)) {
     int tier = query.getTier(entityRef).orElse(0);
-    System.out.println("RPG mob detected — Tier " + (tier + 1));
+    System.out.println("RPG mob detected  -  Tier " + (tier + 1));
 }
 ```
 
@@ -248,7 +241,7 @@ Optional<Float> healthBonus = query.getDistanceHealthBonus(entityRef);
 Optional<Float> damageBonus = query.getDistanceDamageBonus(entityRef);
 
 if (healthBonus.isPresent() && damageBonus.isPresent()) {
-    System.out.println("Distance bonuses — health: +" + healthBonus.get()
+    System.out.println("Distance bonuses  -  health: +" + healthBonus.get()
         + "x, damage: +" + damageBonus.get() + "x");
 }
 ```
@@ -273,25 +266,32 @@ query.getSummonedMinionCount(entityRef).ifPresent(count -> {
 @Override
 public void onRPGMobDeath(RPGMobsDeathEvent event) {
     if (event.isMinion()) {
-        // Skip minion deaths — only reward XP for real elites
+        // Skip minion deaths  -  only reward XP for real elites
         return;
     }
     int tier = event.getTier();
     UUID uuid = event.getEntityUuid();
     World world = event.getWorld();
-    System.out.println("Elite killed in " + world + " — tier " + (tier + 1));
+    System.out.println("Elite killed in " + world + "  -  tier " + (tier + 1));
 }
 ```
 
-## Ability Types
+## Ability IDs
 
-The `AbilityType` enum defines the built-in abilities:
+Abilities are identified by string IDs passed in ability events (`RPGMobsAbilityStartedEvent`, `RPGMobsAbilityCompletedEvent`, `RPGMobsAbilityInterruptedEvent`). The built-in ability IDs are:
 
-| Enum            | ID                | Description                         |
-| :-------------- | :---------------- | :---------------------------------- |
-| `HEAL_LEAP`     | `"HEAL_LEAP"`     | Jump to safety and self-heal        |
-| `CHARGE_LEAP`   | `"CHARGE_LEAP"`   | Leap toward target with area damage |
-| `SUMMON_UNDEAD` | `"SUMMON_UNDEAD"` | Spawn undead reinforcements         |
+| ID                    | Description                                                    |
+| :-------------------- | :------------------------------------------------------------- |
+| `"charge_leap"`       | Leap toward target with area slam damage                       |
+| `"heal_leap"`         | Jump to safety and drink a healing potion                      |
+| `"undead_summon"`     | Spawn faction-appropriate reinforcements                       |
+| `"dodge_roll"`        | Reactive/preemptive lateral dodge with invulnerability frames  |
+| `"multi_slash_short"` | 1-2 hit quick strikes (3 random variations per weapon type)    |
+| `"multi_slash_medium"`| 2-4 hit combos (2 random variations per weapon type)           |
+| `"multi_slash_long"`  | 4-6 hit full combos (1 variation per weapon type)              |
+| `"war_cry"`           | Staff-channeling AOE buff/debuff with heal aura and dark orbs  |
+| `"enrage"`            | Berserk fist-fighting mode ending in exhaustion death           |
+| `"volley"`            | Ranged projectile burst for bow/crossbow/gun wielders          |
 
 ## Example: Full Integration
 

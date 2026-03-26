@@ -1,0 +1,157 @@
+{
+  "Type": "Serial",
+  "$Comment": "RPGMobs MultiSlashLong Battleaxes - 3-hit deliberate strikes (~6.0s total): menacing charge -> side cleave -> controlled whirlwind -> devastating overhead slam. Uses SFX_Battleaxe_T2 sounds.",
+  "Interactions": [
+    {
+      "Type": "Simple",
+      "$Comment": "Wind-up - 1.5s menacing side charge with Large_Charged_Red trail",
+      "RunTime": 1.5,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "SwingLeftCharging",
+        "WorldSoundEventId": "SFX_Battleaxe_T2_Raise",
+        "Trails": [
+          {
+            "TrailId": "Large_Charged_Red",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ],
+        "MovementEffects": { "DisableAll": true }
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 1 - SwingLeftCharged deliberate side cleave",
+      "RunTime": 0.5,
+      "HorizontalSpeedMultiplier": 0.3,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "SwingLeftCharged",
+        "WorldSoundEventId": "SFX_Battleaxe_T2_Swing",
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.0 }, "Range": 2.8 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionBattleaxes} ]
+      }
+    },
+    {
+      "Type": "Selector",
+      "$Comment": "Hit 2 - WhirlwindChargedSpin controlled spin",
+      "RunTime": 0.4,
+      "HorizontalSpeedMultiplier": 0.3,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "WhirlwindChargedSpin",
+        "WorldSoundEventId": "SFX_Battleaxe_T2_Signature_Swing",
+        "Particles": [
+          {
+            "SystemId": "Mace_Signature_Cast",
+            "TargetEntityPart": "Entity",
+            "TargetNodeName": "Hip",
+            "PositionOffset": { "Y": 0.5 }
+          }
+        ],
+        "Trails": [
+          {
+            "TrailId": "Mace_Signature",
+            "TargetEntityPart": "PrimaryItem",
+            "TargetNodeName": "Origin_Projectile",
+            "PositionOffset": { "Y": -0.2 }
+          }
+        ]
+      },
+      "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.2 }, "Range": 3.0 },
+      "HitEntity": {
+        "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionBattleaxes} ]
+      }
+    },
+    {
+      "Type": "Serial",
+      "$Comment": "Hit 3 - DownstrikeCharged FINISHER devastating overhead slam with forward drift + impact VFX",
+      "Interactions": [
+        {
+          "Type": "ApplyForce",
+          "Force": ${features.MultiSlashLong.config.forwardDriftForcePerTier},
+          "Direction": { "X": 0, "Y": 0.08, "Z": -1.5 },
+          "WaitForGround": false,
+          "ChangeVelocityType": "Add",
+          "VelocityConfig": {
+            "AirResistance": 0.90, "AirResistanceMax": 0.85,
+            "GroundResistance": 0.85, "GroundResistanceMax": 0.70,
+            "Threshold": 0.1, "Style": "Exp"
+          }
+        },
+        {
+          "Type": "Selector",
+          "RunTime": 0.45,
+          "HorizontalSpeedMultiplier": 0.3,
+          "Effects": {
+            "ItemPlayerAnimationsId": "Battleaxe",
+            "ItemAnimationId": "DownstrikeCharged",
+            "WorldSoundEventId": "SFX_Battleaxe_T2_Swing",
+            "Particles": [
+              {
+                "SystemId": "Mace_Signature_Slash",
+                "TargetEntityPart": "Entity",
+                "TargetNodeName": "Hip",
+                "PositionOffset": { "Y": 0.3, "Z": -0.5 }
+              },
+              {
+                "SystemId": "Mace_Signature_Cast",
+                "TargetEntityPart": "Entity",
+                "TargetNodeName": "Hip",
+                "PositionOffset": { "Y": 0.3 }
+              },
+              {
+                "SystemId": "Block_Break_Dust",
+                "TargetEntityPart": "Entity",
+                "TargetNodeName": "Hip",
+                "PositionOffset": { "Y": 0.0 }
+              }
+            ],
+            "Trails": [
+              {
+                "TrailId": "Mace_Signature",
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              },
+              {
+                "TrailId": "Mace_Signature2",
+                "RotationOffset": { "Roll": 90.0 },
+                "TargetEntityPart": "PrimaryItem",
+                "TargetNodeName": "Origin_Projectile",
+                "PositionOffset": { "Y": -0.2 }
+              }
+            ]
+          },
+          "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.5 }, "Range": 3.2 },
+          "HitEntity": {
+            "Interactions": [ ${features.MultiSlashLong.config.templates.damageInteractionBattleaxes} ]
+          }
+        }
+      ]
+    },
+    {
+      "Type": "Simple",
+      "$Comment": "Recovery - Idle recovery, movement locked",
+      "RunTime": 1.0,
+      "Effects": {
+        "ItemPlayerAnimationsId": "Battleaxe",
+        "ItemAnimationId": "Idle",
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
+      }
+    }
+  ]
+}
