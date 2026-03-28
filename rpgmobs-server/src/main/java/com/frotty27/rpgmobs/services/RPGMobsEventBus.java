@@ -96,8 +96,8 @@ public final class RPGMobsEventBus implements IRPGMobsEventBus {
     public void fire(RPGMobsScalingAppliedEvent event) {
         dispatch(event, IRPGMobsEventListener::onScalingApplied, "onScalingApplied",
                  "fire(RPGMobsScalingAppliedEvent) tier=%d healthMult=%.2f damageMult=%.2f modelScale=%.2f baseHealth=%.1f finalHealth=%.1f listeners=%d",
-                 event.tierIndex(), event.healthMultiplier(), event.damageMultiplier(),
-                 event.modelScale(), event.baseHealth(), event.finalHealth(), listeners.size());
+                 event.getTier(), event.getHealthMultiplier(), event.getDamageMultiplier(),
+                 event.getModelScale(), event.getBaseHealth(), event.getFinalHealth(), listeners.size());
     }
 
     private <E> void dispatch(E event,

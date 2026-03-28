@@ -45,11 +45,11 @@
     },
     {
       "Type": "Selector",
-      "$Comment": "Hit 2  - Stab (double stab)",
+      "$Comment": "Hit 2  - SpinSwingLeft",
       "RunTime": 0.45,
       "Effects": {
         "ItemPlayerAnimationsId": "Spear",
-        "ItemAnimationId": "Stab",
+        "ItemAnimationId": "SpinSwingLeft",
         "WorldSoundEventId": "SFX_Spear_Lunge",
         "Trails": [
           {

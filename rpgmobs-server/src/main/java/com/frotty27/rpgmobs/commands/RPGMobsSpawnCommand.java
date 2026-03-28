@@ -110,7 +110,27 @@ public final class RPGMobsSpawnCommand extends AbstractPlayerCommand {
         Vector3f rotation = new Vector3f(transform.getRotation());
 
         String roleName = roleInfo.getKeyName();
-        Pair<Ref<EntityStore>, ?> spawned = NPCPlugin.get().spawnNPC(entityStore, roleName, null, position, rotation);
+        Pair<Ref<EntityStore>, ?> spawned;
+        try {
+            spawned = NPCPlugin.get().spawnNPC(entityStore, roleName, null, position, rotation);
+        } catch (Exception e) {
+            String fallback = roleName + "_Fighter";
+            int fallbackIdx = NPCPlugin.get().getIndex(fallback);
+            if (fallbackIdx >= 0) {
+                ctx.sendMessage(Message.raw("[RPGMobs] '" + roleName + "' is not spawnable directly. Trying '" + fallback + "'..."));
+                roleName = fallback;
+                try {
+                    spawned = NPCPlugin.get().spawnNPC(entityStore, roleName, null, position, rotation);
+                } catch (Exception e2) {
+                    ctx.sendMessage(Message.raw("[RPGMobs] Failed to spawn '" + roleName + "': " + e2.getMessage()));
+                    return;
+                }
+            } else {
+                ctx.sendMessage(Message.raw("[RPGMobs] Failed to spawn '" + roleName + "': " + e.getMessage()
+                        + ". Try using a spawnable Variant (e.g. Skeleton_Fighter)."));
+                return;
+            }
+        }
 
         if (spawned == null || spawned.first() == null) {
             ctx.sendMessage(Message.raw("[RPGMobs] Failed to spawn NPC role: " + roleName));

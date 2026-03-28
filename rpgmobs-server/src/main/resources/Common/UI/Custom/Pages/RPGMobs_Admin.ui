@@ -137,6 +137,12 @@ $C = "../Common.ui";
   Pressed: (Background: #171d26, LabelStyle: (FontSize: 13, TextColor: #5a6d82, RenderBold: false, HorizontalAlignment: Start, VerticalAlignment: Center))
 );
 
+@AssetPickerRowSelectedStyle = TextButtonStyle(
+  Default: (Background: #1a4a3a, LabelStyle: (FontSize: 13, TextColor: #4ae04a, RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Hovered: (Background: #1a4a3a, LabelStyle: (FontSize: 13, TextColor: #4ae04a, RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center)),
+  Pressed: (Background: #1a4a3a, LabelStyle: (FontSize: 13, TextColor: #4ae04a, RenderBold: true, HorizontalAlignment: Start, VerticalAlignment: Center))
+);
+
 @ToggleOnStyle = TextButtonStyle(
   Default: (Background: #1a3a2a, LabelStyle: (FontSize: 13, TextColor: #4ade80, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
   Hovered: (Background: #244a3a, LabelStyle: (FontSize: 13, TextColor: #6aee9a, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -210,6 +216,22 @@ $C.@PageOverlay {
           TextButton #NavGlobalDebugActive { Text: "Debug"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
           TextButton #NavGlobalDebugChanged { Text: "Debug"; Anchor: (Height: 28); Style: @SidebarNavChangedStyle; Padding: (Left: 12); Visible: false; }
           TextButton #NavGlobalDebugChangedActive { Text: "Debug"; Anchor: (Height: 28); Style: @SidebarNavChangedActiveStyle; Padding: (Left: 12); Visible: false; }
+        }
+
+        Group #NavGlobalMobRulesGroup {
+          Anchor: (Height: 28, Bottom: 3);
+          TextButton #NavGlobalMobRules { Text: "Mob Rules"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); Visible: true; }
+          TextButton #NavGlobalMobRulesActive { Text: "Mob Rules"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
+          TextButton #NavGlobalMobRulesChanged { Text: "Mob Rules"; Anchor: (Height: 28); Style: @SidebarNavChangedStyle; Padding: (Left: 12); Visible: false; }
+          TextButton #NavGlobalMobRulesChangedActive { Text: "Mob Rules"; Anchor: (Height: 28); Style: @SidebarNavChangedActiveStyle; Padding: (Left: 12); Visible: false; }
+        }
+
+        Group #NavGlobalCombatAIGroup {
+          Anchor: (Height: 28, Bottom: 3);
+          TextButton #NavGlobalCombatAI { Text: "Combat AI"; Anchor: (Height: 28); Style: @SidebarNavStyle; Padding: (Left: 12); Visible: true; }
+          TextButton #NavGlobalCombatAIActive { Text: "Combat AI"; Anchor: (Height: 28); Style: @SidebarNavActiveStyle; Padding: (Left: 12); Visible: false; }
+          TextButton #NavGlobalCombatAIChanged { Text: "Combat AI"; Anchor: (Height: 28); Style: @SidebarNavChangedStyle; Padding: (Left: 12); Visible: false; }
+          TextButton #NavGlobalCombatAIChangedActive { Text: "Combat AI"; Anchor: (Height: 28); Style: @SidebarNavChangedActiveStyle; Padding: (Left: 12); Visible: false; }
         }
 
         Group #NavGlobalConfigGroup {
@@ -329,6 +351,20 @@ $C.@PageOverlay {
           Group #SubTabGroup6 { FlexWeight: 1; Anchor: (Height: 30); Visible: false; TextButton #SubTab6 { Text: "Abilities"; Anchor: (Height: 30); Style: @SubTabStyle; Visible: true; } TextButton #SubTab6Active { Text: "Abilities"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; } TextButton #SubTab6Changed { Text: "Abilities"; Anchor: (Height: 30); Style: @SubTabChangedStyle; Visible: false; } TextButton #SubTab6ChangedActive { Text: "Abilities"; Anchor: (Height: 30); Style: @SubTabChangedActiveStyle; Visible: false; } }
           Group { Anchor: (Width: 4, Height: 30); }
           Group #SubTabGroup7 { FlexWeight: 1; Anchor: (Height: 30); Visible: false; TextButton #SubTab7 { Text: "Visuals"; Anchor: (Height: 30); Style: @SubTabStyle; Visible: true; } TextButton #SubTab7Active { Text: "Visuals"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; } TextButton #SubTab7Changed { Text: "Visuals"; Anchor: (Height: 30); Style: @SubTabChangedStyle; Visible: false; } TextButton #SubTab7ChangedActive { Text: "Visuals"; Anchor: (Height: 30); Style: @SubTabChangedActiveStyle; Visible: false; } }
+        }
+
+        Group #CaiTabBar {
+          LayoutMode: Left;
+          Anchor: (Height: 38);
+          Background: (Color: #0f1620);
+          Padding: (Left: 8, Right: 8, Top: 4, Bottom: 4);
+          Visible: false;
+
+          Group #CaiTabGroup0 { FlexWeight: 1; Anchor: (Height: 30); TextButton #CaiTab0 { Text: "Combat Styles"; Anchor: (Height: 30); Style: @SubTabStyle; Visible: false; } TextButton #CaiTab0Active { Text: "Combat Styles"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: true; } }
+          Group { Anchor: (Width: 4, Height: 30); }
+          Group #CaiTabGroup1 { FlexWeight: 1; Anchor: (Height: 30); TextButton #CaiTab1 { Text: "Tier Behavior"; Anchor: (Height: 30); Style: @SubTabStyle; Visible: true; } TextButton #CaiTab1Active { Text: "Tier Behavior"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; } }
+          Group { Anchor: (Width: 4, Height: 30); }
+          Group #CaiTabGroup2 { FlexWeight: 1; Anchor: (Height: 30); TextButton #CaiTab2 { Text: "Weapon Combat"; Anchor: (Height: 30); Style: @SubTabStyle; Visible: true; } TextButton #CaiTab2Active { Text: "Weapon Combat"; Anchor: (Height: 30); Style: @SubTabActiveStyle; Visible: false; } }
         }
 
         Group #ContentHeader {
@@ -571,7 +607,7 @@ $C.@PageOverlay {
               Group { Anchor: (Height: 1, Bottom: 8); Background: (Color: #1a2840); }
               Label { Text: "Per-Tier Equipment"; Style: @SectionHeaderStyle; Anchor: (Height: 20, Bottom: 4); }
               Label { Text: "How many armor pieces and shield chance each tier gets when spawning."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 6); }
-              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2); Anchor: (Height: 22, Bottom: 2);
+              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2, Left: 8); Anchor: (Height: 22, Bottom: 2);
                 Label { Text: "Setting"; Style: @ColHeaderStyle; Anchor: (Width: 140); }
                 Label { Text: "T1"; Style: @ColHeaderStyle; Anchor: (Width: 70); }
                 Group { Anchor: (Width: 14); }
@@ -583,7 +619,7 @@ $C.@PageOverlay {
                 Group { Anchor: (Width: 14); }
                 Label { Text: "T5"; Style: @ColHeaderStyle; Anchor: (Width: 70); }
               }
-              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530);
+              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
                 Label { Text: "Armor Pieces"; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); Anchor: (Width: 140); }
                 $C.@TextField #FieldRarityArmorPieces0 { Anchor: (Width: 70, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
                 Group { Anchor: (Width: 14); }
@@ -611,7 +647,7 @@ $C.@PageOverlay {
               Group { Anchor: (Height: 1, Bottom: 8); Background: (Color: #1a2840); }
               Label { Text: "Tier Allowed Rarities"; Style: @SectionHeaderStyle; Anchor: (Height: 20, Bottom: 4); }
               Label { Text: "Which equipment rarities are allowed to spawn at each tier."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 6); }
-              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2); Anchor: (Height: 22, Bottom: 2);
+              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2, Left: 8); Anchor: (Height: 22, Bottom: 2);
                 Label { Text: "Tier"; Style: @ColHeaderStyle; Anchor: (Width: 40); }
                 Label { Text: "Common"; Style: @ColHeaderStyle; Anchor: (Width: 90); }
                 Group { Anchor: (Width: 8); }
@@ -687,7 +723,7 @@ $C.@PageOverlay {
               Group { Anchor: (Height: 1, Bottom: 8); Background: (Color: #1a2840); }
               Label { Text: "Tier Rarity Weights"; Style: @SectionHeaderStyle; Anchor: (Height: 20, Bottom: 4); }
               Label { Text: "Relative probability weights for each rarity at each tier. Higher = more likely."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 6); }
-              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2); Anchor: (Height: 22, Bottom: 2);
+              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2, Left: 8); Anchor: (Height: 22, Bottom: 2);
                 Label { Text: "Tier"; Style: @ColHeaderStyle; Anchor: (Width: 40); }
                 Label { Text: "Common"; Style: @ColHeaderStyle; Anchor: (Width: 80); }
                 Group { Anchor: (Width: 8); }
@@ -699,7 +735,7 @@ $C.@PageOverlay {
                 Group { Anchor: (Width: 8); }
                 Label { Text: "Legendary"; Style: @ColHeaderStyle; Anchor: (Width: 80); }
               }
-              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530);
+              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
                 Label { Text: "T1"; Style: (FontSize: 14, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Width: 40); }
                 $C.@TextField #FieldRarityWt00 { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
                 Group { Anchor: (Width: 8); }
@@ -711,7 +747,7 @@ $C.@PageOverlay {
                 Group { Anchor: (Width: 8); }
                 $C.@TextField #FieldRarityWt04 { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
               }
-              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530);
+              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
                 Label { Text: "T2"; Style: (FontSize: 14, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Width: 40); }
                 $C.@TextField #FieldRarityWt10 { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
                 Group { Anchor: (Width: 8); }
@@ -723,7 +759,7 @@ $C.@PageOverlay {
                 Group { Anchor: (Width: 8); }
                 $C.@TextField #FieldRarityWt14 { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
               }
-              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530);
+              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
                 Label { Text: "T3"; Style: (FontSize: 14, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Width: 40); }
                 $C.@TextField #FieldRarityWt20 { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
                 Group { Anchor: (Width: 8); }
@@ -735,7 +771,7 @@ $C.@PageOverlay {
                 Group { Anchor: (Width: 8); }
                 $C.@TextField #FieldRarityWt24 { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
               }
-              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530);
+              Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
                 Label { Text: "T4"; Style: (FontSize: 14, TextColor: #ffffff, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Width: 40); }
                 $C.@TextField #FieldRarityWt30 { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
                 Group { Anchor: (Width: 8); }
@@ -789,7 +825,7 @@ $C.@PageOverlay {
               Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4);
                 TextButton #WpnRarityAdd { Text: "+ Add Weapon Rarity Rule"; Anchor: (Width: 200, Height: 26); Style: @SubTabStyle; }
               }
-              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2); Anchor: (Height: 22, Bottom: 2);
+              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2, Left: 8); Anchor: (Height: 22, Bottom: 2);
                 Label { Text: "Fragment"; Style: @ColHeaderStyle; FlexWeight: 1; }
                 Label { Text: "Rarity"; Style: @ColHeaderStyle; Anchor: (Width: 120); }
                 Group { Anchor: (Width: 28); }
@@ -817,7 +853,7 @@ $C.@PageOverlay {
               Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4);
                 TextButton #ArmRarityAdd { Text: "+ Add Armor Rarity Rule"; Anchor: (Width: 200, Height: 26); Style: @SubTabStyle; }
               }
-              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2); Anchor: (Height: 22, Bottom: 2);
+              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2, Left: 8); Anchor: (Height: 22, Bottom: 2);
                 Label { Text: "Fragment"; Style: @ColHeaderStyle; FlexWeight: 1; }
                 Label { Text: "Rarity"; Style: @ColHeaderStyle; Anchor: (Width: 120); }
                 Group { Anchor: (Width: 28); }
@@ -837,6 +873,376 @@ $C.@PageOverlay {
                 Group { Anchor: (Width: 2); }
                 Group { Anchor: (Width: 26, Height: 26); TextButton #ArmRarityLastPage { Text: ">>"; Anchor: (Width: 26, Height: 26); Style: @SubTabStyle; } }
                 Group { FlexWeight: 1; }
+              }
+            }
+
+            Group #TabConfigCombatAI { LayoutMode: Top; Visible: false;
+
+              Group #CaiSubFactionStyles { LayoutMode: Top; Visible: true; Padding: (Left: 12);
+              Label { Text: "Combat Styles"; Style: (FontSize: 16, TextColor: #e8e8e8); Anchor: (Height: 20, Bottom: 4); }
+              Label { Text: "Each combat style defines distinct attack timing, defense, and movement. Select a style to edit its parameters."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 6); }
+              Group { LayoutMode: Left; Anchor: (Height: 32, Bottom: 6);
+                Group { Anchor: (Width: 110, Height: 28); TextButton #CaiFaction0 { Text: "Disciplined"; Anchor: (Width: 110, Height: 28); Style: @SubTabStyle; } TextButton #CaiFaction0Active { Text: "Disciplined"; Anchor: (Width: 110, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 4); }
+                Group { Anchor: (Width: 110, Height: 28); TextButton #CaiFaction1 { Text: "Berserker"; Anchor: (Width: 110, Height: 28); Style: @SubTabStyle; } TextButton #CaiFaction1Active { Text: "Berserker"; Anchor: (Width: 110, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 4); }
+                Group { Anchor: (Width: 110, Height: 28); TextButton #CaiFaction2 { Text: "Tactical"; Anchor: (Width: 110, Height: 28); Style: @SubTabStyle; } TextButton #CaiFaction2Active { Text: "Tactical"; Anchor: (Width: 110, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 4); }
+                Group { Anchor: (Width: 110, Height: 28); TextButton #CaiFaction3 { Text: "Chaotic"; Anchor: (Width: 110, Height: 28); Style: @SubTabStyle; } TextButton #CaiFaction3Active { Text: "Chaotic"; Anchor: (Width: 110, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+              }
+              Group #CaiFactionDetail { LayoutMode: Top; Anchor: (Bottom: 6); Padding: (Left: 12);
+                Label #CaiFactionGroupLabel { Text: "Steady, measured attacks with consistent timing and reliable defense."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 6); }
+                Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2, Left: 8); Anchor: (Height: 22, Bottom: 2);
+                  Label { Text: "Parameter"; Style: @ColHeaderStyle; Anchor: (Width: 180); }
+                  Label { Text: "Min"; Style: @ColHeaderStyle; Anchor: (Width: 80); }
+                  Group { Anchor: (Width: 14); }
+                  Label { Text: "Max"; Style: @ColHeaderStyle; Anchor: (Width: 80); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Time Between Attacks (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacAtkCdMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacAtkCdMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Shield Block Duration (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacShieldCharge { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Shield Block HP Threshold"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacShieldSwitch { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Step Back Distance"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacBoDistMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacBoDistMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Step Back HP Threshold"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacBoSwitch { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Low HP Retreat Distance"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacRetDistMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacRetDistMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Low HP Retreat Priority"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacRetWeight { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Re-engage After Retreat"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacReEngMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacReEngMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Re-engage Timing Jitter (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacReEngRandMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacReEngRandMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Time Between Strafes (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacStrafeCdMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacStrafeCdMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Watch Allies Fight"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  Group { Anchor: (Width: 50, Height: 26); TextButton #CaiFacObserveOn { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiFacObserveOff { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Flanking"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  Group { Anchor: (Width: 50, Height: 26); TextButton #CaiFacFlankOn { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiFacFlankOff { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                }
+                Label { Text: "Positioning & Decisions"; Style: (FontSize: 14, TextColor: #e8e8e8); Anchor: (Height: 20, Top: 6, Bottom: 4); }
+                Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2, Left: 8); Anchor: (Height: 22, Bottom: 2);
+                  Label { Text: "Parameter"; Style: @ColHeaderStyle; Anchor: (Width: 180); }
+                  Label { Text: "Min"; Style: @ColHeaderStyle; Anchor: (Width: 80); }
+                  Group { Anchor: (Width: 14); }
+                  Label { Text: "Max"; Style: @ColHeaderStyle; Anchor: (Width: 80); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Guard Chance"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacGuardRandMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacGuardRandMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Step Back Chance"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacBoRandMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacBoRandMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Retreat Interval (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacRetCooldown { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Re-engage Distance"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacReEngDistMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacReEngDistMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Observe Distance"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacObsDistMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                  Group { Anchor: (Width: 14); }
+                  $C.@TextField #FieldCaiFacObsDistMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Flanking Angle"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiFacFlankAngle { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+              }
+              }
+
+              Group #CaiSubTierBehavior { LayoutMode: Top; Visible: false; Padding: (Left: 12);
+              Label { Text: "Tier Behavior Escalation"; Style: (FontSize: 16, TextColor: #e8e8e8); Anchor: (Height: 20, Bottom: 4); }
+              Label { Text: "Which behaviors each tier unlocks. Higher tiers get more advanced combat tactics."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 6); }
+              Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2, Left: 8); Anchor: (Height: 22, Bottom: 2);
+                Label { Text: "Behavior"; Style: @ColHeaderStyle; Anchor: (Width: 100); }
+                Label { Text: "T1"; Style: @ColHeaderStyle; Anchor: (Width: 60); }
+                Group { Anchor: (Width: 8); }
+                Label { Text: "T2"; Style: @ColHeaderStyle; Anchor: (Width: 60); }
+                Group { Anchor: (Width: 8); }
+                Label { Text: "T3"; Style: @ColHeaderStyle; Anchor: (Width: 60); }
+                Group { Anchor: (Width: 8); }
+                Label { Text: "T4"; Style: @ColHeaderStyle; Anchor: (Width: 60); }
+                Group { Anchor: (Width: 8); }
+                Label { Text: "T5"; Style: @ColHeaderStyle; Anchor: (Width: 60); }
+              }
+              Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                Label { Text: "Shield Block"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 100); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleShield0On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleShield0Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleShield1On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleShield1Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleShield2On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleShield2Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleShield3On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleShield3Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleShield4On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleShield4Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+              }
+              Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                Label { Text: "Step Back"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 100); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleBackOff0On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleBackOff0Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleBackOff1On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleBackOff1Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleBackOff2On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleBackOff2Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleBackOff3On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleBackOff3Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleBackOff4On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleBackOff4Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+              }
+              Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                Label { Text: "Low HP Retreat"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 100); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleRetreat0On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleRetreat0Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleRetreat1On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleRetreat1Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleRetreat2On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleRetreat2Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleRetreat3On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleRetreat3Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleRetreat4On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleRetreat4Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+              }
+              Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                Label { Text: "Watch Allies"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 100); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleObserve0On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleObserve0Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleObserve1On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleObserve1Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleObserve2On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleObserve2Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleObserve3On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleObserve3Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleObserve4On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleObserve4Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+              }
+              Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 6); Background: (Color: #1e2530); Padding: (Left: 8);
+                Label { Text: "Flanking"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 100); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleFlank0On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleFlank0Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleFlank1On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleFlank1Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleFlank2On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleFlank2Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleFlank3On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleFlank3Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+                Group { Anchor: (Width: 8); }
+                Group { Anchor: (Width: 60, Height: 26); TextButton #CaiTierToggleFlank4On { Text: "ON"; Anchor: (Width: 38, Height: 24); Style: @ToggleOnStyle; Visible: false; } TextButton #CaiTierToggleFlank4Off { Text: "OFF"; Anchor: (Width: 38, Height: 24); Style: @ToggleOffStyle; Visible: false; } }
+              }
+
+              Label { Text: "Tier Detail Parameters"; Style: (FontSize: 14, TextColor: #e8e8e8); Anchor: (Height: 16, Bottom: 4); }
+              Group { LayoutMode: Left; Anchor: (Height: 32, Bottom: 6);
+                Group { Anchor: (Width: 50, Height: 28); TextButton #CaiTier0 { Text: "T1"; Anchor: (Width: 50, Height: 28); Style: @SubTabStyle; } TextButton #CaiTier0Active { Text: "T1"; Anchor: (Width: 50, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 4); }
+                Group { Anchor: (Width: 50, Height: 28); TextButton #CaiTier1 { Text: "T2"; Anchor: (Width: 50, Height: 28); Style: @SubTabStyle; } TextButton #CaiTier1Active { Text: "T2"; Anchor: (Width: 50, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 4); }
+                Group { Anchor: (Width: 50, Height: 28); TextButton #CaiTier2 { Text: "T3"; Anchor: (Width: 50, Height: 28); Style: @SubTabStyle; } TextButton #CaiTier2Active { Text: "T3"; Anchor: (Width: 50, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 4); }
+                Group { Anchor: (Width: 50, Height: 28); TextButton #CaiTier3 { Text: "T4"; Anchor: (Width: 50, Height: 28); Style: @SubTabStyle; } TextButton #CaiTier3Active { Text: "T4"; Anchor: (Width: 50, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 4); }
+                Group { Anchor: (Width: 50, Height: 28); TextButton #CaiTier4 { Text: "T5"; Anchor: (Width: 50, Height: 28); Style: @SubTabStyle; } TextButton #CaiTier4Active { Text: "T5"; Anchor: (Width: 50, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+              }
+              Group #CaiTierDetail { LayoutMode: Top; Anchor: (Bottom: 6); Padding: (Left: 12);
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Guard Cooldown Min (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiTierCdMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Guard Cooldown Max (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiTierCdMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Strafe Interval Min (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiTierStrCdMin { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Strafe Interval Max (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiTierStrCdMax { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Shield Block Duration (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiTierShieldCharge { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Guard Recovery Time (s)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiTierGuardCd { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Retreat HP Threshold (%)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiTierRetHealth { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+              }
+              }
+
+              Group #CaiSubWeaponCombat { LayoutMode: Top; Visible: false; Padding: (Left: 12);
+              Group { LayoutMode: Left; Anchor: (Height: 32, Bottom: 2);
+                Group { Anchor: (Width: 72, Height: 28); TextButton #CaiWeapon0 { Text: "Swords"; Anchor: (Width: 72, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon0Active { Text: "Swords"; Anchor: (Width: 72, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 84, Height: 28); TextButton #CaiWeapon1 { Text: "Longswords"; Anchor: (Width: 84, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon1Active { Text: "Longswords"; Anchor: (Width: 84, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 68, Height: 28); TextButton #CaiWeapon2 { Text: "Daggers"; Anchor: (Width: 68, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon2Active { Text: "Daggers"; Anchor: (Width: 68, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 54, Height: 28); TextButton #CaiWeapon3 { Text: "Axes"; Anchor: (Width: 54, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon3Active { Text: "Axes"; Anchor: (Width: 54, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 78, Height: 28); TextButton #CaiWeapon4 { Text: "Battleaxes"; Anchor: (Width: 78, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon4Active { Text: "Battleaxes"; Anchor: (Width: 78, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 60, Height: 28); TextButton #CaiWeapon5 { Text: "Maces"; Anchor: (Width: 60, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon5Active { Text: "Maces"; Anchor: (Width: 60, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 56, Height: 28); TextButton #CaiWeapon6 { Text: "Clubs"; Anchor: (Width: 56, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon6Active { Text: "Clubs"; Anchor: (Width: 56, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 56, Height: 28); TextButton #CaiWeapon7 { Text: "Flails"; Anchor: (Width: 56, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon7Active { Text: "Flails"; Anchor: (Width: 56, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 60, Height: 28); TextButton #CaiWeapon8 { Text: "Spears"; Anchor: (Width: 60, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon8Active { Text: "Spears"; Anchor: (Width: 60, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 72, Height: 28); TextButton #CaiWeapon9 { Text: "Pickaxes"; Anchor: (Width: 72, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon9Active { Text: "Pickaxes"; Anchor: (Width: 72, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 58, Height: 28); TextButton #CaiWeapon10 { Text: "Other"; Anchor: (Width: 58, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon10Active { Text: "Other"; Anchor: (Width: 58, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+              }
+              Group { LayoutMode: Left; Anchor: (Height: 32, Bottom: 6);
+                Group { Anchor: (Width: 80, Height: 28); TextButton #CaiWeapon11 { Text: "Shortbows"; Anchor: (Width: 80, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon11Active { Text: "Shortbows"; Anchor: (Width: 80, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 82, Height: 28); TextButton #CaiWeapon12 { Text: "Crossbows"; Anchor: (Width: 82, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon12Active { Text: "Crossbows"; Anchor: (Width: 82, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 54, Height: 28); TextButton #CaiWeapon13 { Text: "Guns"; Anchor: (Width: 54, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon13Active { Text: "Guns"; Anchor: (Width: 54, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 60, Height: 28); TextButton #CaiWeapon14 { Text: "Staves"; Anchor: (Width: 60, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon14Active { Text: "Staves"; Anchor: (Width: 60, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+                Group { Anchor: (Width: 3); }
+                Group { Anchor: (Width: 82, Height: 28); TextButton #CaiWeapon15 { Text: "Spellbooks"; Anchor: (Width: 82, Height: 28); Style: @SubTabStyle; } TextButton #CaiWeapon15Active { Text: "Spellbooks"; Anchor: (Width: 82, Height: 28); Style: @SubTabActiveStyle; Visible: false; } }
+              }
+              Group #CaiWeaponDetail { LayoutMode: Top; Anchor: (Bottom: 6); Padding: (Left: 12);
+                Label #CaiWpnRangedLabel { Text: "Ranged weapon - uses vanilla AI. Only range and speed can be configured."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 4); Visible: false; }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Attack Range (blocks)"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiWpnRange { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+                Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Attack Speed Multiplier"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                  $C.@TextField #FieldCaiWpnSpeed { Anchor: (Width: 80, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
+                }
+
+                Group #CaiWpnMeleeDetail { LayoutMode: Top; Anchor: (Bottom: 2);
+                  Group { LayoutMode: Top;
+                  Group { Anchor: (Height: 1, Top: 6, Bottom: 8); Background: (Color: #1a2840); }
+                  Label { Text: "ANIMATION"; Style: (FontSize: 14, TextColor: #e8e8e8); Anchor: (Height: 18, Bottom: 4); }
+                  Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                    Label { Text: "Animation Set"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                    TextButton #CaiWpnAnimSetBtn { Text: "Sword"; Anchor: (Width: 200, Height: 28); Style: @SubTabStyle; }
+                  }
+
+                  Group { Anchor: (Height: 1, Top: 6, Bottom: 8); Background: (Color: #1a2840); }
+                  Label { Text: "BASIC ATTACK CHAIN"; Style: (FontSize: 14, TextColor: #e8e8e8); Anchor: (Height: 18, Bottom: 2); }
+                  Label { Text: "Each swing plays in sequence during basic attacks. The NPC loops back to the first."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 4); }
+                  Group { LayoutMode: Left; Background: #1a2332(0.8); Padding: (Top: 2, Bottom: 2); Anchor: (Height: 22, Bottom: 2);
+                    Label { Text: "#"; Style: @ColHeaderStyle; Anchor: (Width: 30); }
+                    Label { Text: "Animation"; Style: @ColHeaderStyle; FlexWeight: 1; }
+                    Group { Anchor: (Width: 32); }
+                  }
+                  Group #CaiWpnChainRow0 { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Visible: false;
+                    Label #CaiWpnChainNum0 { Text: "1"; Style: (FontSize: 14, TextColor: #7a8da0, VerticalAlignment: Center, HorizontalAlignment: Center); Anchor: (Width: 30); }
+                    TextButton #CaiWpnChainAnim0 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @SubTabStyle; }
+                    Group { Anchor: (Width: 4); }
+                    TextButton #CaiWpnChainDel0 { Text: "X"; Anchor: (Width: 28, Height: 28); Style: @DeleteRowButtonStyle; }
+                  }
+                  Group #CaiWpnChainRow1 { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Visible: false;
+                    Label #CaiWpnChainNum1 { Text: "2"; Style: (FontSize: 14, TextColor: #7a8da0, VerticalAlignment: Center, HorizontalAlignment: Center); Anchor: (Width: 30); }
+                    TextButton #CaiWpnChainAnim1 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @SubTabStyle; }
+                    Group { Anchor: (Width: 4); }
+                    TextButton #CaiWpnChainDel1 { Text: "X"; Anchor: (Width: 28, Height: 28); Style: @DeleteRowButtonStyle; }
+                  }
+                  Group #CaiWpnChainRow2 { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Visible: false;
+                    Label #CaiWpnChainNum2 { Text: "3"; Style: (FontSize: 14, TextColor: #7a8da0, VerticalAlignment: Center, HorizontalAlignment: Center); Anchor: (Width: 30); }
+                    TextButton #CaiWpnChainAnim2 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @SubTabStyle; }
+                    Group { Anchor: (Width: 4); }
+                    TextButton #CaiWpnChainDel2 { Text: "X"; Anchor: (Width: 28, Height: 28); Style: @DeleteRowButtonStyle; }
+                  }
+                  Group #CaiWpnChainRow3 { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Visible: false;
+                    Label #CaiWpnChainNum3 { Text: "4"; Style: (FontSize: 14, TextColor: #7a8da0, VerticalAlignment: Center, HorizontalAlignment: Center); Anchor: (Width: 30); }
+                    TextButton #CaiWpnChainAnim3 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @SubTabStyle; }
+                    Group { Anchor: (Width: 4); }
+                    TextButton #CaiWpnChainDel3 { Text: "X"; Anchor: (Width: 28, Height: 28); Style: @DeleteRowButtonStyle; }
+                  }
+                  Group #CaiWpnChainRow4 { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Visible: false;
+                    Label #CaiWpnChainNum4 { Text: "5"; Style: (FontSize: 14, TextColor: #7a8da0, VerticalAlignment: Center, HorizontalAlignment: Center); Anchor: (Width: 30); }
+                    TextButton #CaiWpnChainAnim4 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @SubTabStyle; }
+                    Group { Anchor: (Width: 4); }
+                    TextButton #CaiWpnChainDel4 { Text: "X"; Anchor: (Width: 28, Height: 28); Style: @DeleteRowButtonStyle; }
+                  }
+                  TextButton #CaiWpnChainAdd { Text: "[+] Add Swing"; Anchor: (Width: 120, Height: 28); Style: @SubTabStyle; }
+
+                  Group { Anchor: (Height: 1, Top: 6, Bottom: 8); Background: (Color: #1a2840); }
+                  Label { Text: "SOUNDS"; Style: (FontSize: 14, TextColor: #e8e8e8); Anchor: (Height: 18, Bottom: 4); }
+                  Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                    Label { Text: "Swing Sound"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                    TextButton #CaiWpnSwingSoundBtn { Text: ""; Anchor: (Width: 250, Height: 28); Style: @SubTabStyle; }
+                    Group { Anchor: (Width: 4); }
+                    Group { Anchor: (Width: 28, Height: 28); TextButton #CaiWpnSwingSoundPreview { Text: "|>"; Anchor: (Width: 28, Height: 28); Style: @SubTabStyle; } }
+                  }
+                  Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                    Label { Text: "Hit Impact Sound"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                    TextButton #CaiWpnImpactSoundBtn { Text: ""; Anchor: (Width: 250, Height: 28); Style: @SubTabStyle; }
+                    Group { Anchor: (Width: 4); }
+                    Group { Anchor: (Width: 28, Height: 28); TextButton #CaiWpnImpactSoundPreview { Text: "|>"; Anchor: (Width: 28, Height: 28); Style: @SubTabStyle; } }
+                  }
+
+                  Group { Anchor: (Height: 1, Top: 6, Bottom: 8); Background: (Color: #1a2840); }
+                  Label { Text: "VISUAL EFFECTS"; Style: (FontSize: 14, TextColor: #e8e8e8); Anchor: (Height: 18, Bottom: 4); }
+                  Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                    Label { Text: "Weapon Trail"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                    TextButton #CaiWpnTrailBtn { Text: ""; Anchor: (Width: 200, Height: 28); Style: @SubTabStyle; }
+                  }
+                  Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2); Background: (Color: #1e2530); Padding: (Left: 8);
+                    Label { Text: "Hit Particle"; Style: (FontSize: 14, TextColor: #c8d6e5, VerticalAlignment: Center); Anchor: (Width: 180); }
+                    TextButton #CaiWpnHitParticleBtn { Text: ""; Anchor: (Width: 200, Height: 28); Style: @SubTabStyle; }
+                  }
+                  }
+                }
+              }
               }
             }
 
@@ -1472,61 +1878,6 @@ $C.@PageOverlay {
                   Group { LayoutMode: Left; Anchor: (Height: 30, Bottom: 2);
                     Label { Text: "Interrupt Hit Count:"; Style: @FieldLabelStyle; Anchor: (Width: 185); }
                     $C.@TextField #AbilCfgHLInterrupt { Anchor: (Width: 70, Height: 28); Style: (FontSize: 14, TextColor: #ffffff); }
-                  }
-                  Group { Anchor: (Height: 1, Top: 4, Bottom: 6); Background: (Color: #2a3a4a); }
-                  Label { Text: "Mob Type Filtering"; Style: @SectionHeaderStyle; Anchor: (Height: 16, Bottom: 2); }
-                  Label { Text: "Denied mob prefixes prevent heal leap on matching NPCs."; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 3); }
-                  Group #AbilCfgHLDenySection { LayoutMode: Top; Anchor: (Bottom: 4);
-                    Label { Text: "Denied Prefixes:"; Style: @FieldLabelStyle; Anchor: (Height: 18, Bottom: 2); }
-                    Group #AbilCfgHLDenyRow0 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLDenyName0 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLDenyDel0 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group #AbilCfgHLDenyRow1 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLDenyName1 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLDenyDel1 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group #AbilCfgHLDenyRow2 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLDenyName2 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLDenyDel2 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group #AbilCfgHLDenyRow3 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLDenyName3 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLDenyDel3 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group #AbilCfgHLDenyRow4 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLDenyName4 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLDenyDel4 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group { LayoutMode: Left; Anchor: (Height: 28, Top: 2);
-                      TextButton #AbilCfgHLDenyAdd { Text: "+ Add Prefix"; Style: @SubTabStyle; Anchor: (Width: 100, Height: 26); }
-                    }
-                  }
-                  Group #AbilCfgHLAllowSection { LayoutMode: Top; Anchor: (Bottom: 4);
-                    Label { Text: "Allowed Exceptions:"; Style: @FieldLabelStyle; Anchor: (Height: 18, Bottom: 2); }
-                    Group #AbilCfgHLAllowRow0 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLAllowName0 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLAllowDel0 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group #AbilCfgHLAllowRow1 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLAllowName1 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLAllowDel1 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group #AbilCfgHLAllowRow2 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLAllowName2 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLAllowDel2 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group #AbilCfgHLAllowRow3 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLAllowName3 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLAllowDel3 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group #AbilCfgHLAllowRow4 { LayoutMode: Left; Anchor: (Height: 26, Bottom: 1); Visible: false; Background: (Color: #1a3a2a);
-                      Label #AbilCfgHLAllowName4 { Text: ""; Style: (FontSize: 14, TextColor: #ffffff, VerticalAlignment: Center); FlexWeight: 1; Padding: (Left: 8); }
-                      TextButton #AbilCfgHLAllowDel4 { Text: "X"; Style: @DeleteRowButtonStyle; Anchor: (Width: 26, Height: 26); }
-                    }
-                    Group { LayoutMode: Left; Anchor: (Height: 28, Top: 2);
-                      TextButton #AbilCfgHLAllowAdd { Text: "+ Add Exception"; Style: @SubTabStyle; Anchor: (Width: 120, Height: 26); }
-                    }
                   }
                 }
 
@@ -2339,6 +2690,7 @@ $C.@PageOverlay {
             Group #TabWorldMobRules { LayoutMode: Top; Visible: false;
 
               Label { Text: "Mob Rules"; Style: @SectionHeaderStyle; Anchor: (Height: 20, Bottom: 8); }
+              Label #PerWorldMobRuleSummary { Text: ""; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 6); Visible: false; }
 
               Group #MobRuleBreadcrumb {
                 LayoutMode: Left;
@@ -2430,6 +2782,11 @@ $C.@PageOverlay {
                 Group { LayoutMode: Left; Anchor: (Height: 34, Bottom: 4); Background: (Color: #1e2530); Padding: (Left: 8);
                   Label { Text: "Override Mode"; Style: @FieldLabelStyle; Anchor: (Width: 130); }
                   TextButton #GlobMobRuleCycleMode { Text: "ALWAYS"; Anchor: (Width: 140, Height: 30); Style: @SubTabStyle; }
+                }
+
+                Group { LayoutMode: Left; Anchor: (Height: 34, Bottom: 4); Background: (Color: #1e2530); Padding: (Left: 8);
+                  Label { Text: "Combat Style"; Style: @FieldLabelStyle; Anchor: (Width: 130); }
+                  TextButton #GlobMobRuleCombatStyle { Text: "Auto"; Anchor: (Width: 140, Height: 30); Style: @SubTabStyle; }
                 }
 
                 Group #GlobMobRuleWpnTierTable { LayoutMode: Top; Anchor: (Left: 0, Width: 380, Bottom: 4);
@@ -3144,6 +3501,76 @@ $C.@PageOverlay {
         TextButton #CatPeekClose { Text: "Close"; Anchor: (Width: 100, Height: 30); Style: @SubTabStyle; }
         Group { FlexWeight: 1; }
         TextButton #CatPeekExtract { Text: "Extract Items"; Anchor: (Width: 120, Height: 30); Style: @SubTabStyle; Visible: false; }
+      }
+    }
+  }
+
+  Group #AssetPickerPopup {
+    Anchor: (Width: 1200, Height: 880);
+    Background: (Color: #00000080);
+    Visible: false;
+
+    TextButton #AssetPickerBackdrop { Text: ""; Anchor: (Width: 1200, Height: 880); Style: @BackdropStyle; }
+
+    Group {
+      Anchor: (Width: 480, Height: 740);
+      Background: (Color: #141c26);
+      LayoutMode: Top;
+      Padding: (Left: 18, Right: 18, Top: 14, Bottom: 14);
+
+      Label #AssetPickerTitle { Text: "Select Asset"; Style: (FontSize: 17, TextColor: #c8d6e5, RenderBold: true); Anchor: (Height: 26, Bottom: 4); }
+      Label #AssetPickerSubtitle { Text: ""; Style: (FontSize: 13, TextColor: #7a8da0); Anchor: (Height: 16, Bottom: 6); }
+
+      Group { LayoutMode: Left; Anchor: (Height: 32, Bottom: 6);
+        Label { Text: "Filter:"; Style: (FontSize: 14, TextColor: #96a9be, VerticalAlignment: Center); Anchor: (Width: 46); }
+        $C.@TextField #AssetPickerFilter { Anchor: (Width: 390, Height: 28); Style: (FontSize: 14, TextColor: #c8d6e5); }
+      }
+
+      Group #AssetPickerRows { LayoutMode: Top; Anchor: (Left: 0);
+        Group #AssetPickerRow0 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn0 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel0 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow1 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn1 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel1 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow2 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn2 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel2 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow3 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn3 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel3 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow4 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn4 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel4 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow5 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn5 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel5 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow6 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn6 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel6 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow7 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn7 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel7 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow8 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn8 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel8 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow9 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn9 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel9 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow10 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn10 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel10 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow11 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn11 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel11 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow12 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn12 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel12 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow13 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn13 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel13 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+        Group #AssetPickerRow14 { LayoutMode: Left; Anchor: (Height: 28, Bottom: 2); Visible: false; TextButton #AssetPickerRowBtn14 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @TreeRowItemStyle; Padding: (Left: 8); } TextButton #AssetPickerRowBtnSel14 { Text: ""; FlexWeight: 1; Anchor: (Height: 28); Style: @AssetPickerRowSelectedStyle; Padding: (Left: 8); Visible: false; } }
+      }
+
+      Label #AssetPickerEmpty { Text: "No assets match filter."; Style: (FontSize: 13, TextColor: #5a6d82); Anchor: (Height: 18); Visible: false; }
+
+      Group #AssetPickerPagination { LayoutMode: Left; Anchor: (Height: 28, Top: 4); Visible: false;
+        Group { FlexWeight: 1; }
+        Group { Anchor: (Width: 26, Height: 26); TextButton #AssetPickerFirstPage { Text: "<<"; Anchor: (Width: 26, Height: 26); Style: @SubTabStyle; } }
+        Group { Anchor: (Width: 2); }
+        Group { Anchor: (Width: 26, Height: 26); TextButton #AssetPickerPrevPage { Text: "<"; Anchor: (Width: 26, Height: 26); Style: @SubTabStyle; } }
+        Group { Anchor: (Width: 4); }
+        Label #AssetPickerPageInfo { Text: ""; Style: (FontSize: 13, TextColor: #5a6d82, HorizontalAlignment: Center, VerticalAlignment: Center); Anchor: (Width: 80, Height: 26); }
+        Group { Anchor: (Width: 4); }
+        Group { Anchor: (Width: 26, Height: 26); TextButton #AssetPickerNextPage { Text: ">"; Anchor: (Width: 26, Height: 26); Style: @SubTabStyle; } }
+        Group { Anchor: (Width: 2); }
+        Group { Anchor: (Width: 26, Height: 26); TextButton #AssetPickerLastPage { Text: ">>"; Anchor: (Width: 26, Height: 26); Style: @SubTabStyle; } }
+        Group { FlexWeight: 1; }
+      }
+
+      Group { Anchor: (Height: 1, Top: 8, Bottom: 8); Background: (Color: #2a3a4a); }
+
+      Group { LayoutMode: Left; Anchor: (Height: 22, Bottom: 6);
+        Label { Text: "Selected:"; Style: (FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center); Anchor: (Width: 70); }
+        Label #AssetPickerSelectedLabel { Text: "None"; Style: (FontSize: 14, TextColor: #4ae04a, VerticalAlignment: Center); FlexWeight: 1; }
+      }
+
+      Group { LayoutMode: Left; Anchor: (Height: 34);
+        TextButton #AssetPickerCancel { Text: "Cancel"; Anchor: (Width: 100, Height: 30); Style: @SubTabStyle; }
+        Group { FlexWeight: 1; }
+        TextButton #AssetPickerConfirm { Text: "Select"; Anchor: (Width: 120, Height: 30); Style: @SubTabStyle; Visible: false; }
       }
     }
   }

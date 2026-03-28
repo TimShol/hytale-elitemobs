@@ -24,7 +24,7 @@
     {
       "Type": "Selector",
       "$Comment": "Hit 1  - ThrowCharged forward thrust (flows naturally from ThrowCharging, no idle gap). Impact sound on this stab.",
-      "RunTime": 0.15,
+      "RunTime": 0.35,
       "Effects": {
         "ItemPlayerAnimationsId": "Spear",
         "ItemAnimationId": "ThrowCharged",

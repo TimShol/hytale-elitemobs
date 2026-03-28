@@ -11,14 +11,13 @@ import com.frotty27.rpgmobs.utils.AbilityHelpers;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class RPGMobsVolleyAbilityFeature
         extends AbstractGatedAbilityFeature<VolleyAbilityComponent, RPGMobsConfig.VolleyAbilityConfig> {
@@ -60,11 +59,10 @@ public final class RPGMobsVolleyAbilityFeature
         RPGMobsConfig.AbilityConfig rawConfig = context.config().abilitiesConfig.defaultAbilities.get(id());
         if (!(rawConfig instanceof RPGMobsConfig.VolleyAbilityConfig abilityConfig)) return false;
 
-        float distance = calculateDistance(context.entityRef(), targetRef, context.store());
+        float distance = AbilityHelpers.calculateDistance(context.entityRef(), targetRef, context.store());
         if (distance < abilityConfig.minRange || distance > abilityConfig.maxRange) return false;
 
-        Random random = new Random();
-        return random.nextFloat() < volley.volleyTriggerChance;
+        return ThreadLocalRandom.current().nextFloat() < volley.volleyTriggerChance;
     }
 
     @Override
@@ -88,19 +86,6 @@ public final class RPGMobsVolleyAbilityFeature
         if (volley == null) return;
 
         AbilityHelpers.restoreWeaponIfNeeded(npcEntity, volley);
-    }
-
-    private float calculateDistance(Ref<EntityStore> entityRef, Ref<EntityStore> targetRef, Store<EntityStore> store) {
-        TransformComponent mobTransform = store.getComponent(entityRef, TransformComponent.getComponentType());
-        TransformComponent targetTransform = store.getComponent(targetRef, TransformComponent.getComponentType());
-        if (mobTransform == null || targetTransform == null) return Float.MAX_VALUE;
-
-        Vector3d mobPos = mobTransform.getPosition();
-        Vector3d targetPos = targetTransform.getPosition();
-        double dx = targetPos.getX() - mobPos.getX();
-        double dy = targetPos.getY() - mobPos.getY();
-        double dz = targetPos.getZ() - mobPos.getZ();
-        return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     @Override

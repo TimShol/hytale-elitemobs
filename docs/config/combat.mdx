@@ -1,0 +1,202 @@
+---
+title: Combat
+description: Configuring the CombatActionEvaluator combat system for elite NPCs.
+---
+
+`combat.yml` controls the CombatActionEvaluator (CAE) combat system that drives elite basic attacks, guarding, retreat, and movement AI. The CAE is Hytale's native combat evaluation system  -  RPGMobs generates per-faction, per-tier, and per-weapon CAE configs at build time from these settings.
+
+## How CAE Combat Works
+
+Instead of a code-side state machine, RPGMobs uses Hytale's built-in CombatActionEvaluator to handle:
+
+- **Basic attacks**  -  per-weapon swing chains with correct animations and sounds
+- **Sustained guard**  -  shield blocking on recent sustained damage (T2+)
+- **BackOff**  -  brief retreat after completing an attack chain (T2+)
+- **Health retreat**  -  fleeing when health drops below a threshold (T3+)
+- **Group observe**  -  pausing before joining group combat (T3+)
+- **Flanking**  -  positioning behind the target (T5 only for most factions)
+
+RPGMobs abilities (Charge Leap, Multi Slash, Enrage, etc.) are handled code-side and temporarily interrupt CAE control. Code-side parry uses CAE's `setCurrentInteraction()` to fire reactive guard interactions.
+
+## Combat Styles
+
+The `factionStyles` map defines combat personality profiles. Each mob rule can reference a combat style to control its attack timing and defensive behavior.
+
+```yaml
+factionStyles:
+  skeleton:
+    attackCooldownMin: 1.0
+    attackCooldownMax: 2.0
+    shieldBlockEnabled: true
+    backoffEnabled: true
+    retreatEnabled: true
+    reengageEnabled: true
+    strafeEnabled: false
+    observeEnabled: true
+    flankingEnabled: false
+  trork:
+    attackCooldownMin: 0.4
+    attackCooldownMax: 0.8
+    shieldBlockEnabled: false
+    backoffEnabled: true
+    retreatEnabled: true
+    reengageEnabled: true
+    strafeEnabled: false
+    observeEnabled: false
+    flankingEnabled: false
+  outlander:
+    attackCooldownMin: 0.8
+    attackCooldownMax: 1.2
+    shieldBlockEnabled: true
+    backoffEnabled: true
+    retreatEnabled: true
+    reengageEnabled: true
+    strafeEnabled: true
+    observeEnabled: true
+    flankingEnabled: true
+  goblin:
+    attackCooldownMin: 0.3
+    attackCooldownMax: 2.0
+    shieldBlockEnabled: true
+    backoffEnabled: true
+    retreatEnabled: true
+    reengageEnabled: true
+    strafeEnabled: false
+    observeEnabled: true
+    flankingEnabled: false
+```
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `attackCooldownMin` | float | Minimum delay between basic attack chains (seconds). |
+| `attackCooldownMax` | float | Maximum delay between basic attack chains (seconds). A random value in this range is chosen each cycle. |
+| `shieldBlockEnabled` | boolean | Whether the style uses CAE ShieldBlock action for sustained guarding. |
+| `backoffEnabled` | boolean | Whether the style briefly retreats after completing an attack chain. |
+| `retreatEnabled` | boolean | Whether the style retreats when health is low (CAE HealthRetreat). |
+| `reengageEnabled` | boolean | Whether the style automatically re-engages after retreating. |
+| `strafeEnabled` | boolean | Whether the style strafes around the target between attacks. |
+| `observeEnabled` | boolean | Whether grouped elites pause before joining combat (CAE GroupObserve). |
+| `flankingEnabled` | boolean | Whether the style attempts to position behind the target. |
+
+## Tier Behaviors
+
+The `tierBehaviors` list defines which CAE actions are unlocked at each tier. Index 0 = T1, index 4 = T5.
+
+```yaml
+tierBehaviors:
+  - shieldBlock: false
+    backOff: false
+    healthRetreat: false
+    groupObserve: false
+    flanking: false
+  - shieldBlock: true
+    backOff: true
+    healthRetreat: false
+    groupObserve: false
+    flanking: false
+    guardChargeFor: 3.0
+    guardCooldown: 8.0
+  - shieldBlock: true
+    backOff: true
+    healthRetreat: true
+    groupObserve: true
+    flanking: false
+    guardChargeFor: 3.5
+    guardCooldown: 6.0
+    retreatHealthThreshold: 0.35
+    retreatDuration: 3.0
+  - shieldBlock: true
+    backOff: true
+    healthRetreat: true
+    groupObserve: true
+    flanking: false
+    guardChargeFor: 4.0
+    guardCooldown: 5.0
+    retreatHealthThreshold: 0.30
+    retreatDuration: 2.5
+  - shieldBlock: true
+    backOff: true
+    healthRetreat: true
+    groupObserve: true
+    flanking: true
+    guardChargeFor: 5.0
+    guardCooldown: 4.0
+    retreatHealthThreshold: 0.25
+    retreatDuration: 2.0
+```
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `shieldBlock` | boolean | Whether this tier can use sustained shield guard. |
+| `backOff` | boolean | Whether this tier retreats briefly after attacking. |
+| `healthRetreat` | boolean | Whether this tier retreats when health is low. |
+| `groupObserve` | boolean | Whether this tier pauses before joining group combat. |
+| `flanking` | boolean | Whether this tier attempts to flank the target. |
+| `guardChargeFor` | float | Duration in seconds that the mob holds its shield guard. |
+| `guardCooldown` | float | Minimum time in seconds between guard actions. |
+| `retreatHealthThreshold` | float | Health fraction below which the mob retreats (e.g., `0.35` = 35% HP). |
+| `retreatDuration` | float | How long in seconds the mob retreats before re-engaging. |
+
+## Weapon Parameters
+
+The `weaponParams` map defines per-weapon basic attack configuration. Each entry controls the attack chain, sounds, and combat reach for one weapon type.
+
+```yaml
+weaponParams:
+  swords:
+    maxRange: 3.5
+    speedMultiplier: 1.0
+    animationSet: "Sword"
+    attackChain:
+      - "SwingLeft"
+      - "SwingRight"
+      - "SwingLeft"
+      - "SwingRight"
+    swingSound: "SFX_Sword_T1_Swing"
+    impactSound: "SFX_Sword_T2_Impact"
+    weaponTrail: "Sword_Distortion"
+    hitParticle: "Mace_Signature_Cast"
+```
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `maxRange` | float | Maximum attack reach in blocks. Larger weapons (battleaxes, spears) have longer range. Uses projected distance (edge-to-edge, not center-to-center). |
+| `speedMultiplier` | float | Attack speed modifier. `1.0` = baseline. Daggers are faster (~1.3), Battleaxes slower (~0.7). |
+| `animationSet` | string | Hytale animation set ID (e.g., `Sword`, `Daggers`, `Battleaxe`, `Mace`, `Spear`, `Club`, `Club_Flail`, `Axe`, `Longsword`). |
+| `attackChain` | string[] | Ordered list of animation IDs for the basic attack cycle. The NPC cycles through these in order, then loops. |
+| `swingSound` | string | Sound event played on every swing regardless of hit. |
+| `impactSound` | string | Sound event played only on successful hit (defined in the damage template, not the swing). |
+| `weaponTrail` | string | Trail asset attached to the weapon during swings. Optional  -  leave empty for no trail. |
+| `hitParticle` | string | Particle system spawned on impact. Optional. |
+
+### Default Weapon Configurations
+
+| Weapon | Range | Speed | Animation Set | Chain Length |
+| :--- | :---: | :---: | :--- | :---: |
+| Swords | 3.5 | 1.0 | Sword | 4 |
+| Longswords | 4.0 | 0.9 | Longsword | 4 |
+| Daggers | 2.8 | 1.3 | Daggers | 4 |
+| Axes | 3.5 | 0.9 | Axe | 5 |
+| Battleaxes | 4.0 | 0.7 | Battleaxe | 5 |
+| Maces | 3.5 | 0.85 | Mace | 4 |
+| Clubs | 3.5 | 0.9 | Club | 4 |
+| ClubsFlail | 3.5 | 0.9 | Club_Flail | 4 |
+| Spears | 4.5 | 0.85 | Spear | 4 |
+
+## Parry System
+
+The code-side reactive parry system is not configurable via `combat.yml`  -  it is hardcoded with per-tier chances and per-weapon delays. The parry system detects player attacks via `RPGMobsPlayerAttackDetectionSystem` and fires guard interactions through `CombatActionEvaluator.setCurrentInteraction()`.
+
+| Tier | Parry Chance |
+| :---: | :---: |
+| T1 | 0% |
+| T2 | 15% |
+| T3 | 30% |
+| T4 | 50% |
+| T5 | 70% |
+
+Per-weapon parry delay (based on the player's weapon wind-up time): Daggers 1 tick, Swords 2, Spears 5, Battleaxes 7, Maces 10.
+
+## Admin UI
+
+Combat AI settings are editable in the [Combat AI tab](/ui/combat-ai) of the Admin UI. The tab provides visual editors for combat styles, tier behaviors, and per-weapon attack chains.

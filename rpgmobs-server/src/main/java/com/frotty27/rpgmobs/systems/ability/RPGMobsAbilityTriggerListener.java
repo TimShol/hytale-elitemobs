@@ -103,9 +103,15 @@ public final class RPGMobsAbilityTriggerListener implements IRPGMobsEventListene
 
         RPGMobsAbilityLockComponent lock = store.getComponent(entityRef, plugin.getAbilityLockComponentType());
         boolean interruptingAbility = false;
+        boolean isReactiveTrigger = source == AbilityTriggerSource.PLAYER_ATTACK_NEARBY
+                || source == AbilityTriggerSource.PLAYER_CHARGED_ATTACK_NEARBY
+                || source == AbilityTriggerSource.DAMAGE_RECEIVED;
         if (lock != null && (lock.isLocked() || lock.isChainStartPending())) {
-            if ((source == AbilityTriggerSource.PLAYER_ATTACK_NEARBY
-                    || source == AbilityTriggerSource.PLAYER_CHARGED_ATTACK_NEARBY)
+            boolean hasActiveAbility = lock.activeAbilityId != null;
+            boolean onlyGlobalCooldown = !hasActiveAbility && lock.isOnGlobalCooldown();
+            if (isReactiveTrigger && onlyGlobalCooldown) {
+                // Reactive abilities bypass global cooldown - they're responses to player actions
+            } else if (isReactiveTrigger && hasActiveAbility
                     && AbilityIds.MULTI_SLASH_SHORT.equals(lock.activeAbilityId)) {
                 interruptingAbility = true;
             } else {

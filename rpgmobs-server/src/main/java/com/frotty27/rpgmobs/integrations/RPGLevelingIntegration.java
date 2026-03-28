@@ -33,8 +33,8 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
     }
 
     public boolean tryActivate() {
-        RPGMobsConfig cfg = plugin.getConfig();
-        if (cfg == null || !cfg.integrationsConfig.rpgLeveling.enabled) {
+        RPGMobsConfig config = plugin.getConfig();
+        if (config == null || !config.integrationsConfig.rpgLeveling.enabled) {
             LOGGER.atInfo().log("RPGLeveling integration disabled by config.");
             return false;
         }
@@ -91,8 +91,8 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
             double minionXP = baseXP * resolved.minionXPMultiplier;
             xpEvent.setXpAmount(minionXP);
 
-            RPGMobsConfig debugCfg = plugin.getConfig();
-            if (debugCfg != null && debugCfg.debugConfig.isDebugModeEnabled) {
+            RPGMobsConfig debugConfig = plugin.getConfig();
+            if (debugConfig != null && debugConfig.debugConfig.isDebugModeEnabled) {
                 LOGGER.atInfo().log("Minion kill  - XP: %.0f → %.0f (×%.2f)",
                                     baseXP, minionXP, resolved.minionXPMultiplier);
             }
@@ -105,8 +105,8 @@ public final class RPGLevelingIntegration implements IRPGMobsEventListener {
         double scaledXP = baseXP * tierMult + resolved.xpBonusPerAbility * data.abilityCount;
         xpEvent.setXpAmount(scaledXP);
 
-        RPGMobsConfig debugCfg = plugin.getConfig();
-        if (debugCfg != null && debugCfg.debugConfig.isDebugModeEnabled) {
+        RPGMobsConfig debugConfig = plugin.getConfig();
+        if (debugConfig != null && debugConfig.debugConfig.isDebugModeEnabled) {
             LOGGER.atInfo().log("Elite kill  - tier=%d baseXP=%.0f tierMult=%.1f abilities=%d bonusPerAbility=%.0f → XP=%.0f (world=%s)",
                                 data.tier, baseXP, tierMult, data.abilityCount, resolved.xpBonusPerAbility, scaledXP, data.worldName);
         }

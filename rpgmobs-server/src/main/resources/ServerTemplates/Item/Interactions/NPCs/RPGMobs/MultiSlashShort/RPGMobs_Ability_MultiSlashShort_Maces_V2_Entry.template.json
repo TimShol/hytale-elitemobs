@@ -23,11 +23,11 @@
     },
     {
       "Type": "Selector",
-      "$Comment": "Hit 1  - SwingDownCharged rooted slam",
+      "$Comment": "Hit 1  - SwingUpLeftCharged uppercut",
       "RunTime": 0.6,
       "Effects": {
         "ItemPlayerAnimationsId": "Mace",
-        "ItemAnimationId": "SwingDownCharged",
+        "ItemAnimationId": "SwingUpLeftCharged",
         "WorldSoundEventId": "SFX_Mace_T2_Swing_Charged",
         "Trails": [
           {

@@ -6,6 +6,7 @@
       "Type": "Simple",
       "$Comment": "Wind-up  - 1.6s spin charge with Mace_Signature trail on weapon",
       "RunTime": 1.1,
+      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Sword",
         "ItemAnimationId": "SwingLeftCharging",
@@ -17,8 +18,7 @@
             "TargetNodeName": "Origin_Projectile",
             "PositionOffset": { "Y": -0.2 }
           }
-        ],
-        "MovementEffects": { "DisableAll": true }
+        ]
       }
     },
     {
@@ -113,11 +113,11 @@
       "Type": "Simple",
       "$Comment": "Recovery  - Idle recovery, movement locked",
       "RunTime": 0.4,
+      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Sword",
         "ItemAnimationId": "Idle",
-        "ClearAnimationOnFinish": true,
-        "MovementEffects": { "DisableAll": true }
+        "ClearAnimationOnFinish": true
       }
     }
   ]

@@ -26,7 +26,7 @@ public final class RPGLevelingBridge {
             if (api == null) return;
             api.registerExperienceGainedListener(event -> {
                 EntityKillContext ctx = event.getEntityKillContext();
-                if (ctx != null && ctx.getEntityUuid() != null) {
+                if (ctx != null) {
                     handler.accept(event, ctx.getEntityUuid());
                 }
             });

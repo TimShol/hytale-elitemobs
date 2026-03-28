@@ -1,14 +1,19 @@
 package com.frotty27.rpgmobs.services;
 
 import com.frotty27.rpgmobs.api.query.IRPGMobsQueryAPI;
+import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
+import com.frotty27.rpgmobs.components.ability.RPGMobsAbilityLockComponent;
 import com.frotty27.rpgmobs.components.combat.RPGMobsCombatTrackingComponent;
 import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
+import com.frotty27.rpgmobs.config.CombatStyle;
+import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.hypixel.hytale.component.Component;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -113,6 +118,55 @@ public class RPGMobsQueryAPI implements IRPGMobsQueryAPI {
         return queryComponent(entityRef, plugin.getCombatTrackingComponentType())
                 .map(RPGMobsCombatTrackingComponent::isInCombat)
                 .orElse(false);
+    }
+
+    @Override
+    public @Nullable String getMatchedMobRuleKey(Ref<EntityStore> entityRef, Store<EntityStore> store) {
+        if (entityRef == null || store == null) return null;
+        RPGMobsTierComponent tier = store.getComponent(entityRef, plugin.getRPGMobsComponentType());
+        if (tier == null) return null;
+        return (tier.matchedRuleKey != null && !tier.matchedRuleKey.isEmpty()) ? tier.matchedRuleKey : null;
+    }
+
+    @Override
+    public @Nullable String getActiveAbilityId(Ref<EntityStore> entityRef, Store<EntityStore> store) {
+        if (entityRef == null || store == null) return null;
+        RPGMobsAbilityLockComponent lock = store.getComponent(entityRef, plugin.getAbilityLockComponentType());
+        if (lock == null) return null;
+        return lock.activeAbilityId;
+    }
+
+    @Override
+    public @Nullable String getCombatStyle(Ref<EntityStore> entityRef, Store<EntityStore> store) {
+        if (entityRef == null || store == null) return null;
+        RPGMobsTierComponent tier = store.getComponent(entityRef, plugin.getRPGMobsComponentType());
+        if (tier == null) return null;
+        String ruleKey = tier.matchedRuleKey;
+        if (ruleKey == null || ruleKey.isEmpty()) return null;
+
+        RPGMobsConfig config = plugin.getConfig();
+        if (config != null && config.mobsConfig != null && config.mobsConfig.defaultMobRules != null) {
+            RPGMobsConfig.MobRule rule = config.mobsConfig.defaultMobRules.get(ruleKey);
+            if (rule != null && rule.combatStyle != null && !rule.combatStyle.isEmpty()) {
+                CombatStyle style = CombatStyle.parse(rule.combatStyle);
+                if (style != CombatStyle.AUTO) {
+                    return style.displayName();
+                }
+            }
+        }
+
+        return detectFactionFromRoleName(ruleKey);
+    }
+
+    private static @Nullable String detectFactionFromRoleName(String roleName) {
+        var lower = roleName.toLowerCase();
+        if (lower.contains("trork")) return CombatStyle.BERSERKER.displayName();
+        if (lower.contains("outlander")) return CombatStyle.TACTICAL.displayName();
+        if (lower.contains("goblin")) return CombatStyle.CHAOTIC.displayName();
+        if (lower.contains("skeleton") || lower.contains("wraith")
+                || lower.contains("zombie") || lower.contains("risen")
+                || lower.contains("feran")) return CombatStyle.DISCIPLINED.displayName();
+        return CombatStyle.TACTICAL.displayName();
     }
 
     private <C extends Component<EntityStore>> Optional<C> queryComponent(Ref<EntityStore> entityRef,

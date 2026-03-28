@@ -13,7 +13,7 @@ public final class GlobalConfig {
             ALL config files (base, world overlays, instance overlays) are wiped and regenerated.
             This is NOT tied to plugin versions  - it only changes when the config layout breaks.
             Do not change this manually.""")
-    public int configFormatVersion = 3;
+    public int configFormatVersion = 4;
 
     @Default
     @Cfg(group = "Worlds", file = "core.yml", comment = """

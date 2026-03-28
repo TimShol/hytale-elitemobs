@@ -3,10 +3,8 @@ package com.frotty27.rpgmobs.features;
 import com.frotty27.rpgmobs.components.ability.AbilityEnabledComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig.AbilityConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig.SummonAbilityConfig;
-import com.frotty27.rpgmobs.config.overlay.ResolvedConfig;
 import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
 import com.frotty27.rpgmobs.logs.RPGMobsLogger;
-import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.systems.ability.TriggerContext;
 import com.frotty27.rpgmobs.utils.AbilityHelpers;
 import com.frotty27.rpgmobs.utils.Constants;
@@ -35,14 +33,6 @@ public final class RPGMobsAbilityFeatureHelpers {
     private static final String DEFAULT_IDENTIFIER = "default";
 
     private RPGMobsAbilityFeatureHelpers() {
-    }
-
-    public static ResolvedConfig resolveConfig(RPGMobsPlugin plugin,
-                                               Ref<EntityStore> npcRef,
-                                               Store<EntityStore> entityStore) {
-        NPCEntity npc = entityStore.getComponent(npcRef, Constants.NPC_COMPONENT_TYPE);
-        String worldName = (npc != null && npc.getWorld() != null) ? npc.getWorld().getName() : null;
-        return plugin.getResolvedConfig(worldName);
     }
 
     public static <C extends AbilityEnabledComponent> @Nullable C getReadyAbilityComponent(

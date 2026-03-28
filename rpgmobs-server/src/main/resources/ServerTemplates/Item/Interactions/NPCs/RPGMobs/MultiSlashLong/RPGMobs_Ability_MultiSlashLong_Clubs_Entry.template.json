@@ -107,7 +107,7 @@
         },
         {
           "Type": "Selector",
-          "RunTime": 0.3,
+          "RunTime": 0.45,
           "Effects": {
             "ItemPlayerAnimationsId": "Club",
             "ItemAnimationId": "SwingDownCharged",

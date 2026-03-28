@@ -24,7 +24,7 @@
     {
       "Type": "Selector",
       "$Comment": "Hit 1  - SwingLeftCharged",
-      "RunTime": 0.15,
+      "RunTime": 0.45,
       "Effects": {
         "ItemPlayerAnimationsId": "Longsword",
         "ItemAnimationId": "SwingLeftCharged",

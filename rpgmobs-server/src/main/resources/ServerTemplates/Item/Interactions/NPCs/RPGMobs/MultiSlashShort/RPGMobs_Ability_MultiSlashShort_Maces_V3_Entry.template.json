@@ -24,7 +24,7 @@
     {
       "Type": "Selector",
       "$Comment": "Hit 1  - SwingLeftCharged",
-      "RunTime": 0.15,
+      "RunTime": 0.40,
       "Effects": {
         "ItemPlayerAnimationsId": "Mace",
         "ItemAnimationId": "SwingLeftCharged",

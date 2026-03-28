@@ -31,6 +31,7 @@ import com.frotty27.rpgmobs.logs.RPGMobsLogger;
 import com.frotty27.rpgmobs.services.RPGMobsEventBus;
 import com.frotty27.rpgmobs.services.RPGMobsNameplateService;
 import com.frotty27.rpgmobs.services.RPGMobsQueryAPI;
+import com.frotty27.rpgmobs.services.RuntimeRoleSelector;
 import com.frotty27.rpgmobs.systems.combat.RPGMobsAITargetPollingSystem;
 import com.frotty27.rpgmobs.systems.combat.RPGMobsCombatStateSystem;
 import com.frotty27.rpgmobs.systems.death.RPGMobsVanillaDropsCullZoneManager;
@@ -39,13 +40,11 @@ import com.frotty27.rpgmobs.systems.migration.RPGMobsComponentMigrationSystem;
 import com.frotty27.rpgmobs.systems.spawn.RPGMobsSpawnSystem;
 import com.frotty27.rpgmobs.utils.PlayerAttackTracker;
 import com.frotty27.rpgmobs.utils.TickClock;
-import com.hypixel.hytale.assetstore.AssetPack;
 import com.hypixel.hytale.builtin.instances.InstancesPlugin;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.asset.AssetModule;
-import com.hypixel.hytale.server.core.asset.AssetRegistryLoader;
 import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
 import com.hypixel.hytale.server.core.modules.entity.damage.DamageEventSystem;
 import com.hypixel.hytale.server.core.modules.entity.damage.DeathSystems;
@@ -56,13 +55,9 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -102,6 +97,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
     private final RPGMobsAssetRetriever RPGMobsAssetRetriever = new RPGMobsAssetRetriever(this);
     private final RPGMobsFeatureRegistry featureRegistry = new RPGMobsFeatureRegistry(this);
     private final RPGMobsEventBus eventBus = new RPGMobsEventBus();
+    private final RuntimeRoleSelector runtimeRoleSelector = new RuntimeRoleSelector();
     private RPGLevelingIntegration rpgLevelingIntegration;
 
     private final AtomicBoolean reconcileEventPending = new AtomicBoolean(false);
@@ -121,6 +117,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         loadOrCreateRPGMobsConfig();
 
         getEventRegistry().register(LoadAssetEvent.class, this::onLoadAssets);
+        getEventRegistry().register(com.hypixel.hytale.server.npc.AllNPCsLoadedEvent.class, this::onAllNPCsLoaded);
 
         nameplateService.describeSegments(this);
 
@@ -136,24 +133,23 @@ public final class RPGMobsPlugin extends JavaPlugin {
         try {
             loadOrCreateRPGMobsConfig();
             Path RPGMobsDirectory = getModDirectory();
-            RPGMobsAssetGenerator.generateAll(RPGMobsDirectory, config, true);
+            RPGMobsAssetGenerator.generateAll(RPGMobsDirectory, config);
 
-            AssetPack assetPack = new AssetPack(RPGMobsDirectory,
-                                                ASSET_PACK_NAME,
-                                                RPGMobsDirectory,
-                                                FileSystems.getDefault(),
-                                                false,
-                                                getManifest()
+            AssetModule.get().registerPack(
+                    ASSET_PACK_NAME,
+                    RPGMobsDirectory,
+                    getManifest(),
+                    true
             );
 
-            AssetRegistryLoader.loadAssets(event, assetPack);
-
-            LOGGER.atInfo().log("Loaded generated AssetPack '%s' from: %s",
+            LOGGER.atInfo().log("Registered AssetPack '%s' from: %s (NPC roles loaded via AssetPackRegisterEvent)",
                                 ASSET_PACK_NAME,
                                 RPGMobsDirectory.toAbsolutePath()
             );
 
-            reloadNpcRoleAssetsIfPossible();
+            runtimeRoleSelector.initialize(config);
+            LOGGER.atInfo().log("RuntimeRoleSelector initialized: %d cached variants",
+                                runtimeRoleSelector.getCachedVariantCount());
         } catch (Throwable error) {
             LOGGER.atWarning().log("onLoadAssets failed: %s", error.toString());
             error.printStackTrace();
@@ -187,30 +183,28 @@ public final class RPGMobsPlugin extends JavaPlugin {
         }
     }
 
+    private void onAllNPCsLoaded(com.hypixel.hytale.server.npc.AllNPCsLoadedEvent event) {
+        int previousCount = runtimeRoleSelector.getCachedVariantCount();
+        runtimeRoleSelector.initialize(config);
+        int newCount = runtimeRoleSelector.getCachedVariantCount();
+        if (newCount != previousCount) {
+            LOGGER.atInfo().log("RuntimeRoleSelector refreshed via AllNPCsLoadedEvent: %d cached variants (was %d, loaded %d roles in batch)",
+                                newCount, previousCount, event.getLoadedNPCs().size());
+        }
+    }
+
     public void reloadConfigAndAssets() {
         loadOrCreateRPGMobsConfig();
 
-        RPGMobsConfig cfg = getConfig();
-        if (cfg == null) throw new IllegalStateException("RPGMobsConfig is null after force reload!");
+        RPGMobsConfig config = getConfig();
+        if (config == null) throw new IllegalStateException("RPGMobsConfig is null after force reload!");
 
         Path RPGMobsDir = getModDirectory();
-        RPGMobsAssetGenerator.generateAll(RPGMobsDir, cfg, true);
+        RPGMobsAssetGenerator.generateAll(RPGMobsDir, config);
 
-        AssetModule assetModule = AssetModule.get();
-        if (assetModule == null) {
-            LOGGER.atWarning().log("AssetModule is null; cannot force reload asset pack.");
-            return;
-        }
+        int count = configReloadCount.incrementAndGet();
 
-        try {
-            assetModule.registerPack(ASSET_PACK_NAME, RPGMobsDir, getManifest(), true);
-            LOGGER.atInfo().log("Reloaded config & regenerated assets successfully!");
-            reloadNpcRoleAssetsIfPossible();
-
-        } catch (Throwable error) {
-            LOGGER.atWarning().log("Failed to reload: %s", error.toString());
-            error.printStackTrace();
-        }
+        LOGGER.atInfo().log("Reloaded config & wrote asset changes. File monitor handles reload. configReloadCount=%d", count);
     }
 
     public void reloadConfigOnly() {
@@ -226,8 +220,6 @@ public final class RPGMobsPlugin extends JavaPlugin {
         LOGGER.atInfo().log("GlobalConfig written to disk.");
     }
 
-    private void reloadNpcRoleAssetsIfPossible() {
-    }
 
     public synchronized void loadOrCreateRPGMobsConfig() {
         Path modDirectory = getModDirectory();
@@ -237,9 +229,9 @@ public final class RPGMobsPlugin extends JavaPlugin {
         Path baseDir = modDirectory.resolve("base");
 
         int oldFormatVersion = readConfigFormatVersion(modDirectory);
-        if (oldFormatVersion < 3) {
+        if (oldFormatVersion < 4) {
             LOGGER.atWarning().log(
-                    "[RPGMobs] Config format version %d → 3  - deleting entire config directory.", oldFormatVersion);
+                    "[RPGMobs] Config format version %d → 4  - deleting entire config directory.", oldFormatVersion);
             deleteDirectoryContents(modDirectory);
         }
 
@@ -271,8 +263,8 @@ public final class RPGMobsPlugin extends JavaPlugin {
 
         globalConfig = YamlSerializer.loadOrCreate(modDirectory, new GlobalConfig());
 
-        if (globalConfig != null && globalConfig.configFormatVersion < 3) {
-            globalConfig.configFormatVersion = 3;
+        if (globalConfig != null && globalConfig.configFormatVersion < 4) {
+            globalConfig.configFormatVersion = 4;
             writeGlobalConfig();
         }
 
@@ -382,8 +374,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
         addTierOverride(o, "Goblin_Ogre", new boolean[]{false, false, false, true, false});
         addTierOverride(o, "Goblin_Duke", new boolean[]{false, false, false, false, true});
 
-        o.mobRules = buildGoblinMobRules();
-        o.mobRuleCategoryTree = buildGoblinCategoryTree();
+        o.disabledMobRuleKeys = new LinkedHashSet<>();
 
         o.lootTemplates = buildGoblinLootTemplates();
         o.lootTemplateCategoryTree = new RPGMobsConfig.LootTemplateCategory("All",
@@ -826,6 +817,10 @@ public final class RPGMobsPlugin extends JavaPlugin {
 
     public RPGMobsEventBus getEventBus() {
         return eventBus;
+    }
+
+    public RuntimeRoleSelector getRuntimeRoleSelector() {
+        return runtimeRoleSelector;
     }
 
     public int getConfigReloadCount() {

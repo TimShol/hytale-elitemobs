@@ -1,6 +1,5 @@
 package com.frotty27.rpgmobs.features;
 
-import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.HealLeapAbilityComponent;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
@@ -51,8 +50,6 @@ public final class RPGMobsHealLeapAbilityFeature
                 context, context.plugin().getHealLeapAbilityComponentType());
         if (healLeap == null) return false;
 
-        if (!isMobTypeAllowed(context)) return false;
-
         float healthPercent = calculateHealthPercent(context.entityRef(), context.store());
 
         if (context.source() == AbilityTriggerSource.COMBAT_TICK) {
@@ -70,29 +67,6 @@ public final class RPGMobsHealLeapAbilityFeature
         }
 
         return healthPercent < healLeap.triggerHealthPercent;
-    }
-
-    private boolean isMobTypeAllowed(TriggerContext context) {
-        RPGMobsConfig.AbilityConfig rawConfig = context.config().abilitiesConfig.defaultAbilities.get(id());
-        if (!(rawConfig instanceof RPGMobsConfig.HealLeapAbilityConfig healConfig)) return true;
-
-        RPGMobsTierComponent tier = context.store().getComponent(
-                context.entityRef(), context.plugin().getRPGMobsComponentType()
-        );
-        if (tier == null || tier.matchedRuleKey == null || tier.matchedRuleKey.isBlank()) return true;
-
-        String ruleKey = tier.matchedRuleKey;
-        String ruleKeyLower = ruleKey.toLowerCase();
-
-        for (String exception : healConfig.allowedExceptions) {
-            if (ruleKeyLower.startsWith(exception.toLowerCase())) return true;
-        }
-
-        for (String denied : healConfig.deniedMobPrefixes) {
-            if (ruleKeyLower.startsWith(denied.toLowerCase())) return false;
-        }
-
-        return true;
     }
 
     @Override
@@ -185,12 +159,6 @@ public final class RPGMobsHealLeapAbilityFeature
                 new AbilityConfigField.PerTierFloat("Apply Force",
                         config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).applyForcePerTier,
                         (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).applyForcePerTier = value),
-                new AbilityConfigField.StringList("Denied Mob Prefixes",
-                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).deniedMobPrefixes,
-                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).deniedMobPrefixes = value),
-                new AbilityConfigField.StringList("Allowed Exceptions",
-                        config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).allowedExceptions,
-                        (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).allowedExceptions = value),
                 new AbilityConfigField.ScalarFloat("Retreat Heal Min Distance",
                         config -> ((RPGMobsConfig.HealLeapAbilityConfig) config).retreatHealMinDistance,
                         (config, value) -> ((RPGMobsConfig.HealLeapAbilityConfig) config).retreatHealMinDistance = value),

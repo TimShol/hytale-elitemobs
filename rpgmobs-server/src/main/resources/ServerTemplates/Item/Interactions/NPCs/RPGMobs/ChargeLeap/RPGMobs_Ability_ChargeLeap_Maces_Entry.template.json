@@ -132,11 +132,11 @@
       "Type": "Simple",
       "$Comment": "Recovery (still rooted)",
       "RunTime": 0.6,
+      "HorizontalSpeedMultiplier": 0.0,
       "Effects": {
         "ItemPlayerAnimationsId": "Mace",
         "ItemAnimationId": "SwingDownCharged",
-        "ClearAnimationOnFinish": true,
-        "HorizontalSpeedMultiplier": 0.0
+        "ClearAnimationOnFinish": true
       }
     }
   ]

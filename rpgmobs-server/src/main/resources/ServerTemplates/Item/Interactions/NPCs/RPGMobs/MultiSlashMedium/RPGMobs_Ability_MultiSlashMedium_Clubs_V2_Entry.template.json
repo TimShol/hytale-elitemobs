@@ -6,6 +6,7 @@
       "Type": "Simple",
       "$Comment": "Wind-up  - 1.6s slam charge with Large_Charged trail on weapon",
       "RunTime": 1.0,
+      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Club",
         "ItemAnimationId": "SwingDownCharging",
@@ -17,17 +18,16 @@
             "TargetNodeName": "Origin_Projectile",
             "PositionOffset": { "Y": -0.2 }
           }
-        ],
-        "MovementEffects": { "DisableAll": true }
+        ]
       }
     },
     {
       "Type": "Selector",
-      "$Comment": "Hit 1  - SwingDown downward bash",
+      "$Comment": "Hit 1  - SwingUpLeft upswing bash",
       "RunTime": 0.5,
       "Effects": {
         "ItemPlayerAnimationsId": "Club",
-        "ItemAnimationId": "SwingDown",
+        "ItemAnimationId": "SwingUpLeft",
         "WorldSoundEventId": "SFX_Mace_T1_Swing",
         "Trails": [
           {
@@ -61,7 +61,7 @@
         },
         {
           "Type": "Selector",
-          "RunTime": 0.3,
+          "RunTime": 0.45,
           "Effects": {
             "ItemPlayerAnimationsId": "Club",
             "ItemAnimationId": "SwingDownCharged",
@@ -80,8 +80,7 @@
                 "TargetNodeName": "Origin_Projectile",
                 "PositionOffset": { "Y": -0.2 }
               }
-            ],
-            "MovementEffects": { "DisableAll": true }
+            ]
           },
           "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.2 }, "Range": 2.8 },
           "HitEntity": {
@@ -94,11 +93,11 @@
       "Type": "Simple",
       "$Comment": "Recovery  - Idle recovery, movement locked",
       "RunTime": 0.4,
+      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Club",
         "ItemAnimationId": "Idle",
-        "ClearAnimationOnFinish": true,
-        "MovementEffects": { "DisableAll": true }
+        "ClearAnimationOnFinish": true
       }
     }
   ]

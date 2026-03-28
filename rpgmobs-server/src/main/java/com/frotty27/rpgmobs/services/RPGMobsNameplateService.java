@@ -37,7 +37,7 @@ public final class RPGMobsNameplateService {
     public static final String EXAMPLE_PREFIX = "• • •";
     public static final String EXAMPLE_TIER = "Common, ...";
     public static final String EXAMPLE_NAME = "Zombie, ...";
-    public static final String EXAMPLE_DEBUG = "[T3] CL MSS DR | ▶MSS";
+    public static final String EXAMPLE_DEBUG = "CL MSS DR | MSS";
 
     public void describeSegments(JavaPlugin plugin) {
         NameplateAPI.describe(plugin, SEGMENT_PREFIX, DISPLAY_PREFIX, SegmentTarget.NPCS, EXAMPLE_PREFIX);
@@ -145,7 +145,7 @@ public final class RPGMobsNameplateService {
         var tier = entityStore.getComponent(entityRef, plugin.getRPGMobsComponentType());
         int tierDisplay = (tier != null) ? tier.tierIndex + 1 : 0;
 
-        var sb = new StringBuilder("[T").append(tierDisplay).append("] ");
+        var sb = new StringBuilder();
 
         List<String> enabledAbilities = new ArrayList<>();
         ChargeLeapAbilityComponent cl = entityStore.getComponent(entityRef, plugin.getChargeLeapAbilityComponentType());

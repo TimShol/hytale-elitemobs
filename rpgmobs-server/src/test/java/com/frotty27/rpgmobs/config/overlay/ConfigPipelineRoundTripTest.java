@@ -6,10 +6,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -89,37 +86,14 @@ public class ConfigPipelineRoundTripTest {
     public void overlayWithMobRulesRoundTrips(@TempDir Path tempDir) throws IOException {
         var overlay = new ConfigOverlay();
 
-        var rule = new RPGMobsConfig.MobRule();
-        rule.enabled = true;
-        rule.matchExact = new ArrayList<>(List.of("Zombie_Scout"));
-        rule.matchContains = new ArrayList<>(List.of("zombie"));
-        rule.matchExcludes = new ArrayList<>(List.of("baby"));
-        rule.weaponOverrideMode = RPGMobsConfig.WeaponOverrideMode.ALWAYS;
-        rule.allowedWeaponCategories = new ArrayList<>(List.of("category:Swords"));
-
-        overlay.mobRules = new LinkedHashMap<>();
-        overlay.mobRules.put("zombie", rule);
-
-        var cat = new RPGMobsConfig.MobRuleCategory();
-        cat.name = "All";
-        cat.mobRuleKeys = new ArrayList<>(List.of("zombie"));
-        overlay.mobRuleCategoryTree = cat;
+        overlay.disabledMobRuleKeys = new LinkedHashSet<>(List.of("zombie_scout", "skeleton_warrior"));
 
         var restored = writeAndReload(overlay, tempDir);
 
-        assertNotNull(restored.mobRules);
-        assertEquals(1, restored.mobRules.size());
-        var restoredRule = restored.mobRules.get("zombie");
-        assertNotNull(restoredRule);
-        assertTrue(restoredRule.enabled);
-        assertEquals(List.of("Zombie_Scout"), restoredRule.matchExact);
-        assertEquals(List.of("zombie"), restoredRule.matchContains);
-        assertEquals(List.of("baby"), restoredRule.matchExcludes);
-        assertEquals(RPGMobsConfig.WeaponOverrideMode.ALWAYS, restoredRule.weaponOverrideMode);
-
-        assertNotNull(restored.mobRuleCategoryTree);
-        assertEquals("All", restored.mobRuleCategoryTree.name);
-        assertEquals(List.of("zombie"), restored.mobRuleCategoryTree.mobRuleKeys);
+        assertNotNull(restored.disabledMobRuleKeys);
+        assertEquals(2, restored.disabledMobRuleKeys.size());
+        assertTrue(restored.disabledMobRuleKeys.contains("zombie_scout"));
+        assertTrue(restored.disabledMobRuleKeys.contains("skeleton_warrior"));
     }
 
     @Test
@@ -349,7 +323,7 @@ public class ConfigPipelineRoundTripTest {
         assertNull(restored.progressionStyle);
         assertNull(restored.spawnChancePerTier);
         assertNull(restored.environmentTierRules);
-        assertNull(restored.mobRules);
+        assertNull(restored.disabledMobRuleKeys);
         assertNull(restored.lootTemplates);
         assertNull(restored.abilityOverlays);
         assertNull(restored.tierOverrides);
@@ -407,26 +381,12 @@ public class ConfigPipelineRoundTripTest {
             }
             restored.environmentTierRules = envRules;
         }
-        if (yamlMap.containsKey("mobRules") && yamlMap.get("mobRules") instanceof Map<?, ?> rulesMap) {
-            Map<String, RPGMobsConfig.MobRule> rules = new LinkedHashMap<>();
-            for (var entry : rulesMap.entrySet()) {
-                String key = String.valueOf(entry.getKey());
-                if (entry.getValue() instanceof Map<?, ?> ruleMap) {
-                    Map<String, Object> ruleMapStr = new LinkedHashMap<>();
-                    for (var re : ruleMap.entrySet()) {
-                        if (re.getKey() != null) ruleMapStr.put(String.valueOf(re.getKey()), re.getValue());
-                    }
-                    rules.put(key, ConfigResolver.parseMobRule(ruleMapStr));
-                }
+        if (yamlMap.containsKey("disabledMobRuleKeys") && yamlMap.get("disabledMobRuleKeys") instanceof List<?> disabledList) {
+            Set<String> disabledKeys = new LinkedHashSet<>();
+            for (Object item : disabledList) {
+                if (item != null) disabledKeys.add(String.valueOf(item));
             }
-            restored.mobRules = rules;
-        }
-        if (yamlMap.containsKey("mobRuleCategoryTree") && yamlMap.get("mobRuleCategoryTree") instanceof Map<?, ?> treeMap) {
-            Map<String, Object> treeMapStr = new LinkedHashMap<>();
-            for (var entry : treeMap.entrySet()) {
-                if (entry.getKey() != null) treeMapStr.put(String.valueOf(entry.getKey()), entry.getValue());
-            }
-            restored.mobRuleCategoryTree = ConfigResolver.parseMobRuleCategory(treeMapStr);
+            restored.disabledMobRuleKeys = disabledKeys;
         }
         if (yamlMap.containsKey("lootTemplates") && yamlMap.get("lootTemplates") instanceof Map<?, ?> tplsMap) {
             Map<String, RPGMobsConfig.LootTemplate> templates = new LinkedHashMap<>();

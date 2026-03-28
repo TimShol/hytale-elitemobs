@@ -61,7 +61,7 @@
         },
         {
           "Type": "Selector",
-          "RunTime": 0.15,
+          "RunTime": 0.40,
           "Effects": {
             "ItemPlayerAnimationsId": "Mace",
             "ItemAnimationId": "SwingLeftCharged",

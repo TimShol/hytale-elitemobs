@@ -43,11 +43,10 @@ public final class RPGMobsAssetGenerator {
     private RPGMobsAssetGenerator() {
     }
 
-    public static void generateAll(Path RPGMobsDirectory, RPGMobsConfig config, boolean cleanFirst) {
+    public static void generateAll(Path RPGMobsDirectory, RPGMobsConfig config) {
         Path outputRootDirectory = RPGMobsDirectory.resolve(OUTPUT_ROOT);
 
         try {
-            if (cleanFirst) deleteDirectoryIfExists(outputRootDirectory);
             Files.createDirectories(outputRootDirectory);
 
             int writtenFileCount = 0;
@@ -123,7 +122,9 @@ public final class RPGMobsAssetGenerator {
                     }
 
                     if (!lowercaseFileName.endsWith(".json")) {
-                        Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+                        if (!Files.exists(destinationPath) || Files.size(sourcePath) != Files.size(destinationPath)) {
+                            Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+                        }
                         writtenFileCount++;
                         continue;
                     }
@@ -145,10 +146,17 @@ public final class RPGMobsAssetGenerator {
             writtenFileCount += extraSummonRoleVariants;
             processedJsonFileCount += extraSummonRoleVariants;
 
-            LOGGER.atInfo().log(String.format("Generated assets to: %s (files=%d, jsonProcessed=%d)",
+            var caeResult = CaeConfigGenerator.generateAll(outputRootDirectory, config);
+            writtenFileCount += caeResult.totalFiles();
+            processedJsonFileCount += caeResult.totalFiles();
+
+            LOGGER.atInfo().log(String.format("Generated assets to: %s (files=%d, jsonProcessed=%d, caeTotal=%d, caeWritten=%d, caeDeleted=%d)",
                                               outputRootDirectory.toAbsolutePath(),
                                               writtenFileCount,
-                                              processedJsonFileCount
+                                              processedJsonFileCount,
+                                              caeResult.totalFiles(),
+                                              caeResult.filesWritten(),
+                                              caeResult.filesDeleted()
             ));
 
         } catch (Throwable throwable) {
@@ -570,25 +578,16 @@ public final class RPGMobsAssetGenerator {
     }
 
     private static void writeUtf8(Path destinationPath, String content) throws IOException {
+        if (Files.exists(destinationPath)) {
+            String existing = Files.readString(destinationPath, StandardCharsets.UTF_8);
+            if (existing.equals(content)) return;
+        }
         Files.writeString(destinationPath,
                           content,
                           StandardCharsets.UTF_8,
                           StandardOpenOption.CREATE,
                           StandardOpenOption.TRUNCATE_EXISTING
         );
-    }
-
-    private static void deleteDirectoryIfExists(Path directory) throws IOException {
-        if (!Files.exists(directory)) return;
-
-        try (Stream<Path> paths = Files.walk(directory)) {
-            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
-                try {
-                    Files.deleteIfExists(path);
-                } catch (IOException ignored) {
-                }
-            });
-        }
     }
 
     private static ResourceTree openResourceTreeFromJar() throws Exception {

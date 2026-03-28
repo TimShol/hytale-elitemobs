@@ -2,7 +2,9 @@ package com.frotty27.rpgmobs.api.query;
 
 import com.frotty27.rpgmobs.api.RPGMobsAPI;
 import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -138,4 +140,47 @@ public interface IRPGMobsQueryAPI {
      * @return true if in combat
      */
     boolean isInCombat(Ref<EntityStore> entityRef);
+
+    /**
+     * Returns the mob rule key that matched this elite during tier assignment.
+     *
+     * <p>The mob rule key is the identifier from the mob rules configuration
+     * that was selected by the matcher (e.g. "Skeleton_Guard", "Trork_Warrior").
+     * Returns {@code null} if the entity is not an RPGMobs elite or has no
+     * matched rule.</p>
+     *
+     * @param entityRef the entity to query
+     * @param store     the entity store to read from
+     * @return the matched mob rule key, or {@code null}
+     * @since 1.2.0
+     */
+    @Nullable String getMatchedMobRuleKey(Ref<EntityStore> entityRef, Store<EntityStore> store);
+
+    /**
+     * Returns the ability ID currently being executed by this elite.
+     *
+     * <p>Common ability IDs: charge_leap, dodge_roll, multi_slash_short,
+     * multi_slash_medium, multi_slash_long, enrage, volley, heal_leap,
+     * undead_summon.</p>
+     *
+     * @param entityRef the entity to query
+     * @param store     the entity store to read from
+     * @return the active ability ID, or {@code null} if no ability is running
+     * @since 1.2.0
+     */
+    @Nullable String getActiveAbilityId(Ref<EntityStore> entityRef, Store<EntityStore> store);
+
+    /**
+     * Returns the combat style name assigned to this elite's CAE configuration.
+     *
+     * <p>Possible values: "Disciplined" (Skeleton faction), "Berserker" (Trork),
+     * "Tactical" (Outlander), "Chaotic" (Goblin), or {@code null} if the entity
+     * is not an RPGMobs elite or has no combat style assigned.</p>
+     *
+     * @param entityRef the entity to query
+     * @param store     the entity store to read from
+     * @return the combat style display name, or {@code null}
+     * @since 1.2.0
+     */
+    @Nullable String getCombatStyle(Ref<EntityStore> entityRef, Store<EntityStore> store);
 }

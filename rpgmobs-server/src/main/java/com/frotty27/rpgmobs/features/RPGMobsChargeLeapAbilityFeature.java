@@ -9,12 +9,11 @@ import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
 import com.frotty27.rpgmobs.systems.ability.AbilityTriggerSource;
 import com.frotty27.rpgmobs.systems.ability.TriggerContext;
+import com.frotty27.rpgmobs.utils.AbilityHelpers;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.List;
@@ -64,7 +63,7 @@ public final class RPGMobsChargeLeapAbilityFeature
         RPGMobsConfig.AbilityConfig rawConfig = context.config().abilitiesConfig.defaultAbilities.get(id());
         if (!(rawConfig instanceof RPGMobsConfig.ChargeLeapAbilityConfig abilityConfig)) return false;
 
-        float distance = calculateDistance(context.entityRef(), targetRef, context.store());
+        float distance = AbilityHelpers.calculateDistance(context.entityRef(), targetRef, context.store());
         boolean inRange = distance >= abilityConfig.minRange && distance <= abilityConfig.maxRange;
         RPGMobsLogger.debug(LOGGER,
                 "[ChargeLeap] canTrigger: distance=%.1f minRange=%.1f maxRange=%.1f inRange=%b",
@@ -76,54 +75,14 @@ public final class RPGMobsChargeLeapAbilityFeature
     protected void populateComponent(ChargeLeapAbilityComponent component, RPGMobsPlugin plugin,
                                      Ref<EntityStore> npcRef, Store<EntityStore> entityStore,
                                      int tierIndex) {
-        component.weaponVariant = resolveWeaponVariant(plugin, npcRef, entityStore);
+        component.weaponVariant = AbilityHelpers.resolveWeaponVariant(plugin, npcRef, entityStore);
     }
 
     @Override
     public String resolveRootTemplateKey(TriggerContext context) {
-        String variant = resolveWeaponVariant(context.plugin(), context.entityRef(), context.store());
+        String variant = AbilityHelpers.resolveWeaponVariant(context.plugin(), context.entityRef(), context.store());
         String cap = Character.toUpperCase(variant.charAt(0)) + variant.substring(1);
         return "root" + cap;
-    }
-
-    private String resolveWeaponVariant(RPGMobsPlugin plugin, Ref<EntityStore> npcRef,
-                                        Store<EntityStore> entityStore) {
-        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
-        if (weaponId.isEmpty()) return AbstractMultiSlashFeature.VARIANT_SWORDS;
-
-        RPGMobsConfig config = plugin.getConfig();
-        if (config == null || config.gearConfig == null || config.gearConfig.weaponCategoryTree == null) {
-            return AbstractMultiSlashFeature.VARIANT_SWORDS;
-        }
-
-        RPGMobsConfig.GearCategory weaponTree = config.gearConfig.weaponCategoryTree;
-        for (RPGMobsConfig.GearCategory category : weaponTree.children) {
-            if (category.itemKeys.contains(weaponId)) {
-                String mapped = AbstractMultiSlashFeature.CATEGORY_TO_VARIANT.get(category.name);
-                if (mapped != null) {
-                    if (AbstractMultiSlashFeature.VARIANT_CLUBS.equals(mapped)
-                            && weaponId.toLowerCase().contains("flail")) {
-                        return AbstractMultiSlashFeature.VARIANT_CLUBS_FLAIL;
-                    }
-                    return mapped;
-                }
-            }
-        }
-
-        return AbstractMultiSlashFeature.VARIANT_SWORDS;
-    }
-
-    private float calculateDistance(Ref<EntityStore> entityRef, Ref<EntityStore> targetRef, Store<EntityStore> store) {
-        TransformComponent mobTransform = store.getComponent(entityRef, TransformComponent.getComponentType());
-        TransformComponent targetTransform = store.getComponent(targetRef, TransformComponent.getComponentType());
-        if (mobTransform == null || targetTransform == null) return Float.MAX_VALUE;
-
-        Vector3d mobPos = mobTransform.getPosition();
-        Vector3d targetPos = targetTransform.getPosition();
-        double dx = targetPos.getX() - mobPos.getX();
-        double dy = targetPos.getY() - mobPos.getY();
-        double dz = targetPos.getZ() - mobPos.getZ();
-        return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     @Override

@@ -4,7 +4,7 @@
 
 ![RPGMobs Ability](https://media.forgecdn.net/attachments/1495/784/eliteleapability-gif.gif)
 
-Currently enhancing <span style="color:#2dc26b">165 NPC types</span>  -  and more to come!
+Currently enhancing <span style="color:#2dc26b">200+ NPC types</span>  -  and more to come!
 
 ## Documentation / Guide
 
@@ -32,19 +32,31 @@ If you wish to support me and this project, you can simply download and play thi
 *   Ability gating per mob rule with per-tier toggles and weapon category restrictions
 *   Per-mob armor slot restrictions  -  mobs whose models don't support full armor won't equip it
 *   Entity effects system (projectile resistance and more)
-*   Elite-vs-elite aggro prevention toggle
+*   CAE-driven combat AI with 4 combat styles (Disciplined, Berserker, Tactical, Chaotic)  -  assignable per mob rule
+*   Per-tier behavior escalation (shield block, back-off, health retreat, group observe, flanking)
+*   Reactive parry system with per-weapon timing and per-tier chance
+
+<!-- TODO: Replace with Combat AI - Styles screenshot URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_UI_COMBAT_AI_STYLES" alt="Combat AI - Combat Styles"></p></div>
+
+<!-- TODO: Replace with Combat AI - Tier Behavior screenshot URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_UI_COMBAT_AI_TIERS" alt="Combat AI - Tier Behavior"></p></div>
 
 ### Abilities
 
-Elites use an event-driven ability system  -  abilities trigger contextually based on combat state, not on a timer. There are currently 3 abilities:
+Elites use an event-driven ability system  -  abilities trigger contextually based on combat state, not on a timer. There are currently 9 abilities:
 
-*   **Charge Leap**  -  Gap-closing attack. Triggers when a target is within range.
-*   **Heal Leap**  -  Defensive retreat with self-heal. Triggers when health drops below a threshold.
-*   **Undead Summon**  -  Spawns faction-appropriate reinforcements (goblins summon goblins, trorks summon trorks, undead summon undead). Triggers periodically during sustained combat. Configurable summon pool exclusion prevents certain roles from being summoned.
+*   **Charge Leap**  -  Gap-closing slam with per-weapon sounds
+*   **Heal Leap**  -  Defensive retreat with potion healing (living humanoids only)
+*   **Undead Summon**  -  Faction-appropriate reinforcements
+*   **Dodge Roll**  -  Reactive/preemptive lateral dodge bypassing global cooldown
+*   **Multi Slash Short**  -  1-2 hit quick strikes (3 random variations per weapon)
+*   **Multi Slash Medium**  -  2-4 hit combos (2 variations per weapon)
+*   **Multi Slash Long**  -  4-6 hit full combos (1 variation per weapon)
+*   **Enrage**  -  Berserk fist-fighting mode ending in exhaustion death (Outlanders/Goblins/Trorks only)
+*   **Volley**  -  Ranged projectile burst for bow/crossbow/gun wielders
 
-Each ability is linked to specific mob rules with per-tier enablement toggles and weapon category restrictions  -  for example, staff-wielding mobs cannot use Charge Leap. By default, most mob categories have abilities enabled for Tier 4 and 5.
-
-More abilities and new AI behaviours are actively in development, including conditional combos, environmental awareness, and tier-exclusive mechanics that will make each encounter feel distinct.
+Abilities are linked to specific mob rules with per-tier ON/OFF toggles and weapon category gates. A global ability cooldown (1-3s) prevents chaining, while reactive abilities (Dodge Roll, Parry) bypass it for instant response.
 
 <div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/description/1444529/description_158dce7c-1520-4c2a-a6c0-2053fdce20a8.png" alt="Tiers"></p></div>
 
@@ -72,10 +84,10 @@ More abilities and new AI behaviours are actively in development, including cond
 RPGMobs uses an overlay system with per-world files in `worlds/` and per-instance-template files in `instances/`. Each overlay can override spawning, stats, loot, abilities, visuals, and elite behavior independently.
 
 *   Per-world and per-instance-template overrides via the overlay system
-*   Per-world mob rules and loot templates with category tree organization
+*   Global mob rules with per-world enable/disable via the Admin UI
 *   Tier overrides and loot overrides for fine-grained per-mob control
 *   Instance worlds (`instance-{Template}-{UUID}`) are automatically matched by template name (case-insensitive)
-*   Two built-in presets (Full and Empty) plus custom preset save/restore
+*   Three built-in presets (Full, Minimal, Dungeon) plus custom preset save/restore
 *   Manage overlays visually through the Admin UI or edit YAML files directly
 
 ## Progression
@@ -90,19 +102,33 @@ There are 3 progression styles currently:
 
 <span style="color:#2dc26b"><strong>Almost everything is configurable!</strong></span> The recommended way to configure RPGMobs is through the in-game Admin UI using `/rpgmobs config`.
 
-*   **9 sub-tabs** per world/instance: General, Mob Rules, Stats, Loot, Spawning, Entity Effects, Abilities, Visuals, Overrides
-*   **Sidebar navigation** with sections for Global Core, Global Debug, Per-World overlays, and Per-Instance overlays
+*   **8 sub-tabs** per world/instance: General, Mob Rules, Stats, Loot, Spawning, Entity Effects, Abilities, Visuals
+*   **Sidebar navigation** with global sections for Core, Debug, Mob Rules, Combat AI, and Equipment, plus Per-World and Per-Instance overlays
 *   **Tree explorers** for mob rules, loot templates, abilities, and entity effects with search filtering
 *   **NPC picker** and **Item picker** popups for adding mob rules and loot drops
-*   **Global Config** tabs for managing weapon categories, armor categories, rarity rules, and tier equipment quality
+*   **Combat AI tab** with combat styles, tier behavior, and weapon combat editors
+*   **Asset picker popup** with sound preview for configuring weapon attack chains
+*   **Equipment tab** for managing weapon categories, armor categories, rarity rules, and tier equipment quality
 *   **Save & Discard** with unsaved change indicators across all tabs
 
 <!-- TODO: Replace with actual UI-General screenshot URL -->
 <div class="spoiler"><p><img src="PLACEHOLDER_UI_GENERAL" alt="Admin UI General"></p></div>
 
+<!-- TODO: Replace with Global Mob Rules screenshot URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_UI_MOB_RULES_GLOBAL" alt="Global Mob Rules"></p></div>
+
+<!-- TODO: Replace with Per-World Mob Rules screenshot URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_UI_MOB_RULES_PERWORLD" alt="Per-World Mob Rules"></p></div>
+
+<!-- TODO: Replace with Combat AI - Weapon Combat screenshot URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_UI_COMBAT_AI_WEAPONS" alt="Combat AI - Weapon Combat"></p></div>
+
+<!-- TODO: Replace with Asset Picker popup screenshot URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_UI_ASSET_PICKER" alt="Asset Picker with Sound Preview"></p></div>
+
 ### Editing via Config Files
 
-Optionally, you can also configure RPGMobs by editing the YAML files directly. RPGMobs generates 9 base YAML files plus per-world and per-instance overlay files under:
+Optionally, you can also configure RPGMobs by editing the YAML files directly. RPGMobs generates 10 base YAML files plus per-world and per-instance overlay files under:
 
 ```
 %APPDATA%\Hytale\UserData\Saves\(your save name)\mods\RPGMobs
@@ -110,7 +136,7 @@ Optionally, you can also configure RPGMobs by editing the YAML files directly. R
 
 <div class="spoiler"><p><img src="https://media.forgecdn.net/attachments/description/1444529/description_7ec2c5a1-5926-4ed7-8e44-f96ad5861c85.png" alt="Config Directory"></p></div>
 
-*   Layered config: `base/` (9 YAML files) + `worlds/` (per-world overlays) + `instances/` (per-instance overlays)
+*   Layered config: `base/` (10 YAML files) + `worlds/` (per-world overlays) + `instances/` (per-instance overlays)
 *   Live reload via `/rpgmobs reload` with automatic reconciliation of existing elites
 *   Every feature is independently toggleable
 *   Config format version migration  -  automatically regenerates config when the architecture changes, preserves custom changes on regular updates
@@ -145,7 +171,7 @@ Instead, use `/npc clean --confirm` and repeat until all remaining elite NPCs ar
 
 RPGMobs (should) work alongside other Hytale mods. Nameplate rendering is handled by [NameplateBuilder](https://www.curseforge.com/hytale/mods/nameplatebuilder).
 
-Custom weapons and armor from other mods can be added to the appropriate weapon or armor categories in `gear.yml` (or use the Admin UI under Global Config to manage categories visually).
+Custom weapons and armor from other mods can be added to the appropriate weapon or armor categories in `gear.yml` (or use the Admin UI under the Equipment tab to manage categories visually).
 
 ✅ **Strongly recommended to play alongside:**
 
@@ -171,7 +197,7 @@ Solo developer project  -  this mod is developed and maintained by one person (m
 
 <span style="color:#843fa1"><strong>Which Hytale version is supported?</strong></span>
 
-<span style="color:#2dc26b"><em>Hytale <strong>Update 3</strong>.</em></span>
+<span style="color:#2dc26b"><em>Hytale <strong>Update 4</strong>.</em></span>
 
 <span style="color:#843fa1"><strong>Does this work on existing worlds?</strong></span>
 
@@ -199,8 +225,8 @@ Solo developer project  -  this mod is developed and maintained by one person (m
 
 RPGMobs ships a separate `rpgmobs-api` artifact for mod developers. Add it as a compile-time dependency to listen to events, query RPG mob state, or modify loot and damage at runtime.
 
-*   Event-driven API with 12 event types (spawn, death, damage, abilities, aggro, loot)
-*   Read-only Query API for inspecting any RPG mob's tier, scaling, combat state, and more
+*   Event-driven API with 12 event types (spawn, death, damage, abilities, aggro, scaling, reconcile, loot)
+*   Query API with combat state inspection (mob rule key, active ability, combat style)
 *   Cancellable events for spawn blocking, damage modification, and loot customization
 *   Lightweight API artifact  -  no dependency on the full plugin
 

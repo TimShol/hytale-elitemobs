@@ -9,6 +9,7 @@
     }
   ],
   "Website": "${website}",
+  "Icon": "icon.png",
   "ServerVersion": "${server_version}",
   "Dependencies": {
     "Frotty27:NameplateBuilder": "*"

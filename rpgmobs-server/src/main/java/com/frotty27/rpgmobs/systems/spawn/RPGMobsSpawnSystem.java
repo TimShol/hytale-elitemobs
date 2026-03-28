@@ -51,6 +51,7 @@ import com.hypixel.hytale.server.flock.FlockPlugin;
 import com.hypixel.hytale.server.flock.config.FlockAsset;
 import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import com.hypixel.hytale.server.npc.systems.RoleChangeSystem;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -197,15 +198,6 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
-        // Test variants bypass RPGMobs elite system - CAE handles combat, code handles parry
-        if (roleName.startsWith("RPGMobs_Test_T") || roleName.startsWith("RPGMobs_Parry")) {
-            plugin.getPlayerAttackTracker().registerGuardEntity(npcRef);
-            plugin.getPlayerAttackTracker().tickDelayedGuardRequests(plugin.getTickClock().getTick());
-            processParryRequest(npcRef, npcEntity, entityStore, commandBuffer);
-            logNpcScanSummaryIfDue(config);
-            return;
-        }
-
         mobsSeenCount++;
 
         String spawnWorldNameForMobRule = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
@@ -218,6 +210,11 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         MobRuleMatcher.MatchResult matchResult = mobRuleMatcher.findBestMatch(resolvedForMobRule.mobRules, roleName);
         if (matchResult == null) {
+            logNpcScanSummaryIfDue(config);
+            return;
+        }
+
+        if (resolvedForMobRule.disabledMobRuleKeys.contains(matchResult.key())) {
             logNpcScanSummaryIfDue(config);
             return;
         }
@@ -244,6 +241,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         RPGMobsTierComponent newTierComponent = new RPGMobsTierComponent();
         newTierComponent.tierIndex = tierIndex;
         newTierComponent.matchedRuleKey = matchedRuleKey;
+        newTierComponent.originalRoleName = roleName;
         newTierComponent.lastReconciledAt = plugin.getConfigReloadCount();
 
         equipmentService.buildAndApply(npcEntity, config, tierIndex, matchResult.mobRule(),
@@ -263,6 +261,8 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity);
         featureRegistry.applyAll(plugin, config, resolvedForMobRule, npcRef, entityStore, commandBuffer, newTierComponent, roleName);
+
+        requestCaeRoleChangeIfAvailable(npcRef, npcEntity, entityStore, tierIndex, matchResult.mobRule(), matchedRuleKey);
 
         if (config.debugConfig.isDebugModeEnabled) {
             RPGMobsLogger.debug(LOGGER,
@@ -557,9 +557,17 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
             return false;
         }
 
+        if (resolvedForMobRule.disabledMobRuleKeys.contains(matchResult.key())) {
+            RPGMobsLogger.debug(LOGGER,
+                                "Command spawn skipped  - mob rule disabled in world overlay: role=%s ruleKey=%s world=%s",
+                                RPGMobsLogLevel.INFO, roleName, matchResult.key(), String.valueOf(cmdWorldNameForMobRule));
+            return false;
+        }
+
         RPGMobsTierComponent newTierComponent = new RPGMobsTierComponent();
         newTierComponent.tierIndex = clampedTierIndex;
         newTierComponent.matchedRuleKey = matchResult.key();
+        newTierComponent.originalRoleName = roleName;
         newTierComponent.lastReconciledAt = plugin.getConfigReloadCount();
 
         equipmentService.buildAndApply(npcEntity, config, clampedTierIndex, matchResult.mobRule(),
@@ -571,6 +579,8 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity);
 
         featureRegistry.applyAll(plugin, config, resolvedForMobRule, npcRef, entityStore, commandBuffer, newTierComponent, roleName);
+
+        requestCaeRoleChangeIfAvailable(npcRef, npcEntity, entityStore, clampedTierIndex, matchResult.mobRule(), matchResult.key());
 
         TransformComponent spawnTransform = entityStore.getComponent(npcRef, TransformComponent.getComponentType());
         plugin.getEventBus().fire(new RPGMobsSpawnedEvent(npcEntity.getWorld(),
@@ -594,6 +604,32 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         }
 
         return true;
+    }
+
+    private void requestCaeRoleChangeIfAvailable(Ref<EntityStore> npcRef, NPCEntity npcEntity,
+                                                    Store<EntityStore> entityStore, int tierIndex,
+                                                    RPGMobsConfig.MobRule mobRule, String matchedRuleKey) {
+        var roleSelector = plugin.getRuntimeRoleSelector();
+        if (roleSelector == null || !roleSelector.isInitialized()) return;
+
+        int variantIdx = roleSelector.resolveVariantRoleIndex(
+                matchedRuleKey, tierIndex, npcRef, entityStore, mobRule, plugin);
+        if (variantIdx < 0) return;
+
+        RPGMobsTierComponent tier = entityStore.getComponent(npcRef, plugin.getRPGMobsComponentType());
+        if (tier != null) tier.pendingPostRoleChangeEquip = true;
+
+        RoleChangeSystem.requestRoleChange(
+                npcRef,
+                npcEntity.getRole(),
+                variantIdx,
+                false,
+                entityStore
+        );
+
+        RPGMobsLogger.debug(LOGGER,
+                            "CAE role change queued: ruleKey=%s -> variantIdx=%d tier=T%d",
+                            RPGMobsLogLevel.INFO, matchedRuleKey, variantIdx, tierIndex + 1);
     }
 
     private double @Nullable [] resolveSpawnChances(RPGMobsConfig config, NPCEntity npcEntity) {
@@ -786,10 +822,30 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         boolean tierComponentChanged = false;
 
-        String roleName = null;
         NPCEntity npcEntity = entityStore.getComponent(npcRef, Constants.NPC_COMPONENT_TYPE);
-        if (npcEntity != null) roleName = npcEntity.getRoleName();
+        String roleName = tierComponent.getEffectiveRoleName();
+        if ((roleName == null || roleName.isEmpty()) && npcEntity != null) {
+            roleName = npcEntity.getRoleName();
+        }
         decrementAbilityCooldowns(npcRef, entityStore, commandBuffer);
+
+        if (tierComponent.pendingPostRoleChangeEquip && npcEntity != null) {
+            String currentRole = npcEntity.getRoleName();
+            if (currentRole != null && currentRole.startsWith("RPGMobs_")) {
+                tierComponent.pendingPostRoleChangeEquip = false;
+                tierComponentChanged = true;
+                String effectiveRoleName = tierComponent.getEffectiveRoleName();
+                ResolvedConfig resolved = plugin.getResolvedConfig(
+                        npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null);
+                MobRuleMatcher.MatchResult match = mobRuleMatcher.findBestMatch(resolved.mobRules, effectiveRoleName);
+                if (match != null) {
+                    equipmentService.buildAndApply(npcEntity, config, tierComponent.tierIndex, match.mobRule(),
+                            resolved.droppedGearDurabilityMin, resolved.droppedGearDurabilityMax);
+                    featureRegistry.reconcileAll(plugin, config, resolved, npcRef, entityStore,
+                            commandBuffer, tierComponent, effectiveRoleName);
+                }
+            }
+        }
 
         tierComponentChanged |= tryHandlePendingSummon(config, npcRef, npcEntity, entityStore, commandBuffer);
 
@@ -802,6 +858,8 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                 plugin.getVolleyAbilityComponentType());
 
         long tick = plugin.getTickClock().getTick();
+
+        plugin.getPlayerAttackTracker().ensureRegistered(npcRef, entityStore, plugin);
 
         // Process parry requests (code-side reactive guard via CAE setCurrentInteraction)
         plugin.getPlayerAttackTracker().tickDelayedGuardRequests(tick);
@@ -845,6 +903,18 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                                         RPGMobsLogLevel.INFO,
                                         roleName,
                                         String.valueOf(tierComponent.matchedRuleKey),
+                                        tierComponent.tierIndex + 1
+                    );
+                    deElite(config, npcRef, entityStore, commandBuffer, tierComponent, npcEntity);
+                    return;
+                }
+
+                if (resolvedForReconcile.disabledMobRuleKeys.contains(newMatch.key())) {
+                    RPGMobsLogger.debug(LOGGER,
+                                        "[Reconcile] De-eliting NPC  - mob rule disabled in overlay: role=%s ruleKey=%s tier=T%d",
+                                        RPGMobsLogLevel.INFO,
+                                        roleName,
+                                        newMatch.key(),
                                         tierComponent.tierIndex + 1
                     );
                     deElite(config, npcRef, entityStore, commandBuffer, tierComponent, npcEntity);

@@ -47,12 +47,10 @@ class ConfigTemplateTest {
     }
 
     @Test
-    void emptyPresetHasEmptyMobRulesAndLoot() {
+    void emptyPresetHasEmptyDisabledMobRuleKeysAndLoot() {
         ConfigOverlay o = ConfigTemplate.get("empty").getOverlay();
-        assertNotNull(o.mobRules);
-        assertTrue(o.mobRules.isEmpty());
-        assertNotNull(o.mobRuleCategoryTree);
-        assertEquals("All", o.mobRuleCategoryTree.name);
+        assertNotNull(o.disabledMobRuleKeys);
+        assertTrue(o.disabledMobRuleKeys.isEmpty());
         assertNotNull(o.lootTemplates);
         assertTrue(o.lootTemplates.isEmpty());
         assertNotNull(o.lootTemplateCategoryTree);

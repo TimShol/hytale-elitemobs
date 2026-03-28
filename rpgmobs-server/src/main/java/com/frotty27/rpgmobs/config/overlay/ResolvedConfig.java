@@ -5,6 +5,7 @@ import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class ResolvedConfig {
 
@@ -68,6 +69,8 @@ public final class ResolvedConfig {
     public double minionXPMultiplier = 0.05;
 
     public Map<String, ConfigOverlay.TierOverride> tierOverrides = new LinkedHashMap<>();
+
+    public Set<String> disabledMobRuleKeys = Set.of();
 
     public Map<String, RPGMobsConfig.MobRule> mobRules = new LinkedHashMap<>();
     public RPGMobsConfig.MobRuleCategory mobRuleCategoryTree = new RPGMobsConfig.MobRuleCategory();

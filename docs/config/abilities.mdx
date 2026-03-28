@@ -3,7 +3,7 @@ title: Abilities
 description: Configuring the special combat abilities that elites can use.
 ---
 
-`abilities.yml` defines the 10 combat abilities that make elites more than just stat-boosted mobs. Each ability has its own activation rules, cooldowns, per-tier scaling, and personality filtering.
+`abilities.yml` defines the 9 combat abilities that make elites more than just stat-boosted mobs. Each ability has its own activation rules, cooldowns, and per-tier scaling.
 
 ## Common Fields
 
@@ -168,7 +168,7 @@ The summon system automatically builds per-faction summon pools from the mob rul
 
 ## Dodge Roll
 
-A reactive and preemptive defensive ability. On damage received (all tiers), the elite has a chance to dodge sideways with a brief invulnerability window. T4+ elites with combat intelligence can also dodge preemptively when they detect their target is attacking or charging.
+A reactive and preemptive defensive ability. When a nearby player starts attacking, the elite has a chance to dodge sideways with a brief invulnerability window. Charged attacks give a boosted dodge chance. Detected by `RPGMobsPlayerAttackDetectionSystem` which reads player attack interactions in a cone.
 
 ```yaml
 dodge_roll:
@@ -181,7 +181,7 @@ dodge_roll:
 
 | Setting | What it does |
 | :--- | :--- |
-| `dodgeChancePerTier` | Probability that the elite dodges when triggered. T4+ intelligence boosts this by 2.5x for preemptive dodges. |
+| `dodgeChancePerTier` | Probability that the elite dodges when triggered. Charged player attacks boost this chance. |
 | `dodgeForce` | Lateral dash velocity. Higher values mean faster, longer dodges. |
 | `invulnerabilityDurationPerTier` | Duration in seconds of the invulnerability window during the dodge. |
 
@@ -236,26 +236,9 @@ All three Multi Slash abilities support 8 weapon variants, each with unique anim
 | Clubs | 1-2 | 2 | 3 | Side bashes and overhead slam |
 | Spears | 1-2 | 3 | 5 | Stab and spin sweep finisher |
 
-## War Cry
-
-A staff-channeling AOE ability that buffs nearby allies and debuffs nearby enemies. The mob temporarily swaps to a configurable staff item during the cast. Available T3+ with Strategic and Berserker personalities.
-
-```yaml
-war_cry:
-  isEnabled: true
-  cooldownSecondsPerTier: [0, 0, 30, 25, 20]
-  warCryTriggerChancePerTier: [0, 0, 0.08, 0.12, 0.18]
-  npcStaffItemId: "Staff_Arcane"
-```
-
-| Setting | What it does |
-| :--- | :--- |
-| `warCryTriggerChancePerTier` | Probability of triggering per combat tick evaluation. |
-| `npcStaffItemId` | The staff item the mob holds during the channeling animation. Configurable in the Admin UI via the item picker. |
-
 ## Enrage
 
-A berserk transformation where the elite drops its weapon and enters a 20-second rapid punch chain. The mob cycles through 3 random variation patterns of light and heavy punches, then dies from exhaustion with normal loot and XP drops. Available T2+ with Aggressive, Tactical, Strategic, and Berserker personalities.
+A berserk transformation where the elite drops its weapon and enters a 20-second rapid punch chain. The mob cycles through 3 random variation patterns of light and heavy punches, then dies from exhaustion with normal loot and XP drops. Available T2+.
 
 ```yaml
 enrage:
@@ -276,7 +259,7 @@ enrage:
 
 ## Volley
 
-A ranged projectile burst for mobs wielding bows, crossbows, or guns. The mob aims upward briefly, then fires a spread of projectiles. Available T3+ with Aggressive and Tactical personalities.
+A ranged projectile burst for mobs wielding bows, crossbows, or guns. The mob aims upward briefly, then fires a spread of projectiles. Available T3+.
 
 ```yaml
 volley:
@@ -307,15 +290,8 @@ globalCooldownMinSeconds: 1.0
 globalCooldownMaxSeconds: 3.0
 ```
 
-## Personality-Based Ability Filtering
+## Ability Gating Summary
 
-T4+ elites are assigned a combat personality that determines which abilities they receive. This creates coherent ability sets instead of every mob having every ability:
+Abilities are no longer filtered by combat personality. Instead, each ability uses the linked mob rule system with per-entry per-tier toggles. This gives full control over which mobs can use which abilities at which tiers, configured through the Admin UI or the `abilityOverlays` in per-world overlays.
 
-| Personality | Abilities | Style |
-| :--- | :--- | :--- |
-| Aggressive | Charge Leap, Multi Slash, Enrage, Dodge Roll, Volley | Gap-closing and sustained damage |
-| Tactical | Charge Leap, Dodge Roll, Heal Leap, Volley, Multi Slash, Enrage | Balanced and adaptive |
-| Strategic | War Cry, Undead Summon, Heal Leap, Dodge Roll, Enrage | Support and area control |
-| Berserker | Multi Slash, Enrage, Charge Leap, Dodge Roll, War Cry | Relentless offense |
-
-T1-T3 elites (without personalities) receive a limited set based on tier: T1 gets Dodge Roll only, T2 adds Multi Slash, T3 adds Enrage.
+Abilities are evaluated in feature registration order  -  the first ability whose gate passes wins. A global cooldown (1-3 seconds, configurable) prevents immediate ability chaining after any ability completes.

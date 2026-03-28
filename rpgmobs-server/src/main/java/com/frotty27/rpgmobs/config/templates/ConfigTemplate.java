@@ -4,6 +4,7 @@ import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import com.frotty27.rpgmobs.config.overlay.ConfigOverlay;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -70,8 +71,7 @@ public final class ConfigTemplate {
         o.droppedGearDurabilityMin = 0.0;
         o.droppedGearDurabilityMax = 0.0;
 
-        o.mobRules = new LinkedHashMap<>();
-        o.mobRuleCategoryTree = new RPGMobsConfig.MobRuleCategory("All", List.of());
+        o.disabledMobRuleKeys = new LinkedHashSet<>();
 
         o.lootTemplates = new LinkedHashMap<>();
         o.lootTemplateCategoryTree = new RPGMobsConfig.LootTemplateCategory("All", List.of());

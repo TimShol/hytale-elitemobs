@@ -6,9 +6,7 @@
       "Type": "Simple",
       "$Comment": "Wind-up - crossbow reload animation. Player counter window.",
       "RunTime": 1.8,
-      "MovementEffects": {
-        "DisableAll": true
-      },
+      "HorizontalSpeedMultiplier": 0.0,
       "Effects": {
         "ItemPlayerAnimationsId": "Crossbow",
         "ItemAnimationId": "ReloadCharged",
@@ -27,9 +25,7 @@
       "Type": "Simple",
       "$Comment": "Reload ready - brief aim up",
       "RunTime": 0.3,
-      "MovementEffects": {
-        "DisableAll": true
-      },
+      "HorizontalSpeedMultiplier": 0.0,
       "Effects": {
         "ItemPlayerAnimationsId": "Crossbow",
         "ItemAnimationId": "ReloadReady",
@@ -150,9 +146,7 @@
       "Type": "Simple",
       "$Comment": "Recovery - weapon swap back happens in Java",
       "RunTime": 0.6,
-      "MovementEffects": {
-        "DisableAll": true
-      },
+      "HorizontalSpeedMultiplier": 0.0,
       "Effects": {
         "ClearAnimationOnFinish": true
       }

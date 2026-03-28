@@ -373,6 +373,43 @@ final class AdminUIData {
         builder = addString(builder, "@GlobalCdMax",
                 (d, v) -> d.globalCdMax = v, d -> d.globalCdMax);
 
+        builder = addString(builder, "@CaiFacAtkCdMin", (d, v) -> d.caiFacAtkCdMin = v, d -> d.caiFacAtkCdMin);
+        builder = addString(builder, "@CaiFacAtkCdMax", (d, v) -> d.caiFacAtkCdMax = v, d -> d.caiFacAtkCdMax);
+        builder = addString(builder, "@CaiFacShieldCharge", (d, v) -> d.caiFacShieldCharge = v, d -> d.caiFacShieldCharge);
+        builder = addString(builder, "@CaiFacShieldSwitch", (d, v) -> d.caiFacShieldSwitch = v, d -> d.caiFacShieldSwitch);
+        builder = addString(builder, "@CaiFacBoDistMin", (d, v) -> d.caiFacBoDistMin = v, d -> d.caiFacBoDistMin);
+        builder = addString(builder, "@CaiFacBoDistMax", (d, v) -> d.caiFacBoDistMax = v, d -> d.caiFacBoDistMax);
+        builder = addString(builder, "@CaiFacBoSwitch", (d, v) -> d.caiFacBoSwitch = v, d -> d.caiFacBoSwitch);
+        builder = addString(builder, "@CaiFacRetDistMin", (d, v) -> d.caiFacRetDistMin = v, d -> d.caiFacRetDistMin);
+        builder = addString(builder, "@CaiFacRetDistMax", (d, v) -> d.caiFacRetDistMax = v, d -> d.caiFacRetDistMax);
+        builder = addString(builder, "@CaiFacRetWeight", (d, v) -> d.caiFacRetWeight = v, d -> d.caiFacRetWeight);
+        builder = addString(builder, "@CaiFacReEngMin", (d, v) -> d.caiFacReEngMin = v, d -> d.caiFacReEngMin);
+        builder = addString(builder, "@CaiFacReEngMax", (d, v) -> d.caiFacReEngMax = v, d -> d.caiFacReEngMax);
+        builder = addString(builder, "@CaiFacReEngRandMin", (d, v) -> d.caiFacReEngRandMin = v, d -> d.caiFacReEngRandMin);
+        builder = addString(builder, "@CaiFacReEngRandMax", (d, v) -> d.caiFacReEngRandMax = v, d -> d.caiFacReEngRandMax);
+        builder = addString(builder, "@CaiFacStrafeCdMin", (d, v) -> d.caiFacStrafeCdMin = v, d -> d.caiFacStrafeCdMin);
+        builder = addString(builder, "@CaiFacStrafeCdMax", (d, v) -> d.caiFacStrafeCdMax = v, d -> d.caiFacStrafeCdMax);
+        builder = addString(builder, "@CaiFacGuardRandMin", (d, v) -> d.caiFacGuardRandMin = v, d -> d.caiFacGuardRandMin);
+        builder = addString(builder, "@CaiFacGuardRandMax", (d, v) -> d.caiFacGuardRandMax = v, d -> d.caiFacGuardRandMax);
+        builder = addString(builder, "@CaiFacBoRandMin", (d, v) -> d.caiFacBoRandMin = v, d -> d.caiFacBoRandMin);
+        builder = addString(builder, "@CaiFacBoRandMax", (d, v) -> d.caiFacBoRandMax = v, d -> d.caiFacBoRandMax);
+        builder = addString(builder, "@CaiFacRetCooldown", (d, v) -> d.caiFacRetCooldown = v, d -> d.caiFacRetCooldown);
+        builder = addString(builder, "@CaiFacReEngDistMin", (d, v) -> d.caiFacReEngDistMin = v, d -> d.caiFacReEngDistMin);
+        builder = addString(builder, "@CaiFacReEngDistMax", (d, v) -> d.caiFacReEngDistMax = v, d -> d.caiFacReEngDistMax);
+        builder = addString(builder, "@CaiFacObsDistMin", (d, v) -> d.caiFacObsDistMin = v, d -> d.caiFacObsDistMin);
+        builder = addString(builder, "@CaiFacObsDistMax", (d, v) -> d.caiFacObsDistMax = v, d -> d.caiFacObsDistMax);
+        builder = addString(builder, "@CaiFacFlankAngle", (d, v) -> d.caiFacFlankAngle = v, d -> d.caiFacFlankAngle);
+        builder = addString(builder, "@CaiTierCdMin", (d, v) -> d.caiTierCdMin = v, d -> d.caiTierCdMin);
+        builder = addString(builder, "@CaiTierCdMax", (d, v) -> d.caiTierCdMax = v, d -> d.caiTierCdMax);
+        builder = addString(builder, "@CaiTierStrCdMin", (d, v) -> d.caiTierStrCdMin = v, d -> d.caiTierStrCdMin);
+        builder = addString(builder, "@CaiTierStrCdMax", (d, v) -> d.caiTierStrCdMax = v, d -> d.caiTierStrCdMax);
+        builder = addString(builder, "@CaiTierShieldCharge", (d, v) -> d.caiTierShieldCharge = v, d -> d.caiTierShieldCharge);
+        builder = addString(builder, "@CaiTierGuardCd", (d, v) -> d.caiTierGuardCd = v, d -> d.caiTierGuardCd);
+        builder = addString(builder, "@CaiTierRetHealth", (d, v) -> d.caiTierRetHealth = v, d -> d.caiTierRetHealth);
+        builder = addString(builder, "@CaiWpnRange", (d, v) -> d.caiWpnRange = v, d -> d.caiWpnRange);
+        builder = addString(builder, "@CaiWpnSpeed", (d, v) -> d.caiWpnSpeed = v, d -> d.caiWpnSpeed);
+        builder = addString(builder, "@AssetPickerFilter", (d, v) -> d.assetPickerFilter = v, d -> d.assetPickerFilter);
+
         CODEC = builder.build();
     }
 
@@ -520,5 +557,24 @@ final class AdminUIData {
 
     String globalCdMin;
     String globalCdMax;
+
+    String caiFacAtkCdMin, caiFacAtkCdMax;
+    String caiFacShieldCharge, caiFacShieldSwitch;
+    String caiFacBoDistMin, caiFacBoDistMax, caiFacBoSwitch;
+    String caiFacRetDistMin, caiFacRetDistMax, caiFacRetWeight;
+    String caiFacReEngMin, caiFacReEngMax;
+    String caiFacReEngRandMin, caiFacReEngRandMax;
+    String caiFacStrafeCdMin, caiFacStrafeCdMax;
+    String caiFacGuardRandMin, caiFacGuardRandMax;
+    String caiFacBoRandMin, caiFacBoRandMax;
+    String caiFacRetCooldown;
+    String caiFacReEngDistMin, caiFacReEngDistMax;
+    String caiFacObsDistMin, caiFacObsDistMax;
+    String caiFacFlankAngle;
+    String caiTierCdMin, caiTierCdMax;
+    String caiTierStrCdMin, caiTierStrCdMax;
+    String caiTierShieldCharge, caiTierGuardCd, caiTierRetHealth;
+    String caiWpnRange, caiWpnSpeed;
+    String assetPickerFilter;
 
 }

@@ -13,7 +13,7 @@ Add the API JAR as a compile-only dependency in your `build.gradle`:
 
 ```groovy
 dependencies {
-    compileOnly files('libs/RPGMobs-API-1.1.0.jar')
+    compileOnly files('libs/RPGMobs-API-1.2.0.jar')
 }
 ```
 
@@ -21,7 +21,7 @@ Or if published to a Maven repository:
 
 ```groovy
 dependencies {
-    compileOnly 'Frotty27:RPGMobs-api:1.1.0'
+    compileOnly 'Frotty27:RPGMobs-api:1.2.0'
 }
 ```
 
@@ -109,8 +109,8 @@ RPGMobsAPI.registerListener(new MyEliteListener());
 | `RPGMobsAbilityInterruptedEvent` | Ability was interrupted     | No          | `getReason()`                 |
 | `RPGMobsAggroEvent`              | Elite targets an entity     | No          | `getTargetRef()`              |
 | `RPGMobsDeaggroEvent`            | Elite loses its target      | No          |  -                              |
-| `RPGMobsScalingAppliedEvent`     | Scaling parameters computed | No          | All fields (read-only record) |
-| `RPGMobsReconcileEvent`          | Config reconciliation pass  | No          |  -                              |
+| `RPGMobsScalingAppliedEvent`     | Scaling parameters computed | No          | `getHealthMultiplier()`, `getDamageMultiplier()`, `getModelScale()` |
+| `RPGMobsReconcileEvent`          | Config reconciliation pass  | No          | `getWorldName()`, `getEntityCount()` |
 
 ### Base Event Fields
 
@@ -260,6 +260,24 @@ query.getSummonedMinionCount(entityRef).ifPresent(count -> {
 });
 ```
 
+#### Inspect combat state *(since 1.2.0)*
+
+```java
+IRPGMobsQueryAPI query = RPGMobsAPI.query();
+
+// Which mob rule matched this elite
+String ruleKey = query.getMatchedMobRuleKey(entityRef, store);
+// e.g. "Skeleton_Fighter", "Trork_Warrior"
+
+// Currently executing ability (null if idle)
+String abilityId = query.getActiveAbilityId(entityRef, store);
+// e.g. "multi_slash_medium", "charge_leap", null
+
+// Combat style driving the CAE behavior
+String style = query.getCombatStyle(entityRef, store);
+// e.g. "Disciplined", "Berserker", "Tactical", "Chaotic"
+```
+
 #### Filter minion deaths
 
 ```java
@@ -289,7 +307,6 @@ Abilities are identified by string IDs passed in ability events (`RPGMobsAbility
 | `"multi_slash_short"` | 1-2 hit quick strikes (3 random variations per weapon type)    |
 | `"multi_slash_medium"`| 2-4 hit combos (2 random variations per weapon type)           |
 | `"multi_slash_long"`  | 4-6 hit full combos (1 variation per weapon type)              |
-| `"war_cry"`           | Staff-channeling AOE buff/debuff with heal aura and dark orbs  |
 | `"enrage"`            | Berserk fist-fighting mode ending in exhaustion death           |
 | `"volley"`            | Ranged projectile burst for bow/crossbow/gun wielders          |
 

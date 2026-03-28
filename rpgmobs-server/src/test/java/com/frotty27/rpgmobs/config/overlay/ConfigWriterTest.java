@@ -7,10 +7,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -92,46 +89,17 @@ class ConfigWriterTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void overlayToMapSerializesMobRules() {
+    void overlayToMapSerializesDisabledMobRuleKeys() {
         var overlay = new ConfigOverlay();
-        overlay.mobRules = new LinkedHashMap<>();
-        var rule = new RPGMobsConfig.MobRule();
-        rule.enabled = true;
-        rule.matchExact = new ArrayList<>(List.of("zombie"));
-        overlay.mobRules.put("zombie", rule);
+        overlay.disabledMobRuleKeys = new LinkedHashSet<>(List.of("zombie_scout", "skeleton_warrior"));
 
         Map<String, Object> map = ConfigWriter.overlayToMap(overlay);
 
-        assertTrue(map.containsKey("mobRules"));
-        Map<String, Object> rulesMap = (Map<String, Object>) map.get("mobRules");
-        assertTrue(rulesMap.containsKey("zombie"));
-        Map<String, Object> zombieRule = (Map<String, Object>) rulesMap.get("zombie");
-        assertEquals(true, zombieRule.get("enabled"));
-        List<String> matchExact = (List<String>) zombieRule.get("matchExact");
-        assertEquals(1, matchExact.size());
-        assertEquals("zombie", matchExact.get(0));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void overlayToMapSerializesMobRuleCategoryTree() {
-        var overlay = new ConfigOverlay();
-        var child = new RPGMobsConfig.MobRuleCategory("Undead", List.of("zombie", "skeleton"));
-        var root = new RPGMobsConfig.MobRuleCategory("All", List.of(), child);
-        overlay.mobRuleCategoryTree = root;
-
-        Map<String, Object> map = ConfigWriter.overlayToMap(overlay);
-
-        assertTrue(map.containsKey("mobRuleCategoryTree"));
-        Map<String, Object> treeMap = (Map<String, Object>) map.get("mobRuleCategoryTree");
-        assertEquals("All", treeMap.get("name"));
-        List<Map<String, Object>> children = (List<Map<String, Object>>) treeMap.get("children");
-        assertEquals(1, children.size());
-        assertEquals("Undead", children.get(0).get("name"));
-        List<String> childKeys = (List<String>) children.get(0).get("mobRuleKeys");
-        assertEquals(2, childKeys.size());
-        assertEquals("zombie", childKeys.get(0));
-        assertEquals("skeleton", childKeys.get(1));
+        assertTrue(map.containsKey("disabledMobRuleKeys"));
+        List<String> keys = (List<String>) map.get("disabledMobRuleKeys");
+        assertEquals(2, keys.size());
+        assertTrue(keys.contains("zombie_scout"));
+        assertTrue(keys.contains("skeleton_warrior"));
     }
 
     @Test

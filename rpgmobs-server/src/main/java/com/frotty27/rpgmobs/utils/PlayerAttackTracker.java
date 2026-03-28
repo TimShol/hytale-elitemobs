@@ -109,6 +109,22 @@ public class PlayerAttackTracker {
         registeredGuardEntities.remove(entityRef);
     }
 
+    public void ensureRegistered(Ref<EntityStore> entityRef, Store<EntityStore> entityStore, RPGMobsPlugin plugin) {
+        DodgeRollAbilityComponent dodge = entityStore.getComponent(entityRef, plugin.getDodgeRollAbilityComponentType());
+        if (dodge != null && dodge.abilityEnabled) {
+            registeredEntities.add(entityRef);
+        }
+        RPGMobsAbilityLockComponent lock = entityStore.getComponent(entityRef, plugin.getAbilityLockComponentType());
+        if (lock != null) {
+            registeredGuardEntities.add(entityRef);
+        }
+    }
+
+    public void pruneInvalidRefs() {
+        registeredEntities.removeIf(ref -> !ref.isValid());
+        registeredGuardEntities.removeIf(ref -> !ref.isValid());
+    }
+
     // Per-weapon parry delay in ticks (based on player weapon wind-up time)
     // Reduced from raw wind-up to activate parry EARLIER so the block is clearly visible
     // before the hit lands. The NPC raises guard, THEN the hit connects into the guard.
@@ -279,34 +295,32 @@ public class PlayerAttackTracker {
             guardChance *= 0.5;
         }
 
-        long entityKey = stableEntityKey;
-
         // Debounce: skip if we already evaluated guard for this entity recently
         // (one player swing generates 3-5 detection events from chain operation changes)
         long currentTick = plugin.getTickClock().getTick();
-        Long lastEval = lastGuardEvalTick.get(entityKey);
+        Long lastEval = lastGuardEvalTick.get(stableEntityKey);
         if (lastEval != null && (currentTick - lastEval) < GUARD_EVAL_DEBOUNCE_TICKS) return;
-        lastGuardEvalTick.put(entityKey, currentTick);
+        lastGuardEvalTick.put(stableEntityKey, currentTick);
 
         // Check guard cooldown (after guard break or parry rest)
-        GuardState state = guardStates.get(entityKey);
+        GuardState state = guardStates.get(stableEntityKey);
         if (state != null && state.onCooldown) return;
 
         // Already guarding - don't restart
         if (state != null && state.isGuarding) return;
 
         // Already has a delayed guard pending - don't duplicate
-        if (delayedGuardRequests.containsKey(entityKey)) return;
+        if (delayedGuardRequests.containsKey(stableEntityKey)) return;
 
         // Already has a pending guard request waiting to be processed
-        if (pendingGuardRequests.containsKey(entityKey)) return;
+        if (pendingGuardRequests.containsKey(stableEntityKey)) return;
 
         // Random chance roll
         if (Math.random() >= guardChance) return;
 
         // Queue guard request immediately - setCurrentInteraction on CAE handles timing
         // The CAE's ChargeFor controls guard duration, not our delay system
-        pendingGuardRequests.put(entityKey, entityRef);
+        pendingGuardRequests.put(stableEntityKey, entityRef);
 
         RPGMobsLogger.debug(LOGGER, "Guard scheduled for tier=%d charged=%b chance=%.2f delay=%d ticks",
                 RPGMobsLogLevel.INFO, tierIndex + 1, isCharged, guardChance, parryDelayTicks);
@@ -351,14 +365,6 @@ public class PlayerAttackTracker {
         return state != null && state.onCooldown;
     }
 
-    public void markGuardStarted(long entityKey) {
-        guardStates.put(entityKey, new GuardState(true, false));
-    }
-
-    public void markGuardBroken(long entityKey) {
-        guardStates.put(entityKey, new GuardState(false, true));
-    }
-
     private static final int PARRY_REST_COOLDOWN_TICKS = 5; // ~0.17s between parries (minimal gap)
 
     public void markGuardEnded(long entityKey) {
@@ -377,10 +383,6 @@ public class PlayerAttackTracker {
             }
             return false;
         });
-    }
-
-    public void cleanup(long entityKey) {
-        guardStates.remove(entityKey);
     }
 
     private static final int PARRY_DURATION_TICKS = 25; // ~0.83 seconds - long enough to visually see the guard

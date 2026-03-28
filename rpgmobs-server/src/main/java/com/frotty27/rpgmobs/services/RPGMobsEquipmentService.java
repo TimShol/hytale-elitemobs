@@ -70,7 +70,7 @@ public final class RPGMobsEquipmentService {
             } catch (Throwable ignored) {}
         }
 
-        if (changed) inventory.markChanged();
+        if (changed) npcEntity.invalidateEquipmentNetwork();
     }
 
     public void buildAndApply(NPCEntity npcEntity, RPGMobsConfig config, int tierIndex,
@@ -89,10 +89,7 @@ public final class RPGMobsEquipmentService {
         int clampedTierIndex = clampTierIndex(tierIndex);
 
         Inventory inventory = npcEntity.getInventory();
-        if (inventory == null) {
-            inventory = new Inventory();
-            npcEntity.setInventory(inventory);
-        }
+        if (inventory == null) return;
 
         boolean inventoryChanged = false;
 
@@ -103,16 +100,16 @@ public final class RPGMobsEquipmentService {
                 ? maybePickWeaponFromCategory(inventory, config, clampedTierIndex, weaponCategoryOverride)
                 : maybePickWeapon(inventory, config, clampedTierIndex, mobRule);
         if (chosenWeapon != null) {
-            setInHand(inventory, chosenWeapon);
+            setInHand(npcEntity, inventory, chosenWeapon);
             inventoryChanged = true;
         }
 
         inventoryChanged |= applyInHandDurability(inventory, activeDurabilityMin, activeDurabilityMax);
 
-        ItemStack chosenShield = maybeEquipUtilityShield(inventory, config, clampedTierIndex);
+        ItemStack chosenShield = maybeEquipUtilityShield(npcEntity, inventory, config, clampedTierIndex);
         if (chosenShield != null) inventoryChanged = true;
 
-        if (inventoryChanged) inventory.markChanged();
+        if (inventoryChanged) npcEntity.invalidateEquipmentNetwork();
     }
 
     private boolean clearDisallowedArmor(ItemContainer armorContainer, List<String> allowedArmorSlots) {
@@ -311,16 +308,18 @@ public final class RPGMobsEquipmentService {
         return itemStack.withDurability(maxDurability * durabilityFraction);
     }
 
-    private void setInHand(Inventory inventory, ItemStack itemStack) {
+    private void setInHand(NPCEntity npcEntity, Inventory inventory, ItemStack itemStack) {
         byte activeHotbarSlot = inventory.getActiveHotbarSlot();
         if (activeHotbarSlot == Inventory.INACTIVE_SLOT_INDEX) {
             activeHotbarSlot = 0;
-            inventory.setActiveHotbarSlot(activeHotbarSlot);
+            var ref = npcEntity.getReference();
+            var store = npcEntity.getWorld().getEntityStore().getStore();
+            inventory.setActiveHotbarSlot(ref, activeHotbarSlot, store);
         }
         inventory.getHotbar().setItemStackForSlot(activeHotbarSlot, itemStack);
     }
 
-    private ItemStack maybeEquipUtilityShield(Inventory inventory, RPGMobsConfig config, int tierIndex) {
+    private ItemStack maybeEquipUtilityShield(NPCEntity npcEntity, Inventory inventory, RPGMobsConfig config, int tierIndex) {
 
         if (config.gearConfig.shieldUtilityChancePerTier == null || config.gearConfig.shieldUtilityChancePerTier.length < TIERS_AMOUNT) {
             return null;
@@ -342,7 +341,9 @@ public final class RPGMobsEquipmentService {
             itemInHand = inventory.getHotbar().getItemStack((short) 0);
             if (itemInHand == null || itemInHand.isEmpty()) return null;
 
-            inventory.setActiveHotbarSlot((byte) 0);
+            var ref = npcEntity.getReference();
+            var store = npcEntity.getWorld().getEntityStore().getStore();
+            inventory.setActiveHotbarSlot(ref, (byte) 0, store);
         }
 
         String weaponItemId = itemInHand.getItemId();
@@ -372,7 +373,9 @@ public final class RPGMobsEquipmentService {
         try {
             utilityContainer.setItemStackForSlot(utilitySlot, shield);
 
-            inventory.setActiveUtilitySlot((byte) utilitySlot);
+            var ref = npcEntity.getReference();
+            var store = npcEntity.getWorld().getEntityStore().getStore();
+            inventory.setActiveUtilitySlot(ref, (byte) utilitySlot, store);
         } catch (Throwable ignored) {
             return null;
         }

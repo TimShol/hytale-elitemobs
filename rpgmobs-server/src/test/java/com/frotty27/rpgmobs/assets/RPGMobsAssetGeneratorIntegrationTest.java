@@ -21,7 +21,7 @@ public class RPGMobsAssetGeneratorIntegrationTest {
 
         new RPGMobsFeatureRegistry(null);
 
-        RPGMobsAssetGenerator.generateAll(tempDir, cfg, true);
+        RPGMobsAssetGenerator.generateAll(tempDir, cfg);
 
         Path outputRoot = tempDir.resolve("Server");
         Path t1 = outputRoot.resolve("Entity/Effects/RPGMobs/RPGMobs_Effect_ProjectileResistance_Tier_1.json");

@@ -172,8 +172,12 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
             if (hv != null) finalHealth = hv.getMax();
         }
 
-        plugin.getEventBus().fire(new RPGMobsScalingAppliedEvent(npcRef,
-                                                                 tierIndex,
+        NPCEntity npcEntity = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
+        com.hypixel.hytale.server.core.universe.world.World world = npcEntity != null ? npcEntity.getWorld() : null;
+        String roleName = tierComponent.getEffectiveRoleName();
+
+        plugin.getEventBus().fire(new RPGMobsScalingAppliedEvent(world, npcRef,
+                                                                 tierIndex, roleName,
                                                                  tierHealthMult,
                                                                  damageMultiplier,
                                                                  modelScale,

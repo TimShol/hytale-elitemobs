@@ -2,6 +2,20 @@
 
 All notable changes to RPGMobs API will be documented in this file.
 
+## [1.2.0] - 2026-03-28
+
+### Added
+
+- `IRPGMobsQueryAPI.getMatchedMobRuleKey(Ref, Store)`  -  returns the mob rule key that matched this elite
+- `IRPGMobsQueryAPI.getActiveAbilityId(Ref, Store)`  -  returns the currently executing ability ID, or null if idle
+- `IRPGMobsQueryAPI.getCombatStyle(Ref, Store)`  -  returns the combat style name (Disciplined, Berserker, Tactical, Chaotic)
+- `RPGMobsReconcileEvent` now carries `worldName` and `entityCount` fields
+
+### Changed
+
+- `RPGMobsScalingAppliedEvent` converted from a record to a proper class extending `RPGMobsEvent`  -  now includes `World`, `entityRef`, `tierIndex`, and `roleName` consistent with all other events
+- Removed stale `war_cry` reference from `RPGMobsAbilityStartedEvent` Javadoc
+
 ## [1.1.0] - 2026-03-16
 
 ### Added

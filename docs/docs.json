@@ -33,7 +33,8 @@
           "ui/entity-effects",
           "ui/abilities",
           "ui/visuals",
-          "ui/global-config"
+          "ui/combat-ai",
+          "ui/equipment"
         ]
       },
       {
@@ -48,6 +49,7 @@
           "config/abilities",
           "config/mobs",
           "config/effects",
+          "config/combat",
           "config/instances"
         ]
       },

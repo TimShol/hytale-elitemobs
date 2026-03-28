@@ -4,8 +4,8 @@ import com.frotty27.rpgmobs.assets.AssetConfig;
 import com.frotty27.rpgmobs.assets.AssetType;
 import com.frotty27.rpgmobs.assets.TieredAssetConfig;
 import com.frotty27.rpgmobs.config.schema.*;
-import com.frotty27.rpgmobs.features.AbstractMultiSlashFeature;
 import com.frotty27.rpgmobs.systems.ability.AbilityIds;
+import com.frotty27.rpgmobs.utils.Constants;
 import com.frotty27.rpgmobs.utils.MobRuleCategoryHelpers;
 import com.google.gson.Gson;
 
@@ -52,6 +52,7 @@ public final class RPGMobsConfig {
     public final AssetGeneratorConfig assetGenerator = new AssetGeneratorConfig();
     public final AbilitiesConfig abilitiesConfig = new AbilitiesConfig();
     public final EffectsConfig effectsConfig = new EffectsConfig();
+    public final CombatAIConfig combatAIConfig = new CombatAIConfig();
     public final IntegrationsConfig integrationsConfig = new IntegrationsConfig();
     public final DebugConfig debugConfig = new DebugConfig();
 
@@ -683,6 +684,7 @@ public final class RPGMobsConfig {
         prefixToCategory.put("Weapon_Kunai", "Other");
         prefixToCategory.put("Weapon_Gun_", "Guns");
         prefixToCategory.put("Weapon_Spellbook_", "Spellbooks");
+        prefixToCategory.put("Halloween_Broomstick", "Staves");
         prefixToCategory.put("Halloween_", "Other");
 
         for (String weaponId : catalog) {
@@ -694,7 +696,7 @@ public final class RPGMobsConfig {
                 }
             }
             if (assigned == null) assigned = "Other";
-            buckets.computeIfAbsent(assigned, k -> new ArrayList<>()).add(weaponId);
+            buckets.computeIfAbsent(assigned, _ -> new ArrayList<>()).add(weaponId);
         }
 
         List<GearCategory> children = new ArrayList<>();
@@ -756,7 +758,7 @@ public final class RPGMobsConfig {
         @Default
         @FixedArraySize(TIERS_AMOUNT)
         @Cfg(group = "Loot", file = "loot.yml", comment = "Extra rolls of the mob's vanilla drop table per tier. 0 = no extra drops.")
-        public int[] vanillaDroplistExtraRollsPerTier = {0, 0, 1, 2, 3};
+        public int[] vanillaDroplistExtraRollsPerTier = {0, 0, 1, 1, 2};
 
         @Min(0.0)
         @Max(1.0)
@@ -818,75 +820,75 @@ public final class RPGMobsConfig {
 
     private static List<ExtraDropRule> tier3DropRules() {
         List<ExtraDropRule> list = new ArrayList<>();
-        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 2, 2, 3, 7));
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 2, 2, 2, 4));
         list.add(createExtraDropRule("Ore_Copper", 0.1, 2, 2, 1, 2));
-        list.add(createExtraDropRule("Ingredient_Bar_Copper", 0.07, 2, 2, 1, 4));
-        list.add(createExtraDropRule("Ore_Iron", 0.1, 2, 2, 1, 4));
-        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 2, 2, 1, 3));
-        list.add(createExtraDropRule("Ore_Silver", 0.07, 2, 2, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 2, 2, 1, 2));
-        list.add(createExtraDropRule("Ore_Gold", 0.07, 2, 2, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 2, 2, 1, 2));
-        list.add(createExtraDropRule("Ingredient_Bar_Bronze", 0.05, 2, 2, 1, 2));
-        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.1, 2, 2, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.13, 2, 2, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Copper", 0.07, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ore_Iron", 0.1, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ore_Silver", 0.07, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 2, 2, 1, 1));
+        list.add(createExtraDropRule("Ore_Gold", 0.07, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 2, 2, 1, 1));
+        list.add(createExtraDropRule("Ingredient_Bar_Bronze", 0.05, 2, 2, 1, 1));
+        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.1, 2, 2, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.13, 2, 2, 1, 2));
         return list;
     }
 
     private static List<ExtraDropRule> tier4DropRules() {
         List<ExtraDropRule> list = new ArrayList<>();
-        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 3, 3, 11, 21));
-        list.add(createExtraDropRule("Ore_Iron", 0.1, 3, 3, 1, 4));
-        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 3, 3, 1, 3));
-        list.add(createExtraDropRule("Ore_Silver", 0.07, 3, 3, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 3, 3, 1, 2));
-        list.add(createExtraDropRule("Ore_Gold", 0.07, 3, 3, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 3, 3, 1, 2));
-        list.add(createExtraDropRule("Ore_Cobalt", 0.07, 3, 3, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Cobalt", 0.05, 3, 3, 1, 2));
-        list.add(createExtraDropRule("Ingredient_Bar_Bronze", 0.05, 3, 3, 1, 2));
-        list.add(createExtraDropRule("Ore_Thorium", 0.07, 3, 3, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Thorium", 0.05, 3, 3, 1, 2));
-        list.add(createExtraDropRule("Ore_Prisma", 0.07, 3, 3, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Prisma", 0.05, 3, 3, 1, 2));
-        list.add(createExtraDropRule("Ore_Adamantite", 0.15, 3, 3, 1, 5));
-        list.add(createExtraDropRule("Ingredient_Bar_Adamantite", 0.1, 3, 3, 1, 5));
-        list.add(createExtraDropRule("Ingredient_Leather_Heavy", 0.09, 3, 3, 2, 5));
-        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.11, 3, 3, 2, 5));
-        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.15, 3, 3, 2, 5));
-        list.add(createExtraDropRule("Rock_Gem_Ruby", 0.03, 3, 3, 1, 1));
-        list.add(createExtraDropRule("Rock_Gem_Sapphire", 0.03, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 3, 3, 6, 11));
+        list.add(createExtraDropRule("Ore_Iron", 0.1, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Iron", 0.07, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ore_Silver", 0.07, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Ore_Gold", 0.07, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Ore_Cobalt", 0.07, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Cobalt", 0.05, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Ingredient_Bar_Bronze", 0.05, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Ore_Thorium", 0.07, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Thorium", 0.05, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Ore_Prisma", 0.07, 3, 3, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Prisma", 0.05, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Ore_Adamantite", 0.15, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Adamantite", 0.1, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Leather_Heavy", 0.09, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.11, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.15, 3, 3, 1, 3));
+        list.add(createExtraDropRule("Rock_Gem_Ruby", 0.02, 3, 3, 1, 1));
+        list.add(createExtraDropRule("Rock_Gem_Sapphire", 0.02, 3, 3, 1, 1));
         return list;
     }
 
     private static List<ExtraDropRule> tier5DropRules() {
         List<ExtraDropRule> list = new ArrayList<>();
-        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 4, 4, 11, 21));
-        list.add(createExtraDropRule("Ore_Silver", 0.07, 4, 4, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 4, 4, 1, 2));
-        list.add(createExtraDropRule("Ore_Gold", 0.07, 4, 4, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 4, 4, 1, 2));
-        list.add(createExtraDropRule("Ore_Prisma", 0.07, 4, 4, 1, 3));
-        list.add(createExtraDropRule("Ingredient_Bar_Prisma", 0.05, 4, 4, 1, 2));
-        list.add(createExtraDropRule("Ore_Adamantite", 0.15, 4, 4, 1, 5));
-        list.add(createExtraDropRule("Ingredient_Bar_Adamantite", 0.1, 4, 4, 1, 5));
-        list.add(createExtraDropRule("Ore_Mithril", 0.15, 4, 4, 1, 5));
-        list.add(createExtraDropRule("Ingredient_Bar_Mithril", 0.1, 4, 4, 1, 5));
-        list.add(createExtraDropRule("Ore_Onyxium", 0.15, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Ingredient_Bar_Onyxium", 0.1, 4, 4, 1, 5));
-        list.add(createExtraDropRule("Ingredient_Leather_Heavy", 0.3, 4, 4, 3, 7));
-        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.4, 4, 4, 3, 7));
-        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.5, 4, 4, 3, 7));
-        list.add(createExtraDropRule("Tool_Repair_Kit_Iron", 0.3, 4, 4, 1, 3));
-        list.add(createExtraDropRule("Potion_Mana", 0.07, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Potion_Regen_Health", 0.07, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Potion_Health_Greater", 0.2, 4, 4, 1, 3));
-        list.add(createExtraDropRule("Potion_Stamina_Greater", 0.2, 4, 4, 1, 3));
-        list.add(createExtraDropRule("Potion_Mana_Large", 0.1, 4, 4, 1, 2));
-        list.add(createExtraDropRule("Potion_Regen_Health_Large", 0.1, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Potion_Regen_Stamina_Large", 0.1, 4, 4, 1, 1));
-        list.add(createExtraDropRule("Potion_Health_Large", 0.1, 4, 4, 1, 2));
-        list.add(createExtraDropRule("Potion_Stamina_Large", 0.1, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Life_Essence", 1, 4, 4, 6, 11));
+        list.add(createExtraDropRule("Ore_Silver", 0.07, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Silver", 0.05, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Ore_Gold", 0.07, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Gold", 0.05, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Ore_Prisma", 0.07, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Ingredient_Bar_Prisma", 0.05, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Ore_Adamantite", 0.15, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Adamantite", 0.1, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Ore_Mithril", 0.15, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Bar_Mithril", 0.1, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Ore_Onyxium", 0.1, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Ingredient_Bar_Onyxium", 0.07, 4, 4, 1, 3));
+        list.add(createExtraDropRule("Ingredient_Leather_Heavy", 0.15, 4, 4, 2, 4));
+        list.add(createExtraDropRule("Ingredient_Leather_Medium", 0.2, 4, 4, 2, 4));
+        list.add(createExtraDropRule("Ingredient_Leather_Light", 0.25, 4, 4, 2, 4));
+        list.add(createExtraDropRule("Tool_Repair_Kit_Iron", 0.15, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Potion_Mana", 0.04, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Regen_Health", 0.04, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Health_Greater", 0.1, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Potion_Stamina_Greater", 0.1, 4, 4, 1, 2));
+        list.add(createExtraDropRule("Potion_Mana_Large", 0.05, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Regen_Health_Large", 0.05, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Regen_Stamina_Large", 0.05, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Health_Large", 0.05, 4, 4, 1, 1));
+        list.add(createExtraDropRule("Potion_Stamina_Large", 0.05, 4, 4, 1, 1));
         list.add(createExtraDropRule("Rock_Gem_Diamond", 0.02, 4, 4, 1, 1));
         list.add(createExtraDropRule("Rock_Gem_Ruby", 0.03, 4, 4, 1, 1));
         list.add(createExtraDropRule("Rock_Gem_Sapphire", 0.03, 4, 4, 1, 1));
@@ -1102,12 +1104,8 @@ public final class RPGMobsConfig {
                 "Crawler_Void", "Eye_Void", "Spawn_Void", "Spectre_Void"
         ));
 
-        var testMobs = new MobRuleCategory("Test", List.of(
-                "RPGMobs_Test", "RPGMobs_ParryTest"
-        ));
-
         return new MobRuleCategory("All", List.of(),
-                goblins, outlanders, trorks, skeletons, zombies, wraiths, voidMobs, testMobs
+                goblins, outlanders, trorks, skeletons, zombies, wraiths, voidMobs
         );
     }
 
@@ -1129,6 +1127,239 @@ public final class RPGMobsConfig {
         );
         m.put("projectile_resistance", projectileResistance);
 
+        return m;
+    }
+
+    public static final class CombatAIConfig {
+
+        @Default
+        @Cfg(group = "CombatAI", file = "combat.yml", comment = "How long (seconds) the CAE remembers hostile targets.")
+        public int targetMemoryDuration = 10;
+
+        @Default
+        @Cfg(group = "CombatAI", file = "combat.yml", comment = "Minimum utility score for the CAE to run an evaluation cycle.")
+        public double minRunUtility = 0.5;
+
+        @Default
+        @Cfg(group = "CombatAI", file = "combat.yml", comment = "Minimum utility score for an individual action to be selected.")
+        public double minActionUtility = 0.01;
+
+        @Default
+        @Cfg(group = "CombatAI", file = "combat.yml", comment = "Combat styles defining how each faction fights. Key = style name (Disciplined, Berserker, Tactical, Chaotic).")
+        public Map<String, FactionStyle> factionStyles = defaultFactionStyles();
+
+        @Default
+        @Cfg(group = "CombatAI", file = "combat.yml", comment = "Per-tier behavior escalation. Index 0 = T1, index 4 = T5.")
+        public List<TierBehavior> tierBehaviors = defaultTierBehaviors();
+
+        @Default
+        @Cfg(group = "CombatAI", file = "combat.yml", comment = "Per-weapon combat parameters. Key = weapon category name (Swords, Daggers, Shortbows, etc.).")
+        public Map<String, WeaponCombatParams> weaponParams = defaultWeaponParams();
+    }
+
+    public static final class FactionStyle {
+        @Default public double attackCooldownMin = 1.0;
+        @Default public double attackCooldownMax = 2.0;
+        @Default public double shieldChargeFor = 1.5;
+        @Default public double shieldSwitchPoint = 0.5;
+        @Default public double backOffDistanceMin = 5.0;
+        @Default public double backOffDistanceMax = 8.0;
+        @Default public double backOffSwitchPoint = 6.0;
+        @Default public double healthRetreatDistanceMin = 10.0;
+        @Default public double healthRetreatDistanceMax = 15.0;
+        @Default public double healthRetreatWeight = 5.0;
+        @Default public double reEngageXRangeMin = 0.0;
+        @Default public double reEngageXRangeMax = 10.0;
+        @Default public double reEngageRandomiserMin = 0.4;
+        @Default public double reEngageRandomiserMax = 0.6;
+        @Default public double strafeCooldownMin = 1.5;
+        @Default public double strafeCooldownMax = 3.0;
+        @Default public boolean enableGroupObserve = true;
+        @Default public boolean enableFlanking = false;
+        @Default public String npcGroupName = "";
+        @Default public double guardRandomiserMin = 0.4;
+        @Default public double guardRandomiserMax = 1.0;
+        @Default public double backOffRandomiserMin = 0.6;
+        @Default public double backOffRandomiserMax = 1.0;
+        @Default public double retreatCooldown = 15.0;
+        @Default public double reEngageDistanceMin = 2.0;
+        @Default public double reEngageDistanceMax = 3.0;
+        @Default public double groupObserveDistanceMin = 8.0;
+        @Default public double groupObserveDistanceMax = 12.0;
+        @Default public double flankingAngle = 90.0;
+
+        public FactionStyle() {}
+
+        public FactionStyle(double atkMin, double atkMax, double shieldCharge, double shieldSwitch,
+                            double boMin, double boMax, double boSwitch,
+                            double hrMin, double hrMax, double hrWeight,
+                            double reMin, double reMax, double reRandMin, double reRandMax,
+                            double strMin, double strMax, boolean observe, boolean flank, String group,
+                            double guardRandMin, double guardRandMax, double boRandMin, double boRandMax,
+                            double retCd, double reEngDistMin, double reEngDistMax,
+                            double obsDistMin, double obsDistMax, double flankAngle) {
+            this.attackCooldownMin = atkMin; this.attackCooldownMax = atkMax;
+            this.shieldChargeFor = shieldCharge; this.shieldSwitchPoint = shieldSwitch;
+            this.backOffDistanceMin = boMin; this.backOffDistanceMax = boMax; this.backOffSwitchPoint = boSwitch;
+            this.healthRetreatDistanceMin = hrMin; this.healthRetreatDistanceMax = hrMax; this.healthRetreatWeight = hrWeight;
+            this.reEngageXRangeMin = reMin; this.reEngageXRangeMax = reMax;
+            this.reEngageRandomiserMin = reRandMin; this.reEngageRandomiserMax = reRandMax;
+            this.strafeCooldownMin = strMin; this.strafeCooldownMax = strMax;
+            this.enableGroupObserve = observe; this.enableFlanking = flank; this.npcGroupName = group;
+            this.guardRandomiserMin = guardRandMin; this.guardRandomiserMax = guardRandMax;
+            this.backOffRandomiserMin = boRandMin; this.backOffRandomiserMax = boRandMax;
+            this.retreatCooldown = retCd;
+            this.reEngageDistanceMin = reEngDistMin; this.reEngageDistanceMax = reEngDistMax;
+            this.groupObserveDistanceMin = obsDistMin; this.groupObserveDistanceMax = obsDistMax;
+            this.flankingAngle = flankAngle;
+        }
+    }
+
+    public static final class TierBehavior {
+        @Default public double cooldownMin = 1.5;
+        @Default public double cooldownMax = 2.5;
+        @Default public double strafeCooldownMin = 2.5;
+        @Default public double strafeCooldownMax = 4.0;
+        @Default public boolean hasShield = false;
+        @Default public boolean hasBackOff = false;
+        @Default public boolean hasRetreat = false;
+        @Default public boolean hasGroupObserve = false;
+        @Default public boolean hasFlanking = false;
+        @Default public double shieldChargeFor = 0.0;
+        @Default public double shieldGuardCooldown = 0.0;
+        @Default public double retreatHealthThreshold = 0.0;
+        @Default public double movementSpeedMultiplier = 1.0;
+
+        public TierBehavior() {}
+
+        public TierBehavior(double cooldownMin, double cooldownMax, double strafeCdMin, double strafeCdMax,
+                            boolean shield, boolean backOff, boolean retreat, boolean observe, boolean flank,
+                            double shieldCharge, double guardCd, double retreatThreshold, double moveSpeedMult) {
+            this.cooldownMin = cooldownMin; this.cooldownMax = cooldownMax;
+            this.strafeCooldownMin = strafeCdMin; this.strafeCooldownMax = strafeCdMax;
+            this.hasShield = shield; this.hasBackOff = backOff; this.hasRetreat = retreat;
+            this.hasGroupObserve = observe; this.hasFlanking = flank;
+            this.shieldChargeFor = shieldCharge; this.shieldGuardCooldown = guardCd;
+            this.retreatHealthThreshold = retreatThreshold;
+            this.movementSpeedMultiplier = moveSpeedMult;
+        }
+    }
+
+    public static final class WeaponCombatParams {
+        @Default public double maxRange = 2.5;
+        @Default public double speedMultiplier = 1.0;
+        @Default public String attackRootInteraction = "Root_RPGMobs_Attack_Melee";
+        @Default public boolean isRanged = false;
+        @Default public String animationSetId = "Sword";
+        @Default public List<String> attackChainAnimations = new ArrayList<>(List.of("SwingLeft", "SwingRight", "SwingLeft", "SwingRight"));
+        @Default public String swingSoundId = "";
+        @Default public String impactSoundId = "";
+        @Default public String weaponTrailId = "";
+        @Default public String hitParticleId = "";
+        @Default public double hitboxEndDistance = 2.8;
+        @Default public int hitboxConeLength = 60;
+        @Default public int hitboxConeYaw = 30;
+        @Default public double swingWindUpTime = 0.20;
+        @Default public double swingRecoveryTime = 0.17;
+        @Default public int combatSpeed = 8;
+
+        public WeaponCombatParams() {}
+
+        public WeaponCombatParams(double maxRange, double speedMult, String attackRoot, boolean ranged) {
+            this.maxRange = maxRange; this.speedMultiplier = speedMult;
+            this.attackRootInteraction = attackRoot; this.isRanged = ranged;
+        }
+
+        public WeaponCombatParams(double maxRange, double speedMult, String attackRoot, boolean ranged,
+                                  String animSetId, List<String> chain, String swingSound, String impactSound,
+                                  String trail, String hitParticle,
+                                  double endDist, int coneLen, int coneYaw, double windUp, double recovery, int speed) {
+            this.maxRange = maxRange; this.speedMultiplier = speedMult;
+            this.attackRootInteraction = attackRoot; this.isRanged = ranged;
+            this.animationSetId = animSetId;
+            this.attackChainAnimations = new ArrayList<>(chain);
+            this.swingSoundId = swingSound; this.impactSoundId = impactSound;
+            this.weaponTrailId = trail; this.hitParticleId = hitParticle;
+            this.hitboxEndDistance = endDist; this.hitboxConeLength = coneLen;
+            this.hitboxConeYaw = coneYaw; this.swingWindUpTime = windUp;
+            this.swingRecoveryTime = recovery; this.combatSpeed = speed;
+        }
+    }
+
+    private static Map<String, FactionStyle> defaultFactionStyles() {
+        Map<String, FactionStyle> m = new LinkedHashMap<>();
+        m.put("Disciplined", new FactionStyle(1.0, 2.0, 1.5, 0.5, 5, 8, 8, 10, 15, 5.0, 0, 12, 0.4, 0.6, 1.5, 3.0, true, false, "Skeleton",
+                0.4, 1.0, 0.6, 1.0, 15.0, 2.0, 3.0, 8.0, 12.0, 45.0));
+        m.put("Berserker",   new FactionStyle(0.5, 0.8, 2.0, 3.0, 3, 5, 14, 6, 8, 1.5, 0, 5, 0.6, 0.9, 0.8, 1.5, false, false, "Trork",
+                0.7, 1.0, 0.8, 1.0, 25.0, 1.5, 2.5, 5.0, 8.0, 30.0));
+        m.put("Tactical",    new FactionStyle(0.8, 1.2, 1.0, 0.3, 6, 10, 6, 12, 18, 8.0, 0, 14, 0.3, 0.5, 1.2, 2.5, true, true, "Outlander",
+                0.3, 0.9, 0.4, 0.8, 10.0, 3.0, 5.0, 10.0, 16.0, 90.0));
+        m.put("Chaotic",     new FactionStyle(0.5, 2.0, 0.8, 1.0, 3, 12, 5, 8, 20, 4.0, 0, 8, 0.2, 0.9, 0.5, 2.5, false, false, "Goblin",
+                0.6, 1.0, 0.3, 1.0, 12.0, 2.0, 6.0, 6.0, 14.0, 120.0));
+        return m;
+    }
+
+    private static List<TierBehavior> defaultTierBehaviors() {
+        List<TierBehavior> list = new ArrayList<>();
+        list.add(new TierBehavior(0.4, 0.8, 1.0, 2.0, false, false, false, false, false, 0, 0, 0, 1.20));
+        list.add(new TierBehavior(0.6, 1.0, 1.2, 2.5, true, true, false, false, false, 2.0, 8.0, 0, 1.10));
+        list.add(new TierBehavior(0.8, 1.4, 1.5, 3.0, true, true, true, true, false, 3.0, 6.0, 0.30, 1.0));
+        list.add(new TierBehavior(1.0, 1.8, 2.0, 3.5, true, true, true, true, false, 4.0, 5.0, 0.25, 0.85));
+        list.add(new TierBehavior(1.2, 2.2, 2.5, 4.0, true, true, true, true, true, 5.0, 4.0, 0.20, 0.70));
+        return list;
+    }
+
+    private static Map<String, WeaponCombatParams> defaultWeaponParams() {
+        Map<String, WeaponCombatParams> m = new LinkedHashMap<>();
+        m.put("Swords",     new WeaponCombatParams(2.5, 0.8, "Root_RPGMobs_Attack_Swords", false,
+                "Sword", List.of("SwingLeft", "SwingRight", "SwingLeft", "SwingRight"),
+                "SFX_Sword_T1_Swing", "SFX_Sword_T2_Impact", "Medium_Default", "Impact_Sword_Basic",
+                2.8, 60, 30, 0.20, 0.17, 8));
+        m.put("Longswords", new WeaponCombatParams(2.8, 1.0, "Root_RPGMobs_Attack_Longswords", false,
+                "Longsword", List.of("SwingLeft", "SwingRight", "SwingLeft", "SwingRight"),
+                "SFX_Sword_T1_Swing", "SFX_Longsword_Steel_Impact", "Sword_Distortion", "Impact_Sword_Basic",
+                3.0, 65, 30, 0.25, 0.20, 8));
+        m.put("Daggers",    new WeaponCombatParams(2.0, 0.5, "Root_RPGMobs_Attack_Daggers", false,
+                "Daggers", List.of("SwingLeft", "SwingRight", "SwingLeft", "SwingRight"),
+                "SFX_Daggers_T1_Swing", "SFX_Daggers_T2_Slash_Impact", "Daggers_Dash", "Impact_Dagger_Slash",
+                2.2, 55, 30, 0.15, 0.12, 9));
+        m.put("Axes",       new WeaponCombatParams(2.5, 0.9, "Root_RPGMobs_Attack_Axes", false,
+                "Axe", List.of("SwingLeft", "SwingRight", "SwingDownLeft", "SwingRight", "SwingLeft"),
+                "SFX_Axe_Iron_Swing", "SFX_Axe_Iron_Impact", "Medium_Default", "Impact_Sword_Basic",
+                2.8, 55, 25, 0.20, 0.17, 8));
+        m.put("Battleaxes", new WeaponCombatParams(3.0, 1.3, "Root_RPGMobs_Attack_Battleaxes", false,
+                "Battleaxe", List.of("SwingLeft", "SwingRight", "SwingDownLeft", "SwingDownRight", "SwingLeft"),
+                "SFX_Battleaxe_T1_Swing", "SFX_Battleaxe_T2_Impact", "Large_Charged_Red", "Impact_Battleaxe_Bash",
+                2.8, 70, 35, 0.35, 0.30, 7));
+        m.put("Maces",      new WeaponCombatParams(2.5, 1.1, "Root_RPGMobs_Attack_Maces", false,
+                "Mace", List.of("SwingLeft", "SwingRight", "SwingLeft", "SwingRight"),
+                "SFX_Mace_T1_Swing", "SFX_Mace_T2_Impact", "Medium_Mace_Charged", "Impact_Mace_Basic",
+                2.8, 60, 30, 0.50, 0.25, 7));
+        m.put("Clubs",      new WeaponCombatParams(2.5, 1.0, "Root_RPGMobs_Attack_Clubs", false,
+                "Club", List.of("SwingLeft", "SwingRight", "SwingLeft", "SwingRight"),
+                "SFX_Mace_T1_Swing", "SFX_T1_Impact_Blunt", "Large_Charged", "Impact_Mace_Basic",
+                2.8, 55, 25, 0.22, 0.17, 8));
+        m.put("ClubsFlail", new WeaponCombatParams(2.8, 1.1, "Root_RPGMobs_Attack_ClubsFlail", false,
+                "Club_Flail", List.of("SwingLeft", "SwingRight", "SwingLeft", "SwingRight"),
+                "SFX_Flail_Swing", "SFX_T1_Impact_Blunt", "Large_Charged", "Impact_Mace_Basic",
+                2.8, 60, 30, 0.25, 0.20, 7));
+        m.put("Spears",     new WeaponCombatParams(3.0, 0.85, "Root_RPGMobs_Attack_Spears", false,
+                "Spear", List.of("SwingLeft", "SwingRight", "SwingLeft", "SwingRight"),
+                "SFX_Spear_Lunge", "SFX_Spear_Impact", "Medium_Default", "Impact_Sword_Basic",
+                3.0, 70, 15, 0.25, 0.20, 8));
+        m.put("Pickaxes",   new WeaponCombatParams(2.3, 0.9, "Root_RPGMobs_Attack_Swords", false,
+                "Pickaxe", List.of("SwingLeft", "SwingRight", "SwingDown", "SwingLeft", "SwingRight"),
+                "SFX_Sword_T1_Swing", "SFX_Sword_T2_Impact", "Mace_Signature", "Impact_Sword_Basic",
+                2.8, 60, 30, 0.20, 0.17, 8));
+        m.put("Other",      new WeaponCombatParams(3.0, 1.0, "Root_RPGMobs_Attack_Melee", false,
+                "Sword", List.of("SwingLeft", "SwingRight", "SwingDown"),
+                "SFX_Sword_T1_Swing", "SFX_Sword_T2_Impact", "Medium_Default", "Impact_Sword_Basic",
+                2.8, 60, 30, 0.20, 0.17, 8));
+        m.put("Shortbows",  new WeaponCombatParams(18.0, 1.1, "", true));
+        m.put("Crossbows",  new WeaponCombatParams(22.0, 0.8, "", true));
+        m.put("Guns",       new WeaponCombatParams(25.0, 0.7, "", true));
+        m.put("Staves",     new WeaponCombatParams(16.0, 0.9, "", true));
+        m.put("Spellbooks", new WeaponCombatParams(14.0, 1.0, "", true));
         return m;
     }
 
@@ -1176,6 +1407,17 @@ public final class RPGMobsConfig {
         List<String> keys = new ArrayList<>();
         for (MobRuleCategory child : defaultTree.children) {
             keys.add(MobRuleCategoryHelpers.toCategoryKey(child.name));
+        }
+        return keys;
+    }
+
+    private static List<String> buildDefaultLinkedKeysLivingHumanoids(MobRuleCategory defaultTree) {
+        List<String> keys = new ArrayList<>();
+        for (MobRuleCategory child : defaultTree.children) {
+            String name = child.name;
+            if ("Outlanders".equals(name) || "Goblins".equals(name) || "Trorks".equals(name)) {
+                keys.add(MobRuleCategoryHelpers.toCategoryKey(name));
+            }
         }
         return keys;
     }
@@ -1272,7 +1514,7 @@ public final class RPGMobsConfig {
         m.put(AbilityIds.CHARGE_LEAP, chargeLeap);
 
         HealLeapAbilityConfig healLeap = new HealLeapAbilityConfig();
-        healLeap.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
+        healLeap.linkedMobRuleKeys = buildDefaultLinkedKeysLivingHumanoids(defaultTree);
         healLeap.excludeLinkedMobRuleKeys = new ArrayList<>(List.of("Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void"));
         healLeap.isEnabled = true;
         healLeap.isEnabledPerTier = new boolean[]{false, false, false, true, true};
@@ -1413,28 +1655,28 @@ public final class RPGMobsConfig {
                     "Item/Interactions/NPCs/RPGMobs/MultiSlashShort/RPGMobs_Ability_MultiSlashShort_ClubsFlail_V" + v + "_Entry.template.json");
         }
 
-        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SWORDS, new MultiSlashVariantConfig(
+        msShort.variantConfigs.put(Constants.VARIANT_SWORDS, new MultiSlashVariantConfig(
                 new float[]{0.15f, 0.20f, 0.25f, 0.30f, 0.35f}, new float[]{8f, 7f, 6f, 5f, 4f},
                 new int[]{2, 3, 4, 6, 8}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 2f, 3f, 4f, 5f}, 3.5f));
-        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
+        msShort.variantConfigs.put(Constants.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
                 new float[]{0.12f, 0.18f, 0.22f, 0.28f, 0.32f}, new float[]{9f, 8f, 7f, 6f, 5f},
                 new int[]{3, 4, 5, 7, 10}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 3f, 4f, 5f, 7f}, 4.0f));
-        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_DAGGERS, new MultiSlashVariantConfig(
+        msShort.variantConfigs.put(Constants.VARIANT_DAGGERS, new MultiSlashVariantConfig(
                 new float[]{0.20f, 0.25f, 0.30f, 0.35f, 0.40f}, new float[]{6f, 5f, 5f, 4f, 3f},
                 new int[]{1, 2, 3, 4, 6}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 1f, 2f, 3f, 4f}, 3.0f));
-        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
+        msShort.variantConfigs.put(Constants.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
                 new float[]{0.08f, 0.12f, 0.16f, 0.20f, 0.25f}, new float[]{12f, 10f, 9f, 8f, 7f},
                 new int[]{4, 6, 8, 10, 14}, new float[]{0f, 0f, 3f, 4f, 5f}, new float[]{0f, 4f, 6f, 8f, 10f}, 4.0f));
-        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_AXES, new MultiSlashVariantConfig(
+        msShort.variantConfigs.put(Constants.VARIANT_AXES, new MultiSlashVariantConfig(
                 new float[]{0.12f, 0.18f, 0.22f, 0.28f, 0.32f}, new float[]{9f, 8f, 7f, 6f, 5f},
                 new int[]{3, 4, 5, 7, 10}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 3f, 4f, 5f, 7f}, 3.5f));
-        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_MACES, new MultiSlashVariantConfig(
+        msShort.variantConfigs.put(Constants.VARIANT_MACES, new MultiSlashVariantConfig(
                 new float[]{0.10f, 0.15f, 0.20f, 0.25f, 0.30f}, new float[]{10f, 9f, 8f, 7f, 6f},
                 new int[]{3, 5, 7, 10, 14}, new float[]{0f, 0f, 3f, 4f, 5f}, new float[]{0f, 4f, 5f, 7f, 10f}, 3.5f));
-        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_CLUBS, new MultiSlashVariantConfig(
+        msShort.variantConfigs.put(Constants.VARIANT_CLUBS, new MultiSlashVariantConfig(
                 new float[]{0.12f, 0.18f, 0.22f, 0.26f, 0.32f}, new float[]{9f, 8f, 7f, 6f, 5f},
                 new int[]{2, 3, 5, 7, 10}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 3f, 5f, 7f, 9f}, 3.5f));
-        msShort.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SPEARS, new MultiSlashVariantConfig(
+        msShort.variantConfigs.put(Constants.VARIANT_SPEARS, new MultiSlashVariantConfig(
                 new float[]{0.18f, 0.22f, 0.28f, 0.32f, 0.38f}, new float[]{7f, 6f, 5f, 5f, 4f},
                 new int[]{2, 3, 4, 5, 7}, new float[]{0f, 0f, 2f, 3f, 4f}, new float[]{0f, 2f, 3f, 4f, 6f}, 4.5f));
 
@@ -1466,28 +1708,28 @@ public final class RPGMobsConfig {
                     "Item/Interactions/NPCs/RPGMobs/MultiSlashMedium/RPGMobs_Ability_MultiSlashMedium_ClubsFlail_V" + v + "_Entry.template.json");
         }
 
-        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SWORDS, new MultiSlashVariantConfig(
+        msMedium.variantConfigs.put(Constants.VARIANT_SWORDS, new MultiSlashVariantConfig(
                 new float[]{0f, 0.10f, 0.14f, 0.18f, 0.25f}, new float[]{0f, 14f, 12f, 10f, 8f},
                 new int[]{0, 4, 6, 9, 14}, new float[]{0f, 3f, 4f, 5f, 6f}, new float[]{0f, 4f, 6f, 8f, 10f}, 4.0f));
-        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
+        msMedium.variantConfigs.put(Constants.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
                 new float[]{0f, 0.08f, 0.12f, 0.16f, 0.22f}, new float[]{0f, 16f, 14f, 12f, 10f},
                 new int[]{0, 5, 8, 12, 16}, new float[]{0f, 3f, 4f, 6f, 8f}, new float[]{0f, 5f, 7f, 9f, 12f}, 4.5f));
-        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_DAGGERS, new MultiSlashVariantConfig(
+        msMedium.variantConfigs.put(Constants.VARIANT_DAGGERS, new MultiSlashVariantConfig(
                 new float[]{0f, 0.14f, 0.18f, 0.24f, 0.30f}, new float[]{0f, 10f, 9f, 8f, 6f},
                 new int[]{0, 3, 4, 6, 10}, new float[]{0f, 2f, 3f, 4f, 5f}, new float[]{0f, 2f, 3f, 4f, 6f}, 3.5f));
-        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
+        msMedium.variantConfigs.put(Constants.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
                 new float[]{0f, 0.06f, 0.08f, 0.12f, 0.18f}, new float[]{0f, 20f, 18f, 16f, 14f},
                 new int[]{0, 8, 12, 16, 22}, new float[]{0f, 4f, 5f, 7f, 9f}, new float[]{0f, 6f, 8f, 12f, 16f}, 4.5f));
-        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_AXES, new MultiSlashVariantConfig(
+        msMedium.variantConfigs.put(Constants.VARIANT_AXES, new MultiSlashVariantConfig(
                 new float[]{0f, 0.10f, 0.14f, 0.18f, 0.24f}, new float[]{0f, 15f, 13f, 11f, 9f},
                 new int[]{0, 5, 7, 10, 14}, new float[]{0f, 3f, 4f, 5f, 7f}, new float[]{0f, 4f, 6f, 8f, 11f}, 4.0f));
-        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_MACES, new MultiSlashVariantConfig(
+        msMedium.variantConfigs.put(Constants.VARIANT_MACES, new MultiSlashVariantConfig(
                 new float[]{0f, 0.06f, 0.10f, 0.14f, 0.20f}, new float[]{0f, 18f, 16f, 14f, 12f},
                 new int[]{0, 6, 9, 13, 18}, new float[]{0f, 4f, 5f, 6f, 8f}, new float[]{0f, 6f, 8f, 10f, 14f}, 4.0f));
-        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_CLUBS, new MultiSlashVariantConfig(
+        msMedium.variantConfigs.put(Constants.VARIANT_CLUBS, new MultiSlashVariantConfig(
                 new float[]{0f, 0.08f, 0.12f, 0.16f, 0.22f}, new float[]{0f, 16f, 14f, 12f, 10f},
                 new int[]{0, 4, 7, 10, 14}, new float[]{0f, 3f, 4f, 5f, 7f}, new float[]{0f, 5f, 7f, 10f, 13f}, 3.8f));
-        msMedium.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SPEARS, new MultiSlashVariantConfig(
+        msMedium.variantConfigs.put(Constants.VARIANT_SPEARS, new MultiSlashVariantConfig(
                 new float[]{0f, 0.12f, 0.16f, 0.22f, 0.28f}, new float[]{0f, 13f, 11f, 9f, 7f},
                 new int[]{0, 4, 6, 8, 12}, new float[]{0f, 3f, 4f, 5f, 7f}, new float[]{0f, 3f, 5f, 7f, 9f}, 5.0f));
 
@@ -1517,28 +1759,28 @@ public final class RPGMobsConfig {
         msLong.templates.add("entryClubsFlail",
                 "Item/Interactions/NPCs/RPGMobs/MultiSlashLong/RPGMobs_Ability_MultiSlashLong_ClubsFlail_Entry.template.json");
 
-        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SWORDS, new MultiSlashVariantConfig(
+        msLong.variantConfigs.put(Constants.VARIANT_SWORDS, new MultiSlashVariantConfig(
                 new float[]{0f, 0f, 0.08f, 0.12f, 0.18f}, new float[]{0f, 0f, 22f, 20f, 18f},
                 new int[]{0, 0, 6, 10, 16}, new float[]{0f, 0f, 4f, 5f, 6f}, new float[]{0f, 0f, 6f, 8f, 10f}, 4.0f));
-        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
+        msLong.variantConfigs.put(Constants.VARIANT_LONGSWORDS, new MultiSlashVariantConfig(
                 new float[]{0f, 0f, 0.07f, 0.10f, 0.16f}, new float[]{0f, 0f, 24f, 22f, 20f},
                 new int[]{0, 0, 8, 12, 18}, new float[]{0f, 0f, 4f, 6f, 8f}, new float[]{0f, 0f, 7f, 9f, 12f}, 4.5f));
-        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_DAGGERS, new MultiSlashVariantConfig(
+        msLong.variantConfigs.put(Constants.VARIANT_DAGGERS, new MultiSlashVariantConfig(
                 new float[]{0f, 0f, 0.10f, 0.14f, 0.22f}, new float[]{0f, 0f, 18f, 16f, 14f},
                 new int[]{0, 0, 4, 7, 12}, new float[]{0f, 0f, 3f, 4f, 5f}, new float[]{0f, 0f, 3f, 5f, 8f}, 3.5f));
-        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
+        msLong.variantConfigs.put(Constants.VARIANT_BATTLEAXES, new MultiSlashVariantConfig(
                 new float[]{0f, 0f, 0.05f, 0.08f, 0.14f}, new float[]{0f, 0f, 28f, 25f, 22f},
                 new int[]{0, 0, 10, 16, 24}, new float[]{0f, 0f, 5f, 7f, 9f}, new float[]{0f, 0f, 8f, 12f, 16f}, 4.5f));
-        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_AXES, new MultiSlashVariantConfig(
+        msLong.variantConfigs.put(Constants.VARIANT_AXES, new MultiSlashVariantConfig(
                 new float[]{0f, 0f, 0.08f, 0.12f, 0.18f}, new float[]{0f, 0f, 22f, 20f, 18f},
                 new int[]{0, 0, 7, 10, 15}, new float[]{0f, 0f, 4f, 5f, 7f}, new float[]{0f, 0f, 6f, 8f, 11f}, 4.0f));
-        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_MACES, new MultiSlashVariantConfig(
+        msLong.variantConfigs.put(Constants.VARIANT_MACES, new MultiSlashVariantConfig(
                 new float[]{0f, 0f, 0.06f, 0.10f, 0.16f}, new float[]{0f, 0f, 26f, 22f, 20f},
                 new int[]{0, 0, 8, 13, 20}, new float[]{0f, 0f, 5f, 6f, 8f}, new float[]{0f, 0f, 8f, 10f, 14f}, 4.0f));
-        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_CLUBS, new MultiSlashVariantConfig(
+        msLong.variantConfigs.put(Constants.VARIANT_CLUBS, new MultiSlashVariantConfig(
                 new float[]{0f, 0f, 0.08f, 0.12f, 0.18f}, new float[]{0f, 0f, 24f, 22f, 20f},
                 new int[]{0, 0, 6, 10, 16}, new float[]{0f, 0f, 4f, 5f, 7f}, new float[]{0f, 0f, 7f, 10f, 13f}, 3.8f));
-        msLong.variantConfigs.put(AbstractMultiSlashFeature.VARIANT_SPEARS, new MultiSlashVariantConfig(
+        msLong.variantConfigs.put(Constants.VARIANT_SPEARS, new MultiSlashVariantConfig(
                 new float[]{0f, 0f, 0.10f, 0.14f, 0.20f}, new float[]{0f, 0f, 20f, 18f, 16f},
                 new int[]{0, 0, 5, 8, 12}, new float[]{0f, 0f, 4f, 5f, 7f}, new float[]{0f, 0f, 5f, 7f, 9f}, 5.0f));
 
@@ -1546,9 +1788,8 @@ public final class RPGMobsConfig {
 
         EnrageAbilityConfig enrage = new EnrageAbilityConfig();
         enrage.gate.allowedWeaponCategories = WEAPON_CATS_MELEE;
-        enrage.linkedMobRuleKeys = buildDefaultLinkedKeysAllCategories(defaultTree);
-        enrage.excludeLinkedMobRuleKeys = new ArrayList<>(List.of(
-                "Skeleton_Incandescent_Head", "Crawler_Void", "Eye_Void", "Spectre_Void"));
+        enrage.linkedMobRuleKeys = buildDefaultLinkedKeysLivingHumanoids(defaultTree);
+        enrage.excludeLinkedMobRuleKeys = new ArrayList<>();
         enrage.isEnabled = true;
         enrage.isEnabledPerTier = new boolean[]{false, true, true, true, true};
         enrage.chancePerTier = new float[]{0f, 0.30f, 0.50f, 0.70f, 1.00f};
@@ -1682,17 +1923,6 @@ public final class RPGMobsConfig {
         @FixedArraySize(value = TIERS_AMOUNT)
         public float[] applyForcePerTier = {0f, 0f, 0f, 0f, 0f};
 
-        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Mob rule key prefixes denied from using Heal Leap (case-insensitive). Undead mobs drinking potions looks wrong.")
-        public List<String> deniedMobPrefixes = new ArrayList<>(List.of(
-                "Skeleton", "Zombie", "Wraith"
-        ));
-
-        @Cfg(group = "Abilities", file = "abilities.yml", comment = "Exceptions to deniedMobPrefixes  - these mobs CAN use Heal Leap even if they match a denied prefix (e.g. mage-type undead).")
-        public List<String> allowedExceptions = new ArrayList<>(List.of(
-                "Skeleton_Mage", "Skeleton_Archmage", "Skeleton_Frost_Mage",
-                "Skeleton_Sand_Mage", "Skeleton_Incandescent_Mage"
-        ));
-
         @Default
         @Min(1)
         @Max(20)
@@ -1752,7 +1982,7 @@ public final class RPGMobsConfig {
         public double aberrantWeight = 25;
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Roles excluded from the auto-generated summon pool (prevents summoners from summoning themselves).")
-        public List<String> excludeFromSummonPool = new ArrayList<>(List.of("Trork_Shaman", "Goblin_Duke"));
+        public List<String> excludeFromSummonPool = new ArrayList<>(List.of("Trork_Shaman", "Goblin_Duke", "Zombie_Aberrant", "Zombie_Aberrant_Big", "Zombie_Aberrant_Small"));
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Optional explicit spawn marker entries (advanced). If empty, RPGMobs builds this automatically from mob rules.")
         public List<SummonMarkerEntry> spawnMarkerEntries = new ArrayList<>();
@@ -1886,8 +2116,8 @@ public final class RPGMobsConfig {
             if (variant != null && variantConfigs != null) {
                 var vc = variantConfigs.get(variant);
                 if (vc != null) return vc;
-                if (AbstractMultiSlashFeature.VARIANT_CLUBS_FLAIL.equals(variant)) {
-                    var clubsCfg = variantConfigs.get(AbstractMultiSlashFeature.VARIANT_CLUBS);
+                if (Constants.VARIANT_CLUBS_FLAIL.equals(variant)) {
+                    var clubsCfg = variantConfigs.get(Constants.VARIANT_CLUBS);
                     if (clubsCfg != null) return clubsCfg;
                 }
             }
@@ -1929,7 +2159,6 @@ public final class RPGMobsConfig {
     public static final class EnrageAbilityConfig extends AbilityConfig {
         public static final String TEMPLATE_LIGHT_DAMAGE_INTERACTION = "lightDamage";
         public static final String TEMPLATE_HEAVY_DAMAGE_INTERACTION = "heavyDamage";
-        public static final String TEMPLATE_BREATHING_SFX = "breathingSfx";
         public static final String TEMPLATE_EFFECT_RED_EYES = "effectRedEyes";
 
         @Cfg(group = "Abilities", file = "abilities.yml", comment = "Health percent threshold (0.0 to 1.0) at which Enrage triggers per tier.")
@@ -2000,30 +2229,6 @@ public final class RPGMobsConfig {
 
     public static Map<String, MobRule> defaultMobRules() {
         Map<String, MobRule> m = new LinkedHashMap<>();
-
-        m.put("RPGMobs_Test",
-              mobRule(true,
-                      List.of(),
-                      List.of(),
-                      List.of("RPGMobs_Test"),
-                      List.of(),
-                      new boolean[]{false, false, false, false, false},
-                      WeaponOverrideMode.NONE,
-                      List.of()
-              )
-        );
-
-        m.put("RPGMobs_ParryTest",
-              mobRule(true,
-                      List.of("RPGMobs_ParryTest", "RPGMobs_ParryTest_NoShield"),
-                      List.of(),
-                      List.of(),
-                      List.of(),
-                      new boolean[]{false, false, false, false, false},
-                      WeaponOverrideMode.NONE,
-                      List.of()
-              )
-        );
 
         m.put("Goblin_Duke",
               mobRule(true,
@@ -3391,7 +3596,7 @@ public final class RPGMobsConfig {
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
                       List.of(),
-                      List.of("HEAD")
+                      List.of("Head")
               )
         );
 
@@ -3932,7 +4137,7 @@ public final class RPGMobsConfig {
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
                       List.of(),
-                      List.of("HEAD", "CHEST")
+                      List.of("Head", "Chest", "Hands")
               )
         );
 
@@ -3945,7 +4150,7 @@ public final class RPGMobsConfig {
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
                       List.of(),
-                      List.of("NONE")
+                      List.of("Head")
               )
         );
 
@@ -3970,7 +4175,7 @@ public final class RPGMobsConfig {
                       new boolean[]{false, false, false, false, false},
                       WeaponOverrideMode.NONE,
                       List.of(),
-                      List.of()
+                      List.of("Head", "Chest", "Hands")
               )
         );
 
@@ -4147,6 +4352,8 @@ public final class RPGMobsConfig {
 
         public List<String> allowedArmorSlots = List.of();
 
+        public String combatStyle = "auto";
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -4160,13 +4367,15 @@ public final class RPGMobsConfig {
                     && Objects.equals(matchExcludes, that.matchExcludes)
                     && Objects.equals(allowedWeaponCategories, that.allowedWeaponCategories)
                     && Objects.equals(allowedArmorCategories, that.allowedArmorCategories)
-                    && Objects.equals(allowedArmorSlots, that.allowedArmorSlots);
+                    && Objects.equals(allowedArmorSlots, that.allowedArmorSlots)
+                    && Objects.equals(combatStyle, that.combatStyle);
         }
 
         @Override
         public int hashCode() {
             int result = Objects.hash(enabled, weaponOverrideMode, matchExact, matchStartsWith,
-                    matchContains, matchExcludes, allowedWeaponCategories, allowedArmorCategories, allowedArmorSlots);
+                    matchContains, matchExcludes, allowedWeaponCategories, allowedArmorCategories,
+                    allowedArmorSlots, combatStyle);
             result = 31 * result + Arrays.hashCode(enableWeaponOverrideForTier);
             return result;
         }

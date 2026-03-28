@@ -9,11 +9,11 @@ RPGMobs classifies enemies into 5 tiers of power. These tiers determine an entit
 
 | Tier | Name | Indicator | Challenge Level |
 | :--- | :--- | :--- | :--- |
-| **1** | Common | `[•]` | Baseline challenge, slightly stronger than vanilla. |
-| **2** | Uncommon | `[• •]` | Noticeable threat, better equipped. |
-| **3** | Rare | `[• • •]` | Dangerous, requires decent gear to fight. |
-| **4** | Epic | `[• • • •]` | Mini-boss difficulty with combat intelligence, personality-driven ability selection, and group coordination. |
-| **5** | Legendary | `[• • • • •]` | Boss-level threat with full ability access, advanced target analysis, and the best loot. |
+| **1** | Common | `[*]` | Baseline challenge, slightly stronger than vanilla. |
+| **2** | Uncommon | `[* *]` | Noticeable threat, better equipped. Gains shield guard and BackOff behavior. |
+| **3** | Rare | `[* * *]` | Dangerous, requires decent gear to fight. Gains health retreat and group observe. |
+| **4** | Epic | `[* * * *]` | Mini-boss difficulty with tighter combat cooldowns and reactive parry. |
+| **5** | Legendary | `[* * * * *]` | Boss-level threat with full ability access, flanking behavior, and the best loot. |
 
 ## Progression Styles
 
@@ -35,33 +35,79 @@ Difficulty scales linearly as you travel further from coordinates `(0,0)`.
 ### 3. None (Random)
 Any tier can spawn anywhere based on global weights. Good for hardcore survival servers or arena maps.
 
-## Combat Mechanics
+## Combat System
+
+RPGMobs uses a hybrid combat architecture. Basic attacks, guarding, retreat, and movement are handled by Hytale's native CombatActionEvaluator (CAE). Special abilities, reactive parry, and dodge roll detection are handled code-side.
+
+### CombatActionEvaluator (CAE)
+
+The CAE is Hytale's built-in combat evaluation system. RPGMobs generates per-faction, per-tier, and per-weapon CAE configs at build time. This gives every elite realistic combat behavior without requiring a code-side state machine.
+
+**What CAE handles:**
+- Per-weapon basic attack chains with correct animations and sounds
+- Sustained shield guard (T2+)  -  the mob raises its shield when taking sustained damage
+- BackOff (T2+)  -  brief retreat after completing an attack chain
+- Health retreat (T3+)  -  fleeing when health drops below a threshold
+- Group observe (T3+)  -  grouped elites pause before joining combat
+- Flanking (T5)  -  positioning behind the target
+- Re-engage  -  automatically returning to combat after retreating
+
+### Combat Styles
+
+Each combat style defines a distinct combat personality that controls attack timing and behavior:
+
+| Faction | Style | Attack Cooldown | Description |
+| :--- | :--- | :--- | :--- |
+| Skeleton | Disciplined | 1.0 - 2.0s | Consistent, measured attacks with predictable timing. |
+| Trork | Berserker | 0.4 - 0.8s | Aggressive, fast-paced pressure with short cooldowns. |
+| Outlander | Tactical | 0.8 - 1.2s | Balanced approach with flanking at T5. |
+| Goblin | Chaotic | 0.3 - 2.0s | Erratic, unpredictable timing with a wide cooldown range. |
+
+See [Combat AI](/ui/combat-ai) for the full Admin UI editor and [Combat](/config/combat) for the YAML reference.
+
+### Per-Tier Behavior Escalation
+
+Higher tiers unlock more sophisticated combat behaviors:
+
+| Tier | Unlocked Behaviors |
+| :--- | :--- |
+| T1 | Basic attacks only. No guarding, no retreat. |
+| T2 | + Shield guard, BackOff after attacks. |
+| T3 | + Health retreat, Group observe. |
+| T4 | Tighter cooldowns, more reactive. Reactive parry (50% chance). |
+| T5 | + Flanking. Fastest cooldowns. Reactive parry (70% chance). |
+
+### Reactive Parry
+
+When a player starts an attack nearby, elite NPCs (T2+) have a chance to instantly raise their shield or weapon in a parry animation. The parry timing is based on the player's weapon type  -  fast weapons (daggers) trigger an almost instant parry, while slow weapons (maces) give the NPC more time to react. The parry has a 20-tick cooldown between uses.
 
 ### Abilities
-Elites aren't just stat sponges. RPGMobs includes 10 combat abilities across melee, ranged, defensive, and support archetypes:
+
+Elites aren't just stat sponges. RPGMobs includes 9 combat abilities across melee, ranged, defensive, and support archetypes:
 
 *   **Charge Leap:** Launch at a player with a physics-based slam attack. 8 weapon-specific sound variants.
 *   **Heal Leap:** Jump to safety and drink a healing potion. Filtered by mob type  -  undead mobs are excluded by default.
 *   **Summon:** Call faction-appropriate reinforcements  -  undead summon undead, goblins summon goblins, trorks summon trorks.
-*   **Dodge Roll:** Reactive dodge on taking damage (all tiers) or preemptive dodge when T4+ intelligence detects the target attacking. Grants brief invulnerability.
+*   **Dodge Roll:** Reactive dodge when a nearby player attacks, or preemptive dodge when a player charges an attack. Grants brief invulnerability.
 *   **Multi Slash (Short/Medium/Long):** 3 separate melee combo abilities with 48 unique weapon-specific combos. Short (1-2 hits, all tiers), Medium (2-4 hits, T2+), Long (4-6 hits, T3+).
-*   **War Cry:** Staff-channeling AOE buff for allies and debuff for enemies. The mob temporarily swaps to a staff during the cast.
 *   **Enrage:** Berserk fist-fighting transformation. The mob drops its weapon and enters a 20-second rapid punch chain, then dies from exhaustion with normal loot drops.
 *   **Volley:** Ranged projectile burst for bow, crossbow, and gun wielders.
 
-Each ability is linked to specific mob rules with per-tier toggles and weapon category gates. See [Abilities](/config/abilities) for full configuration.
+Each ability is linked to specific mob rules with per-tier toggles and weapon category gates. Abilities temporarily interrupt CAE control  -  the system calls `terminateCurrentAction()` to cleanly exit any CAE-managed action before starting the ability chain, then returns control to CAE when the ability completes.
 
-### Combat Intelligence (T4-T5)
+See [Abilities](/config/abilities) for full configuration.
 
-Tier 4 and Tier 5 elites have a combat intelligence system that makes them significantly more dangerous:
+### CAE-to-Ability Transition
 
-*   **Target Analysis:** Every 10 ticks, the elite analyzes its target's weapon type, shield, and combat state (attacking, charging, blocking). This information triggers preemptive abilities like Dodge Roll.
-*   **Combat Personalities:** Each T4+ elite is assigned a personality at spawn  -  Aggressive, Tactical, Strategic, or Berserker. Each personality has preferred ability types that influence which abilities the mob receives and which fires first.
-*   **Group Coordination:** When multiple elites target the same entity, they dynamically assign combat roles (Engage, Flank, Support, Pressure, Recover) to create varied group behavior instead of identical actions.
+When an ability triggers, the following sequence occurs:
 
-### Elite Friendly Fire
-
-Elites never target or damage other elites or their summoned minions. This is controlled by the `eliteFriendlyFireDisabled` and `eliteNoAggroOnElite` config options (both enabled by default). AI target markers are cleared when an elite attempts to target another elite, preventing the native AI from re-acquiring blocked targets.
+1. `terminateCurrentAction()` exits the current CAE action (guard, basic attack, retreat)
+2. Any running interaction chains are cancelled
+3. The ability's interaction chain starts via `InteractionManager.startChain()`
+4. `setExecutingAttack(true)` prevents CAE from starting new actions
+5. The ability runs its full template chain
+6. On completion, a global cooldown (1-3 seconds) prevents immediate ability chaining
+7. `setExecutingAttack(false)` returns control to CAE
 
 ### Scaling
 *   **Health:** Multiplied per tier (e.g., Tier 5 has +260% base health).

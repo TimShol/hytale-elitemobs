@@ -82,8 +82,8 @@ public final class ConfigResolver {
             return globalConfig != null && globalConfig.enabledByDefault ? baseResolved : DISABLED;
         }
 
-        ResolvedConfig worldCfg = worldConfigs.get(worldName);
-        if (worldCfg != null) return worldCfg;
+        ResolvedConfig worldConfig = worldConfigs.get(worldName);
+        if (worldConfig != null) return worldConfig;
 
         String template = resolveInstanceTemplate(worldName);
         if (template != null) {
@@ -175,17 +175,17 @@ public final class ConfigResolver {
         return worldName.substring(9, worldName.length() - 37);
     }
 
-    private ResolvedConfig buildBaseResolved(RPGMobsConfig cfg) {
+    private ResolvedConfig buildBaseResolved(RPGMobsConfig config) {
         ResolvedConfig base = new ResolvedConfig();
 
-        OverlayFieldRegistry.buildAllBase(cfg, base);
+        OverlayFieldRegistry.buildAllBase(config, base);
 
-        base.progressionStyle = cfg.spawning.progressionStyle;
-        base.spawnChancePerTier = Arrays.copyOf(cfg.spawning.spawnChancePerTier, cfg.spawning.spawnChancePerTier.length);
+        base.progressionStyle = config.spawning.progressionStyle;
+        base.spawnChancePerTier = Arrays.copyOf(config.spawning.spawnChancePerTier, config.spawning.spawnChancePerTier.length);
 
         base.resolvedAbilities = new LinkedHashMap<>();
-        if (cfg.abilitiesConfig.defaultAbilities != null) {
-            for (var entry : cfg.abilitiesConfig.defaultAbilities.entrySet()) {
+        if (config.abilitiesConfig.defaultAbilities != null) {
+            for (var entry : config.abilitiesConfig.defaultAbilities.entrySet()) {
                 RPGMobsConfig.AbilityConfig ac = entry.getValue();
                 var resolved = new ResolvedConfig.ResolvedAbilityConfig();
                 resolved.enabled = ac.isEnabled;
@@ -197,7 +197,7 @@ public final class ConfigResolver {
             }
         }
 
-        base.tierPrefixesByFamily = new LinkedHashMap<>(cfg.nameplatesConfig.defaultedTierPrefixesByFamily);
+        base.tierPrefixesByFamily = new LinkedHashMap<>(config.nameplatesConfig.defaultedTierPrefixesByFamily);
 
         base.tierOverrides = new LinkedHashMap<>();
 
@@ -208,25 +208,25 @@ public final class ConfigResolver {
         base.environmentTierRules.put("zone3", new double[]{0, 32, 28, 22, 18});
         base.environmentTierRules.put("zone4", new double[]{0, 0, 40, 33, 27});
 
-        if (cfg.mobsConfig.defaultMobRules != null) {
-            base.mobRules = new LinkedHashMap<>(cfg.mobsConfig.defaultMobRules);
+        if (config.mobsConfig.defaultMobRules != null) {
+            base.mobRules = new LinkedHashMap<>(config.mobsConfig.defaultMobRules);
             backfillMobRuleWeaponArmorCategories(base.mobRules);
         }
-        if (cfg.mobsConfig.categoryTree != null) {
-            base.mobRuleCategoryTree = cfg.mobsConfig.categoryTree;
+        if (config.mobsConfig.categoryTree != null) {
+            base.mobRuleCategoryTree = config.mobsConfig.categoryTree;
         }
-        if (cfg.lootConfig.lootTemplates != null) {
-            base.lootTemplates = new LinkedHashMap<>(cfg.lootConfig.lootTemplates);
+        if (config.lootConfig.lootTemplates != null) {
+            base.lootTemplates = new LinkedHashMap<>(config.lootConfig.lootTemplates);
         }
-        if (cfg.lootConfig.lootTemplateTree != null) {
-            base.lootTemplateCategoryTree = cfg.lootConfig.lootTemplateTree;
+        if (config.lootConfig.lootTemplateTree != null) {
+            base.lootTemplateCategoryTree = config.lootConfig.lootTemplateTree;
         }
 
-        if (cfg.gearConfig.weaponCategoryTree != null) {
-            base.weaponCategoryTree = cfg.gearConfig.weaponCategoryTree;
+        if (config.gearConfig.weaponCategoryTree != null) {
+            base.weaponCategoryTree = config.gearConfig.weaponCategoryTree;
         }
-        if (cfg.gearConfig.armorCategoryTree != null) {
-            base.armorCategoryTree = cfg.gearConfig.armorCategoryTree;
+        if (config.gearConfig.armorCategoryTree != null) {
+            base.armorCategoryTree = config.gearConfig.armorCategoryTree;
             MobRuleCategoryHelpers.expandArmorMaterialsToFullIds(base.armorCategoryTree);
         }
 
@@ -404,21 +404,13 @@ public final class ConfigResolver {
             if (!overrides.isEmpty()) overlay.tierOverrides = overrides;
         }
 
-        Object mobRulesRaw = yaml.get("mobRules");
-        if (mobRulesRaw instanceof Map<?, ?> rulesMap) {
-            Map<String, RPGMobsConfig.MobRule> rules = new LinkedHashMap<>();
-            for (Map.Entry<?, ?> entry : rulesMap.entrySet()) {
-                String key = String.valueOf(entry.getKey());
-                if (entry.getValue() instanceof Map<?, ?> ruleMap) {
-                    rules.put(key, parseMobRule(toStringKeyMap(ruleMap)));
-                }
+        Object disabledKeysRaw = yaml.get("disabledMobRuleKeys");
+        if (disabledKeysRaw instanceof List<?> disabledList) {
+            Set<String> disabledKeys = new LinkedHashSet<>();
+            for (Object item : disabledList) {
+                if (item != null) disabledKeys.add(String.valueOf(item));
             }
-            overlay.mobRules = rules;
-        }
-
-        Object mobRuleTreeRaw = yaml.get("mobRuleCategoryTree");
-        if (mobRuleTreeRaw instanceof Map<?, ?> treeMap) {
-            overlay.mobRuleCategoryTree = parseMobRuleCategory(toStringKeyMap(treeMap));
+            overlay.disabledMobRuleKeys = disabledKeys;
         }
 
         Object lootTplsRaw = yaml.get("lootTemplates");
@@ -510,13 +502,11 @@ public final class ConfigResolver {
             merged.environmentTierRules = new LinkedHashMap<>(base.environmentTierRules);
         }
 
-        if (overlay.mobRules != null) {
-            merged.mobRules = new LinkedHashMap<>(overlay.mobRules);
-            merged.mobRuleCategoryTree = overlay.mobRuleCategoryTree != null
-                    ? overlay.mobRuleCategoryTree : base.mobRuleCategoryTree;
-        } else {
-            merged.mobRules = new LinkedHashMap<>(base.mobRules);
-            merged.mobRuleCategoryTree = base.mobRuleCategoryTree;
+        merged.mobRules = new LinkedHashMap<>(base.mobRules);
+        merged.mobRuleCategoryTree = base.mobRuleCategoryTree;
+        if (overlay.disabledMobRuleKeys != null) {
+            merged.disabledMobRuleKeys = new LinkedHashSet<>(overlay.disabledMobRuleKeys);
+            merged.disabledMobRuleKeys.retainAll(merged.mobRules.keySet());
         }
 
         if (overlay.lootTemplates != null) {
@@ -706,20 +696,20 @@ public final class ConfigResolver {
     }
 
     private static RPGMobsConfig.LootTemplate parseLootTemplate(String name, Map<String, Object> map) {
-        RPGMobsConfig.LootTemplate tpl = new RPGMobsConfig.LootTemplate();
-        tpl.name = name;
-        tpl.linkedMobRuleKeys = getStringList(map, "linkedMobRuleKeys");
+        RPGMobsConfig.LootTemplate template = new RPGMobsConfig.LootTemplate();
+        template.name = name;
+        template.linkedMobRuleKeys = getStringList(map, "linkedMobRuleKeys");
         Object dropsRaw = map.get("drops");
         if (dropsRaw instanceof List<?> dropList) {
-            tpl.drops = new ArrayList<>();
+            template.drops = new ArrayList<>();
             for (Object drop : dropList) {
                 if (drop instanceof Map<?, ?> dropMap) {
                     RPGMobsConfig.ExtraDropRule rule = parseExtraDropRule(toStringKeyMap(dropMap));
-                    if (rule != null) tpl.drops.add(rule);
+                    if (rule != null) template.drops.add(rule);
                 }
             }
         }
-        return tpl;
+        return template;
     }
 
     private static RPGMobsConfig.LootTemplateCategory parseLootTemplateCategory(Map<String, Object> map) {

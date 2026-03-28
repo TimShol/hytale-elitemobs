@@ -6,6 +6,7 @@
       "Type": "Simple",
       "$Comment": "Wind-up  - 1.1s slam charge with Medium_Mace_Charged trail on weapon",
       "RunTime": 1.1,
+      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Mace",
         "ItemAnimationId": "SwingDownCharging",
@@ -17,14 +18,13 @@
             "TargetNodeName": "Origin_Projectile",
             "PositionOffset": { "Y": -0.2 }
           }
-        ],
-        "MovementEffects": { "DisableAll": true }
+        ]
       }
     },
     {
       "Type": "Selector",
       "$Comment": "Hit 1  - SwingLeftCharged side swing",
-      "RunTime": 0.15,
+      "RunTime": 0.40,
       "Effects": {
         "ItemPlayerAnimationsId": "Mace",
         "ItemAnimationId": "SwingLeftCharged",
@@ -94,8 +94,7 @@
                 "TargetNodeName": "Origin_Projectile",
                 "PositionOffset": { "Y": -0.2 }
               }
-            ],
-            "MovementEffects": { "DisableAll": true }
+            ]
           },
           "Selector": { "Id": "AOECircle", "Offset": { "Z": -1.5 }, "Range": 3.0 },
           "HitEntity": {
@@ -108,11 +107,11 @@
       "Type": "Simple",
       "$Comment": "Recovery  - Idle recovery, movement locked",
       "RunTime": 0.5,
+      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Mace",
         "ItemAnimationId": "Idle",
-        "ClearAnimationOnFinish": true,
-        "MovementEffects": { "DisableAll": true }
+        "ClearAnimationOnFinish": true
       }
     }
   ]

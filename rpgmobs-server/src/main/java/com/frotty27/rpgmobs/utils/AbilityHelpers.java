@@ -2,25 +2,32 @@ package com.frotty27.rpgmobs.utils;
 
 import com.frotty27.rpgmobs.components.ability.EnrageAbilityComponent;
 import com.frotty27.rpgmobs.components.ability.WeaponSwappable;
+import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.features.RPGMobsAbilityFeatureHelpers;
+import com.frotty27.rpgmobs.logs.RPGMobsLogLevel;
+import com.frotty27.rpgmobs.logs.RPGMobsLogger;
+import com.frotty27.rpgmobs.plugin.RPGMobsPlugin;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.logger.HytaleLogger;
+import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.protocol.InteractionType;
 import com.hypixel.hytale.server.core.entity.InteractionChain;
 import com.hypixel.hytale.server.core.entity.InteractionManager;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.interaction.InteractionModule;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.RootInteraction;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Random;
+import static com.frotty27.rpgmobs.utils.Constants.*;
 
-import static com.frotty27.rpgmobs.utils.ClampingHelpers.clamp01;
 
 public final class AbilityHelpers {
 
@@ -76,7 +83,7 @@ public final class AbilityHelpers {
         ItemStack previousItem = inventory.getHotbar().getItemStack(activeSlot);
 
         inventory.getHotbar().setItemStackForSlot(activeSlot, replacementItem);
-        inventory.markChanged();
+        npcEntity.invalidateEquipmentNetwork();
 
         swappable.setSwapActive(true);
         swappable.setSwapSlot(activeSlot);
@@ -105,7 +112,7 @@ public final class AbilityHelpers {
         if (slot == Inventory.INACTIVE_SLOT_INDEX) slot = 0;
 
         inventory.getHotbar().setItemStackForSlot(slot, swappable.getSwapPreviousItem());
-        inventory.markChanged();
+        npcEntity.invalidateEquipmentNetwork();
 
         swappable.setSwapActive(false);
         swappable.setSwapSlot((byte) -1);
@@ -126,7 +133,7 @@ public final class AbilityHelpers {
         if (utilItem == null || utilItem.isEmpty()) return;
 
         utility.setItemStackForSlot((short) 0, null);
-        inventory.markChanged();
+        npcEntity.invalidateEquipmentNetwork();
 
         enrageAbility.utilitySwapActive = true;
         enrageAbility.utilitySwapPreviousItem = utilItem;
@@ -143,24 +150,69 @@ public final class AbilityHelpers {
         if (utility == null || utility.getCapacity() < 1) return;
 
         utility.setItemStackForSlot((short) 0, enrageAbility.utilitySwapPreviousItem);
-        inventory.markChanged();
+        npcEntity.invalidateEquipmentNetwork();
 
         enrageAbility.utilitySwapActive = false;
         enrageAbility.utilitySwapPreviousItem = null;
     }
 
-    public static float rollPercentInRange(Random random, float minPercent, float maxPercent, float fallback) {
-        if (random == null) return fallback;
+    private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
-        float min = clamp01(minPercent);
-        float max = clamp01(maxPercent);
-        if (max < min) {
-            float tmp = min;
-            min = max;
-            max = tmp;
+    public static float calculateDistance(Ref<EntityStore> entityRef, Ref<EntityStore> targetRef,
+                                          Store<EntityStore> store) {
+        TransformComponent mobTransform = store.getComponent(entityRef, TransformComponent.getComponentType());
+        TransformComponent targetTransform = store.getComponent(targetRef, TransformComponent.getComponentType());
+        if (mobTransform == null || targetTransform == null) return Float.MAX_VALUE;
+
+        Vector3d mobPos = mobTransform.getPosition();
+        Vector3d targetPos = targetTransform.getPosition();
+        double dx = targetPos.getX() - mobPos.getX();
+        double dy = targetPos.getY() - mobPos.getY();
+        double dz = targetPos.getZ() - mobPos.getZ();
+        return (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+    public static String resolveWeaponVariant(RPGMobsPlugin plugin, Ref<EntityStore> npcRef,
+                                              Store<EntityStore> entityStore) {
+        String weaponId = RPGMobsAbilityFeatureHelpers.resolveWeaponId(npcRef, entityStore);
+        if (weaponId.isEmpty()) {
+            RPGMobsLogger.debug(LOGGER, "[WeaponVariant] weaponId empty, defaulting to swords",
+                    RPGMobsLogLevel.INFO);
+            return VARIANT_SWORDS;
         }
-        if (max <= 0f) return Math.max(0.01f, fallback);
-        if (max == min) return max;
-        return min + random.nextFloat() * (max - min);
+
+        RPGMobsConfig config = plugin.getConfig();
+        if (config == null || config.gearConfig == null || config.gearConfig.weaponCategoryTree == null) {
+            RPGMobsLogger.debug(LOGGER, "[WeaponVariant] no config/gearConfig, defaulting to swords",
+                    RPGMobsLogLevel.INFO);
+            return VARIANT_SWORDS;
+        }
+
+        RPGMobsConfig.GearCategory weaponTree = config.gearConfig.weaponCategoryTree;
+        for (RPGMobsConfig.GearCategory category : weaponTree.children) {
+            if (category.itemKeys.contains(weaponId)) {
+                String variant = CATEGORY_TO_VARIANT.get(category.name);
+                if (variant != null) {
+                    if (VARIANT_CLUBS.equals(variant) && weaponId.toLowerCase().contains("flail")) {
+                        RPGMobsLogger.debug(LOGGER,
+                                "[WeaponVariant] weaponId=%s -> category=%s -> variant=clubsFlail",
+                                RPGMobsLogLevel.INFO, weaponId, category.name);
+                        return VARIANT_CLUBS_FLAIL;
+                    }
+                    RPGMobsLogger.debug(LOGGER,
+                            "[WeaponVariant] weaponId=%s -> category=%s -> variant=%s",
+                            RPGMobsLogLevel.INFO, weaponId, category.name, variant);
+                    return variant;
+                }
+                RPGMobsLogger.debug(LOGGER,
+                        "[WeaponVariant] weaponId=%s found in category=%s but no variant mapping",
+                        RPGMobsLogLevel.WARNING, weaponId, category.name);
+            }
+        }
+
+        RPGMobsLogger.debug(LOGGER,
+                "[WeaponVariant] weaponId=%s not found in any category, defaulting to swords",
+                RPGMobsLogLevel.WARNING, weaponId);
+        return VARIANT_SWORDS;
     }
 }

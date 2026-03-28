@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
  * evaluation thread without a World reference.
  *
  * <p>Common ability IDs: charge_leap, dodge_roll, multi_slash_short, multi_slash_medium,
- * multi_slash_long, war_cry, enrage, volley, heal_leap, undead_summon.
+ * multi_slash_long, enrage, volley, heal_leap, undead_summon.
  *
  * @since 1.0.0
  */

@@ -91,8 +91,8 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
     }
 
     void processOnDeath(Ref<EntityStore> ref, DeathComponent death, Store<EntityStore> store) {
-        RPGMobsConfig cfg = plugin.getConfig();
-        if (cfg == null) return;
+        RPGMobsConfig config = plugin.getConfig();
+        if (config == null) return;
 
         NPCEntity npc = store.getComponent(ref, Constants.NPC_COMPONENT_TYPE);
         if (npc == null) return;

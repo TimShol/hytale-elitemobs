@@ -105,19 +105,8 @@ public final class ConfigWriter {
             map.put("tierOverrides", toMap);
         }
 
-        if (overlay.mobRules != null) {
-            if (overlay.mobRules.isEmpty()) {
-                map.put("mobRules", new LinkedHashMap<>());
-            } else {
-                Map<String, Object> rulesMap = new LinkedHashMap<>();
-                for (Map.Entry<String, RPGMobsConfig.MobRule> entry : overlay.mobRules.entrySet()) {
-                    rulesMap.put(entry.getKey(), mobRuleToMap(entry.getValue()));
-                }
-                map.put("mobRules", rulesMap);
-            }
-        }
-        if (overlay.mobRuleCategoryTree != null) {
-            map.put("mobRuleCategoryTree", mobRuleCategoryToMap(overlay.mobRuleCategoryTree));
+        if (overlay.disabledMobRuleKeys != null) {
+            map.put("disabledMobRuleKeys", new ArrayList<>(overlay.disabledMobRuleKeys));
         }
 
         if (overlay.lootTemplates != null) {

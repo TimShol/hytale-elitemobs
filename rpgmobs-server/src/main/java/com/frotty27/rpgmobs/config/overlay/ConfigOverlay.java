@@ -3,10 +3,7 @@ package com.frotty27.rpgmobs.config.overlay;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public final class ConfigOverlay {
 
@@ -62,8 +59,7 @@ public final class ConfigOverlay {
     public @Nullable Double minionXPMultiplier = null;
 
     public @Nullable Map<String, TierOverride> tierOverrides = null;
-    public @Nullable Map<String, RPGMobsConfig.MobRule> mobRules = null;
-    public RPGMobsConfig.@Nullable MobRuleCategory mobRuleCategoryTree = null;
+    public @Nullable Set<String> disabledMobRuleKeys = null;
 
     public @Nullable ConfigOverlay customPreset = null;
 
@@ -143,8 +139,7 @@ public final class ConfigOverlay {
 
         if (!Objects.equals(a.tierOverrides, b.tierOverrides)) return false;
 
-        if (!Objects.equals(a.mobRules, b.mobRules)) return false;
-        if (!Objects.equals(a.mobRuleCategoryTree, b.mobRuleCategoryTree)) return false;
+        if (!Objects.equals(a.disabledMobRuleKeys, b.disabledMobRuleKeys)) return false;
 
         if (!Objects.equals(a.lootTemplates, b.lootTemplates)) return false;
         return Objects.equals(a.lootTemplateCategoryTree, b.lootTemplateCategoryTree);

@@ -29,7 +29,6 @@ public final class RPGMobsLogger {
         switch (level) {
             case INFO -> logger.atInfo().log("%s", formattedMessage);
             case WARNING -> logger.atWarning().log("%s", formattedMessage);
-            case SEVERE -> logger.atSevere().log("%s", formattedMessage);
         }
     }
 

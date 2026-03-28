@@ -2,72 +2,58 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
-## [3.260219.2] - 2026-03-16
+## [4.260326.0] - 2026-03-28
 
 ### Added
 
-- **7 new combat abilities** bringing the total from 3 to 10:
-  - **Dodge Roll**  -  reactive dodge on damage (all tiers) and preemptive dodge when T4+ intelligence detects the target attacking. Direction-based lateral dash with dust particles and weapon trails. Grants brief invulnerability during the roll
-  - **Multi Slash Short**  -  1-2 hit quick strikes with 3 random variations per weapon type. Available to all tiers
-  - **Multi Slash Medium**  -  2-4 hit combos with 2 random variations per weapon type. Available T2+
-  - **Multi Slash Long**  -  4-6 hit full combos with 1 variation per weapon type. Available T3+
-  - **War Cry**  -  staff-channeling AOE buff/debuff with healing aura and dark orbs. The mob temporarily swaps to a staff during the cast. Available T3+
-  - **Enrage**  -  berserk fist-fighting transformation. The mob de-equips its weapon and enters a 20-second rapid punch chain (3 random variations), then dies from exhaustion with normal loot/XP drops. Available T2+
-  - **Volley**  -  ranged projectile burst for bow/crossbow/gun wielders. Available T3+
-- **Flail weapon type** with custom swing sounds and Multi Slash template support
-- **8 weapon-specific Multi Slash variants** (Swords, Longswords, Daggers, Battleaxes, Axes, Maces, Clubs, Spears) with unique animations, sounds, trails, and independent per-variant config values
-- **48 unique combo designs** across all weapon types and Multi Slash lengths, each with weapon-appropriate animations and visual effects
-- **8 weapon-specific Charge Leap sound variants**  -  wind-up, launch, and slam sounds now match the equipped weapon type
-- **T4-T5 combat intelligence system**  -  higher-tier elites analyze their target's weapon type, shield, and combat state (attacking, charging, blocking) in real-time
-- **Combat personalities** (Aggressive, Tactical, Strategic, Berserker) assigned to T4+ elites at spawn. Each personality has preferred and avoided ability tags that influence trigger priority
-- **NPC combat coordination system**  -  groups of elites targeting the same entity dynamically assign combat roles (Engage, Flank, Support, Pressure, Recover) to create varied group combat behavior
-- **Personality-based ability filtering**  -  each personality grants a coherent 1-4 ability set instead of all abilities, preventing chaotic combat in group encounters
-- **Global ability cooldown**  -  1-3 second random cooldown between abilities prevents ability spam
-- **Charged attack detection**  -  dodge roll and player attack detection distinguish between the charge-up phase and the actual attack release. Mobs only react when the attack fires, not during charging
-- **Player attack proximity detection**  -  new trigger sources detect when a player swings or releases a charged attack near an elite
-- **Debug nameplate overlay**  -  shows real-time personality, coordination role, enabled abilities, and current activity on NPC nameplates when debug mode is enabled
-- **Global kill switch**  -  `globalEnabled` in `core.yml` disables RPGMobs across all worlds unconditionally, regardless of per-world overlays
-- **Weapon category override on spawn command**  -  `/rpgmobs spawn <role> <tier> [weaponCategory]` now accepts an optional weapon type
-- **Heal Leap mob type filtering**  -  configurable deny/allow lists prevent undead mobs from drinking heal potions while allowing exceptions for mage types
-- **Admin UI: Multi Slash variant selector**  -  8-button variant picker for viewing and editing per-variant config
-- **Admin UI: War Cry staff item picker**  -  item picker for selecting the staff item used during War Cry
-- **Admin UI: Heal Leap deny/allow lists**  -  add/delete interface for denied mob prefixes and allowed exceptions
-- **Ability tag system**  -  abilities declare classification tags and trigger sources for tag-based dispatch and personality matching
+- **6 new combat abilities** bringing the total from 3 to 9:
+  - **Dodge Roll**  -  elites dodge sideways when you swing at them. Higher tiers dodge more often, and charged attacks trigger a boosted dodge chance. The dodge happens instantly and won't wait for other ability cooldowns
+  - **Multi Slash Short**  -  quick 1-2 hit strikes, 3 random variations per weapon. All tiers
+  - **Multi Slash Medium**  -  aggressive 2-4 hit combos, 2 variations per weapon. T2+
+  - **Multi Slash Long**  -  devastating 4-6 hit full combos, 1 variation per weapon. T3+
+  - **Enrage**  -  the elite throws away its weapon and goes berserk, punching rapidly for 10 seconds before dying from exhaustion. Drops normal loot. Only living humanoids (Outlanders, Goblins, Trorks). T2+
+  - **Volley**  -  ranged elites fire a burst of projectiles. T3+
+- **48 unique weapon combos**  -  every melee weapon type (Swords, Longswords, Daggers, Battleaxes, Axes, Maces, Clubs, Spears) has its own set of combo animations with matching sounds and visual trails
+- **Smart combat AI**  -  elites now use Hytale's CombatActionEvaluator with 4 distinct fighting styles:
+  - **Disciplined**  -  steady, measured attacks with long shield blocks
+  - **Berserker**  -  fast, aggressive, barely retreats
+  - **Tactical**  -  circles around you, retreats early, flanks at T5
+  - **Chaotic**  -  unpredictable timing, swarms then scatters
+- **Reactive parry**  -  elites with shields can block your attacks. Higher tiers parry more often (T2: 15% up to T5: 70%)
+- **Per-tier movement speed**  -  T1 elites rush in fast, T5 elites approach with a slow, menacing walk
+- **Global ability cooldown**  -  elites wait 1-3 seconds between abilities so they don't chain them back to back. Dodge roll and parry bypass this so elites can still defend themselves
+- **Pickaxes as weapons**  -  pickaxe-wielding NPCs now attack with proper Pickaxe animations
+- **Charge Leap weapon sounds**  -  the charge-up, launch, and slam now match the weapon the elite is holding
+- **(Deubg mode) Weapon category on spawn command**  -  `/rpgmobs spawn Skeleton 5 --weapon longsword` spawns a T5 Skeleton with a longsword
+- **Debug nameplate**  -  enable debug mode to see each elite's enabled abilities, current activity, and cooldowns above their head
+- **Master kill switch**  -  one toggle in `core.yml` to disable RPGMobs across all worlds instantly
+
+### Admin UI
+
+- **Combat AI tab**  -  new tab with 3 sections to customize how elites fight:
+  - **Combat Styles**  -  adjust attack speed, retreat behavior, and group tactics for each combat personality
+  - **Tier Behavior**  -  toggle which tactics each tier unlocks (shield blocking, stepping back, retreating, watching allies, flanking)
+  - **Weapon Combat**  -  configure attack chains, animation sets, sounds (with preview), and visual effects per weapon type. Supports modded weapons and sounds from other asset packs
+- **Global Mob Rules**  -  new sidebar section. All mob rules are now edited in one place with per-mob combat style selection
+- **Per-world mob rules**  -  simplified ON/OFF toggles per world. Toggle individual rules or entire categories at once. Shows "X of Y rules active" summary
+- **Asset picker popup**  -  browse all loaded sounds, animations, trails, and particles by pack name. Click a sound to hear it
+- **Save & Reload is fast now**  -  no more disconnects when saving combat AI changes
 
 ### Changed
 
-- Feature system standardized with `AbstractGatedAbilityFeature` base class  -  shared gate evaluation, chance roll, and component lifecycle with final `apply()`/`reconcile()` methods
-- Feature cleanup contract  -  each feature removes its own components via `cleanup()`. SpawnSystem de-elite path simplified
-- Config pipeline standardized with declarative `OverlayFieldRegistry`  -  adding a new overlay field now requires only 1 registry entry instead of 7 edits across 5 files
-- Self-describing ability config  -  ability features declare their config fields via descriptors, eliminating per-ability switch blocks in the admin UI
-- All Multi Slash wind-up timings standardized with minimum counter windows: Short 1.1s, Medium 1.6s, Long 2.1s
-- All ability recovery animations changed from Idle to Guard (defensive stance)
-- Enrage reworked from a short visual buff to a 20-second berserk fist-fighting mode with exhaustion death
-- War Cry reworked from roar-based to staff-channeling design with healing aura and dark orb debuff
-- Maximum summoned minions per summoner reduced from 7 to 4
-- Dodge roll force increased from 200 to 300
-- Reconciliation always re-evaluates mob rules unconditionally  -  adding or changing mob rules immediately affects already-spawned elites
-- Weapon swap restoration consolidated into a single generic `finalizeWeaponSwap()` method
+- Combat AI completely overhauled  -  elites now fight using Hytale's native combat system with faction-appropriate behavior instead of a simple attack loop
+- Mob rules are now global  -  edit them once, enable/disable per world
+- Heal Leap restricted to living humanoids (Outlanders, Goblins, Trorks)  -  undead mobs no longer drink healing potions
+- Enrage restricted to Outlanders, Goblins, and Trorks  -  skeletons and zombies can't go berserk
+- All ability wind-ups now give you a visible counter window  -  Short: 1.1s, Medium: 1.6s, Long: 2.1s
+- Elites return to a Guard stance after abilities instead of standing idle
+- NPC and item lists are now detected automatically from loaded asset packs  -  modded NPCs and items show up without rebuilding
+- Hytale Update 4 compatibility
 
 ### Fixed
 
-- Abilities only triggering once per mob lifetime  -  ability lock component mutations were not persisted via `commandBuffer.replaceComponent()`
-- Multi Slash never triggering on any NPC  -  tier component read from entity store before command buffer flush
-- NPCs permanently frozen after ability use  -  `DisableAll: true` in movement effects persisted after interaction chain ended
-- Weapon not restored after War Cry, Heal Leap, or Undead Summon  -  missing commit cases and finalize methods
-- Abilities could double-trigger due to race condition between evaluation and deferred chain start
-- Elite-vs-elite aggro  -  elites and their minions no longer target or fight each other. AI markers are now properly cleared
-- Dodge roll making mobs permanently invulnerable  -  removed engine-level `Invulnerable: true` from templates
-- Dodge roll not cancelling damage during invulnerability  -  eval store vs world store mismatch for cooldown tracking
-- Abilities lost after server restart  -  ability components now properly persist across chunk unload/reload
-- Enrage triggering on ranged mobs  -  now restricted to melee-only
-- Summoned minions incorrectly invulnerable on spawn
-- Command-spawned elites persisting in disabled worlds  -  `applyTierFromCommand()` now checks enabled state
-- Invalid trail, particle, and sound asset IDs causing server crash on startup  -  full asset audit with verified replacements
-- Invalid animation IDs causing mobs to stand motionless during abilities  -  all animations verified against Hytale asset files
-- Battleaxe Multi Slash hitbox ranges oversized  -  reduced to appropriate values
-- All weapon variants now use weapon-appropriate sounds instead of defaulting to sword sounds
-- Duplicate logger prefixes in debug output
+- Elites spawned via `/rpgmobs spawn` persisting in disabled worlds  -  they now correctly de-elite when the world has RPGMobs disabled
+- Heal Leap could be applied to undead mobs like Skeletons  -  now properly restricted to living humanoids
 
 ## [3.260219.1] - 2026-03-05
 
