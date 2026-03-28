@@ -1,16 +1,19 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "name": "RPGMobs",
-  "theme": "willow",
+  "name": "RPG Mobs",
+  "theme": "palm",
   "logo": {
     "dark": "/images/logo-dark.svg",
     "light": "/images/logo-light.svg"
   },
   "favicon": "/images/favicon.svg",
   "colors": {
-    "primary": "#23342C",
+    "primary": "#2f6b59",
     "light": "#C9A86A",
-    "dark": "#0E1511"
+    "dark": "#0E1511",
+    "background": {
+      "dark": "#0f1713"
+    }
   },
   "navigation": {
     "groups": [
