@@ -26,5 +26,5 @@ ext {
     hytaleJar = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/install/release/package/game/${property('game_build')}/Server/HytaleServer.jar")
     userModsDir = file("${System.getProperty('user.home')}/AppData/Roaming/Hytale/UserData/Mods")
     nameplateBuilderApiJar = file("${rootDir}/../NameplateBuilder/nameplate-api/build/libs/NameplateBuilder-API-1.0.0.jar")
-    rpgLevelingJar = file("${rootDir}/libs/RPGLeveling-0.2.9.jar")
+    rpgLevelingJar = file("${rootDir}/libs/RPGLeveling-0.3.2.jar")
 }
