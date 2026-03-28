@@ -38,6 +38,9 @@ bin/
 ### VS Code ###
 .vscode/
 
+### External Dependencies ###
+libs/
+
 # Hytale Generated Assets
 Server/
 
