@@ -42,8 +42,7 @@ public final class RPGMobsNameplateService {
     public void describeSegments(JavaPlugin plugin) {
         NameplateAPI.describe(plugin, SEGMENT_PREFIX, DISPLAY_PREFIX, SegmentTarget.NPCS, EXAMPLE_PREFIX);
         NameplateAPI.describe(plugin, SEGMENT_TIER, DISPLAY_TIER, SegmentTarget.NPCS, EXAMPLE_TIER);
-        NameplateAPI.describe(plugin, SEGMENT_NAME, DISPLAY_NAME, SegmentTarget.NPCS, EXAMPLE_NAME);
-        NameplateAPI.describe(plugin, SEGMENT_DEBUG, DISPLAY_DEBUG, SegmentTarget.NPCS, EXAMPLE_DEBUG);
+        // Elite Type and Debug Info removed — Entity Name is now a built-in NameplateBuilder segment
     }
 
     public void applyOrUpdateNameplate(RPGMobsConfig config,
@@ -103,7 +102,8 @@ public final class RPGMobsNameplateService {
 
         setOrRemove(data, SEGMENT_PREFIX, prefixText);
         setOrRemove(data, SEGMENT_TIER, tierText);
-        setOrRemove(data, SEGMENT_NAME, nameText);
+        // Set built-in entity-name from NameplateBuilder with properly formatted name
+        setOrRemove(data, "entity-name", nameText);
 
         if (isNew) {
             commandBuffer.putComponent(entityRef, type, data);
@@ -124,8 +124,6 @@ public final class RPGMobsNameplateService {
         if (data != null) {
             data.removeText(SEGMENT_PREFIX);
             data.removeText(SEGMENT_TIER);
-            data.removeText(SEGMENT_NAME);
-            data.removeText(SEGMENT_DEBUG);
         }
     }
 

@@ -57,15 +57,32 @@ public class ModelScalingSystem extends EntityTickingSystem<EntityStore> impleme
         RPGMobsTierComponent tierComp = store.getComponent(npcRef, plugin.getRPGMobsComponentType());
         if (tierComp == null) return;
 
-        boolean needsReconcile = plugin.shouldReconcileThisTick()
-                || tierComp.lastReconciledAt < plugin.getConfigReloadCount();
-        if (!needsReconcile) return;
-
         NPCEntity npcEntity = store.getComponent(npcRef, NPC_COMPONENT_TYPE);
         String worldName = (npcEntity != null && npcEntity.getWorld() != null) ? npcEntity.getWorld().getName() : null;
         ResolvedConfig resolved = plugin.getResolvedConfig(worldName);
 
         RPGMobsModelScalingComponent modelComp = store.getComponent(npcRef, plugin.getModelScalingComponentType());
+
+        // Apply initial scaling before reconcile gate (mirrors HealthScalingSystem pattern)
+        if (modelComp != null && !modelComp.scaleApplied) {
+            if (resolved.enableModelScaling) {
+                float targetBaseScale = getBaseScaleMultiplier(resolved, tierComp.tierIndex);
+                float scaleWithVariance = applyVariance(targetBaseScale, resolved.modelScaleVariance);
+                boolean scaled = tryScaleModelComponent(npcRef, store, commandBuffer, scaleWithVariance, false);
+                if (scaled) {
+                    modelComp.scaleApplied = true;
+                    modelComp.appliedScale = scaleWithVariance;
+                    modelComp.configuredBaseScale = targetBaseScale;
+                    modelComp.resyncVerified = true;
+                    commandBuffer.replaceComponent(npcRef, plugin.getModelScalingComponentType(), modelComp);
+                }
+            }
+            return;
+        }
+
+        boolean needsReconcile = plugin.shouldReconcileThisTick()
+                || tierComp.lastReconciledAt < plugin.getConfigReloadCount();
+        if (!needsReconcile) return;
 
         if (!resolved.enableModelScaling) {
 
