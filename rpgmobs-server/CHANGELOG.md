@@ -2,6 +2,12 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [4.260326.2] - 2026-03-30
+
+### Fixed
+
+- Crash from cross-world entity refs in PlayerAttackTracker  -  dodge roll and parry evaluation iterated refs from all worlds, causing "Incorrect store for entity reference" on multi-world servers
+
 ## [4.260326.1] - 2026-03-30
 
 ### Fixed
