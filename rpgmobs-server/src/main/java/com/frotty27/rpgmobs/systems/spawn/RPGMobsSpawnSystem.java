@@ -1,6 +1,7 @@
 package com.frotty27.rpgmobs.systems.spawn;
 
 import com.frotty27.rpgmobs.api.events.RPGMobsSpawnedEvent;
+import com.frotty27.rpgmobs.api.spawn.SpawnResult;
 import com.frotty27.rpgmobs.assets.TemplateNameGenerator;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.*;
@@ -604,6 +605,88 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         }
 
         return true;
+    }
+
+    /**
+     * Applies an RPGMobs elite tier to an existing NPC entity, for use by the public Spawn API.
+     *
+     * <p>Unlike {@link #applyTierFromCommand}, this method does not require debug mode,
+     * fires a cancellable {@code RPGMobsSpawnedEvent} and respects cancellation, and returns
+     * a typed failure reason instead of a boolean.</p>
+     *
+     * @param config                  the current RPGMobs config
+     * @param npcRef                  reference to the NPC entity
+     * @param entityStore             the entity store to read components from
+     * @param commandBuffer           buffer for component mutations
+     * @param npcEntity               the NPC entity component
+     * @param tierIndex               tier index (0-4, will be clamped)
+     * @param weaponCategoryOverride  weapon category override, or {@code null} for default
+     * @return {@code null} on success, or a {@link SpawnResult.Reason} on failure
+     * @since 1.3.0
+     */
+    public SpawnResult.@Nullable Reason applyTierForAPI(RPGMobsConfig config, Ref<EntityStore> npcRef,
+                                                        Store<EntityStore> entityStore,
+                                                        CommandBuffer<EntityStore> commandBuffer,
+                                                        NPCEntity npcEntity, int tierIndex,
+                                                        @Nullable String weaponCategoryOverride) {
+        if (config == null) return SpawnResult.Reason.CONFIG_NOT_LOADED;
+        if (npcEntity == null) return SpawnResult.Reason.TIER_APPLY_FAILED;
+
+        String roleName = npcEntity.getRoleName();
+        if (roleName == null || roleName.isBlank()) return SpawnResult.Reason.TIER_APPLY_FAILED;
+
+        int clampedTierIndex = clampTierIndex(tierIndex);
+
+        String worldName = npcEntity.getWorld() != null ? npcEntity.getWorld().getName() : null;
+        ResolvedConfig resolvedForMobRule = plugin.getResolvedConfig(worldName);
+
+        if (!resolvedForMobRule.enabled) return SpawnResult.Reason.RPGMOBS_DISABLED_IN_WORLD;
+
+        MobRuleMatcher.MatchResult matchResult = mobRuleMatcher.findBestMatch(resolvedForMobRule.mobRules, roleName);
+        if (matchResult == null) return SpawnResult.Reason.NO_MOB_RULE;
+
+        if (resolvedForMobRule.disabledMobRuleKeys.contains(matchResult.key())) {
+            return SpawnResult.Reason.MOB_RULE_DISABLED;
+        }
+
+        RPGMobsTierComponent newTierComponent = new RPGMobsTierComponent();
+        newTierComponent.tierIndex = clampedTierIndex;
+        newTierComponent.matchedRuleKey = matchResult.key();
+        newTierComponent.originalRoleName = roleName;
+        newTierComponent.lastReconciledAt = plugin.getConfigReloadCount();
+
+        equipmentService.buildAndApply(npcEntity, config, clampedTierIndex, matchResult.mobRule(),
+                resolvedForMobRule.droppedGearDurabilityMin, resolvedForMobRule.droppedGearDurabilityMax,
+                weaponCategoryOverride);
+
+        commandBuffer.putComponent(npcRef, plugin.getRPGMobsComponentType(), newTierComponent);
+
+        createNewSchemaComponents(config, npcRef, commandBuffer, npcEntity);
+
+        featureRegistry.applyAll(plugin, config, resolvedForMobRule, npcRef, entityStore, commandBuffer, newTierComponent, roleName);
+
+        requestCaeRoleChangeIfAvailable(npcRef, npcEntity, entityStore, clampedTierIndex, matchResult.mobRule(), matchResult.key());
+
+        TransformComponent spawnTransform = entityStore.getComponent(npcRef, TransformComponent.getComponentType());
+        var spawnedEvent = new RPGMobsSpawnedEvent(npcEntity.getWorld(),
+                                                   npcRef,
+                                                   clampedTierIndex,
+                                                   roleName,
+                                                   spawnTransform != null ? spawnTransform.getPosition().clone() : new Vector3d()
+        );
+        plugin.getEventBus().fire(spawnedEvent);
+        if (spawnedEvent.isCancelled()) return SpawnResult.Reason.EVENT_CANCELLED;
+
+        RPGMobsLogger.debug(LOGGER,
+                            "Elite applied (API): role=%s tier=%d ruleKey=%s weaponCategory=%s",
+                            RPGMobsLogLevel.INFO,
+                            roleName,
+                            clampedTierIndex,
+                            matchResult.key(),
+                            weaponCategoryOverride != null ? weaponCategoryOverride : "any"
+        );
+
+        return null;
     }
 
     private void requestCaeRoleChangeIfAvailable(Ref<EntityStore> npcRef, NPCEntity npcEntity,

@@ -113,6 +113,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
     protected void setup() {
         RPGMobsAPI.setEventBus(eventBus);
         RPGMobsAPI.setQueryAPI(new RPGMobsQueryAPI(this));
+        RPGMobsAPI.setSpawnAPI(new com.frotty27.rpgmobs.services.RPGMobsSpawnAPI(this));
 
         loadOrCreateRPGMobsConfig();
 

@@ -2,6 +2,18 @@
 
 All notable changes to RPGMobs API will be documented in this file.
 
+## [1.3.0] - 2026-03-30
+
+### Added
+
+- **Spawn API**  -  new `IRPGMobsSpawnAPI` interface for programmatically creating RPGMobs elites from other mods
+  - `RPGMobsAPI.spawn()` accessor  -  static entry point, same pattern as `query()`
+  - `spawnElite(World, String, int, Vector3d, Vector3f, String)`  -  creates an NPC and promotes it to an elite in one call
+  - `applyEliteTier(World, Ref, int, String)`  -  promotes an already-spawned NPC to an elite
+  - `SpawnResult` sealed interface with `Success(entityRef, tier, roleName)` and `Failure(reason, message)`
+  - 8 typed failure reasons: `NOT_INITIALIZED`, `CONFIG_NOT_LOADED`, `NPC_SPAWN_FAILED`, `NO_MOB_RULE`, `MOB_RULE_DISABLED`, `RPGMOBS_DISABLED_IN_WORLD`, `EVENT_CANCELLED`, `TIER_APPLY_FAILED`
+  - All methods must be called on the world thread  -  use `world.execute()` from other threads
+
 ## [1.2.0] - 2026-03-28
 
 ### Added

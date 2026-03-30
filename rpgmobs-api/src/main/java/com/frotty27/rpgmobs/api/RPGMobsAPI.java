@@ -1,6 +1,7 @@
 package com.frotty27.rpgmobs.api;
 
 import com.frotty27.rpgmobs.api.query.IRPGMobsQueryAPI;
+import com.frotty27.rpgmobs.api.spawn.IRPGMobsSpawnAPI;
 
 /**
  * Main entry point for the RPGMobs public API.
@@ -33,6 +34,7 @@ public final class RPGMobsAPI {
 
     private static volatile IRPGMobsEventBus eventBus;
     private static volatile IRPGMobsQueryAPI queryAPI;
+    private static volatile IRPGMobsSpawnAPI spawnAPI;
 
     private RPGMobsAPI() {
     }
@@ -53,6 +55,16 @@ public final class RPGMobsAPI {
      */
     public static void setQueryAPI(IRPGMobsQueryAPI api) {
         RPGMobsAPI.queryAPI = api;
+    }
+
+    /**
+     * Sets the spawn API implementation. Called internally by RPGMobs during startup.
+     *
+     * @param api the spawn API implementation
+     * @since 1.3.0
+     */
+    public static void setSpawnAPI(IRPGMobsSpawnAPI api) {
+        RPGMobsAPI.spawnAPI = api;
     }
 
     /**
@@ -89,6 +101,22 @@ public final class RPGMobsAPI {
      */
     public static IRPGMobsQueryAPI query() {
         IRPGMobsQueryAPI current = queryAPI;
+        if (current == null) {
+            throw new RPGMobsNotInitializedException("RPGMobs API not initialized. " + "Ensure RPGMobs is installed and your manifest.json declares " + "\"Frotty27:RPGMobs\": \"*\" in Dependencies.");
+        }
+        return current;
+    }
+
+    /**
+     * Returns the spawn API for programmatically creating RPGMobs elites.
+     *
+     * @return the spawn API instance
+     * @throws RPGMobsNotInitializedException if RPGMobs has not finished loading
+     * @see IRPGMobsSpawnAPI
+     * @since 1.3.0
+     */
+    public static IRPGMobsSpawnAPI spawn() {
+        IRPGMobsSpawnAPI current = spawnAPI;
         if (current == null) {
             throw new RPGMobsNotInitializedException("RPGMobs API not initialized. " + "Ensure RPGMobs is installed and your manifest.json declares " + "\"Frotty27:RPGMobs\": \"*\" in Dependencies.");
         }
