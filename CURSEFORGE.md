@@ -48,7 +48,7 @@ Elites use an event-driven ability system  -  abilities trigger contextually bas
 
 *   **Charge Leap**  -  Gap-closing slam with per-weapon sounds
 *   **Heal Leap**  -  Defensive retreat with potion healing (living humanoids only)
-*   **Undead Summon**  -  Faction-appropriate reinforcements
+*   **Undead Summon**  -  Role-based reinforcements
 *   **Dodge Roll**  -  Reactive/preemptive lateral dodge bypassing global cooldown
 *   **Multi Slash Short**  -  1-2 hit quick strikes (3 random variations per weapon)
 *   **Multi Slash Medium**  -  2-4 hit combos (2 variations per weapon)

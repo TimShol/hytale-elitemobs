@@ -157,15 +157,15 @@ undead_summon:
 | `excludeFromSummonPool` | Roles excluded from the auto-generated summon pool. Prevents summoners from summoning themselves (e.g., Trork_Shaman won't summon other Shamans). |
 | `roleIdentifiers` | List of role name fragments used to pick which variant of minion gets summoned. The summoner's own role is checked against this list to pick a matching variant. For example, a Goblin_Duke matches `"Goblin_"` and will summon other goblin NPCs. |
 
-### Faction-Based Summoning
+### Role-Based Summoning
 
-The summon system automatically builds per-faction summon pools from the mob rules. When a summoner's role matches a `roleIdentifier`, only NPCs matching that same identifier are added to its summon pool:
+The summon system automatically builds per-role summon pools from the mob rules. When a summoner's role matches a `roleIdentifier`, only NPCs matching that same identifier are added to its summon pool:
 
 - **Undead summoners** (skeletons, zombies, wraiths) summon other undead variants
 - **Goblin_Duke** summons other goblins (matching `"Goblin_"`)
 - **Trork_Shaman** summons other trorks (matching `"Trork_"`), excluding itself via `excludeFromSummonPool`
 
-**Tip:** The summon ability is gated via `linkedMobRuleKeys` to undead mobs, Goblin_Duke, and Trork_Shaman by default. To allow other mob types to summon, add them to the ability's `linkedMobRuleKeys` (either individually or via a category) and add an appropriate prefix to `roleIdentifiers` so the summon system knows which faction pool to build for them.
+**Tip:** The summon ability is gated via `linkedMobRuleKeys` to undead mobs, Goblin_Duke, and Trork_Shaman by default. To allow other mob types to summon, add them to the ability's `linkedMobRuleKeys` (either individually or via a category) and add an appropriate prefix to `roleIdentifiers` so the summon system knows which pool to build for them.
 
 ## Dodge Roll
 

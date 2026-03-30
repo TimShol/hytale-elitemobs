@@ -13,7 +13,7 @@ All notable changes to RPGMobs will be documented in this file.
   - **Multi Slash Long**  -  devastating 4-6 hit full combos, 1 variation per weapon. T3+
   - **Enrage**  -  the elite throws away its weapon and goes berserk, punching rapidly for 10 seconds before dying from exhaustion. Drops normal loot. Only living humanoids (Outlanders, Goblins, Trorks). T2+
   - **Volley**  -  ranged elites fire a burst of projectiles. T3+
-- **48 unique weapon combos**  -  every melee weapon type (Swords, Longswords, Daggers, Battleaxes, Axes, Maces, Clubs, Spears) has its own set of combo animations with matching sounds and visual trails
+- **54 unique weapon combos**  -  every melee weapon type (Swords, Longswords, Daggers, Battleaxes, Axes, Maces, Clubs, ClubsFlail, Spears) has its own set of combo animations with matching sounds and visual trails
 - **Smart combat AI**  -  elites now use Hytale's CombatActionEvaluator with 4 distinct fighting styles:
   - **Disciplined**  -  steady, measured attacks with long shield blocks
   - **Berserker**  -  fast, aggressive, barely retreats
@@ -24,9 +24,20 @@ All notable changes to RPGMobs will be documented in this file.
 - **Global ability cooldown**  -  elites wait 1-3 seconds between abilities so they don't chain them back to back. Dodge roll and parry bypass this so elites can still defend themselves
 - **Pickaxes as weapons**  -  pickaxe-wielding NPCs now attack with proper Pickaxe animations
 - **Charge Leap weapon sounds**  -  the charge-up, launch, and slam now match the weapon the elite is holding
-- **(Deubg mode) Weapon category on spawn command**  -  `/rpgmobs spawn Skeleton 5 --weapon longsword` spawns a T5 Skeleton with a longsword
+- **(Debug mode) Weapon category on spawn command**  -  `/rpgmobs spawn Skeleton 5 --weapon longsword` spawns a T5 Skeleton with a longsword
 - **Debug nameplate**  -  enable debug mode to see each elite's enabled abilities, current activity, and cooldowns above their head
 - **Master kill switch**  -  one toggle in `core.yml` to disable RPGMobs across all worlds instantly
+- **In-game Admin UI**  -  `/rpgmobs config` opens a full configuration panel with per-world and per-instance settings
+- **Per-world and per-instance configuration**  -  each world or dungeon instance can have its own settings. Unset fields inherit from the base config
+- **Category-based equipment system**  -  weapon and armor categories (e.g. Swords, Axes, Heavy Armor) replace the old text-based filters. Fully editable in the Admin UI
+- **Loot templates**  -  create custom drop tables and link them to specific mobs or entire categories. Each drop can be toggled per tier individually
+- **Per-mob armor slot restrictions**  -  control which armor slots a mob can equip, so mobs whose models don't support armor no longer look broken
+- **Role-based summoning**  -  summoners now call reinforcements matching their own role instead of only undead
+- **Generic entity effects**  -  new status effects can be added via config alone, no code changes needed
+- **Elite anti-aggro**  -  new option to prevent elites from targeting other elites
+- **Per-world tier and loot overrides**  -  restrict which tiers specific mobs can spawn as, adjust spawn weights, and assign loot templates per mob per world
+- **Ability weapon gating**  -  abilities now check the mob's equipped weapon, so staff-wielding mobs won't use melee-only abilities like Charge Leap
+- **Per-mob per-tier ability control**  -  each linked mob in an ability can have tiers toggled individually
 
 ### Admin UI
 
@@ -41,54 +52,28 @@ All notable changes to RPGMobs will be documented in this file.
 
 ### Changed
 
-- Combat AI completely overhauled  -  elites now fight using Hytale's native combat system with faction-appropriate behavior instead of a simple attack loop
+- Config files reorganized into `base/` (9 files), `worlds/`, `instances/`, and `core.yml`  -  existing configs are migrated automatically
 - Mob rules are now global  -  edit them once, enable/disable per world
+- Mob rule weapon filtering now uses categories instead of substring matching
+- Ability gating reworked from role-based allow/deny lists to per-mob-rule linking with tier control
 - Heal Leap restricted to living humanoids (Outlanders, Goblins, Trorks)  -  undead mobs no longer drink healing potions
-- Enrage restricted to Outlanders, Goblins, and Trorks  -  skeletons and zombies can't go berserk
-- All ability wind-ups now give you a visible counter window  -  Short: 1.1s, Medium: 1.6s, Long: 2.1s
-- Elites return to a Guard stance after abilities instead of standing idle
+- Config changes now take effect on already-spawned elites (mob rules are re-evaluated on reload)
 - NPC and item lists are now detected automatically from loaded asset packs  -  modded NPCs and items show up without rebuilding
 - Hytale Update 4 compatibility
 
 ### Fixed
 
+- Model scaling not applying on spawn  -  elites all appeared the same size until a config reload triggered reconciliation. The tick-based scaling path was gated behind the reconcile check, so newly spawned mobs never hit the initial scaling code
 - Elites spawned via `/rpgmobs spawn` persisting in disabled worlds  -  they now correctly de-elite when the world has RPGMobs disabled
-- Heal Leap could be applied to undead mobs like Skeletons  -  now properly restricted to living humanoids
+- Pickaxe-wielding mobs incorrectly matching "Axe" weapon rules
+- Ability weapon restrictions being silently ignored
+- Crash when switching between world instances
 
 ## [3.260219.1] - 2026-03-05
 
 ### Fixed
 
 - Abilities (Charge Leap, Heal Leap, Undead Summon) not working in worlds that have a saved overlay  -  the weapon category tree was not carried over when merging per-world config overlays, causing the weapon gate to reject all weapons
-
-## [3.260303.0] - 2026-03-03
-
-### Added
-
-- **In-game Admin UI**  -  `/rpgmobs config` opens a full configuration panel. Per-world and per-instance settings with 9 tabs: General, Mob Rules, Stats, Loot, Spawning, Entity Effects, Abilities, Visuals, and Overrides
-- **Per-world and per-instance configuration**  -  each world or dungeon instance can have its own settings. Unset fields inherit from the base config
-- **Category-based equipment system**  -  weapon and armor categories (e.g. Swords, Axes, Heavy Armor) replace the old text-based filters. Fully editable in the Admin UI
-- **Loot templates**  -  create custom drop tables and link them to specific mobs or entire categories. Each drop can be toggled per tier individually
-- **Per-mob armor slot restrictions**  -  control which armor slots a mob can equip, so mobs whose models don't support armor no longer look broken
-- **Faction-based summoning**  -  summoners now call reinforcements from their own faction (goblins summon goblins, trorks summon trorks) instead of only undead
-- **Generic entity effects**  -  new status effects can be added via config alone, no code changes needed
-- **Elite anti-aggro**  -  new option to prevent elites from targeting other elites
-- **Per-world tier and loot overrides**  -  restrict which tiers specific mobs can spawn as, adjust spawn weights, and assign loot templates per mob per world
-- **Ability weapon gating**  -  abilities now check the mob's equipped weapon, so staff-wielding mobs won't use melee-only abilities like Charge Leap
-- **Per-mob per-tier ability control**  -  each linked mob in an ability can have tiers toggled individually
-
-### Changed
-
-- Config files reorganized into `base/` (9 files), `worlds/`, `instances/`, and `core.yml`  -  existing configs are migrated automatically
-- Mob rule weapon filtering now uses categories instead of substring matching
-- Ability gating reworked from role-based allow/deny lists to per-mob-rule linking with tier control
-- Config changes now take effect on already-spawned elites (mob rules are re-evaluated on reload)
-
-### Fixed
-
-- Pickaxe-wielding mobs incorrectly matching "Axe" weapon rules
-- Ability weapon restrictions being silently ignored
-- Crash when switching between world instances
 
 ## [2.0.2] - 2026-02-18
 

@@ -50,7 +50,7 @@ Full configuration guides, developer API reference, and troubleshooting:
 - **9 combat abilities**:
   - **Charge Leap** - melee charge and slam with per-weapon sounds (8 weapon variants)
   - **Heal Leap** - heal potion toss with standing heal variant for retreat situations (living humanoids only)
-  - **Undead Summon** - faction-based minion spawning with green orb hand particles
+  - **Undead Summon** - role-based minion spawning with green orb hand particles
   - **Dodge Roll** - reactive dodge on player attacks, boosted chance against charged attacks. Lateral dash with dust particles and weapon trails
   - **Multi Slash Short** - 1-2 hit quick strikes, 3 random variations per weapon, all tiers
   - **Multi Slash Medium** - 2-4 hit combos, 2 variations per weapon, T2+
@@ -59,7 +59,7 @@ Full configuration guides, developer API reference, and troubleshooting:
   - **Volley** - ranged projectile burst for bow/crossbow/gun wielders, T3+
 - **Reactive parry system** - shield and weapon parry triggered by player attack detection. Per-weapon wind-up delay, per-tier chance (T2: 15% to T5: 70%)
 - **Global ability cooldown** - 1-3 second random cooldown between abilities. Reactive abilities (dodge roll, parry) bypass this cooldown
-- 48 unique combo designs across all weapon types and Multi Slash lengths
+- 54 unique combo designs across all weapon types and Multi Slash lengths
 - Ability gating per mob rule with per-tier toggles and weapon category restrictions
 - Per-mob armor slot restrictions for mobs whose models don't support full armor
 - In-game Admin UI for live configuration (`/rpgmobs config`)

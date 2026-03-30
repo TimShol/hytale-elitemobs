@@ -42,7 +42,7 @@ RPGMobs uses a hybrid combat architecture. Basic attacks, guarding, retreat, and
 
 ### CombatActionEvaluator (CAE)
 
-The CAE is Hytale's built-in combat evaluation system. RPGMobs generates per-faction, per-tier, and per-weapon CAE configs at build time. This gives every elite realistic combat behavior without requiring a code-side state machine.
+The CAE is Hytale's built-in combat evaluation system. RPGMobs generates per-style, per-tier, and per-weapon CAE configs at runtime. This gives every elite realistic combat behavior without requiring a code-side state machine.
 
 **What CAE handles:**
 - Per-weapon basic attack chains with correct animations and sounds
@@ -57,12 +57,12 @@ The CAE is Hytale's built-in combat evaluation system. RPGMobs generates per-fac
 
 Each combat style defines a distinct combat personality that controls attack timing and behavior:
 
-| Faction | Style | Attack Cooldown | Description |
+| Style | Default NPCs | Attack Cooldown | Description |
 | :--- | :--- | :--- | :--- |
-| Skeleton | Disciplined | 1.0 - 2.0s | Consistent, measured attacks with predictable timing. |
-| Trork | Berserker | 0.4 - 0.8s | Aggressive, fast-paced pressure with short cooldowns. |
-| Outlander | Tactical | 0.8 - 1.2s | Balanced approach with flanking at T5. |
-| Goblin | Chaotic | 0.3 - 2.0s | Erratic, unpredictable timing with a wide cooldown range. |
+| Disciplined | Skeleton | 1.0 - 2.0s | Consistent, measured attacks with predictable timing. |
+| Berserker | Trork | 0.4 - 0.8s | Aggressive, fast-paced pressure with short cooldowns. |
+| Tactical | Outlander | 0.8 - 1.2s | Balanced approach with flanking at T5. |
+| Chaotic | Goblin | 0.3 - 2.0s | Erratic, unpredictable timing with a wide cooldown range. |
 
 See [Combat AI](/ui/combat-ai) for the full Admin UI editor and [Combat](/config/combat) for the YAML reference.
 
@@ -88,9 +88,9 @@ Elites aren't just stat sponges. RPGMobs includes 9 combat abilities across mele
 
 *   **Charge Leap:** Launch at a player with a physics-based slam attack. 8 weapon-specific sound variants.
 *   **Heal Leap:** Jump to safety and drink a healing potion. Filtered by mob type  -  undead mobs are excluded by default.
-*   **Summon:** Call faction-appropriate reinforcements  -  undead summon undead, goblins summon goblins, trorks summon trorks.
+*   **Summon:** Call role-based reinforcements  -  summoners spawn NPCs matching their own role identifier.
 *   **Dodge Roll:** Reactive dodge when a nearby player attacks, or preemptive dodge when a player charges an attack. Grants brief invulnerability.
-*   **Multi Slash (Short/Medium/Long):** 3 separate melee combo abilities with 48 unique weapon-specific combos. Short (1-2 hits, all tiers), Medium (2-4 hits, T2+), Long (4-6 hits, T3+).
+*   **Multi Slash (Short/Medium/Long):** 3 separate melee combo abilities with 54 unique weapon-specific combos. Short (1-2 hits, all tiers), Medium (2-4 hits, T2+), Long (4-6 hits, T3+).
 *   **Enrage:** Berserk fist-fighting transformation. The mob drops its weapon and enters a 20-second rapid punch chain, then dies from exhaustion with normal loot drops.
 *   **Volley:** Ranged projectile burst for bow, crossbow, and gun wielders.
 

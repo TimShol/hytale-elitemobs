@@ -4,7 +4,7 @@ description: Configuring the CombatActionEvaluator combat system for elite NPCs.
 icon: "crosshairs"
 ---
 
-`combat.yml` controls the CombatActionEvaluator (CAE) combat system that drives elite basic attacks, guarding, retreat, and movement AI. The CAE is Hytale's native combat evaluation system  -  RPGMobs generates per-faction, per-tier, and per-weapon CAE configs at build time from these settings.
+`combat.yml` controls the CombatActionEvaluator (CAE) combat system that drives elite basic attacks, guarding, retreat, and movement AI. The CAE is Hytale's native combat evaluation system  -  RPGMobs generates per-style, per-tier, and per-weapon CAE configs at runtime from these settings.
 
 ## How CAE Combat Works
 
@@ -15,13 +15,13 @@ Instead of a code-side state machine, RPGMobs uses Hytale's built-in CombatActio
 - **BackOff**  -  brief retreat after completing an attack chain (T2+)
 - **Health retreat**  -  fleeing when health drops below a threshold (T3+)
 - **Group observe**  -  pausing before joining group combat (T3+)
-- **Flanking**  -  positioning behind the target (T5 only for most factions)
+- **Flanking**  -  positioning behind the target (T5 only for most styles)
 
 RPGMobs abilities (Charge Leap, Multi Slash, Enrage, etc.) are handled code-side and temporarily interrupt CAE control. Code-side parry uses CAE's `setCurrentInteraction()` to fire reactive guard interactions.
 
 ## Combat Styles
 
-The `factionStyles` map defines combat personality profiles. Each mob rule can reference a combat style to control its attack timing and defensive behavior.
+The `factionStyles` map defines combat personality profiles. Despite the legacy name, styles are not faction-bound  -  any mob rule can reference any combat style to control its attack timing and defensive behavior.
 
 ```yaml
 factionStyles:
