@@ -136,7 +136,7 @@ RPGMobs includes a full in-game configuration panel accessible via `/rpgmobs con
 
 ### For Developers
 
-- Event-driven API (v1.2.0) with 12 event types (spawn, death, damage, abilities, aggro, loot)
+- Event-driven API (v1.3.0) with 12 event types (spawn, death, damage, abilities, aggro, loot)
 - Read-only Query API for inspecting any RPG mob's state, including `getMatchedMobRuleKey()`, `getActiveAbilityId()`, and `getCombatStyle()`
 - Cancellable events for spawn blocking, damage modification, and loot customization
 - Separate API artifact for compile-time dependency
@@ -209,7 +209,7 @@ next tick - mob rules are re-evaluated and equipment is re-applied as needed.
 
 ## API Overview
 
-RPGMobs ships a separate `rpgmobs-api` artifact (v1.2.0) for mod developers. Add it as a compile-time dependency to listen to
+RPGMobs ships a separate `rpgmobs-api` artifact (v1.3.0) for mod developers. Add it as a compile-time dependency to listen to
 events, query RPG mob state, or modify loot and damage.
 
 The Query API provides methods such as `getMatchedMobRuleKey()`, `getActiveAbilityId()`, and `getCombatStyle()` for

@@ -47,14 +47,49 @@ If you wish to support me and this project, you can simply download and play thi
 Elites use an event-driven ability system  -  abilities trigger contextually based on combat state, not on a timer. There are currently 9 abilities:
 
 *   **Charge Leap**  -  Gap-closing slam with per-weapon sounds
+
+<!-- TODO: Replace with Charge Leap gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_CHARGE_LEAP" alt="Charge Leap"></p></div>
+
 *   **Heal Leap**  -  Defensive retreat with potion healing (living humanoids only)
+
+<!-- TODO: Replace with Heal Leap gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_HEAL_LEAP" alt="Heal Leap"></p></div>
+
 *   **Undead Summon**  -  Role-based reinforcements
+
+<!-- TODO: Replace with Undead Summon gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_UNDEAD_SUMMON" alt="Undead Summon"></p></div>
+
 *   **Dodge Roll**  -  Reactive/preemptive lateral dodge bypassing global cooldown
+
+<!-- TODO: Replace with Dodge Roll gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_DODGE_ROLL" alt="Dodge Roll"></p></div>
+
 *   **Multi Slash Short**  -  1-2 hit quick strikes (3 random variations per weapon)
+
+<!-- TODO: Replace with Multi Slash Short gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_MULTI_SLASH_SHORT" alt="Multi Slash Short"></p></div>
+
 *   **Multi Slash Medium**  -  2-4 hit combos (2 variations per weapon)
+
+<!-- TODO: Replace with Multi Slash Medium gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_MULTI_SLASH_MEDIUM" alt="Multi Slash Medium"></p></div>
+
 *   **Multi Slash Long**  -  4-6 hit full combos (1 variation per weapon)
+
+<!-- TODO: Replace with Multi Slash Long gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_MULTI_SLASH_LONG" alt="Multi Slash Long"></p></div>
+
 *   **Enrage**  -  Berserk fist-fighting mode ending in exhaustion death (Outlanders/Goblins/Trorks only)
+
+<!-- TODO: Replace with Enrage gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_ENRAGE" alt="Enrage"></p></div>
+
 *   **Volley**  -  Ranged projectile burst for bow/crossbow/gun wielders
+
+<!-- TODO: Replace with Volley gif URL -->
+<div class="spoiler"><p><img src="PLACEHOLDER_GIF_VOLLEY" alt="Volley"></p></div>
 
 Abilities are linked to specific mob rules with per-tier ON/OFF toggles and weapon category gates. A global ability cooldown (1-3s) prevents chaining, while reactive abilities (Dodge Roll, Parry) bypass it for instant response.
 
