@@ -362,23 +362,74 @@ public class MyMod implements IRPGMobsEventListener {
 
 The Spawn API lets other mods programmatically create RPGMobs elites. Access it via `RPGMobsAPI.spawn()`.
 
-### Spawn a new elite
+### Quick Reference
 
 ```java
-import com.frotty27.rpgmobs.api.spawn.IRPGMobsSpawnAPI;
+import com.frotty27.rpgmobs.api.RPGMobsAPI;
 import com.frotty27.rpgmobs.api.spawn.SpawnResult;
+```
 
+| Method | Description |
+| :----- | :---------- |
+| `RPGMobsAPI.spawn().spawnElite(world, roleName, tier, position, rotation, weaponCategory)` | Creates an NPC and promotes it to an elite in one call |
+| `RPGMobsAPI.spawn().applyEliteTier(world, npcRef, tier, weaponCategory)` | Promotes an already-spawned NPC to an elite |
+
+**Parameters:**
+
+| Parameter | Type | Description |
+| :-------- | :--- | :---------- |
+| `world` | `World` | The world to spawn in |
+| `roleName` | `String` | NPC role name (e.g. `"Skeleton_Fighter"`, `"Trork_Warrior"`, `"Goblin_Duke"`) |
+| `tier` | `int` | Tier number **1-5** (clamped if out of range). 1 = Common, 5 = Legendary |
+| `position` | `Vector3d` | Spawn position in world coordinates |
+| `rotation` | `@Nullable Vector3f` | Spawn rotation, or `null` for default |
+| `weaponCategory` | `@Nullable String` | Weapon category override (see table below), or `null` to use the mob rule's default |
+| `npcRef` | `Ref<EntityStore>` | *(applyEliteTier only)* Reference to an existing NPC entity |
+
+### Weapon Categories
+
+Pass one of these exact strings as `weaponCategory` to force the elite to spawn with that weapon type. Pass `null` to let RPGMobs pick based on the mob rule's configured categories.
+
+| Category | Type | Example weapons |
+| :------- | :--- | :-------------- |
+| `"Swords"` | Melee | Iron Sword, Steel Sword |
+| `"Longswords"` | Melee | Steel Longsword, Adamantite Longsword |
+| `"Daggers"` | Melee | Iron Daggers, Bone Daggers |
+| `"Axes"` | Melee | Iron Axe, Steel Axe |
+| `"Battleaxes"` | Melee | Iron Battleaxe, Adamantite Battleaxe |
+| `"Maces"` | Melee | Iron Mace, Steel Mace |
+| `"Clubs"` | Melee | Wooden Club, Bone Club |
+| `"ClubsFlail"` | Melee | Flail variants |
+| `"Spears"` | Melee | Iron Spear, Steel Spear |
+| `"Pickaxes"` | Melee | Iron Pickaxe, Steel Pickaxe |
+| `"Shortbows"` | Ranged | Shortbow variants (uses vanilla ranged AI) |
+| `"Crossbows"` | Ranged | Crossbow variants (uses vanilla ranged AI) |
+| `"Guns"` | Ranged | Gun variants (uses vanilla ranged AI) |
+| `"Staves"` | Ranged | Staff variants (uses vanilla ranged AI) |
+| `"Spellbooks"` | Ranged | Spellbook variants (uses vanilla ranged AI) |
+
+Ranged weapon categories use vanilla Hytale AI instead of the CAE combat system.
+
+### Spawn a New Elite
+
+```java
 SpawnResult result = RPGMobsAPI.spawn().spawnElite(
-    world, "Skeleton_Fighter", 3, position, null, null);
+    world,                  // the world to spawn in
+    "Skeleton_Fighter",     // NPC role name
+    3,                      // tier (1-5)
+    position,               // Vector3d spawn position
+    null,                   // rotation (null = default)
+    null                    // weapon category (null = mob rule default)
+);
 
 if (result instanceof SpawnResult.Success s) {
-    Ref<EntityStore> eliteRef = s.entityRef();
-    int tier = s.tier();
-    String role = s.roleName();
+    Ref<EntityStore> eliteRef = s.entityRef();  // the spawned entity
+    int tier = s.tier();                        // 0-4 (zero-indexed)
+    String role = s.roleName();                 // resolved role name
 }
 ```
 
-### Elite-ify an existing NPC
+### Elite-ify an Existing NPC
 
 If you already spawned an NPC via `NPCPlugin` and want to promote it:
 
@@ -387,27 +438,41 @@ SpawnResult result = RPGMobsAPI.spawn().applyEliteTier(
     world, existingNpcRef, 5, "Longswords");
 ```
 
-### Force a weapon category
-
-Pass a weapon category override to control what weapon the elite spawns with:
+### Force a Weapon Category
 
 ```java
+// Spawn a T4 Trork with an axe
 RPGMobsAPI.spawn().spawnElite(
     world, "Trork_Warrior", 4, pos, null, "Axes");
+
+// Spawn a T5 Skeleton with a longsword
+RPGMobsAPI.spawn().spawnElite(
+    world, "Skeleton_Fighter", 5, pos, null, "Longswords");
 ```
 
-### Handle failures
+### Handle Failures
 
-`SpawnResult` is a sealed interface. Failures carry a typed reason:
+`SpawnResult` is a sealed interface. Check success or match on the failure reason:
 
 ```java
-if (result instanceof SpawnResult.Failure f) {
-    switch (f.reason()) {
-        case NO_MOB_RULE -> log("No mob rule for this role");
-        case EVENT_CANCELLED -> log("A listener cancelled the spawn");
-        case RPGMOBS_DISABLED_IN_WORLD -> log("RPGMobs is disabled here");
-        default -> log("Failed: " + f.message());
-    }
+SpawnResult result = RPGMobsAPI.spawn().spawnElite(world, "Skeleton_Fighter", 3, pos, null, null);
+
+if (result.isSuccess()) {
+    var success = (SpawnResult.Success) result;
+    // use success.entityRef()
+    return;
+}
+
+var failure = (SpawnResult.Failure) result;
+switch (failure.reason()) {
+    case CONFIG_NOT_LOADED       -> log("RPGMobs config not ready");
+    case NPC_SPAWN_FAILED        -> log("Hytale couldn't spawn the NPC");
+    case NO_MOB_RULE             -> log("No mob rule matches this role");
+    case MOB_RULE_DISABLED       -> log("Mob rule is disabled in this world");
+    case RPGMOBS_DISABLED_IN_WORLD -> log("RPGMobs is off in this world");
+    case EVENT_CANCELLED         -> log("A listener cancelled the spawn");
+    case NOT_INITIALIZED         -> log("RPGMobs hasn't started yet");
+    case TIER_APPLY_FAILED       -> log("Internal error: " + failure.message());
 }
 ```
 
