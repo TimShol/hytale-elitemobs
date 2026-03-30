@@ -14,7 +14,7 @@ Add the API JAR as a compile-only dependency in your `build.gradle`:
 
 ```groovy
 dependencies {
-    compileOnly files('libs/RPGMobs-API-1.2.0.jar')
+    compileOnly files('libs/RPGMobs-API-1.3.0.jar')
 }
 ```
 
@@ -22,7 +22,7 @@ Or if published to a Maven repository:
 
 ```groovy
 dependencies {
-    compileOnly 'Frotty27:RPGMobs-api:1.2.0'
+    compileOnly 'Frotty27:RPGMobs-api:1.3.0'
 }
 ```
 
@@ -356,6 +356,69 @@ public class MyMod implements IRPGMobsEventListener {
         }
     }
 }
+```
+
+## Spawn API *(since 1.3.0)*
+
+The Spawn API lets other mods programmatically create RPGMobs elites. Access it via `RPGMobsAPI.spawn()`.
+
+### Spawn a new elite
+
+```java
+import com.frotty27.rpgmobs.api.spawn.IRPGMobsSpawnAPI;
+import com.frotty27.rpgmobs.api.spawn.SpawnResult;
+
+SpawnResult result = RPGMobsAPI.spawn().spawnElite(
+    world, "Skeleton_Fighter", 3, position, null, null);
+
+if (result instanceof SpawnResult.Success s) {
+    Ref<EntityStore> eliteRef = s.entityRef();
+    int tier = s.tier();
+    String role = s.roleName();
+}
+```
+
+### Elite-ify an existing NPC
+
+If you already spawned an NPC via `NPCPlugin` and want to promote it:
+
+```java
+SpawnResult result = RPGMobsAPI.spawn().applyEliteTier(
+    world, existingNpcRef, 5, "Longswords");
+```
+
+### Force a weapon category
+
+Pass a weapon category override to control what weapon the elite spawns with:
+
+```java
+RPGMobsAPI.spawn().spawnElite(
+    world, "Trork_Warrior", 4, pos, null, "Axes");
+```
+
+### Handle failures
+
+`SpawnResult` is a sealed interface. Failures carry a typed reason:
+
+```java
+if (result instanceof SpawnResult.Failure f) {
+    switch (f.reason()) {
+        case NO_MOB_RULE -> log("No mob rule for this role");
+        case EVENT_CANCELLED -> log("A listener cancelled the spawn");
+        case RPGMOBS_DISABLED_IN_WORLD -> log("RPGMobs is disabled here");
+        default -> log("Failed: " + f.message());
+    }
+}
+```
+
+### Threading
+
+All spawn methods **must be called on the world's thread**. From other threads, wrap in `world.execute()`:
+
+```java
+world.execute(() -> {
+    RPGMobsAPI.spawn().spawnElite(world, "Goblin_Duke", 5, pos, null, null);
+});
 ```
 
 ## Thread Safety
