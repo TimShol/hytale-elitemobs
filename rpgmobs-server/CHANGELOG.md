@@ -2,6 +2,12 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [4.260326.3] - 2026-03-30
+
+### Fixed
+
+- Crash when equipping NPCs with zero-capacity hotbar  -  NPCs from other mods (e.g. dialog NPCs) could match a mob rule but have no inventory slots, causing "Slot is outside capacity" crash
+
 ## [4.260326.2] - 2026-03-30
 
 ### Fixed

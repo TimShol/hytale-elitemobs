@@ -309,6 +309,9 @@ public final class RPGMobsEquipmentService {
     }
 
     private void setInHand(NPCEntity npcEntity, Inventory inventory, ItemStack itemStack) {
+        var hotbar = inventory.getHotbar();
+        if (hotbar == null || hotbar.getCapacity() <= 0) return;
+
         byte activeHotbarSlot = inventory.getActiveHotbarSlot();
         if (activeHotbarSlot == Inventory.INACTIVE_SLOT_INDEX) {
             activeHotbarSlot = 0;
@@ -316,7 +319,8 @@ public final class RPGMobsEquipmentService {
             var store = npcEntity.getWorld().getEntityStore().getStore();
             inventory.setActiveHotbarSlot(ref, activeHotbarSlot, store);
         }
-        inventory.getHotbar().setItemStackForSlot(activeHotbarSlot, itemStack);
+        if (activeHotbarSlot >= hotbar.getCapacity()) return;
+        hotbar.setItemStackForSlot(activeHotbarSlot, itemStack);
     }
 
     private ItemStack maybeEquipUtilityShield(NPCEntity npcEntity, Inventory inventory, RPGMobsConfig config, int tierIndex) {
