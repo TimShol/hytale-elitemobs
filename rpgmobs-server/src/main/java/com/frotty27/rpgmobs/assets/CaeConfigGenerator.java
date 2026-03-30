@@ -240,12 +240,17 @@ public final class CaeConfigGenerator {
         var parameters = new LinkedHashMap<String, Object>();
         var attitudeGroup = new LinkedHashMap<String, Object>();
         attitudeGroup.put("Value", faction);
-        attitudeGroup.put("Description", "RPGMobs elite - " + faction + " faction");
+        attitudeGroup.put("Description", "RPGMobs elite - " + faction);
         parameters.put("AttitudeGroup", attitudeGroup);
 
         var damageGroupsParam = new LinkedHashMap<String, Object>();
         damageGroupsParam.put("Value", disableDamageGroups);
         parameters.put("DisableDamageGroups", damageGroupsParam);
+
+        var nameKeyParam = new LinkedHashMap<String, Object>();
+        nameKeyParam.put("Value", "server.npcRoles." + mobRuleKey + ".name");
+        nameKeyParam.put("Description", "Translation key for NPC name display");
+        parameters.put("NameTranslationKey", nameKeyParam);
 
         if (tier.movementSpeedMultiplier != 1.0) {
             int scaledSpeed = (int) Math.round(10.0 * tier.movementSpeedMultiplier);
@@ -254,9 +259,13 @@ public final class CaeConfigGenerator {
             parameters.put("MaxSpeed", maxSpeedParam);
         }
 
+        var nameTranslationKeyCompute = new LinkedHashMap<String, Object>();
+        nameTranslationKeyCompute.put("Compute", "NameTranslationKey");
+
         var modify = new LinkedHashMap<String, Object>();
         modify.put("UseCombatActionEvaluator", true);
         modify.put("_CombatConfig", caeConfigName);
+        modify.put("NameTranslationKey", nameTranslationKeyCompute);
 
         var root = new LinkedHashMap<String, Object>();
         root.put("Type", "Variant");
@@ -714,7 +723,7 @@ public final class CaeConfigGenerator {
 
         var vfxEffects = new LinkedHashMap<String, Object>();
         vfxEffects.put("Trails", List.of(trailEntry));
-        vfxEffects.put("WorldSoundEventId", "SFX_Sword_T1_Swing");
+        vfxEffects.put("WorldSoundEventId", defaultWp.swingSoundId.isEmpty() ? "SFX_Sword_T1_Swing" : defaultWp.swingSoundId);
 
         var trailSimple = new LinkedHashMap<String, Object>();
         trailSimple.put("Type", "Simple");

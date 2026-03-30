@@ -2,6 +2,13 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [4.260326.1] - 2026-03-30
+
+### Fixed
+
+- Death message showing "Template" instead of the NPC name after CAE role change  -  added NameTranslationKey to generated role variants
+- Per-weapon basic attack sounds using sword sound for all weapons  -  generic swing interaction was hardcoded to SFX_Sword_T1_Swing
+
 ## [4.260326.0] - 2026-03-28
 
 ### Added
