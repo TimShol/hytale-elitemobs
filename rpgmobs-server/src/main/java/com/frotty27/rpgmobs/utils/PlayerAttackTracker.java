@@ -179,7 +179,13 @@ public class PlayerAttackTracker {
             if (!entityRef.isValid()) continue;
             if (entityRef.hashCode() == playerRefHash) continue;
 
-            DodgeRollAbilityComponent dodge = entityStore.getComponent(entityRef, plugin.getDodgeRollAbilityComponentType());
+            DodgeRollAbilityComponent dodge;
+            try {
+                dodge = entityStore.getComponent(entityRef, plugin.getDodgeRollAbilityComponentType());
+            } catch (IllegalStateException e) {
+                registeredEntities.remove(entityRef);
+                continue;
+            }
             if (dodge == null || !dodge.abilityEnabled || dodge.cooldownTicksRemaining > 0) continue;
 
             RPGMobsTierComponent tier = entityStore.getComponent(entityRef, plugin.getRPGMobsComponentType());
@@ -234,7 +240,13 @@ public class PlayerAttackTracker {
             if (!entityRef.isValid()) continue;
             if (entityRef.hashCode() == playerRefHash) continue;
 
-            RPGMobsTierComponent tier = entityStore.getComponent(entityRef, plugin.getRPGMobsComponentType());
+            RPGMobsTierComponent tier;
+            try {
+                tier = entityStore.getComponent(entityRef, plugin.getRPGMobsComponentType());
+            } catch (IllegalStateException e) {
+                registeredGuardEntities.remove(entityRef);
+                continue;
+            }
             // For test variants without tier component, default to T5 guard chance
             int effectiveTierIndex = (tier != null && tier.tierIndex >= 0) ? tier.tierIndex : 4;
 
