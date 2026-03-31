@@ -40,8 +40,8 @@ public final class RPGMobsNameplateService {
     public static final String EXAMPLE_DEBUG = "CL MSS DR | MSS";
 
     public void describeSegments(JavaPlugin plugin) {
-        NameplateAPI.describe(plugin, SEGMENT_PREFIX, DISPLAY_PREFIX, SegmentTarget.NPCS, EXAMPLE_PREFIX);
-        NameplateAPI.describe(plugin, SEGMENT_TIER, DISPLAY_TIER, SegmentTarget.NPCS, EXAMPLE_TIER);
+        NameplateAPI.define(plugin, SEGMENT_PREFIX, DISPLAY_PREFIX, SegmentTarget.NPCS, EXAMPLE_PREFIX);
+        NameplateAPI.define(plugin, SEGMENT_TIER, DISPLAY_TIER, SegmentTarget.NPCS, EXAMPLE_TIER);
         // Elite Type and Debug Info removed — Entity Name is now a built-in NameplateBuilder segment
     }
 

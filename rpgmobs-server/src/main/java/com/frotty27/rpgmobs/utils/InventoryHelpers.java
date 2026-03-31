@@ -13,6 +13,11 @@ public final class InventoryHelpers {
         return new ItemStack(src.getItemId(), 1, src.getDurability(), src.getMaxDurability(), src.getMetadata());
     }
 
+    public static ItemStack safeGetItemStack(ItemContainer container, short slot) {
+        if (container == null || container.getCapacity() <= 0 || slot >= container.getCapacity()) return null;
+        return container.getItemStack(slot);
+    }
+
     public static int getContainerSizeSafe(ItemContainer c) {
         try {
             var m = c.getClass().getMethod("getSize");

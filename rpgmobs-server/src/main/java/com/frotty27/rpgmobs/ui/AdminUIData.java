@@ -27,7 +27,7 @@ final class AdminUIData {
 
     static final int TREE_ROW_COUNT = 20;
 
-    static final int LOOT_TEMPLATE_DROPS_PER_PAGE = 5;
+    static final int LOOT_TEMPLATE_DROPS_PER_PAGE = 10;
 
     static final BuilderCodec<AdminUIData> CODEC;
     static {
@@ -344,6 +344,12 @@ final class AdminUIData {
         builder = addString(builder, "@LootTreeFilter",
                 (d, v) -> d.lootTreeFilter = v, d -> d.lootTreeFilter);
 
+        builder = addString(builder, "@LootDropSearchFilter",
+                (d, v) -> d.lootDropSearchFilter = v, d -> d.lootDropSearchFilter);
+
+        builder = addString(builder, "@LootTplDropFilter",
+                (d, v) -> d.lootTplDropFilter = v, d -> d.lootTplDropFilter);
+
         builder = addString(builder, "@LootDurMin",
                 (d, v) -> d.lootDurMin = v, d -> d.lootDurMin);
         builder = addString(builder, "@LootDurMax",
@@ -399,13 +405,16 @@ final class AdminUIData {
         builder = addString(builder, "@CaiFacObsDistMin", (d, v) -> d.caiFacObsDistMin = v, d -> d.caiFacObsDistMin);
         builder = addString(builder, "@CaiFacObsDistMax", (d, v) -> d.caiFacObsDistMax = v, d -> d.caiFacObsDistMax);
         builder = addString(builder, "@CaiFacFlankAngle", (d, v) -> d.caiFacFlankAngle = v, d -> d.caiFacFlankAngle);
-        builder = addString(builder, "@CaiTierCdMin", (d, v) -> d.caiTierCdMin = v, d -> d.caiTierCdMin);
-        builder = addString(builder, "@CaiTierCdMax", (d, v) -> d.caiTierCdMax = v, d -> d.caiTierCdMax);
-        builder = addString(builder, "@CaiTierStrCdMin", (d, v) -> d.caiTierStrCdMin = v, d -> d.caiTierStrCdMin);
-        builder = addString(builder, "@CaiTierStrCdMax", (d, v) -> d.caiTierStrCdMax = v, d -> d.caiTierStrCdMax);
-        builder = addString(builder, "@CaiTierShieldCharge", (d, v) -> d.caiTierShieldCharge = v, d -> d.caiTierShieldCharge);
-        builder = addString(builder, "@CaiTierGuardCd", (d, v) -> d.caiTierGuardCd = v, d -> d.caiTierGuardCd);
-        builder = addString(builder, "@CaiTierRetHealth", (d, v) -> d.caiTierRetHealth = v, d -> d.caiTierRetHealth);
+        for (int t = 0; t < 5; t++) {
+            final int ti = t;
+            builder = addString(builder, "@CaiTierCdMin" + t, (d, v) -> d.caiTierCdMin[ti] = v, d -> d.caiTierCdMin[ti]);
+            builder = addString(builder, "@CaiTierCdMax" + t, (d, v) -> d.caiTierCdMax[ti] = v, d -> d.caiTierCdMax[ti]);
+            builder = addString(builder, "@CaiTierStrCdMin" + t, (d, v) -> d.caiTierStrCdMin[ti] = v, d -> d.caiTierStrCdMin[ti]);
+            builder = addString(builder, "@CaiTierStrCdMax" + t, (d, v) -> d.caiTierStrCdMax[ti] = v, d -> d.caiTierStrCdMax[ti]);
+            builder = addString(builder, "@CaiTierShieldCharge" + t, (d, v) -> d.caiTierShieldCharge[ti] = v, d -> d.caiTierShieldCharge[ti]);
+            builder = addString(builder, "@CaiTierGuardCd" + t, (d, v) -> d.caiTierGuardCd[ti] = v, d -> d.caiTierGuardCd[ti]);
+            builder = addString(builder, "@CaiTierRetHealth" + t, (d, v) -> d.caiTierRetHealth[ti] = v, d -> d.caiTierRetHealth[ti]);
+        }
         builder = addString(builder, "@CaiWpnRange", (d, v) -> d.caiWpnRange = v, d -> d.caiWpnRange);
         builder = addString(builder, "@CaiWpnSpeed", (d, v) -> d.caiWpnSpeed = v, d -> d.caiWpnSpeed);
         builder = addString(builder, "@AssetPickerFilter", (d, v) -> d.assetPickerFilter = v, d -> d.assetPickerFilter);
@@ -549,6 +558,10 @@ final class AdminUIData {
 
     String lootTreeFilter;
 
+    String lootDropSearchFilter;
+
+    String lootTplDropFilter;
+
     String lootDurMin, lootDurMax;
 
     final String[] rarityArmorPieces = new String[TIERS_COUNT];
@@ -571,9 +584,9 @@ final class AdminUIData {
     String caiFacReEngDistMin, caiFacReEngDistMax;
     String caiFacObsDistMin, caiFacObsDistMax;
     String caiFacFlankAngle;
-    String caiTierCdMin, caiTierCdMax;
-    String caiTierStrCdMin, caiTierStrCdMax;
-    String caiTierShieldCharge, caiTierGuardCd, caiTierRetHealth;
+    final String[] caiTierCdMin = new String[5], caiTierCdMax = new String[5];
+    final String[] caiTierStrCdMin = new String[5], caiTierStrCdMax = new String[5];
+    final String[] caiTierShieldCharge = new String[5], caiTierGuardCd = new String[5], caiTierRetHealth = new String[5];
     String caiWpnRange, caiWpnSpeed;
     String assetPickerFilter;
 

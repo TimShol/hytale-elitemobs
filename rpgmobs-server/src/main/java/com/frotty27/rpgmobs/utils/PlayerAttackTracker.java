@@ -354,7 +354,7 @@ public class PlayerAttackTracker {
         Inventory inventory = npcEntity.getInventory();
         if (inventory != null) {
             var utilityContainer = inventory.getUtility();
-            if (utilityContainer != null) {
+            if (utilityContainer != null && utilityContainer.getCapacity() > 0) {
                 ItemStack offhand = utilityContainer.getItemStack((short) 0);
                 if (offhand != null && !offhand.isEmpty()) {
                     String offhandId = offhand.getItemId();

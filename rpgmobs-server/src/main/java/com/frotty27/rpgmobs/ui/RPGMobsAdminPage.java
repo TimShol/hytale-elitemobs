@@ -57,6 +57,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private static final int ITEM_PICKER_MOB_RULE_WPN = -14;
     private static final int ITEM_PICKER_MOB_RULE_ARM = -15;
     private static final int ITEM_PICKER_ABILITY_DRINK = -16;
+    private static final int ITEM_PICKER_LOOT_ADD = -17;
     private static final int RENAME_IDX_TWO_HANDED_ADD = -2;
     private static final int RENAME_IDX_RARITY_RULE_ADD = -3;
     private static final int RENAME_IDX_SUMMON_ROLE_ADD = -4;
@@ -179,6 +180,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private String tierOverrideFilter = "";
 
     private record TreeItem(String name, boolean isCategory) {}
+    private record LootDropSearchResult(String templateKey, int dropIndex, String itemId) {}
 
     private final Deque<RPGMobsConfig.MobRuleCategory> mobRuleNavHistory = new ArrayDeque<>();
     private final Deque<RPGMobsConfig.MobRuleCategory> mobRuleForwardHistory = new ArrayDeque<>();
@@ -204,6 +206,12 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private String lootTreeFilter = "";
     private final List<String> lootTreeFilteredKeys = new ArrayList<>();
     private int lootTemplateDropPage = 0;
+    private String lootDropSearchFilter = "";
+    private final List<LootDropSearchResult> lootDropSearchResults = new ArrayList<>();
+    private int lootDropSearchPage = 0;
+    private @Nullable String pendingLootExpandedKey = null;
+    private String lootTplDropFilter = "";
+    private final List<Integer> lootTplDropVisibleIndices = new ArrayList<>();
     private String lootTplMobFilter = "";
     private int lootTplMobPage = 0;
     private final List<String> lootTplMobFiltered = new ArrayList<>();
@@ -743,6 +751,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindAction(events, "#GlobMobRuleArmCatAdd", "GlobMobRuleArmCatAdd");
         bindAction(events, "#GlobMobRuleArmCatAddItem", "GlobMobRuleArmCatAddItem");
         bindAction(events, "#GlobMobRuleArmCatClear", "GlobMobRuleArmCatClear");
+        bindAction(events, "#GlobMobRuleArmCatDeleteFiltered", "GlobMobRuleArmCatDeleteFiltered");
         bindAction(events, "#GlobMobRuleArmCatPrev", "GlobMobRuleArmCatPrev");
         bindAction(events, "#GlobMobRuleArmCatNext", "GlobMobRuleArmCatNext");
         bindValueChanged(events, "#GlobMobRuleArmCatFilter", "@GlobMobRuleArmCatFilter");
@@ -827,6 +836,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindAction(events, "#GlobMobRuleWpnCatAdd", "GlobMobRuleWpnCatAdd");
         bindAction(events, "#GlobMobRuleWpnCatAddItem", "GlobMobRuleWpnCatAddItem");
         bindAction(events, "#GlobMobRuleWpnCatClear", "GlobMobRuleWpnCatClear");
+        bindAction(events, "#GlobMobRuleWpnCatDeleteFiltered", "GlobMobRuleWpnCatDeleteFiltered");
         bindAction(events, "#GlobMobRuleWpnCatPrev", "GlobMobRuleWpnCatPrev");
         bindAction(events, "#GlobMobRuleWpnCatNext", "GlobMobRuleWpnCatNext");
         bindValueChanged(events, "#GlobMobRuleWpnCatFilter", "@GlobMobRuleWpnCatFilter");
@@ -852,6 +862,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindValueChanged(events, "#LootTreeFilter", "@LootTreeFilter");
         bindAction(events, "#LootDeleteFiltered", "LootDeleteFiltered");
         bindAction(events, "#LootDeleteAll", "LootDeleteAll");
+        bindValueChanged(events, "#LootDropSearchField", "@LootDropSearchFilter");
+        bindAction(events, "#LootDropSearchDeleteFiltered", "LootDropSearchDeleteFiltered");
+        // LootDropSearchDeleteFiltered removed from UI; reuse LootTplDropDeleteFiltered during search
         for (int i = 0; i < AdminUIData.TREE_ROW_COUNT; i++) {
             bindAction(events, "#LootRowCat" + i, "LootRowClick_" + i);
             bindAction(events, "#LootRowItm" + i, "LootRowClick_" + i);
@@ -887,6 +900,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindAction(events, "#ItemPickerCancel", "ItemPickerCancel");
         bindAction(events, "#ItemPickerBackdrop", "ItemPickerCancel");
         bindAction(events, "#ItemPickerAdd", "ItemPickerAdd");
+        bindAction(events, "#ItemPickerAddAllFiltered", "ItemPickerAddAllFiltered");
         bindAction(events, "#ItemPickerFirstPage", "ItemPickerFirstPage");
         bindAction(events, "#ItemPickerPrevPage", "ItemPickerPrevPage");
         bindAction(events, "#ItemPickerNextPage", "ItemPickerNextPage");
@@ -901,6 +915,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindAction(events, "#NpcPickerCancel", "NpcPickerCancel");
         bindAction(events, "#NpcPickerBackdrop", "NpcPickerCancel");
         bindAction(events, "#NpcPickerAdd", "NpcPickerAdd");
+        bindAction(events, "#NpcPickerAddAllFiltered", "NpcPickerAddAllFiltered");
         bindAction(events, "#NpcPickerFirstPage", "NpcPickerFirstPage");
         bindAction(events, "#NpcPickerPrevPage", "NpcPickerPrevPage");
         bindAction(events, "#NpcPickerNextPage", "NpcPickerNextPage");
@@ -933,6 +948,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindAction(events, "#LootTplMobDeleteAll", "LootTplMobDeleteAll");
 
         bindAction(events, "#LootTplAddDrop", "LootTplAddDrop");
+        bindValueChanged(events, "#LootTplDropFilter", "@LootTplDropFilter");
+        bindAction(events, "#LootTplDropDeleteFiltered", "LootTplDropDeleteFiltered");
+        bindAction(events, "#LootTplDropDeleteAll", "LootTplDropDeleteAll");
         bindAction(events, "#LootTplDropFirstPage", "LootTplDropFirstPage");
         bindAction(events, "#LootTplDropPrevPage", "LootTplDropPrevPage");
         bindAction(events, "#LootTplDropNextPage", "LootTplDropNextPage");
@@ -997,10 +1015,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 bindAction(events, "#CaiTierToggle" + b + t + "Off", "CaiTierToggle_" + b + "_" + t);
             }
         }
-        for (int i = 0; i < 5; i++) {
-            bindAction(events, "#CaiTier" + i, "CaiTier_" + i);
-            bindAction(events, "#CaiTier" + i + "Active", "CaiTier_" + i);
-        }
+        // Tier tab buttons removed - now a table
         for (int i = 0; i < 3; i++) {
             bindAction(events, "#CaiTab" + i, "CaiSubTab_" + i);
             bindAction(events, "#CaiTab" + i + "Active", "CaiSubTab_" + i);
@@ -1049,13 +1064,15 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindValueChanged(events, "#FieldCaiFacReEngRandMax", "@CaiFacReEngRandMax");
         bindValueChanged(events, "#FieldCaiFacStrafeCdMin", "@CaiFacStrafeCdMin");
         bindValueChanged(events, "#FieldCaiFacStrafeCdMax", "@CaiFacStrafeCdMax");
-        bindValueChanged(events, "#FieldCaiTierCdMin", "@CaiTierCdMin");
-        bindValueChanged(events, "#FieldCaiTierCdMax", "@CaiTierCdMax");
-        bindValueChanged(events, "#FieldCaiTierStrCdMin", "@CaiTierStrCdMin");
-        bindValueChanged(events, "#FieldCaiTierStrCdMax", "@CaiTierStrCdMax");
-        bindValueChanged(events, "#FieldCaiTierShieldCharge", "@CaiTierShieldCharge");
-        bindValueChanged(events, "#FieldCaiTierGuardCd", "@CaiTierGuardCd");
-        bindValueChanged(events, "#FieldCaiTierRetHealth", "@CaiTierRetHealth");
+        for (int t = 0; t < 5; t++) {
+            bindValueChanged(events, "#FieldCaiTierCdMin" + t, "@CaiTierCdMin" + t);
+            bindValueChanged(events, "#FieldCaiTierCdMax" + t, "@CaiTierCdMax" + t);
+            bindValueChanged(events, "#FieldCaiTierStrCdMin" + t, "@CaiTierStrCdMin" + t);
+            bindValueChanged(events, "#FieldCaiTierStrCdMax" + t, "@CaiTierStrCdMax" + t);
+            bindValueChanged(events, "#FieldCaiTierShieldCharge" + t, "@CaiTierShieldCharge" + t);
+            bindValueChanged(events, "#FieldCaiTierGuardCd" + t, "@CaiTierGuardCd" + t);
+            bindValueChanged(events, "#FieldCaiTierRetHealth" + t, "@CaiTierRetHealth" + t);
+        }
         bindValueChanged(events, "#FieldCaiWpnRange", "@CaiWpnRange");
         bindValueChanged(events, "#FieldCaiWpnSpeed", "@CaiWpnSpeed");
 
@@ -1273,6 +1290,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindValueChanged(events, "#FieldOverlayMinionXPMult", "@OverlayMinionXPMult");
 
         bindValueChanged(events, "#TierOvrFilter", "@TierOvrFilter");
+        bindAction(events, "#TierOvrDeleteFiltered", "TierOvrDeleteFiltered");
+        bindAction(events, "#TierOvrDeleteAll", "TierOvrDeleteAll");
         bindActionWithFilter(events, "#AddTierOvrCategory", "AddTierOvrCategory", "@TierOvrFilter", "#TierOvrFilter");
         bindActionWithFilter(events, "#AddTierOvrMob", "AddTierOvrMob", "@TierOvrFilter", "#TierOvrFilter");
         bindActionWithFilter(events, "#TierOvrFirstPage", "TierOvrFirstPage", "@TierOvrFilter", "#TierOvrFilter");
@@ -1332,6 +1351,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         updateFilter(data.lootTplMobFilter, lootTplMobFilter, v -> lootTplMobFilter = v, () -> { lootTplMobPage = 0; rebuildLootTplMobFiltered(); });
         updateFilter(data.mobRuleTreeFilter, mobRuleTreeFilter, v -> mobRuleTreeFilter = v, () -> { mobRuleTreeExpandedIndex = -1; rebuildMobRuleTreeFiltered(); });
         updateFilter(data.lootTreeFilter, lootTreeFilter, v -> lootTreeFilter = v, () -> { lootTemplateExpandedIndex = -1; rebuildLootTreeFiltered(); });
+        updateFilter(data.lootDropSearchFilter, lootDropSearchFilter, v -> lootDropSearchFilter = v, () -> { lootDropSearchPage = 0; lootTemplateExpandedIndex = -1; rebuildLootDropSearchResults(); });
+        updateFilter(data.lootTplDropFilter, lootTplDropFilter, v -> lootTplDropFilter = v, () -> { lootTemplateDropPage = 0; });
         updateFilter(data.effectTreeFilter, effectTreeFilter, v -> effectTreeFilter = v, () -> { effectExpandedIndex = -1; rebuildEffectTreeFiltered(); });
         updateFilter(data.wpnCatTreeFilter, wpnCatTreeFilter, v -> wpnCatTreeFilter = v, () -> { wpnCatFilterPage = 0; rebuildGearCatTreeFiltered(true); });
         updateFilter(data.armCatTreeFilter, armCatTreeFilter, v -> armCatTreeFilter = v, () -> { armCatFilterPage = 0; rebuildGearCatTreeFiltered(false); });
@@ -1400,9 +1421,15 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             case "LootTplMobDeleteAll" -> handleLootTplMobDeleteAll();
 
             case "LootTplAddDrop" -> addLootTemplateDrop();
+            case "LootTplDropDeleteFiltered" -> handleLootTplDropDeleteFiltered();
+            case "LootTplDropDeleteAll" -> handleLootTplDropDeleteAll();
             case "LootTplDropFirstPage", "LootTplDropPrevPage", "LootTplDropNextPage", "LootTplDropLastPage" -> {
-                var lt = getExpandedLootTemplate();
-                if (lt != null) handlePaginationAction(action, "LootTplDrop", lootTemplateDropPage, lt.drops.size(), AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE, p -> lootTemplateDropPage = p);
+                if (!lootDropSearchFilter.isEmpty()) {
+                    handlePaginationAction(action, "LootTplDrop", lootDropSearchPage, lootDropSearchResults.size(), AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE, p -> lootDropSearchPage = p);
+                } else {
+                    var lt = getExpandedLootTemplate();
+                    if (lt != null) handlePaginationAction(action, "LootTplDrop", lootTemplateDropPage, lt.drops.size(), AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE, p -> lootTemplateDropPage = p);
+                }
                 needsFieldRefresh = true;
             }
 
@@ -1429,6 +1456,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             }
             case "ItemPickerUseCustom" -> handleItemPickerUseCustom();
             case "ItemPickerAdd" -> { applyItemPickerSelection(); needsFieldRefresh = true; }
+            case "ItemPickerAddAllFiltered" -> { handleItemPickerAddAllFiltered(); needsFieldRefresh = true; }
 
             case "NpcPickerCancel" -> closeNpcPicker();
             case "NpcPickerFirstPage", "NpcPickerPrevPage", "NpcPickerNextPage", "NpcPickerLastPage" -> {
@@ -1437,6 +1465,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             }
             case "NpcPickerUseCustom" -> handleNpcPickerUseCustom();
             case "NpcPickerAdd" -> { applyNpcPickerSelection(); needsFieldRefresh = true; }
+            case "NpcPickerAddAllFiltered" -> { handleNpcPickerAddAllFiltered(); needsFieldRefresh = true; }
 
             case "FirstWorlds" -> worldPage = 0;
             case "PrevWorlds" -> worldPage = Math.max(0, worldPage - 1);
@@ -1471,6 +1500,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             case "MobRuleDeleteAll" -> handleMobRuleDeleteAll();
             case "LootDeleteFiltered" -> handleLootDeleteFiltered();
             case "LootDeleteAll" -> handleLootDeleteAll();
+            case "LootDropSearchDeleteFiltered" -> handleLootDropSearchDeleteFiltered();
             case "ToggleFallDamage" -> toggleOverlayBoolean(() -> editOverlay.eliteFallDamageDisabled, v -> editOverlay.eliteFallDamageDisabled = v, r -> r.eliteFallDamageDisabled);
 
             case "ToggleHealthScaling" -> toggleOverlayBoolean(() -> editOverlay.enableHealthScaling, v -> editOverlay.enableHealthScaling = v, r -> r.enableHealthScaling);
@@ -1480,6 +1510,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
             case "AddTierOvrCategory" -> openTierRestrictionCategoryPicker();
             case "AddTierOvrMob" -> openTierRestrictionNpcPicker();
+            case "TierOvrDeleteFiltered" -> handleTierOvrDeleteFiltered();
+            case "TierOvrDeleteAll" -> handleTierOvrDeleteAll();
             case "TierOvrFirstPage", "TierOvrPrevPage", "TierOvrNextPage", "TierOvrLastPage" -> {
                 handlePaginationAction(action, "TierOvr", tierOverridePage, buildTierOverrideVisibleIndices().size(), AdminUIData.TIER_OVERRIDE_PAGE_SIZE, p -> tierOverridePage = p);
                 needsFieldRefresh = true;
@@ -1610,6 +1642,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             handleGlobMobRuleWpnCatPeek(parseIdx(action, "GlobMobRuleWpnCatPeek_"));
         } else if (action.equals("GlobMobRuleWpnCatClear")) {
             handleGlobMobRuleWpnCatClear();
+        } else if (action.equals("GlobMobRuleWpnCatDeleteFiltered")) {
+            handleGlobMobRuleWpnCatDeleteFiltered();
         } else if (action.equals("GlobMobRuleWpnCatPrev")) {
             if (mobRuleWpnCatPage > 0) { mobRuleWpnCatPage--; needsFieldRefresh = true; }
         } else if (action.equals("GlobMobRuleWpnCatNext")) {
@@ -1628,6 +1662,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             handleGlobMobRuleArmCatPeek(parseIdx(action, "GlobMobRuleArmCatPeek_"));
         } else if (action.equals("GlobMobRuleArmCatClear")) {
             handleGlobMobRuleArmCatClear();
+        } else if (action.equals("GlobMobRuleArmCatDeleteFiltered")) {
+            handleGlobMobRuleArmCatDeleteFiltered();
         } else if (action.equals("GlobMobRuleArmCatPrev")) {
             if (mobRuleArmCatPage > 0) { mobRuleArmCatPage--; needsFieldRefresh = true; }
         } else if (action.equals("GlobMobRuleArmCatNext")) {
@@ -1640,13 +1676,23 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
     private boolean handleLootTreeAction(String action) {
         if (action.startsWith("LootRowClick_")) {
-            handleLootRowClick(parseIdx(action, "LootRowClick_"));
+            if (lootDropSearchFilter.isEmpty()) {
+                handleLootRowClick(parseIdx(action, "LootRowClick_"));
+            }
         } else if (action.startsWith("LootRowRen_")) {
-            openRenamePopupForLoot(parseIdx(action, "LootRowRen_"));
+            if (lootDropSearchFilter.isEmpty()) {
+                openRenamePopupForLoot(parseIdx(action, "LootRowRen_"));
+            }
         } else if (action.startsWith("LootRowMov_")) {
-            openMovePopupForLoot(parseIdx(action, "LootRowMov_"));
+            if (lootDropSearchFilter.isEmpty()) {
+                openMovePopupForLoot(parseIdx(action, "LootRowMov_"));
+            }
         } else if (action.startsWith("LootRowDel_")) {
-            handleLootRowDelete(parseIdx(action, "LootRowDel_"));
+            if (!lootDropSearchFilter.isEmpty()) {
+                handleLootDropSearchDelete(parseIdx(action, "LootRowDel_"));
+            } else {
+                handleLootRowDelete(parseIdx(action, "LootRowDel_"));
+            }
         } else {
             return false;
         }
@@ -1663,7 +1709,19 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         } else if (action.startsWith("LootTplDropTier_")) {
             handleLootTplDropTierToggle(action);
         } else if (action.startsWith("LootTplDropItemPick_")) {
-            openItemPicker(parseIdx(action, "LootTplDropItemPick_"));
+            if (!lootDropSearchFilter.isEmpty()) {
+                int slot = parseIdx(action, "LootTplDropItemPick_");
+                int resultIdx = lootDropSearchPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE + slot;
+                if (resultIdx >= 0 && resultIdx < lootDropSearchResults.size()) {
+                    String templateKey = lootDropSearchResults.get(resultIdx).templateKey();
+                    lootDropSearchFilter = "";
+                    lootDropSearchResults.clear();
+                    navigateToLootTemplate(templateKey);
+                    needsFieldRefresh = true;
+                }
+            } else {
+                openItemPicker(parseIdx(action, "LootTplDropItemPick_"));
+            }
         } else {
             return false;
         }
@@ -2485,24 +2543,33 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 reloadedCfg.upgradeSummonMarkerEntriesToVariantIds();
             }
 
-            snapshotGlobalConfig();
-            snapshotAllData();
-            refreshSidebarLists();
-
             String savedMobCatName = currentMobRuleCategory != null ? currentMobRuleCategory.name : null;
             int savedMobExpanded = mobRuleTreeExpandedIndex;
             List<String> savedMobNavNames = mobRuleNavHistory.stream().map(c -> c.name).toList();
             List<String> savedMobFwdNames = mobRuleForwardHistory.stream().map(c -> c.name).toList();
             String savedPerWorldMobCatName = perWorldCurrentCategory != null ? perWorldCurrentCategory.name : null;
             String savedLootCatName = currentLootCategory != null ? currentLootCategory.name : null;
-            int savedLootExpanded = lootTemplateExpandedIndex;
+            String savedLootExpandedKey = null;
+            if (lootTemplateExpandedIndex >= 0 && lootTemplateExpandedIndex < lootTreeItems.size()) {
+                TreeItem item = lootTreeItems.get(lootTemplateExpandedIndex);
+                if (!item.isCategory) savedLootExpandedKey = item.name;
+            }
             int savedLootDropPage = lootTemplateDropPage;
+            String savedLootDropSearch = lootDropSearchFilter;
             List<String> savedLootNavNames = lootNavHistory.stream().map(c -> c.name).toList();
             List<String> savedLootFwdNames = lootForwardHistory.stream().map(c -> c.name).toList();
             int savedAbilExpanded = abilityExpandedIndex;
             String savedAbilMobFilter = abilityMobFilter;
             int savedAbilMobPage = abilityMobPage;
             int savedEffectExpanded = effectExpandedIndex;
+            String savedWpnCatName = currentWeaponCategory != null ? currentWeaponCategory.name : null;
+            String savedArmCatName = currentArmorCategory != null ? currentArmorCategory.name : null;
+            String savedWpnFilter = wpnCatTreeFilter;
+            String savedArmFilter = armCatTreeFilter;
+
+            snapshotGlobalConfig();
+            snapshotAllData();
+            refreshSidebarLists();
 
             if (selectedName != null) loadOverlayForEditing();
 
@@ -2545,9 +2612,13 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                         var cat = findLootCategoryByName(getLootCategoryRoot(), name);
                         if (cat != null) lootForwardHistory.addLast(cat);
                     }
-                    lootTemplateExpandedIndex = savedLootExpanded;
+                    pendingLootExpandedKey = savedLootExpandedKey;
                     lootTemplateDropPage = savedLootDropPage;
                 }
+            }
+            lootDropSearchFilter = savedLootDropSearch;
+            if (!lootDropSearchFilter.isEmpty()) {
+                rebuildLootDropSearchResults();
             }
 
             abilityExpandedIndex = savedAbilExpanded;
@@ -2558,12 +2629,16 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
             effectExpandedIndex = savedEffectExpanded;
 
-            wpnCatTreeFilter = "";
-            wpnCatFilterPage = 0;
-            wpnCatTreeFilteredKeys.clear();
-            armCatTreeFilter = "";
-            armCatFilterPage = 0;
-            armCatTreeFilteredKeys.clear();
+            if (savedWpnCatName != null) {
+                currentWeaponCategory = MobRuleCategoryHelpers.findGearCategoryByName(editWeaponCategoryTree, savedWpnCatName);
+            }
+            if (savedArmCatName != null) {
+                currentArmorCategory = MobRuleCategoryHelpers.findGearCategoryByName(editArmorCategoryTree, savedArmCatName);
+            }
+            wpnCatTreeFilter = savedWpnFilter;
+            armCatTreeFilter = savedArmFilter;
+            rebuildGearCatTreeFiltered(true);
+            rebuildGearCatTreeFiltered(false);
 
             pendingOverlays.clear();
             pendingTemplateKeys.clear();
@@ -2584,12 +2659,54 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         pendingOverlays.clear();
         pendingTemplateKeys.clear();
 
+        String savedWpnFilter = wpnCatTreeFilter;
+        String savedArmFilter = armCatTreeFilter;
+        currentWeaponCategory = null;
+        wpnCatNavHistory.clear();
+        wpnCatForwardHistory.clear();
+        wpnCatTreeItems.clear();
+        wpnCatFilterPage = 0;
+        currentArmorCategory = null;
+        armCatNavHistory.clear();
+        armCatForwardHistory.clear();
+        armCatTreeItems.clear();
+        armCatFilterPage = 0;
+        wpnCatTreeFilter = savedWpnFilter;
+        armCatTreeFilter = savedArmFilter;
+        rebuildGearCatTreeFiltered(true);
+        rebuildGearCatTreeFiltered(false);
+
+        String savedLootExpandedKey = null;
+        if (lootTemplateExpandedIndex >= 0 && lootTemplateExpandedIndex < lootTreeItems.size()
+                && !lootTreeItems.get(lootTemplateExpandedIndex).isCategory) {
+            savedLootExpandedKey = lootTreeItems.get(lootTemplateExpandedIndex).name;
+        }
+        String savedLootFilter = lootTreeFilter;
+        String savedLootDropSearch = lootDropSearchFilter;
+        String savedLootTplDropFilter = lootTplDropFilter;
+        String savedLootTplMobFilter = lootTplMobFilter;
+        int savedLootDropPage = lootTemplateDropPage;
+        String savedLootCatName = currentLootCategory != null ? currentLootCategory.name : null;
+
         int savedAbilExpanded = abilityExpandedIndex;
         String savedAbilMobFilter = abilityMobFilter;
         int savedAbilMobPage = abilityMobPage;
         int savedEffectExpanded = effectExpandedIndex;
 
         if (selectedName != null) loadOverlayForEditing();
+
+        if (savedLootCatName != null) {
+            var found = findLootCategoryByName(getLootCategoryRoot(), savedLootCatName);
+            if (found != null) currentLootCategory = found;
+        }
+        lootTreeFilter = savedLootFilter;
+        lootDropSearchFilter = savedLootDropSearch;
+        lootTplDropFilter = savedLootTplDropFilter;
+        lootTplMobFilter = savedLootTplMobFilter;
+        lootTemplateDropPage = savedLootDropPage;
+        rebuildLootTreeFiltered();
+        if (!lootDropSearchFilter.isEmpty()) rebuildLootDropSearchResults();
+        pendingLootExpandedKey = savedLootExpandedKey;
 
         abilityExpandedIndex = savedAbilExpanded;
         abilityMobFilter = savedAbilMobFilter;
@@ -4264,6 +4381,28 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         needsFieldRefresh = true;
     }
 
+    private void handleTierOvrDeleteFiltered() {
+        if (editOverlay == null || tierOverrideFilter.isEmpty()) return;
+        List<Integer> visibleIndices = buildTierOverrideVisibleIndices();
+        List<String> keysToRemove = new ArrayList<>();
+        for (int idx : visibleIndices) keysToRemove.add(activeTierOverrideKeys.get(idx));
+        activeTierOverrideKeys.removeAll(keysToRemove);
+        if (editOverlay.tierOverrides != null) {
+            for (String key : keysToRemove) editOverlay.tierOverrides.remove(key);
+            if (editOverlay.tierOverrides.isEmpty()) editOverlay.tierOverrides = null;
+        }
+        tierOverridePage = 0;
+        needsFieldRefresh = true;
+    }
+
+    private void handleTierOvrDeleteAll() {
+        if (editOverlay == null) return;
+        activeTierOverrideKeys.clear();
+        editOverlay.tierOverrides = null;
+        tierOverridePage = 0;
+        needsFieldRefresh = true;
+    }
+
     private void processTierRestrictionFilter(AdminUIData data) {
         if (editOverlay == null) return;
         if (data.tierOvrFilter != null) {
@@ -4321,6 +4460,8 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         boolean tierOvrEmpty = activeTierOverrideKeys.isEmpty();
         c.set("#TierOvrEmpty.Visible", tierOvrEmpty);
         c.set("#TierOvrHeaders.Visible", !tierOvrEmpty);
+        boolean filtering = !tierOverrideFilter.isEmpty();
+        c.set("#TierOvrDeleteFiltered.Visible", filtering && totalVisible > 0);
 
         int pageEnd = Math.min((page + 1) * AdminUIData.TIER_OVERRIDE_PAGE_SIZE, totalVisible);
         c.set("#TierOvrPageInfo.Text", pageEnd + "/" + totalVisible);
@@ -5362,6 +5503,18 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         needsFieldRefresh = true;
     }
 
+    private void handleGlobMobRuleWpnCatDeleteFiltered() {
+        if (mobRuleWpnCatFilter.isEmpty() || mobRuleWpnCatFiltered.isEmpty()) return;
+        RPGMobsConfig.MobRule rule = getExpandedGlobMobRule();
+        if (rule == null) return;
+        if (!(rule.allowedWeaponCategories instanceof ArrayList))
+            rule.allowedWeaponCategories = new ArrayList<>(rule.allowedWeaponCategories);
+        rule.allowedWeaponCategories.removeAll(mobRuleWpnCatFiltered);
+        mobRuleWpnCatPage = 0;
+        rebuildMobRuleLinkedFiltered(rule.allowedWeaponCategories, mobRuleWpnCatFilter, mobRuleWpnCatFiltered);
+        needsFieldRefresh = true;
+    }
+
     private void handleGlobMobRuleWpnCatAddItem() {
         RPGMobsConfig.MobRule rule = getExpandedGlobMobRule();
         if (rule == null) return;
@@ -5438,6 +5591,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         if (showPagination) {
             c.set(prefix + "PageInfo.Text", (page + 1) + " / " + totalPages);
         }
+        c.set(prefix + "DeleteFiltered.Visible", !filter.isEmpty() && totalItems > 0);
     }
 
     private void handleAbilMobPeek(int slotIdx) {
@@ -6049,7 +6203,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             }
             case TIER_OVERRIDE -> {
                 if (editOverlay == null || editOverlay.tierOverrides == null) break;
-                ConfigOverlay.TierOverride existing = editOverlay.tierOverrides.remove(MobRuleCategoryHelpers.fromCategoryKey(catKey));
+                ConfigOverlay.TierOverride existing = editOverlay.tierOverrides.remove(catKey);
                 if (existing == null) break;
                 int insertIdx = activeTierOverrideKeys.indexOf(catKey);
                 if (insertIdx >= 0) activeTierOverrideKeys.remove(insertIdx);
@@ -6391,8 +6545,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             if (showPagination) {
                 c.set(prefix + "PageInfo.Text", (filterPage + 1) + " / " + totalPages);
             }
+            c.set(prefix + "DeleteFiltered.Visible", totalFiltered > 0);
         } else {
             c.set(prefix + "Pagination.Visible", false);
+            c.set(prefix + "DeleteFiltered.Visible", false);
             RPGMobsConfig.GearCategory cat = ensureCurrentGearCat(isWeapon);
             c.set(prefix + "NavBack.Visible", !navHistory.isEmpty());
             c.set(prefix + "NavForward.Visible", !fwdHistory.isEmpty());
@@ -6486,6 +6642,18 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         needsFieldRefresh = true;
     }
 
+    private void handleGlobMobRuleArmCatDeleteFiltered() {
+        if (mobRuleArmCatFilter.isEmpty() || mobRuleArmCatFiltered.isEmpty()) return;
+        RPGMobsConfig.MobRule rule = getExpandedGlobMobRule();
+        if (rule == null) return;
+        if (!(rule.allowedArmorCategories instanceof ArrayList))
+            rule.allowedArmorCategories = new ArrayList<>(rule.allowedArmorCategories);
+        rule.allowedArmorCategories.removeAll(mobRuleArmCatFiltered);
+        mobRuleArmCatPage = 0;
+        rebuildMobRuleLinkedFiltered(rule.allowedArmorCategories, mobRuleArmCatFilter, mobRuleArmCatFiltered);
+        needsFieldRefresh = true;
+    }
+
     private void handleGlobMobRuleArmCatAddItem() {
         RPGMobsConfig.MobRule rule = getExpandedGlobMobRule();
         if (rule == null) return;
@@ -6534,6 +6702,31 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         lootTemplateExpandedIndex = -1;
         lootTemplateDropPage = 0;
         needsFieldRefresh = true;
+    }
+
+    private void navigateToLootTemplate(String templateKey) {
+        lootTreeFilter = "";
+        lootTreeFilteredKeys.clear();
+        RPGMobsConfig.LootTemplateCategory root = getLootCategoryRoot();
+        RPGMobsConfig.LootTemplateCategory parent = findLootCategoryContaining(root, templateKey);
+        if (parent != null && parent != currentLootCategory) {
+            if (currentLootCategory != null) lootNavHistory.push(currentLootCategory);
+            lootForwardHistory.clear();
+            currentLootCategory = parent;
+        }
+        pendingLootExpandedKey = templateKey;
+        lootTemplateDropPage = 0;
+        needsFieldRefresh = true;
+    }
+
+    private RPGMobsConfig.@Nullable LootTemplateCategory findLootCategoryContaining(
+            RPGMobsConfig.LootTemplateCategory cat, String templateKey) {
+        if (cat.templateKeys.contains(templateKey)) return cat;
+        for (var child : cat.children) {
+            var found = findLootCategoryContaining(child, templateKey);
+            if (found != null) return found;
+        }
+        return null;
     }
 
     private void lootTreeBack() {
@@ -6709,8 +6902,85 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private void populateLootTree(UICommandBuilder c) {
         if (needsFieldRefresh) {
             c.set("#LootTreeFilter.Value", lootTreeFilter);
+            c.set("#LootDropSearchField.Value", lootDropSearchFilter);
         }
+        boolean dropSearching = !lootDropSearchFilter.isEmpty();
         boolean filtering = !lootTreeFilter.isEmpty();
+
+        if (dropSearching) {
+            c.set("#LootBreadcrumb.Visible", false);
+            boolean empty = lootDropSearchResults.isEmpty();
+            c.set("#LootTreeEmpty.Visible", empty);
+            c.set("#LootDeleteFiltered.Visible", false);
+            c.set("#LootDropSearchDeleteFiltered.Visible", !empty);
+
+            for (int i = 0; i < AdminUIData.TREE_ROW_COUNT; i++) {
+                c.set("#LootRow" + i + ".Visible", false);
+            }
+            c.set("#AddLootCategory.Visible", false);
+            c.set("#AddLootTemplate.Visible", false);
+            c.set("#LootDeleteAll.Visible", false);
+
+            c.set("#LootTemplateDetail.Visible", !empty);
+            if (!empty) {
+                c.set("#LootTplDetailTitle.Visible", false);
+                c.set("#LootTplMobSection.Visible", false);
+                c.set("#LootTplDropHeader.Visible", false);
+                c.set("#LootTplDropActions.Visible", false);
+                c.set("#LootTplAddDrop.Visible", false);
+
+                int pageSize = AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE;
+                int totalResults = lootDropSearchResults.size();
+                int totalPages = Math.max(1, (totalResults + pageSize - 1) / pageSize);
+                if (lootDropSearchPage >= totalPages) lootDropSearchPage = totalPages - 1;
+                int pageStart = lootDropSearchPage * pageSize;
+
+                for (int slot = 0; slot < pageSize; slot++) {
+                    int resultIdx = pageStart + slot;
+                    boolean vis = resultIdx < totalResults;
+                    if (vis) {
+                        LootDropSearchResult result = lootDropSearchResults.get(resultIdx);
+                        RPGMobsConfig.LootTemplate tpl = editLootTemplates.get(result.templateKey());
+                        RPGMobsConfig.ExtraDropRule drop = tpl != null && result.dropIndex() < tpl.drops.size()
+                                ? tpl.drops.get(result.dropIndex()) : null;
+                        if (drop != null) {
+                            String itemId = drop.itemId != null ? drop.itemId : "";
+                            boolean hasItemId = !itemId.isBlank();
+                            c.set("#LootTplDropIcon" + slot + ".Visible", hasItemId);
+                            if (hasItemId) c.set("#LootTplDropIcon" + slot + ".ItemId", itemId);
+                            c.set("#LootTplDropItemBtn" + slot + ".Text", result.templateKey() + " > " + itemId);
+                            for (int t = 0; t < AdminUIData.TIERS_COUNT; t++) {
+                                boolean en = drop.enabledPerTier[t];
+                                c.set("#LootTplDropTierOn" + slot + "T" + t + ".Visible", en);
+                                c.set("#LootTplDropTierOff" + slot + "T" + t + ".Visible", !en);
+                            }
+                            c.set("#LootTplDropChance" + slot + ".Value", String.valueOf(drop.chance));
+                            c.set("#LootTplDropMinQty" + slot + ".Value", String.valueOf(drop.minQty));
+                            c.set("#LootTplDropMaxQty" + slot + ".Value", String.valueOf(drop.maxQty));
+                        } else {
+                            vis = false;
+                        }
+                    }
+                    c.set("#LootTplDrop" + slot + ".Visible", vis);
+                }
+
+                c.set("#LootTplDropsEmpty.Visible", totalResults == 0);
+                int pageEnd = Math.min((lootDropSearchPage + 1) * pageSize, totalResults);
+                c.set("#LootTplDropPageInfo.Text", pageEnd + "/" + totalResults);
+                c.set("#LootTplDropPagination.Visible", totalPages > 1);
+                boolean multiPage = totalPages > 1;
+                c.set("#LootTplDropFirstPage.Visible", multiPage && lootDropSearchPage > 0);
+                c.set("#LootTplDropPrevPage.Visible", multiPage && lootDropSearchPage > 0);
+                c.set("#LootTplDropNextPage.Visible", multiPage && lootDropSearchPage < totalPages - 1);
+                c.set("#LootTplDropLastPage.Visible", multiPage && lootDropSearchPage < totalPages - 1);
+            }
+            return;
+        }
+
+        c.set("#LootDropSearchDeleteFiltered.Visible", false);
+        c.set("#AddLootCategory.Visible", true);
+        c.set("#AddLootTemplate.Visible", true);
+        c.set("#LootDeleteAll.Visible", true);
 
         if (filtering) {
             c.set("#LootBreadcrumb.Visible", false);
@@ -6732,6 +7002,17 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             for (String key : cat.templateKeys) {
                 lootTreeItems.add(new TreeItem(key, false));
             }
+        }
+
+        if (pendingLootExpandedKey != null) {
+            lootTemplateExpandedIndex = -1;
+            for (int i = 0; i < lootTreeItems.size(); i++) {
+                if (!lootTreeItems.get(i).isCategory && lootTreeItems.get(i).name.equals(pendingLootExpandedKey)) {
+                    lootTemplateExpandedIndex = i;
+                    break;
+                }
+            }
+            pendingLootExpandedKey = null;
         }
 
         boolean empty = lootTreeItems.isEmpty();
@@ -6850,6 +7131,57 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         needsFieldRefresh = true;
     }
 
+    private void rebuildLootDropSearchResults() {
+        lootDropSearchResults.clear();
+        if (lootDropSearchFilter.isEmpty()) return;
+        String lower = lootDropSearchFilter.toLowerCase(Locale.ROOT);
+        for (var entry : editLootTemplates.entrySet()) {
+            RPGMobsConfig.LootTemplate template = entry.getValue();
+            for (int i = 0; i < template.drops.size(); i++) {
+                String itemId = template.drops.get(i).itemId;
+                if (itemId != null && !itemId.isEmpty() && itemId.toLowerCase(Locale.ROOT).contains(lower)) {
+                    lootDropSearchResults.add(new LootDropSearchResult(entry.getKey(), i, itemId));
+                }
+            }
+        }
+    }
+
+    private void handleLootDropSearchDelete(int rowIdx) {
+        int actualIdx = lootDropSearchPage * AdminUIData.TREE_ROW_COUNT + rowIdx;
+        if (actualIdx < 0 || actualIdx >= lootDropSearchResults.size()) return;
+        LootDropSearchResult result = lootDropSearchResults.get(actualIdx);
+        RPGMobsConfig.LootTemplate template = editLootTemplates.get(result.templateKey);
+        if (template != null && result.dropIndex < template.drops.size()) {
+            template.drops.remove(result.dropIndex);
+        }
+        rebuildLootDropSearchResults();
+        int maxPage = Math.max(0, (lootDropSearchResults.size() - 1) / AdminUIData.TREE_ROW_COUNT);
+        if (lootDropSearchPage > maxPage) lootDropSearchPage = maxPage;
+        needsFieldRefresh = true;
+    }
+
+    private void handleLootDropSearchDeleteFiltered() {
+        if (lootDropSearchFilter.isEmpty() || lootDropSearchResults.isEmpty()) return;
+        Map<String, List<Integer>> indicesToRemove = new LinkedHashMap<>();
+        for (LootDropSearchResult result : lootDropSearchResults) {
+            indicesToRemove.computeIfAbsent(result.templateKey, k -> new ArrayList<>()).add(result.dropIndex);
+        }
+        for (var entry : indicesToRemove.entrySet()) {
+            RPGMobsConfig.LootTemplate template = editLootTemplates.get(entry.getKey());
+            if (template == null) continue;
+            List<Integer> indices = entry.getValue();
+            indices.sort(Collections.reverseOrder());
+            for (int idx : indices) {
+                if (idx < template.drops.size()) {
+                    template.drops.remove(idx);
+                }
+            }
+        }
+        lootDropSearchPage = 0;
+        rebuildLootDropSearchResults();
+        needsFieldRefresh = true;
+    }
+
     private List<String> collectAllLootTemplateKeys(RPGMobsConfig.LootTemplateCategory cat) {
         List<String> keys = new ArrayList<>(cat.templateKeys);
         for (RPGMobsConfig.LootTemplateCategory child : cat.children) {
@@ -6872,7 +7204,12 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         if (!showDetail) return;
 
         String templateName = lootTreeItems.get(lootTemplateExpandedIndex).name;
+        c.set("#LootTplDetailTitle.Visible", true);
         c.set("#LootTplDetailTitle.Text", "Editing " + templateName);
+        c.set("#LootTplMobSection.Visible", true);
+        c.set("#LootTplDropHeader.Visible", true);
+        c.set("#LootTplDropActions.Visible", true);
+        c.set("#LootTplAddDrop.Visible", true);
 
         List<String> links = template.linkedMobRuleKeys;
         int totalMobs = lootTplMobFiltered.size();
@@ -6916,8 +7253,31 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#LootTplMobNextPage.Visible", mobMultiPage && lootTplMobPage < mobPages - 1);
         c.set("#LootTplMobLastPage.Visible", mobMultiPage && lootTplMobPage < mobPages - 1);
 
+        if (needsFieldRefresh) {
+            c.set("#LootTplDropFilter.Value", lootTplDropFilter);
+        }
+
         List<RPGMobsConfig.ExtraDropRule> drops = template.drops;
-        int totalDrops = drops.size();
+        lootTplDropVisibleIndices.clear();
+        if (!lootTplDropFilter.isEmpty()) {
+            String lowerFilter = lootTplDropFilter.toLowerCase();
+            for (int i = 0; i < drops.size(); i++) {
+                var d = drops.get(i);
+                if (d.itemId != null && d.itemId.toLowerCase().contains(lowerFilter)) {
+                    lootTplDropVisibleIndices.add(i);
+                }
+            }
+        } else {
+            for (int i = 0; i < drops.size(); i++) lootTplDropVisibleIndices.add(i);
+        }
+        List<RPGMobsConfig.ExtraDropRule> visibleDrops = lootTplDropVisibleIndices.stream()
+                .map(drops::get).toList();
+
+        int totalDrops = visibleDrops.size();
+        boolean hasDropFilter = !lootTplDropFilter.isEmpty();
+        c.set("#LootTplDropDeleteFiltered.Visible", hasDropFilter && totalDrops > 0);
+        c.set("#LootTplDropDeleteAll.Visible", true);
+
         int pageSize = AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE;
         int totalPages = Math.max(1, (totalDrops + pageSize - 1) / pageSize);
         if (lootTemplateDropPage >= totalPages) lootTemplateDropPage = totalPages - 1;
@@ -6927,7 +7287,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             int dropIdx = pageStart + slot;
             boolean vis = dropIdx < totalDrops;
             if (vis) {
-                RPGMobsConfig.ExtraDropRule drop = drops.get(dropIdx);
+                RPGMobsConfig.ExtraDropRule drop = visibleDrops.get(dropIdx);
                 String itemId = drop.itemId != null ? drop.itemId : "";
                 boolean hasItemId = !itemId.isBlank();
 
@@ -6939,7 +7299,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                     c.set("#LootTplDropTierOn" + slot + "T" + t + ".Visible", en);
                     c.set("#LootTplDropTierOff" + slot + "T" + t + ".Visible", !en);
                 }
-                if (needsFieldRefresh) {
+                if (needsFieldRefresh || !lootTplDropFilter.isEmpty()) {
                     c.set("#LootTplDropChance" + slot + ".Value", String.valueOf(drop.chance));
                     c.set("#LootTplDropMinQty" + slot + ".Value", String.valueOf(drop.minQty));
                     c.set("#LootTplDropMaxQty" + slot + ".Value", String.valueOf(drop.maxQty));
@@ -6963,14 +7323,42 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     }
 
     private void processLootTemplateDropFields(AdminUIData data) {
+        if (!lootDropSearchFilter.isEmpty()) {
+            processLootDropSearchFields(data);
+            return;
+        }
         RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
         if (template == null) return;
 
         int pageStart = lootTemplateDropPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE;
         for (int slot = 0; slot < AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE; slot++) {
-            int dropIdx = pageStart + slot;
+            int visibleIdx = pageStart + slot;
+            if (visibleIdx >= lootTplDropVisibleIndices.size()) break;
+            int dropIdx = lootTplDropVisibleIndices.get(visibleIdx);
             if (dropIdx >= template.drops.size()) break;
             RPGMobsConfig.ExtraDropRule drop = template.drops.get(dropIdx);
+
+            if (data.lootTplDropChances[slot] != null) {
+                try { drop.chance = Double.parseDouble(data.lootTplDropChances[slot].trim()); } catch (NumberFormatException ignored) {}
+            }
+            if (data.lootTplDropMinQtys[slot] != null) {
+                try { drop.minQty = Integer.parseInt(data.lootTplDropMinQtys[slot].trim()); } catch (NumberFormatException ignored) {}
+            }
+            if (data.lootTplDropMaxQtys[slot] != null) {
+                try { drop.maxQty = Integer.parseInt(data.lootTplDropMaxQtys[slot].trim()); } catch (NumberFormatException ignored) {}
+            }
+        }
+    }
+
+    private void processLootDropSearchFields(AdminUIData data) {
+        int pageStart = lootDropSearchPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE;
+        for (int slot = 0; slot < AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE; slot++) {
+            int resultIdx = pageStart + slot;
+            if (resultIdx >= lootDropSearchResults.size()) break;
+            LootDropSearchResult result = lootDropSearchResults.get(resultIdx);
+            RPGMobsConfig.LootTemplate tpl = editLootTemplates.get(result.templateKey());
+            if (tpl == null || result.dropIndex() >= tpl.drops.size()) continue;
+            RPGMobsConfig.ExtraDropRule drop = tpl.drops.get(result.dropIndex());
 
             if (data.lootTplDropChances[slot] != null) {
                 try { drop.chance = Double.parseDouble(data.lootTplDropChances[slot].trim()); } catch (NumberFormatException ignored) {}
@@ -7013,6 +7401,27 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         needsFieldRefresh = true;
     }
 
+    private void handleLootTplDropDeleteFiltered() {
+        if (!lootDropSearchFilter.isEmpty()) {
+            handleLootDropSearchDeleteFiltered();
+            return;
+        }
+        RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
+        if (template == null || lootTplDropFilter.isEmpty()) return;
+        String lowerFilter = lootTplDropFilter.toLowerCase();
+        template.drops.removeIf(d -> d.itemId != null && d.itemId.toLowerCase().contains(lowerFilter));
+        lootTemplateDropPage = 0;
+        needsFieldRefresh = true;
+    }
+
+    private void handleLootTplDropDeleteAll() {
+        RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
+        if (template == null) return;
+        template.drops.clear();
+        lootTemplateDropPage = 0;
+        needsFieldRefresh = true;
+    }
+
     private void rebuildLootTplMobFiltered() {
         lootTplMobFiltered.clear();
         RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
@@ -7036,23 +7445,36 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private void addLootTemplateDrop() {
         RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
         if (template == null) return;
+        itemPickerOpen = true;
+        itemPickerDropSlot = ITEM_PICKER_LOOT_ADD;
+        itemPickerFilter = "";
+        itemPickerCustomId = "";
+        itemPickerPage = 0;
+        itemPickerSelectedItem = null;
+        rebuildItemPickerFiltered();
+        needsFieldRefresh = true;
+    }
+
+    private void addLootDropForItem(RPGMobsConfig.LootTemplate template, String itemId) {
         var drop = new RPGMobsConfig.ExtraDropRule();
-        drop.itemId = "";
+        drop.itemId = itemId;
         drop.chance = 1.0;
         drop.minQty = 1;
         drop.maxQty = 1;
         Arrays.fill(drop.enabledPerTier, true);
         template.drops.add(drop);
-        int totalDrops = template.drops.size();
-        int pageSize = AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE;
-        lootTemplateDropPage = Math.max(0, (totalDrops - 1) / pageSize);
-        needsFieldRefresh = true;
     }
 
     private void deleteLootTemplateDrop(int slotIdx) {
+        if (!lootDropSearchFilter.isEmpty()) {
+            handleLootDropSearchDelete(slotIdx);
+            return;
+        }
         RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
         if (template == null) return;
-        int dropIdx = lootTemplateDropPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE + slotIdx;
+        int visibleIdx = lootTemplateDropPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE + slotIdx;
+        if (visibleIdx < 0 || visibleIdx >= lootTplDropVisibleIndices.size()) return;
+        int dropIdx = lootTplDropVisibleIndices.get(visibleIdx);
         if (dropIdx < 0 || dropIdx >= template.drops.size()) return;
         template.drops.remove(dropIdx);
         needsFieldRefresh = true;
@@ -7069,9 +7491,22 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         } catch (NumberFormatException e) {
             return;
         }
+        if (!lootDropSearchFilter.isEmpty()) {
+            int resultIdx = lootDropSearchPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE + slot;
+            if (resultIdx < 0 || resultIdx >= lootDropSearchResults.size()) return;
+            LootDropSearchResult result = lootDropSearchResults.get(resultIdx);
+            RPGMobsConfig.LootTemplate tpl = editLootTemplates.get(result.templateKey());
+            if (tpl == null || result.dropIndex() >= tpl.drops.size()) return;
+            if (tier < 0 || tier >= AdminUIData.TIERS_COUNT) return;
+            tpl.drops.get(result.dropIndex()).enabledPerTier[tier] = !tpl.drops.get(result.dropIndex()).enabledPerTier[tier];
+            needsFieldRefresh = true;
+            return;
+        }
         RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
         if (template == null) return;
-        int dropIdx = lootTemplateDropPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE + slot;
+        int visibleIdx = lootTemplateDropPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE + slot;
+        if (visibleIdx < 0 || visibleIdx >= lootTplDropVisibleIndices.size()) return;
+        int dropIdx = lootTplDropVisibleIndices.get(visibleIdx);
         if (dropIdx < 0 || dropIdx >= template.drops.size()) return;
         if (tier < 0 || tier >= AdminUIData.TIERS_COUNT) return;
         template.drops.get(dropIdx).enabledPerTier[tier] = !template.drops.get(dropIdx).enabledPerTier[tier];
@@ -7919,6 +8354,18 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         needsFieldRefresh = true;
     }
 
+    private void handleNpcPickerAddAllFiltered() {
+        if (npcPickerFilter.isEmpty() || npcPickerFiltered.isEmpty()) return;
+        if (npcPickerMode == NpcPickerMode.REBIND_MOB_RULE || npcPickerMode == NpcPickerMode.MOB_RULE) return;
+        List<String> toAdd = new ArrayList<>(npcPickerFiltered);
+        for (String item : toAdd) {
+            npcPickerSelectedItem = item;
+            applyNpcPickerSelection();
+        }
+        npcPickerSelectedItem = null;
+        closeNpcPicker();
+    }
+
     private void handleNpcPickerRowClick(int rowIdx) {
         int actualIdx = npcPickerPage * NPC_PICKER_ROW_COUNT + rowIdx;
         if (actualIdx < 0 || actualIdx >= npcPickerFiltered.size()) return;
@@ -8054,6 +8501,9 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         boolean hasSelection = npcPickerSelectedItem != null && !npcPickerSelectedItem.isBlank();
         c.set("#NpcPickerSelectedLabel.Text", hasSelection ? npcPickerSelectedItem : "None");
         c.set("#NpcPickerAdd.Visible", hasSelection);
+        boolean canBulkAdd = !npcPickerFilter.isEmpty() && !npcPickerFiltered.isEmpty()
+                && npcPickerMode != NpcPickerMode.REBIND_MOB_RULE && npcPickerMode != NpcPickerMode.MOB_RULE;
+        c.set("#NpcPickerAddAllFiltered.Visible", canBulkAdd);
 
         int npcPageEnd = Math.min((npcPickerPage + 1) * NPC_PICKER_ROW_COUNT, totalItems);
         c.set("#NpcPickerPageInfo.Text", npcPageEnd + "/" + totalItems);
@@ -8192,12 +8642,48 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             needsFieldRefresh = true;
             return;
         }
+        if (itemPickerDropSlot == ITEM_PICKER_LOOT_ADD) {
+            RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
+            if (template == null) { closeItemPicker(); return; }
+            addLootDropForItem(template, selectedItem);
+            int pageSize = AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE;
+            lootTemplateDropPage = Math.max(0, (template.drops.size() - 1) / pageSize);
+            closeItemPicker();
+            needsFieldRefresh = true;
+            return;
+        }
         RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
         if (template == null) return;
         int dropIdx = lootTemplateDropPage * AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE + itemPickerDropSlot;
         if (dropIdx >= template.drops.size()) return;
 
         template.drops.get(dropIdx).itemId = selectedItem;
+        closeItemPicker();
+        needsFieldRefresh = true;
+    }
+
+    private void handleItemPickerAddAllFiltered() {
+        if (itemPickerFilter.isEmpty() || itemPickerFiltered.isEmpty()) return;
+        if (itemPickerDropSlot == ITEM_PICKER_LOOT_ADD) {
+            RPGMobsConfig.LootTemplate template = getExpandedLootTemplate();
+            if (template == null) { closeItemPicker(); return; }
+            for (String item : itemPickerFiltered) {
+                addLootDropForItem(template, item);
+            }
+            int pageSize = AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE;
+            lootTemplateDropPage = Math.max(0, (template.drops.size() - 1) / pageSize);
+            closeItemPicker();
+            needsFieldRefresh = true;
+            return;
+        }
+        if (itemPickerDropSlot != ITEM_PICKER_GEAR_WEAPON_ADD && itemPickerDropSlot != ITEM_PICKER_GEAR_ARMOR_ADD) return;
+        boolean isWeapon = itemPickerDropSlot == ITEM_PICKER_GEAR_WEAPON_ADD;
+        RPGMobsConfig.GearCategory cat = ensureCurrentGearCat(isWeapon);
+        for (String item : itemPickerFiltered) {
+            if (!cat.itemKeys.contains(item)) {
+                cat.itemKeys.add(item);
+            }
+        }
         closeItemPicker();
         needsFieldRefresh = true;
     }
@@ -8264,6 +8750,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#ItemPickerSelectedLabel.Text", hasSelection ? itemPickerSelectedItem : "None");
         c.set("#ItemPickerSelectedLabel.Visible", true);
         c.set("#ItemPickerAdd.Visible", hasSelection);
+        boolean canBulkAddItems = !itemPickerFilter.isEmpty() && !itemPickerFiltered.isEmpty()
+                && (itemPickerDropSlot == ITEM_PICKER_GEAR_WEAPON_ADD || itemPickerDropSlot == ITEM_PICKER_GEAR_ARMOR_ADD
+                    || itemPickerDropSlot == ITEM_PICKER_LOOT_ADD);
+        c.set("#ItemPickerAddAllFiltered.Visible", canBulkAddItems);
 
         int itemPageEnd = Math.min((itemPickerPage + 1) * ITEM_PICKER_ROW_COUNT, totalItems);
         c.set("#ItemPickerPageInfo.Text", itemPageEnd + "/" + totalItems);
@@ -8607,9 +9097,6 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         } else if (action.startsWith("CaiFaction_")) {
             caiFactionIndex = parseIdx(action, "CaiFaction_");
             needsFieldRefresh = true;
-        } else if (action.startsWith("CaiTier_")) {
-            caiTierIndex = parseIdx(action, "CaiTier_");
-            needsFieldRefresh = true;
         } else if (action.startsWith("CaiWeapon_")) {
             caiWeaponIndex = parseIdx(action, "CaiWeapon_");
             needsFieldRefresh = true;
@@ -8884,15 +9371,15 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             fs.groupObserveDistanceMax = parseDoubleField(data.caiFacObsDistMax, fs.groupObserveDistanceMax);
             fs.flankingAngle = parseDoubleField(data.caiFacFlankAngle, fs.flankingAngle);
         }
-        if (caiTierIndex < editCombatAI.tierBehaviors.size()) {
-            var tb = editCombatAI.tierBehaviors.get(caiTierIndex);
-            tb.cooldownMin = parseDoubleField(data.caiTierCdMin, tb.cooldownMin);
-            tb.cooldownMax = parseDoubleField(data.caiTierCdMax, tb.cooldownMax);
-            tb.strafeCooldownMin = parseDoubleField(data.caiTierStrCdMin, tb.strafeCooldownMin);
-            tb.strafeCooldownMax = parseDoubleField(data.caiTierStrCdMax, tb.strafeCooldownMax);
-            tb.shieldChargeFor = parseDoubleField(data.caiTierShieldCharge, tb.shieldChargeFor);
-            tb.shieldGuardCooldown = parseDoubleField(data.caiTierGuardCd, tb.shieldGuardCooldown);
-            tb.retreatHealthThreshold = parseDoubleField(data.caiTierRetHealth, tb.retreatHealthThreshold);
+        for (int t = 0; t < editCombatAI.tierBehaviors.size() && t < 5; t++) {
+            var tb = editCombatAI.tierBehaviors.get(t);
+            tb.cooldownMin = parseDoubleField(data.caiTierCdMin[t], tb.cooldownMin);
+            tb.cooldownMax = parseDoubleField(data.caiTierCdMax[t], tb.cooldownMax);
+            tb.strafeCooldownMin = parseDoubleField(data.caiTierStrCdMin[t], tb.strafeCooldownMin);
+            tb.strafeCooldownMax = parseDoubleField(data.caiTierStrCdMax[t], tb.strafeCooldownMax);
+            tb.shieldChargeFor = parseDoubleField(data.caiTierShieldCharge[t], tb.shieldChargeFor);
+            tb.shieldGuardCooldown = parseDoubleField(data.caiTierGuardCd[t], tb.shieldGuardCooldown);
+            tb.retreatHealthThreshold = parseDoubleField(data.caiTierRetHealth[t], tb.retreatHealthThreshold);
         }
         String wpnKey = CAI_WEAPON_KEYS[caiWeaponIndex];
         var wp = editCombatAI.weaponParams.get(wpnKey);
@@ -8979,19 +9466,17 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             renderToggle(c, "#CaiTierToggleFlank" + t, tb.hasFlanking);
         }
 
-        for (int i = 0; i < 5; i++) {
-            c.set("#CaiTier" + i + ".Visible", i != caiTierIndex);
-            c.set("#CaiTier" + i + "Active.Visible", i == caiTierIndex);
-        }
-        if (caiTierIndex < editCombatAI.tierBehaviors.size() && needsFieldRefresh) {
-            var tb = editCombatAI.tierBehaviors.get(caiTierIndex);
-            c.set("#FieldCaiTierCdMin.Value", fmtDouble(tb.cooldownMin));
-            c.set("#FieldCaiTierCdMax.Value", fmtDouble(tb.cooldownMax));
-            c.set("#FieldCaiTierStrCdMin.Value", fmtDouble(tb.strafeCooldownMin));
-            c.set("#FieldCaiTierStrCdMax.Value", fmtDouble(tb.strafeCooldownMax));
-            c.set("#FieldCaiTierShieldCharge.Value", fmtDouble(tb.shieldChargeFor));
-            c.set("#FieldCaiTierGuardCd.Value", fmtDouble(tb.shieldGuardCooldown));
-            c.set("#FieldCaiTierRetHealth.Value", fmtDouble(tb.retreatHealthThreshold));
+        if (needsFieldRefresh) {
+            for (int t = 0; t < editCombatAI.tierBehaviors.size() && t < 5; t++) {
+                var tb = editCombatAI.tierBehaviors.get(t);
+                c.set("#FieldCaiTierCdMin" + t + ".Value", fmtDouble(tb.cooldownMin));
+                c.set("#FieldCaiTierCdMax" + t + ".Value", fmtDouble(tb.cooldownMax));
+                c.set("#FieldCaiTierStrCdMin" + t + ".Value", fmtDouble(tb.strafeCooldownMin));
+                c.set("#FieldCaiTierStrCdMax" + t + ".Value", fmtDouble(tb.strafeCooldownMax));
+                c.set("#FieldCaiTierShieldCharge" + t + ".Value", fmtDouble(tb.shieldChargeFor));
+                c.set("#FieldCaiTierGuardCd" + t + ".Value", fmtDouble(tb.shieldGuardCooldown));
+                c.set("#FieldCaiTierRetHealth" + t + ".Value", fmtDouble(tb.retreatHealthThreshold));
+            }
         }
     }
 

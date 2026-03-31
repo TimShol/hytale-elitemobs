@@ -291,10 +291,13 @@ public final class RPGMobsEquipmentService {
 
         ItemStack updatedInHand = withRandomDurabilityFraction(itemInHand, minFraction, maxFraction);
 
+        var hotbar = inventory.getHotbar();
+        if (hotbar == null || hotbar.getCapacity() <= 0) return false;
         byte activeHotbarSlot = inventory.getActiveHotbarSlot();
         if (activeHotbarSlot == Inventory.INACTIVE_SLOT_INDEX) return false;
+        if (activeHotbarSlot >= hotbar.getCapacity()) return false;
 
-        inventory.getHotbar().setItemStackForSlot(activeHotbarSlot, updatedInHand);
+        hotbar.setItemStackForSlot(activeHotbarSlot, updatedInHand);
         return true;
     }
 
@@ -341,8 +344,9 @@ public final class RPGMobsEquipmentService {
 
         ItemStack itemInHand = inventory.getItemInHand();
         if (itemInHand == null || itemInHand.isEmpty()) {
-
-            itemInHand = inventory.getHotbar().getItemStack((short) 0);
+            var hotbar = inventory.getHotbar();
+            if (hotbar == null || hotbar.getCapacity() <= 0) return null;
+            itemInHand = hotbar.getItemStack((short) 0);
             if (itemInHand == null || itemInHand.isEmpty()) return null;
 
             var ref = npcEntity.getReference();

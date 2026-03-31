@@ -77,12 +77,16 @@ public final class AbilityHelpers {
         Inventory inventory = npcEntity.getInventory();
         if (inventory == null) return false;
 
+        var hotbar = inventory.getHotbar();
+        if (hotbar == null || hotbar.getCapacity() <= 0) return false;
+
         byte activeSlot = inventory.getActiveHotbarSlot();
         if (activeSlot == Inventory.INACTIVE_SLOT_INDEX) activeSlot = 0;
+        if (activeSlot >= hotbar.getCapacity()) return false;
 
-        ItemStack previousItem = inventory.getHotbar().getItemStack(activeSlot);
+        ItemStack previousItem = hotbar.getItemStack(activeSlot);
 
-        inventory.getHotbar().setItemStackForSlot(activeSlot, replacementItem);
+        hotbar.setItemStackForSlot(activeSlot, replacementItem);
         npcEntity.invalidateEquipmentNetwork();
 
         swappable.setSwapActive(true);
@@ -108,10 +112,14 @@ public final class AbilityHelpers {
         Inventory inventory = npcEntity.getInventory();
         if (inventory == null) return;
 
+        var hotbar = inventory.getHotbar();
+        if (hotbar == null || hotbar.getCapacity() <= 0) return;
+
         byte slot = swappable.getSwapSlot();
         if (slot == Inventory.INACTIVE_SLOT_INDEX) slot = 0;
+        if (slot >= hotbar.getCapacity()) return;
 
-        inventory.getHotbar().setItemStackForSlot(slot, swappable.getSwapPreviousItem());
+        hotbar.setItemStackForSlot(slot, swappable.getSwapPreviousItem());
         npcEntity.invalidateEquipmentNetwork();
 
         swappable.setSwapActive(false);

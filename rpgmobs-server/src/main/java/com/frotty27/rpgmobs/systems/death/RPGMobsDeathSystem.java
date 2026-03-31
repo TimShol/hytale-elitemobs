@@ -240,9 +240,12 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
                                Inventory inv, List<ItemStack> drops) {
         double chance = resolved.dropWeaponChance;
         if (random.nextDouble() > chance) return;
+        var hotbar = inv.getHotbar();
+        if (hotbar == null || hotbar.getCapacity() <= 0) return;
         byte slot = inv.getActiveHotbarSlot();
         if (slot == Inventory.INACTIVE_SLOT_INDEX) slot = 0;
-        ItemStack mainHand = inv.getHotbar().getItemStack(slot);
+        if (slot >= hotbar.getCapacity()) return;
+        ItemStack mainHand = hotbar.getItemStack(slot);
         if (mainHand != null && !mainHand.isEmpty()) {
             drops.add(copyExactSingle(mainHand));
         }
@@ -251,9 +254,12 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
     private void addArmorDrops(ResolvedConfig resolved,
                                Inventory inv, List<ItemStack> drops) {
         double chance = resolved.dropArmorPieceChance;
+        var armorContainer = inv.getArmor();
+        if (armorContainer == null || armorContainer.getCapacity() <= 0) return;
         for (ItemArmorSlot slot : ItemArmorSlot.values()) {
             if (random.nextDouble() > chance) continue;
-            ItemStack item = inv.getArmor().getItemStack((short) slot.ordinal());
+            if (slot.ordinal() >= armorContainer.getCapacity()) continue;
+            ItemStack item = armorContainer.getItemStack((short) slot.ordinal());
             if (item != null && !item.isEmpty()) {
                 drops.add(copyExactSingle(item));
             }
@@ -264,7 +270,9 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
                                 Inventory inv, List<ItemStack> drops) {
         double chance = resolved.dropOffhandItemChance;
         if (random.nextDouble() > chance) return;
-        ItemStack utility = inv.getHotbar().getItemStack((short) UTILITY_SLOT_INDEX);
+        var utilityHotbar = inv.getHotbar();
+        if (utilityHotbar == null || utilityHotbar.getCapacity() <= UTILITY_SLOT_INDEX) return;
+        ItemStack utility = utilityHotbar.getItemStack((short) UTILITY_SLOT_INDEX);
         if (utility != null && !utility.isEmpty()) {
             drops.add(copyExactSingle(utility));
         }
@@ -299,12 +307,6 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
     private void addExtraVanillaDroplistRolls(int tierId, NPCEntity npc,
                                               ObjectArrayList<ItemStack> drops,
                                               ResolvedConfig resolved) {
-        int[] extraRollsPerTier = resolved.vanillaDroplistExtraRollsPerTier;
-        if (extraRollsPerTier == null || extraRollsPerTier.length < Constants.TIERS_AMOUNT) return;
-
-        int extraRolls = Math.max(0, extraRollsPerTier[tierId]);
-        if (extraRolls == 0) return;
-
         var role = npc.getRole();
         if (role == null) return;
 
@@ -314,7 +316,18 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         ItemModule itemModule = ItemModule.get();
         if (itemModule == null || !itemModule.isEnabled()) return;
 
-        for (int i = 0; i < extraRolls; i++) {
+        int extraRolls = 0;
+        int[] extraRollsPerTier = resolved.vanillaDroplistExtraRollsPerTier;
+        if (extraRollsPerTier != null && extraRollsPerTier.length > tierId) {
+            extraRolls = Math.max(0, extraRollsPerTier[tierId]);
+        }
+
+        // Always roll at least once to replace the culled vanilla drops.
+        // extraRolls = 0 means vanilla-equivalent (1 base roll).
+        // extraRolls = 1 means 2x (1 base + 1 extra), etc.
+        int totalRolls = 1 + extraRolls;
+
+        for (int i = 0; i < totalRolls; i++) {
             List<ItemStack> rolled = itemModule.getRandomItemDrops(dropListId);
             if (!rolled.isEmpty()) {
                 drops.addAll(rolled);
