@@ -6,6 +6,7 @@ import com.frotty27.rpgmobs.assets.TemplateNameGenerator;
 import com.frotty27.rpgmobs.components.RPGMobsTierComponent;
 import com.frotty27.rpgmobs.components.ability.*;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsMigrationComponent;
+import com.frotty27.rpgmobs.components.lifecycle.RPGMobsScannedComponent;
 import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonRiseComponent;
@@ -83,6 +84,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
     private final RPGMobsEquipmentService equipmentService = new RPGMobsEquipmentService();
     private final RPGMobsFeatureRegistry featureRegistry;
 
+    private int lastClearedAtConfigVersion = -1;
     private long lastReportTimestampMs = System.currentTimeMillis();
     private long mobsSeenCount;
     private long mobsMatchedCount;
@@ -134,6 +136,12 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         RPGMobsConfig config = plugin.getConfig();
         if (config == null) return;
+
+        int currentConfigVersion = plugin.getConfigReloadCount();
+        if (currentConfigVersion != lastClearedAtConfigVersion) {
+            mobRuleMatcher.clearCache();
+            lastClearedAtConfigVersion = currentConfigVersion;
+        }
 
         Ref<EntityStore> npcRef = archetypeChunk.getReferenceTo(entityIndex);
 
@@ -189,6 +197,12 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
             return;
         }
 
+        RPGMobsScannedComponent scanned = entityStore.getComponent(npcRef, plugin.getScannedComponentType());
+        if (scanned != null && scanned.scannedAtConfigVersion >= currentConfigVersion) {
+            logNpcScanSummaryIfDue(config);
+            return;
+        }
+
         String roleName = npcEntity.getRoleName();
         if (roleName == null || roleName.isBlank()) {
             logNpcScanSummaryIfDue(config);
@@ -205,17 +219,20 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         ResolvedConfig resolvedForMobRule = plugin.getResolvedConfig(spawnWorldNameForMobRule);
 
         if (!resolvedForMobRule.enabled) {
+            markAsScanned(npcRef, commandBuffer);
             logNpcScanSummaryIfDue(config);
             return;
         }
 
         MobRuleMatcher.MatchResult matchResult = mobRuleMatcher.findBestMatch(resolvedForMobRule.mobRules, roleName);
         if (matchResult == null) {
+            markAsScanned(npcRef, commandBuffer);
             logNpcScanSummaryIfDue(config);
             return;
         }
 
         if (resolvedForMobRule.disabledMobRuleKeys.contains(matchResult.key())) {
+            markAsScanned(npcRef, commandBuffer);
             logNpcScanSummaryIfDue(config);
             return;
         }
@@ -224,6 +241,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
 
         double[] spawnChances = resolveSpawnChances(config, npcEntity);
         if (spawnChances == null) {
+            markAsScanned(npcRef, commandBuffer);
             logNpcScanSummaryIfDue(config);
             return;
         }
@@ -520,6 +538,7 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         commandBuffer.tryRemoveComponent(npcRef, plugin.getMigrationComponentType());
         commandBuffer.tryRemoveComponent(npcRef, plugin.getSummonedMinionComponentType());
         commandBuffer.tryRemoveComponent(npcRef, plugin.getSummonRiseComponentType());
+        commandBuffer.tryRemoveComponent(npcRef, plugin.getScannedComponentType());
 
         RPGMobsLogger.debug(LOGGER,
                             "[DeElite] Stripped elite status: role=%s tier=T%d",
@@ -527,6 +546,11 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
                             npcEntity != null ? npcEntity.getRoleName() : "unknown",
                             tierComponent.tierIndex + 1
         );
+    }
+
+    private void markAsScanned(Ref<EntityStore> npcRef, CommandBuffer<EntityStore> commandBuffer) {
+        commandBuffer.putComponent(npcRef, plugin.getScannedComponentType(),
+                new RPGMobsScannedComponent(plugin.getConfigReloadCount()));
     }
 
     public boolean applyTierFromCommand(RPGMobsConfig config, Ref<EntityStore> npcRef, Store<EntityStore> entityStore,

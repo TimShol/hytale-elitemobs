@@ -12,7 +12,7 @@
   "Icon": "icon.png",
   "ServerVersion": "${server_version}",
   "Dependencies": {
-    "Frotty27:NameplateBuilder": "*"
+    "Frotty27:NameplateBuilder": ">=4.260326.2"
   },
   "OptionalDependencies": {
     "Zuxaw:RPGLeveling": ">=0.2.0"

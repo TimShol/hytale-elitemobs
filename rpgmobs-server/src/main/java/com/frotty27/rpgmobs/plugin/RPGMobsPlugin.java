@@ -12,6 +12,7 @@ import com.frotty27.rpgmobs.components.effects.RPGMobsActiveEffectsComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsHealthScalingComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsMigrationComponent;
 import com.frotty27.rpgmobs.components.lifecycle.RPGMobsModelScalingComponent;
+import com.frotty27.rpgmobs.components.lifecycle.RPGMobsScannedComponent;
 import com.frotty27.rpgmobs.components.progression.RPGMobsProgressionComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonMinionTrackingComponent;
 import com.frotty27.rpgmobs.components.summon.RPGMobsSummonRiseComponent;
@@ -89,6 +90,7 @@ public final class RPGMobsPlugin extends JavaPlugin {
     private ComponentType<EntityStore, MultiSlashLongComponent> multiSlashLongComponentType;
     private ComponentType<EntityStore, EnrageAbilityComponent> enrageAbilityComponentType;
     private ComponentType<EntityStore, VolleyAbilityComponent> volleyAbilityComponentType;
+    private ComponentType<EntityStore, RPGMobsScannedComponent> scannedComponentType;
     private final TickClock tickClock = new TickClock();
     private final PlayerAttackTracker playerAttackTracker = new PlayerAttackTracker();
     private final RPGMobsVanillaDropsCullZoneManager cullZoneManager = new RPGMobsVanillaDropsCullZoneManager(tickClock);
@@ -527,124 +529,130 @@ public final class RPGMobsPlugin extends JavaPlugin {
                                                                           "RPGMobsTierComponent",
                                                                           RPGMobsTierComponent.CODEC
         );
-        LOGGER.atInfo().log("[1/21] Registered RPGMobsTierComponent");
+        LOGGER.atInfo().log("[1/22] Registered RPGMobsTierComponent");
 
         progressionComponentType = getEntityStoreRegistry().registerComponent(RPGMobsProgressionComponent.class,
                                                                               "RPGMobsProgressionComponent",
                                                                               RPGMobsProgressionComponent.CODEC
         );
-        LOGGER.atInfo().log("[2/21] Registered RPGMobsProgressionComponent");
+        LOGGER.atInfo().log("[2/22] Registered RPGMobsProgressionComponent");
 
         healthScalingComponentType = getEntityStoreRegistry().registerComponent(RPGMobsHealthScalingComponent.class,
                                                                                 "RPGMobsHealthScalingComponent",
                                                                                 RPGMobsHealthScalingComponent.CODEC
         );
-        LOGGER.atInfo().log("[3/21] Registered RPGMobsHealthScalingComponent");
+        LOGGER.atInfo().log("[3/22] Registered RPGMobsHealthScalingComponent");
 
         modelScalingComponentType = getEntityStoreRegistry().registerComponent(RPGMobsModelScalingComponent.class,
                                                                                "RPGMobsModelScalingComponent",
                                                                                RPGMobsModelScalingComponent.CODEC
         );
-        LOGGER.atInfo().log("[4/21] Registered RPGMobsModelScalingComponent");
+        LOGGER.atInfo().log("[4/22] Registered RPGMobsModelScalingComponent");
 
         activeEffectsComponentType = getEntityStoreRegistry().registerComponent(RPGMobsActiveEffectsComponent.class,
                                                                                 "RPGMobsActiveEffectsComponent",
                                                                                 RPGMobsActiveEffectsComponent.CODEC
         );
-        LOGGER.atInfo().log("[5/21] Registered RPGMobsActiveEffectsComponent");
+        LOGGER.atInfo().log("[5/22] Registered RPGMobsActiveEffectsComponent");
 
         combatTrackingComponentType = getEntityStoreRegistry().registerComponent(RPGMobsCombatTrackingComponent.class,
                                                                                  "RPGMobsCombatTrackingComponent",
                                                                                  RPGMobsCombatTrackingComponent.CODEC
         );
-        LOGGER.atInfo().log("[6/21] Registered RPGMobsCombatTrackingComponent");
+        LOGGER.atInfo().log("[6/22] Registered RPGMobsCombatTrackingComponent");
 
         migrationComponentType = getEntityStoreRegistry().registerComponent(RPGMobsMigrationComponent.class,
                                                                             "RPGMobsMigrationComponent",
                                                                             RPGMobsMigrationComponent.CODEC
         );
-        LOGGER.atInfo().log("[7/21] Registered RPGMobsMigrationComponent (for pre 1.1.0)");
+        LOGGER.atInfo().log("[7/22] Registered RPGMobsMigrationComponent (for pre 1.1.0)");
 
         summonedMinionComponentType = getEntityStoreRegistry().registerComponent(RPGMobsSummonedMinionComponent.class,
                                                                                  "RPGMobsSummonedMinionComponent",
                                                                                  RPGMobsSummonedMinionComponent.CODEC
         );
-        LOGGER.atInfo().log("[8/21] Registered RPGMobsSummonedMinionComponent");
+        LOGGER.atInfo().log("[8/22] Registered RPGMobsSummonedMinionComponent");
 
         summonMinionTrackingComponentType = getEntityStoreRegistry().registerComponent(
                 RPGMobsSummonMinionTrackingComponent.class,
                 "RPGMobsSummonMinionTrackingComponent",
                 RPGMobsSummonMinionTrackingComponent.CODEC
         );
-        LOGGER.atInfo().log("[9/21] Registered RPGMobsSummonMinionTrackingComponent");
+        LOGGER.atInfo().log("[9/22] Registered RPGMobsSummonMinionTrackingComponent");
 
         summonRiseComponentType = getEntityStoreRegistry().registerComponent(RPGMobsSummonRiseComponent.class,
                                                                              "RPGMobsSummonRiseComponent",
                                                                              RPGMobsSummonRiseComponent.CODEC
         );
-        LOGGER.atInfo().log("[10/21] Registered RPGMobsSummonRiseComponent");
+        LOGGER.atInfo().log("[10/22] Registered RPGMobsSummonRiseComponent");
 
         chargeLeapAbilityComponentType = getEntityStoreRegistry().registerComponent(ChargeLeapAbilityComponent.class,
                                                                                     "ChargeLeapAbilityComponent",
                                                                                     ChargeLeapAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[11/21] Registered ChargeLeapAbilityComponent");
+        LOGGER.atInfo().log("[11/22] Registered ChargeLeapAbilityComponent");
 
         healLeapAbilityComponentType = getEntityStoreRegistry().registerComponent(HealLeapAbilityComponent.class,
                                                                                   "HealLeapAbilityComponent",
                                                                                   HealLeapAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[12/21] Registered HealLeapAbilityComponent");
+        LOGGER.atInfo().log("[12/22] Registered HealLeapAbilityComponent");
 
         summonUndeadAbilityComponentType = getEntityStoreRegistry().registerComponent(SummonUndeadAbilityComponent.class,
                                                                                       "SummonUndeadAbilityComponent",
                                                                                       SummonUndeadAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[13/21] Registered SummonUndeadAbilityComponent");
+        LOGGER.atInfo().log("[13/22] Registered SummonUndeadAbilityComponent");
 
         abilityLockComponentType = getEntityStoreRegistry().registerComponent(RPGMobsAbilityLockComponent.class,
                                                                               "RPGMobsAbilityLockComponent",
                                                                               RPGMobsAbilityLockComponent.CODEC
         );
-        LOGGER.atInfo().log("[14/21] Registered RPGMobsAbilityLockComponent");
+        LOGGER.atInfo().log("[14/22] Registered RPGMobsAbilityLockComponent");
 
         dodgeRollAbilityComponentType = getEntityStoreRegistry().registerComponent(DodgeRollAbilityComponent.class,
                                                                                     "DodgeRollAbilityComponent",
                                                                                     DodgeRollAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[15/21] Registered DodgeRollAbilityComponent");
+        LOGGER.atInfo().log("[15/22] Registered DodgeRollAbilityComponent");
 
         multiSlashShortComponentType = getEntityStoreRegistry().registerComponent(MultiSlashShortComponent.class,
                                                                                     "MultiSlashShortComponent",
                                                                                     MultiSlashShortComponent.CODEC
         );
-        LOGGER.atInfo().log("[16/21] Registered MultiSlashShortComponent");
+        LOGGER.atInfo().log("[16/22] Registered MultiSlashShortComponent");
 
         multiSlashMediumComponentType = getEntityStoreRegistry().registerComponent(MultiSlashMediumComponent.class,
                                                                                     "MultiSlashMediumComponent",
                                                                                     MultiSlashMediumComponent.CODEC
         );
-        LOGGER.atInfo().log("[17/21] Registered MultiSlashMediumComponent");
+        LOGGER.atInfo().log("[17/22] Registered MultiSlashMediumComponent");
 
         multiSlashLongComponentType = getEntityStoreRegistry().registerComponent(MultiSlashLongComponent.class,
                                                                                   "MultiSlashLongComponent",
                                                                                   MultiSlashLongComponent.CODEC
         );
-        LOGGER.atInfo().log("[18/21] Registered MultiSlashLongComponent");
+        LOGGER.atInfo().log("[18/22] Registered MultiSlashLongComponent");
 
         enrageAbilityComponentType = getEntityStoreRegistry().registerComponent(EnrageAbilityComponent.class,
                                                                                 "EnrageAbilityComponent",
                                                                                 EnrageAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[19/21] Registered EnrageAbilityComponent");
+        LOGGER.atInfo().log("[19/22] Registered EnrageAbilityComponent");
 
         volleyAbilityComponentType = getEntityStoreRegistry().registerComponent(VolleyAbilityComponent.class,
                                                                                 "VolleyAbilityComponent",
                                                                                 VolleyAbilityComponent.CODEC
         );
-        LOGGER.atInfo().log("[20/21] Registered VolleyAbilityComponent");
+        LOGGER.atInfo().log("[20/22] Registered VolleyAbilityComponent");
 
-        LOGGER.atInfo().log("Component registration complete: 21 total (10 core + 11 ability)");
+        scannedComponentType = getEntityStoreRegistry().registerComponent(RPGMobsScannedComponent.class,
+                                                                          "RPGMobsScannedComponent",
+                                                                          RPGMobsScannedComponent.CODEC
+        );
+        LOGGER.atInfo().log("[21/22] Registered RPGMobsScannedComponent");
+
+        LOGGER.atInfo().log("Component registration complete: 22 total (11 core + 11 ability)");
     }
 
     @SuppressWarnings("unchecked")
@@ -798,6 +806,9 @@ public final class RPGMobsPlugin extends JavaPlugin {
         return volleyAbilityComponentType;
     }
 
+    public ComponentType<EntityStore, RPGMobsScannedComponent> getScannedComponentType() {
+        return scannedComponentType;
+    }
 
     public RPGMobsNameplateService getNameplateService() {
         return nameplateService;

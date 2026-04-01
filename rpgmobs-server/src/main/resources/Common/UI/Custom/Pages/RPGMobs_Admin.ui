@@ -2534,12 +2534,13 @@ $C.@PageOverlay {
                 TextButton #LootDeleteAll { Text: "Delete All"; Anchor: (Width: 80, Height: 26); Style: @DeleteRowButtonStyle; }
               }
 
-              Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4, Left: 0, Width: 650);
+              Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4);
                 Label { Text: "Search All Drops:"; Style: (FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center); Anchor: (Width: 120); }
                 $C.@TextField #LootDropSearchField { Anchor: (Width: 150, Height: 26); Style: (FontSize: 13, TextColor: #c8d6e5); }
                 Group { FlexWeight: 1; }
                 TextButton #LootDropSearchDeleteFiltered { Text: "Delete Filtered"; Anchor: (Width: 110, Height: 26); Style: @DeleteRowButtonStyle; Visible: false; }
-                Group { Anchor: (Width: 14); }
+                Group { Anchor: (Width: 4); }
+                TextButton #LootDropSearchDeleteAll { Text: "Delete All"; Anchor: (Width: 80, Height: 26); Style: @DeleteRowButtonStyle; }
               }
 
               Group #LootTreeRows {
@@ -2622,6 +2623,10 @@ $C.@PageOverlay {
                 Group { LayoutMode: Left; Anchor: (Height: 28, Bottom: 4);
                   Label { Text: "Search Drops:"; Style: (FontSize: 13, TextColor: #96a9be, VerticalAlignment: Center); Anchor: (Width: 90); }
                   $C.@TextField #LootTplDropFilter { Anchor: (Width: 150, Height: 26); Style: (FontSize: 13, TextColor: #c8d6e5); }
+                  Group { FlexWeight: 1; }
+                  TextButton #LootTplDropDeleteFiltered { Text: "Delete Filtered"; Anchor: (Width: 110, Height: 26); Style: @DeleteRowButtonStyle; Visible: false; }
+                  Group { Anchor: (Width: 4); }
+                  TextButton #LootTplDropDeleteAll { Text: "Delete All"; Anchor: (Width: 80, Height: 26); Style: @DeleteRowButtonStyle; }
                 }
                 }
                 Group { LayoutMode: Left; Anchor: (Height: 22, Bottom: 2); Background: #1a2332(0.8); Padding: (Top: 3, Bottom: 3);
@@ -2671,12 +2676,6 @@ $C.@PageOverlay {
                   Group { Anchor: (Width: 2); }
                   Group { Anchor: (Width: 26, Height: 26); TextButton #LootTplDropLastPage { Text: ">>"; Anchor: (Width: 26, Height: 26); Style: @SubTabStyle; } }
                   Group { FlexWeight: 1; }
-                }
-                Group #LootTplDropActions { LayoutMode: Left; Anchor: (Height: 28, Top: 4);
-                  Group { FlexWeight: 1; }
-                  TextButton #LootTplDropDeleteFiltered { Text: "Delete Filtered"; Anchor: (Width: 110, Height: 26); Style: @DeleteRowButtonStyle; Visible: false; }
-                  Group { Anchor: (Width: 4); }
-                  TextButton #LootTplDropDeleteAll { Text: "Delete All"; Anchor: (Width: 80, Height: 26); Style: @DeleteRowButtonStyle; }
                 }
               }
 

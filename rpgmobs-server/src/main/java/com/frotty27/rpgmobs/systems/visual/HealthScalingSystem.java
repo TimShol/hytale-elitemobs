@@ -78,10 +78,9 @@ public class HealthScalingSystem extends EntityTickingSystem<EntityStore> {
 
         if (healthComp.healthFinalized && !healthComp.resyncDone) {
             resyncAfterRestart(npcRef, store, commandBuffer, healthComp);
-            return;
         }
 
-        if (healthComp.healthFinalized) {
+        if (healthComp.healthFinalized || healthComp.resyncDone) {
             reconcileConfigChange(npcRef, store, commandBuffer, healthComp, config);
         }
     }

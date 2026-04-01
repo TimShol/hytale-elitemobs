@@ -2,6 +2,39 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [4.260326.4] - 2026-04-01
+
+### Changed (Admin UI (QOL) Improvements)
+
+- **Spawn Tier Restrictions: Delete All / Delete Filtered buttons**  -  search NPCs and bulk-delete tier restrictions, consistent with Loot and Mob Rules tabs
+- **Tier Detail Parameters table**  -  Combat AI tier parameters (guard cooldown, strafe interval, shield block duration, guard recovery, retreat HP threshold) are now displayed as a table with all 5 tiers visible simultaneously, replacing the old tab-selector-with-single-value layout
+- **Equipment tab**: weapon and armor category rows now stretch full page width and are left-aligned
+- **Rarity & Tiers tab**: Per-Tier Equipment and Tier Rarity Weights tables now have full-width row backgrounds with proper left-aligned data
+- **Spawning tab**: description text moved above progression style buttons, "Search NPCs:" label with Delete All/Delete Filtered, Add Category/Mob Rule buttons moved below the NPC list, consistent spacing and subtitle styling throughout
+- **Combat AI tab**: Combat Styles and Weapon Combat detail panels no longer double-indented from the left wall
+- **Loot tab**: restored missing Delete All button for Search Templates and Add Category/Add Template buttons after exiting drop search mode
+- **Loot tab**: Drop Rules Delete Filtered/Delete All buttons moved below the drop list for consistency
+- **Loot tab**: Search All Drops Delete Filtered button properly aligned with the data table
+- **Mob Rules tab**: NPC selection popup now shows "[+] Add Filtered" button to bulk-add all filtered NPCs to the current category
+- **Custom Presets section**  -  per-world preset area split into "Apply Preset" and "Custom Presets" with clearer descriptions
+
+### Fixed
+
+- Vanilla loot drops not spawning when extra rolls set to 0  -  the drop table now always rolls at least once as a base replacement for culled weapon/armor items
+- Category extract (">" peek button) not working for Spawn Tier Restrictions  -  the extract handler was stripping the category key prefix before map lookup, causing a silent no-op
+- Loot template state (expanded template, filters, category) not preserved after save/discard
+- Equipment tab state (weapon/armor category navigation) not preserved after save/discard
+- Health scaling changes not applying on first save after server restart  -  the post-restart resync was consuming the reconcile cycle without checking for config changes, requiring a second save to take effect
+- Reduced same-faction friendly fire damage between elite NPCs  -  DisableDamageGroups now consistently includes both "Self" and the NPC's own faction for all factions. Note: NPCs may still aggro on each other after accidental hits due to engine-level retaliation behavior. Full fix requires generating Attitude Role assets with Friendly group definitions (planned)
+
+### Optimization
+
+- **Mob rule matching performance overhaul**  - Estimated up to 75% reduction in total RPGMobs server overhead
+
+### Changed
+
+- NameplateBuilder dependency now requires version >= 4.260326.2 (breaking API changes)
+
 ## [4.260326.3] - 2026-03-30
 
 ### Fixed

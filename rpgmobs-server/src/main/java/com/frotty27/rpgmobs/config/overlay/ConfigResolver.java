@@ -2,6 +2,7 @@ package com.frotty27.rpgmobs.config.overlay;
 
 import com.frotty27.rpgmobs.config.GlobalConfig;
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.rules.MobRuleMatcher;
 import com.frotty27.rpgmobs.utils.MobRuleCategoryHelpers;
 import com.hypixel.hytale.logger.HytaleLogger;
 import org.jspecify.annotations.Nullable;
@@ -211,6 +212,7 @@ public final class ConfigResolver {
         if (config.mobsConfig.defaultMobRules != null) {
             base.mobRules = new LinkedHashMap<>(config.mobsConfig.defaultMobRules);
             backfillMobRuleWeaponArmorCategories(base.mobRules);
+            MobRuleMatcher.preNormalizeMobRules(base.mobRules);
         }
         if (config.mobsConfig.categoryTree != null) {
             base.mobRuleCategoryTree = config.mobsConfig.categoryTree;
@@ -503,6 +505,7 @@ public final class ConfigResolver {
         }
 
         merged.mobRules = new LinkedHashMap<>(base.mobRules);
+        MobRuleMatcher.preNormalizeMobRules(merged.mobRules);
         merged.mobRuleCategoryTree = base.mobRuleCategoryTree;
         if (overlay.disabledMobRuleKeys != null) {
             merged.disabledMobRuleKeys = new LinkedHashSet<>(overlay.disabledMobRuleKeys);

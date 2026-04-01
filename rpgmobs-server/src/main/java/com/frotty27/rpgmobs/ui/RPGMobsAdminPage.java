@@ -864,7 +864,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         bindAction(events, "#LootDeleteAll", "LootDeleteAll");
         bindValueChanged(events, "#LootDropSearchField", "@LootDropSearchFilter");
         bindAction(events, "#LootDropSearchDeleteFiltered", "LootDropSearchDeleteFiltered");
-        // LootDropSearchDeleteFiltered removed from UI; reuse LootTplDropDeleteFiltered during search
+        bindAction(events, "#LootDropSearchDeleteAll", "LootDropSearchDeleteAll");
         for (int i = 0; i < AdminUIData.TREE_ROW_COUNT; i++) {
             bindAction(events, "#LootRowCat" + i, "LootRowClick_" + i);
             bindAction(events, "#LootRowItm" + i, "LootRowClick_" + i);
@@ -1501,6 +1501,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             case "LootDeleteFiltered" -> handleLootDeleteFiltered();
             case "LootDeleteAll" -> handleLootDeleteAll();
             case "LootDropSearchDeleteFiltered" -> handleLootDropSearchDeleteFiltered();
+            case "LootDropSearchDeleteAll" -> handleLootDropSearchDeleteAll();
             case "ToggleFallDamage" -> toggleOverlayBoolean(() -> editOverlay.eliteFallDamageDisabled, v -> editOverlay.eliteFallDamageDisabled = v, r -> r.eliteFallDamageDisabled);
 
             case "ToggleHealthScaling" -> toggleOverlayBoolean(() -> editOverlay.enableHealthScaling, v -> editOverlay.enableHealthScaling = v, r -> r.enableHealthScaling);
@@ -6913,6 +6914,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             c.set("#LootTreeEmpty.Visible", empty);
             c.set("#LootDeleteFiltered.Visible", false);
             c.set("#LootDropSearchDeleteFiltered.Visible", !empty);
+            c.set("#LootDropSearchDeleteAll.Visible", !empty);
 
             for (int i = 0; i < AdminUIData.TREE_ROW_COUNT; i++) {
                 c.set("#LootRow" + i + ".Visible", false);
@@ -6926,7 +6928,6 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                 c.set("#LootTplDetailTitle.Visible", false);
                 c.set("#LootTplMobSection.Visible", false);
                 c.set("#LootTplDropHeader.Visible", false);
-                c.set("#LootTplDropActions.Visible", false);
                 c.set("#LootTplAddDrop.Visible", false);
 
                 int pageSize = AdminUIData.LOOT_TEMPLATE_DROPS_PER_PAGE;
@@ -6978,6 +6979,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         }
 
         c.set("#LootDropSearchDeleteFiltered.Visible", false);
+        c.set("#LootDropSearchDeleteAll.Visible", true);
         c.set("#AddLootCategory.Visible", true);
         c.set("#AddLootTemplate.Visible", true);
         c.set("#LootDeleteAll.Visible", true);
@@ -7182,6 +7184,28 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         needsFieldRefresh = true;
     }
 
+    private void handleLootDropSearchDeleteAll() {
+        if (lootDropSearchResults.isEmpty()) return;
+        Map<String, List<Integer>> indicesToRemove = new LinkedHashMap<>();
+        for (LootDropSearchResult result : lootDropSearchResults) {
+            indicesToRemove.computeIfAbsent(result.templateKey, k -> new ArrayList<>()).add(result.dropIndex);
+        }
+        for (var entry : indicesToRemove.entrySet()) {
+            RPGMobsConfig.LootTemplate template = editLootTemplates.get(entry.getKey());
+            if (template == null) continue;
+            List<Integer> indices = entry.getValue();
+            indices.sort(Collections.reverseOrder());
+            for (int index : indices) {
+                if (index < template.drops.size()) {
+                    template.drops.remove(index);
+                }
+            }
+        }
+        lootDropSearchPage = 0;
+        rebuildLootDropSearchResults();
+        needsFieldRefresh = true;
+    }
+
     private List<String> collectAllLootTemplateKeys(RPGMobsConfig.LootTemplateCategory cat) {
         List<String> keys = new ArrayList<>(cat.templateKeys);
         for (RPGMobsConfig.LootTemplateCategory child : cat.children) {
@@ -7208,7 +7232,6 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#LootTplDetailTitle.Text", "Editing " + templateName);
         c.set("#LootTplMobSection.Visible", true);
         c.set("#LootTplDropHeader.Visible", true);
-        c.set("#LootTplDropActions.Visible", true);
         c.set("#LootTplAddDrop.Visible", true);
 
         List<String> links = template.linkedMobRuleKeys;
@@ -8356,7 +8379,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
     private void handleNpcPickerAddAllFiltered() {
         if (npcPickerFilter.isEmpty() || npcPickerFiltered.isEmpty()) return;
-        if (npcPickerMode == NpcPickerMode.REBIND_MOB_RULE || npcPickerMode == NpcPickerMode.MOB_RULE) return;
+        if (npcPickerMode == NpcPickerMode.REBIND_MOB_RULE) return;
         List<String> toAdd = new ArrayList<>(npcPickerFiltered);
         for (String item : toAdd) {
             npcPickerSelectedItem = item;
@@ -8502,7 +8525,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         c.set("#NpcPickerSelectedLabel.Text", hasSelection ? npcPickerSelectedItem : "None");
         c.set("#NpcPickerAdd.Visible", hasSelection);
         boolean canBulkAdd = !npcPickerFilter.isEmpty() && !npcPickerFiltered.isEmpty()
-                && npcPickerMode != NpcPickerMode.REBIND_MOB_RULE && npcPickerMode != NpcPickerMode.MOB_RULE;
+                && npcPickerMode != NpcPickerMode.REBIND_MOB_RULE;
         c.set("#NpcPickerAddAllFiltered.Visible", canBulkAdd);
 
         int npcPageEnd = Math.min((npcPickerPage + 1) * NPC_PICKER_ROW_COUNT, totalItems);

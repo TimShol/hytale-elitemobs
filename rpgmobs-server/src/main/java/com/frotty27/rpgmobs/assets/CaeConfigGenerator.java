@@ -46,13 +46,6 @@ public final class CaeConfigGenerator {
             "Goblin", "Chaotic"
     );
 
-    private static final Map<String, List<String>> FACTION_DISABLE_DAMAGE_GROUPS = Map.of(
-            "Skeleton", List.of("Self"),
-            "Trork", List.of("Self", "Trork"),
-            "Outlander", List.of("Self", "Outlander"),
-            "Goblin", List.of("Goblin")
-    );
-
     private CaeConfigGenerator() {
     }
 
@@ -235,7 +228,7 @@ public final class CaeConfigGenerator {
             String caeConfigName, RPGMobsConfig.FactionStyle factionStyle,
             RPGMobsConfig.TierBehavior tier
     ) {
-        var disableDamageGroups = FACTION_DISABLE_DAMAGE_GROUPS.getOrDefault(faction, List.of("Self"));
+        var disableDamageGroups = List.of("Self", faction);
 
         var parameters = new LinkedHashMap<String, Object>();
         var attitudeGroup = new LinkedHashMap<String, Object>();

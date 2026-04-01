@@ -789,6 +789,7 @@ public final class RPGMobsAssetGenerator {
             Map<String, Object> role = new LinkedHashMap<>();
             role.put("Type", "Variant");
             role.put("Reference", baseRoleId);
+
             role.put("Modify", new LinkedHashMap<>());
 
             Path rolePath = outputRootDirectory.resolve(Paths.get("NPC", "Roles", "RPGMobs", variantRoleId + ".json"));

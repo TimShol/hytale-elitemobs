@@ -1,12 +1,12 @@
 package com.frotty27.rpgmobs.rules;
 
 import com.frotty27.rpgmobs.config.RPGMobsConfig;
+import com.frotty27.rpgmobs.utils.StringHelpers;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiPredicate;
-
-import static com.frotty27.rpgmobs.utils.StringHelpers.normalizeLower;
 
 public final class MobRuleMatcher {
 
@@ -21,13 +21,50 @@ public final class MobRuleMatcher {
     public record MatchResult(String key, RPGMobsConfig.MobRule mobRule, MatchKind matchKind, int score) {
     }
 
+    // --- Match result cache (invalidated on config reload) ---
+
+    private final Map<String, MatchResult> matchCache = new HashMap<>();
+    private static final MatchResult NO_MATCH = new MatchResult("", null, MatchKind.EXACT, -1);
+
+    public void clearCache() {
+        matchCache.clear();
+    }
+
+    // --- Pre-normalization (call once on config load, not per tick) ---
+
+    public static void preNormalizeMobRules(Map<String, RPGMobsConfig.MobRule> mobRules) {
+        if (mobRules == null) return;
+        for (RPGMobsConfig.MobRule rule : mobRules.values()) {
+            if (rule == null) continue;
+            rule.matchExact = normalizeList(rule.matchExact);
+            rule.matchStartsWith = normalizeList(rule.matchStartsWith);
+            rule.matchContains = normalizeList(rule.matchContains);
+            rule.matchExcludes = normalizeList(rule.matchExcludes);
+        }
+    }
+
+    private static List<String> normalizeList(List<String> list) {
+        if (list == null || list.isEmpty()) return List.of();
+        List<String> result = new ArrayList<>(list.size());
+        for (String entry : list) {
+            String normalized = StringHelpers.normalizeLower(entry);
+            if (!normalized.isEmpty()) result.add(normalized);
+        }
+        return List.copyOf(result);
+    }
+
+    // --- Matching ---
+
     public MatchResult findBestMatch(Map<String, RPGMobsConfig.MobRule> mobRules, String roleName) {
         if (roleName == null || roleName.isBlank()) return null;
+        if (mobRules == null || mobRules.isEmpty()) return null;
 
-        if (mobRules == null || mobRules.isEmpty())
-            return null;
+        final String lowerCaseRoleName = StringHelpers.normalizeLower(roleName);
 
-        final String lowerCaseRoleName = normalizeLower(roleName);
+        MatchResult cached = matchCache.get(lowerCaseRoleName);
+        if (cached != null) {
+            return cached == NO_MATCH ? null : cached;
+        }
 
         MatchResult bestMatchResult = null;
         int bestScore = Integer.MIN_VALUE;
@@ -53,6 +90,7 @@ public final class MobRuleMatcher {
             }
         }
 
+        matchCache.put(lowerCaseRoleName, bestMatchResult != null ? bestMatchResult : NO_MATCH);
         return bestMatchResult;
     }
 
@@ -75,45 +113,44 @@ public final class MobRuleMatcher {
         return null;
     }
 
-    private static boolean roleNameContainsAnyDeniedId(String id, List<String> matchExcludeList) {
+    private static boolean roleNameContainsAnyDeniedId(String roleLower, List<String> matchExcludeList) {
         if (matchExcludeList == null || matchExcludeList.isEmpty()) return false;
 
-        for (String matchExcludeEntry : matchExcludeList) {
-            String normalizedExcludeEntry = normalizeEntry(matchExcludeEntry);
-            if (normalizedExcludeEntry.isEmpty()) continue;
-            if (id.contains(normalizedExcludeEntry)) return true;
+        for (String excludeEntry : matchExcludeList) {
+            if (roleLower.contains(excludeEntry)) return true;
         }
         return false;
     }
 
+    // Inlined match methods -- no BiPredicate, direct String calls for JIT inlining
+
     private static int longestExactMatchLength(String roleLower, List<String> matchList) {
-        return longestMatchLength(roleLower, matchList, String::equals);
+        if (matchList == null || matchList.isEmpty()) return 0;
+        for (String entry : matchList) {
+            if (roleLower.equals(entry)) return entry.length();
+        }
+        return 0;
     }
 
     private static int longestPrefixMatchLength(String roleLower, List<String> matchList) {
-        return longestMatchLength(roleLower, matchList, String::startsWith);
+        if (matchList == null || matchList.isEmpty()) return 0;
+        int bestLength = 0;
+        for (String entry : matchList) {
+            if (roleLower.startsWith(entry)) {
+                bestLength = Math.max(bestLength, entry.length());
+            }
+        }
+        return bestLength;
     }
 
     private static int longestContainsMatchLength(String roleLower, List<String> matchList) {
-        return longestMatchLength(roleLower, matchList, String::contains);
-    }
-
-    private static int longestMatchLength(String roleLower, List<String> matchList,
-                                          BiPredicate<String, String> matcher) {
         if (matchList == null || matchList.isEmpty()) return 0;
-
-        int bestScore = 0;
+        int bestLength = 0;
         for (String entry : matchList) {
-            var normalized = normalizeEntry(entry);
-            if (normalized.isEmpty()) continue;
-            if (matcher.test(roleLower, normalized)) {
-                bestScore = Math.max(bestScore, normalized.length());
+            if (roleLower.contains(entry)) {
+                bestLength = Math.max(bestLength, entry.length());
             }
         }
-        return bestScore;
-    }
-
-    private static String normalizeEntry(String entry) {
-        return normalizeLower(entry);
+        return bestLength;
     }
 }
