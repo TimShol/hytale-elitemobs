@@ -2,6 +2,14 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [4.260326.5] - 2026-04-02
+
+### Fixed
+
+- Elite NPCs not dropping vanilla loot (e.g., fabric scraps, bone fragments)  -  generated role variants now preserve the original NPC's drop table instead of inheriting the empty default from Template_Intelligent
+
+---
+
 ## [4.260326.4] - 2026-04-01
 
 ### Changed (Admin UI (QOL) Improvements)
@@ -26,6 +34,7 @@ All notable changes to RPGMobs will be documented in this file.
 - Equipment tab state (weapon/armor category navigation) not preserved after save/discard
 - Health scaling changes not applying on first save after server restart  -  the post-restart resync was consuming the reconcile cycle without checking for config changes, requiring a second save to take effect
 - Reduced same-faction friendly fire damage between elite NPCs  -  DisableDamageGroups now consistently includes both "Self" and the NPC's own faction for all factions. Note: NPCs may still aggro on each other after accidental hits due to engine-level retaliation behavior. Full fix requires generating Attitude Role assets with Friendly group definitions (planned)
+- Elite NPCs not dropping vanilla loot (e.g., Ingredient_Fabric_Scrap_Linen from Skeletons)  -  role variants reference Template_Intelligent which defaults DropList to "Empty", bypassing the original NPC's drop table. The original DropList ID is now captured before role change and used for vanilla drop rolls
 
 ### Optimization
 

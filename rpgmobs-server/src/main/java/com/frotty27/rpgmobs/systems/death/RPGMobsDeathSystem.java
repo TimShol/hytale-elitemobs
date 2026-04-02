@@ -168,7 +168,7 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         }
 
         int beforeVanilla = drops.size();
-        addExtraVanillaDroplistRolls(tierId, npc, drops, resolved);
+        addExtraVanillaDroplistRolls(tierId, tier, npc, drops, resolved);
         if (drops.size() > beforeVanilla) {
             RPGMobsLogger.debug(LOGGER,
                     "[DeathSystem] Vanilla extra rolls: %d items",
@@ -304,14 +304,15 @@ public final class RPGMobsDeathSystem extends DeathSystems.OnDeathSystem {
         return false;
     }
 
-    private void addExtraVanillaDroplistRolls(int tierId, NPCEntity npc,
+    private void addExtraVanillaDroplistRolls(int tierId, RPGMobsTierComponent tier, NPCEntity npc,
                                               ObjectArrayList<ItemStack> drops,
                                               ResolvedConfig resolved) {
-        var role = npc.getRole();
-        if (role == null) return;
-
-        String dropListId = role.getDropListId();
-        if (dropListId == null) return;
+        String dropListId = tier.originalDropListId;
+        if (dropListId == null || dropListId.isEmpty()) {
+            var role = npc.getRole();
+            if (role != null) dropListId = role.getDropListId();
+        }
+        if (dropListId == null || dropListId.isEmpty()) return;
 
         ItemModule itemModule = ItemModule.get();
         if (itemModule == null || !itemModule.isEnabled()) return;

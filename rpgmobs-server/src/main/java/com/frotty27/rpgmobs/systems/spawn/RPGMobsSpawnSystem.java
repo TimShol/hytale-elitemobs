@@ -263,6 +263,12 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         newTierComponent.originalRoleName = roleName;
         newTierComponent.lastReconciledAt = plugin.getConfigReloadCount();
 
+        var originalRole = npcEntity.getRole();
+        if (originalRole != null) {
+            String dropListId = originalRole.getDropListId();
+            if (dropListId != null) newTierComponent.originalDropListId = dropListId;
+        }
+
         equipmentService.buildAndApply(npcEntity, config, tierIndex, matchResult.mobRule(),
                 resolvedForMobRule.droppedGearDurabilityMin, resolvedForMobRule.droppedGearDurabilityMax);
 
@@ -595,6 +601,12 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         newTierComponent.originalRoleName = roleName;
         newTierComponent.lastReconciledAt = plugin.getConfigReloadCount();
 
+        var preChangeRole = npcEntity.getRole();
+        if (preChangeRole != null) {
+            String preChangeDropListId = preChangeRole.getDropListId();
+            if (preChangeDropListId != null) newTierComponent.originalDropListId = preChangeDropListId;
+        }
+
         equipmentService.buildAndApply(npcEntity, config, clampedTierIndex, matchResult.mobRule(),
                 resolvedForMobRule.droppedGearDurabilityMin, resolvedForMobRule.droppedGearDurabilityMax,
                 weaponCategoryOverride);
@@ -678,6 +690,12 @@ public final class RPGMobsSpawnSystem extends EntityTickingSystem<EntityStore> {
         newTierComponent.matchedRuleKey = matchResult.key();
         newTierComponent.originalRoleName = roleName;
         newTierComponent.lastReconciledAt = plugin.getConfigReloadCount();
+
+        var preChangeRole = npcEntity.getRole();
+        if (preChangeRole != null) {
+            String preChangeDropListId = preChangeRole.getDropListId();
+            if (preChangeDropListId != null) newTierComponent.originalDropListId = preChangeDropListId;
+        }
 
         equipmentService.buildAndApply(npcEntity, config, clampedTierIndex, matchResult.mobRule(),
                 resolvedForMobRule.droppedGearDurabilityMin, resolvedForMobRule.droppedGearDurabilityMax,
