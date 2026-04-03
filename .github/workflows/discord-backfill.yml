@@ -1,0 +1,113 @@
+name: Discord Changelog Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      subproject:
+        description: 'Subproject to backfill'
+        required: true
+        type: choice
+        options:
+          - rpgmobs-server
+          - rpgmobs-api
+          - both
+      delay_seconds:
+        description: 'Delay between messages (seconds)'
+        required: false
+        default: '2'
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Post all changelog entries to Discord
+        env:
+          WEBHOOK_SERVER: ${{ secrets.DISCORD_WEBHOOK_RPGMOBS_SERVER }}
+          WEBHOOK_API: ${{ secrets.DISCORD_WEBHOOK_RPGMOBS_API }}
+        run: |
+          set -euo pipefail
+
+          DELAY=${{ inputs.delay_seconds }}
+
+          extract_entry() {
+            local file="$1"
+            local version="$2"
+            awk -v target="$version" '
+              $0 ~ "^## \\[" target "\\]" { found=1; next }
+              /^## \[/ { if(found) exit }
+              found { print }
+            ' "$file" | tr -d '\r' | sed '/^---$/d' | sed -e :a -e '/^\n*$/{$d;N;ba;}'
+          }
+
+          format_for_discord() {
+            local download_url="$1"
+            sed -E 's/^### (.+)/**\1**/g'
+            echo ""
+            echo "**[Download the latest version here](${download_url})**"
+          }
+
+          post_discord() {
+            local webhook="$1"
+            local title="$2"
+            local description="$3"
+            local color="$4"
+
+            description=$(echo "$description" | head -c 4096 | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")
+
+            cat <<PAYLOAD | curl -sf -H "Content-Type: application/json" -d @- "$webhook"
+          {
+            "content": "@everyone",
+            "embeds": [{
+              "title": "$title",
+              "description": "$description",
+              "color": $color
+            }]
+          }
+          PAYLOAD
+          }
+
+          backfill_changelog() {
+            local file="$1"
+            local webhook="$2"
+            local label="$3"
+            local color="$4"
+            local download_url="$5"
+
+            if [ -z "$webhook" ]; then
+              echo "Skipping $label - no webhook configured"
+              return
+            fi
+
+            local versions=$(grep -oP '(?<=^## \[)[^\]]+' "$file" | tr -d '\r')
+            local count=$(echo "$versions" | wc -l)
+            echo "Backfilling $label: $count entries"
+
+            # Post in reverse order (oldest first) so Discord shows newest at bottom
+            local reversed=$(echo "$versions" | tac)
+
+            while IFS= read -r ver; do
+              local body=$(extract_entry "$file" "$ver" | format_for_discord "$download_url")
+              if [ -n "$body" ]; then
+                post_discord "$webhook" "$label v${ver}" "$body" "$color"
+                echo "  Posted $label v${ver}"
+                sleep "$DELAY"
+              else
+                echo "  Skipped $label v${ver} (empty)"
+              fi
+            done <<< "$reversed"
+          }
+
+          SUBPROJECT="${{ inputs.subproject }}"
+
+          if [ "$SUBPROJECT" = "rpgmobs-server" ] || [ "$SUBPROJECT" = "both" ]; then
+            backfill_changelog "rpgmobs-server/CHANGELOG.md" "$WEBHOOK_SERVER" "RPGMobs Server" 5814783 "https://www.curseforge.com/hytale/mods/rpgmobs"
+          fi
+
+          if [ "$SUBPROJECT" = "rpgmobs-api" ] || [ "$SUBPROJECT" = "both" ]; then
+            backfill_changelog "rpgmobs-api/CHANGELOG.md" "$WEBHOOK_API" "RPGMobs API" 5814783 "https://www.curseforge.com/hytale/mods/rpgmobs-api"
+          fi
+
+          echo "Backfill complete!"

@@ -1,0 +1,92 @@
+name: Discord Changelog Notification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'rpgmobs-server/CHANGELOG.md'
+      - 'rpgmobs-api/CHANGELOG.md'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changes and notify Discord
+        env:
+          WEBHOOK_SERVER: ${{ secrets.DISCORD_WEBHOOK_RPGMOBS_SERVER }}
+          WEBHOOK_API: ${{ secrets.DISCORD_WEBHOOK_RPGMOBS_API }}
+        run: |
+          set -euo pipefail
+
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+
+          extract_latest_entry() {
+            local file="$1"
+            awk '
+              /^## \[/ {
+                if (found) exit
+                found = 1
+                next
+              }
+              found { print }
+            ' "$file" | tr -d '\r' | sed '/^---$/d' | sed -e :a -e '/^\n*$/{$d;N;ba;}'
+          }
+
+          format_for_discord() {
+            local download_url="$1"
+            sed -E 's/^### (.+)/**\1**/g'
+            echo ""
+            echo "**[Download the latest version here](${download_url})**"
+          }
+
+          extract_version() {
+            local file="$1"
+            grep -m1 -oP '(?<=^## \[)[^\]]+' "$file" || echo "unknown"
+          }
+
+          post_discord() {
+            local webhook="$1"
+            local title="$2"
+            local description="$3"
+            local color="$4"
+
+            description=$(echo "$description" | head -c 4096 | python3 -c "import sys,json; print(json.dumps(sys.stdin.read())[1:-1])")
+
+            cat <<PAYLOAD | curl -sf -H "Content-Type: application/json" -d @- "$webhook"
+          {
+            "content": "@everyone",
+            "embeds": [{
+              "title": "$title",
+              "description": "$description",
+              "color": $color
+            }]
+          }
+          PAYLOAD
+          }
+
+          if echo "$CHANGED_FILES" | grep -q '^rpgmobs-server/CHANGELOG.md$'; then
+            if [ -n "$WEBHOOK_SERVER" ]; then
+              VERSION=$(extract_version "rpgmobs-server/CHANGELOG.md")
+              BODY=$(extract_latest_entry "rpgmobs-server/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/rpgmobs")
+              if [ -n "$BODY" ]; then
+                post_discord "$WEBHOOK_SERVER" "RPGMobs Server v${VERSION}" "$BODY" 5814783
+                echo "Posted RPGMobs Server v${VERSION} to Discord"
+              fi
+            fi
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q '^rpgmobs-api/CHANGELOG.md$'; then
+            if [ -n "$WEBHOOK_API" ]; then
+              VERSION=$(extract_version "rpgmobs-api/CHANGELOG.md")
+              BODY=$(extract_latest_entry "rpgmobs-api/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/rpgmobs-api")
+              if [ -n "$BODY" ]; then
+                post_discord "$WEBHOOK_API" "RPGMobs API v${VERSION}" "$BODY" 5814783
+                echo "Posted RPGMobs API v${VERSION} to Discord"
+              fi
+            fi
+          fi
