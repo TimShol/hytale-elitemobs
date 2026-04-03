@@ -404,7 +404,6 @@ final class AdminUIData {
         builder = addString(builder, "@CaiFacReEngDistMax", (d, v) -> d.caiFacReEngDistMax = v, d -> d.caiFacReEngDistMax);
         builder = addString(builder, "@CaiFacObsDistMin", (d, v) -> d.caiFacObsDistMin = v, d -> d.caiFacObsDistMin);
         builder = addString(builder, "@CaiFacObsDistMax", (d, v) -> d.caiFacObsDistMax = v, d -> d.caiFacObsDistMax);
-        builder = addString(builder, "@CaiFacFlankAngle", (d, v) -> d.caiFacFlankAngle = v, d -> d.caiFacFlankAngle);
         for (int t = 0; t < 5; t++) {
             final int ti = t;
             builder = addString(builder, "@CaiTierCdMin" + t, (d, v) -> d.caiTierCdMin[ti] = v, d -> d.caiTierCdMin[ti]);
@@ -583,7 +582,6 @@ final class AdminUIData {
     String caiFacRetCooldown;
     String caiFacReEngDistMin, caiFacReEngDistMax;
     String caiFacObsDistMin, caiFacObsDistMax;
-    String caiFacFlankAngle;
     final String[] caiTierCdMin = new String[5], caiTierCdMax = new String[5];
     final String[] caiTierStrCdMin = new String[5], caiTierStrCdMax = new String[5];
     final String[] caiTierShieldCharge = new String[5], caiTierGuardCd = new String[5], caiTierRetHealth = new String[5];

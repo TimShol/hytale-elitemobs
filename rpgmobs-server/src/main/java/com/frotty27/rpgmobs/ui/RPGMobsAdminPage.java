@@ -9032,7 +9032,7 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
                     s.strafeCooldownMin, s.strafeCooldownMax, s.enableGroupObserve, s.enableFlanking, s.npcGroupName,
                     s.guardRandomiserMin, s.guardRandomiserMax, s.backOffRandomiserMin, s.backOffRandomiserMax,
                     s.retreatCooldown, s.reEngageDistanceMin, s.reEngageDistanceMax,
-                    s.groupObserveDistanceMin, s.groupObserveDistanceMax, s.flankingAngle));
+                    s.groupObserveDistanceMin, s.groupObserveDistanceMax));
         }
         return dst;
     }
@@ -9082,7 +9082,6 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             if (ef.retreatCooldown != sf.retreatCooldown) return true;
             if (ef.reEngageDistanceMin != sf.reEngageDistanceMin || ef.reEngageDistanceMax != sf.reEngageDistanceMax) return true;
             if (ef.groupObserveDistanceMin != sf.groupObserveDistanceMin || ef.groupObserveDistanceMax != sf.groupObserveDistanceMax) return true;
-            if (ef.flankingAngle != sf.flankingAngle) return true;
         }
         if (editCombatAI.tierBehaviors.size() != savedCombatAI.tierBehaviors.size()) return true;
         for (int i = 0; i < editCombatAI.tierBehaviors.size(); i++) {
@@ -9387,7 +9386,6 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             fs.reEngageDistanceMax = parseDoubleField(data.caiFacReEngDistMax, fs.reEngageDistanceMax);
             fs.groupObserveDistanceMin = parseDoubleField(data.caiFacObsDistMin, fs.groupObserveDistanceMin);
             fs.groupObserveDistanceMax = parseDoubleField(data.caiFacObsDistMax, fs.groupObserveDistanceMax);
-            fs.flankingAngle = parseDoubleField(data.caiFacFlankAngle, fs.flankingAngle);
         }
         for (int t = 0; t < editCombatAI.tierBehaviors.size() && t < 5; t++) {
             var tb = editCombatAI.tierBehaviors.get(t);
@@ -9466,7 +9464,6 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
             c.set("#FieldCaiFacReEngDistMax.Value", fmtDouble(fs.reEngageDistanceMax));
             c.set("#FieldCaiFacObsDistMin.Value", fmtDouble(fs.groupObserveDistanceMin));
             c.set("#FieldCaiFacObsDistMax.Value", fmtDouble(fs.groupObserveDistanceMax));
-            c.set("#FieldCaiFacFlankAngle.Value", fmtDouble(fs.flankingAngle));
         }
         if (fs != null) {
             renderToggle(c, "#CaiFacObserve", fs.enableGroupObserve);

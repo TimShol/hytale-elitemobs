@@ -86,8 +86,8 @@ public final class RPGMobsAssetGenerator {
                                 "spawnMarkerEntriesJson")) {
                             String testRender = applyPlaceholders(templateText, modelIndex, 0);
                             if (testRender.contains("\"NPCs\": []") || testRender.contains("\"NPCs\":[]")) {
-                                LOGGER.atWarning().log("[AssetGen] Skipping spawn marker template with empty NPCs: %s",
-                                                       fileName
+                                LOGGER.atFine().log("[AssetGen] Skipping spawn marker template with empty NPCs: %s",
+                                                    fileName
                                 );
                                 continue;
                             }

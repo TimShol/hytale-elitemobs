@@ -6,7 +6,6 @@
       "Type": "Simple",
       "$Comment": "Wind-up - 1.0s charging with weapon trail",
       "RunTime": 1.0,
-      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Club_Flail",
         "ItemAnimationId": "SpinSwingLeftCharging",
@@ -18,7 +17,8 @@
             "TargetNodeName": "Origin_Projectile",
             "PositionOffset": { "Y": -0.2 }
           }
-        ]
+        ],
+        "MovementEffects": { "DisableAll": true }
       }
     },
     {
@@ -96,11 +96,11 @@
       "Type": "Simple",
       "$Comment": "Recovery - Idle recovery, movement locked",
       "RunTime": 0.4,
-      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Club_Flail",
         "ItemAnimationId": "Idle",
-        "ClearAnimationOnFinish": true
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
       }
     }
   ]

@@ -6,7 +6,6 @@
       "Type": "Simple",
       "$Comment": "Wind-up - 1.1s side charge with Large_Charged_Red trail",
       "RunTime": 0.8,
-      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Battleaxe",
         "ItemAnimationId": "SwingLeftCharging",
@@ -18,7 +17,8 @@
             "TargetNodeName": "Origin_Projectile",
             "PositionOffset": { "Y": -0.2 }
           }
-        ]
+        ],
+        "MovementEffects": { "DisableAll": true }
       }
     },
     {
@@ -109,11 +109,11 @@
       "Type": "Simple",
       "$Comment": "Recovery - Idle recovery, movement locked",
       "RunTime": 0.7,
-      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Battleaxe",
         "ItemAnimationId": "Idle",
-        "ClearAnimationOnFinish": true
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
       }
     }
   ]

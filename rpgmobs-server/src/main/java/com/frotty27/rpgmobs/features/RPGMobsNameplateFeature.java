@@ -41,6 +41,8 @@ public final class RPGMobsNameplateFeature implements IRPGMobsFeature {
         String role = (roleName != null && !roleName.isBlank()) ? roleName : "";
         plugin.getNameplateService().applyOrUpdateNameplate(config, resolved, npcRef, entityStore,
                                                             commandBuffer, role, tierComponent.tierIndex);
+        plugin.getNameplateService().updateDebugSegment(plugin, npcRef, entityStore,
+                                                         commandBuffer, config.debugConfig.isDebugModeEnabled);
     }
 
     @Override

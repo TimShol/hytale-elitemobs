@@ -6,7 +6,6 @@
       "Type": "Simple",
       "$Comment": "Wind-up  - 1.6s dual stab charge with Daggers_Signature trail on weapon",
       "RunTime": 0.7,
-      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Daggers",
         "ItemAnimationId": "PounceStabCharging",
@@ -18,7 +17,8 @@
             "TargetNodeName": "Origin_Projectile",
             "PositionOffset": { "Y": -0.2 }
           }
-        ]
+        ],
+        "MovementEffects": { "DisableAll": true }
       }
     },
     {
@@ -114,11 +114,11 @@
       "Type": "Simple",
       "$Comment": "Recovery  - Idle recovery, movement locked",
       "RunTime": 0.25,
-      "MovementEffects": { "DisableAll": true },
       "Effects": {
         "ItemPlayerAnimationsId": "Daggers",
         "ItemAnimationId": "Idle",
-        "ClearAnimationOnFinish": true
+        "ClearAnimationOnFinish": true,
+        "MovementEffects": { "DisableAll": true }
       }
     }
   ]

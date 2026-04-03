@@ -2,13 +2,22 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
-## [4.260326.6] - 2026-04-03
+## [4.260326.7] - 2026-04-03
 
 ### Fixed
 
-- Per-world family tier prefixes being erased when adding or saving new entries -- the overlay UI was filtering out entries that matched the resolved config (which included the overlay itself), causing all existing families to be silently dropped on save
-- Per-world family tier prefixes using merge-with-base instead of full replacement -- overlay families are now treated as a complete replacement list, matching the intended overlay semantics. The UI shows only what is configured in the overlay (or base defaults when no overlay exists)
-- Deleting a default family from a per-world overlay not persisting -- removed families reappeared after save because the resolver merged base defaults back in. The overlay now stores the full list, so deletions are implicit
+- 1486 SEVERE asset errors on startup from generated role variants referencing non-existent drop lists (e.g. `Drop_Skeleton_Fighter_Wander`) - the DropList parameter and compute were removed from variant generation since vanilla drops are already handled at runtime via `originalDropListId`. This also fixes role variants that previously failed to load entirely due to the missing asset reference
+- 180 asset warnings from MultiSlashMedium interaction templates having `MovementEffects` at the wrong nesting level - moved inside the `Effects` object to match MultiSlashShort/Long templates
+- Per-world family tier prefixes being erased when adding or saving new entries - the overlay UI was filtering out entries that matched the resolved config (which included the overlay itself), causing all existing families to be silently dropped on save
+- Per-world family tier prefixes using merge-with-base instead of full replacement - overlay families are now treated as a complete replacement list, matching the intended overlay semantics. The UI shows only what is configured in the overlay (or base defaults when no overlay exists)
+- Deleting a default family from a per-world overlay not persisting - removed families reappeared after save because the resolver merged base defaults back in. The overlay now stores the full list, so deletions are implicit
+- Debug nameplates not being removed from entities when debug mode is toggled off - reconciliation now explicitly clears the debug segment on all entities when debug mode changes
+- 9 asset warnings from Tactical T5 FlankPosition CAE configs using unrecognized `FlankingAngle` and `Timeout` keys - removed from generation since the Hytale engine does not support them
+- Empty spawn marker template warning logging at WARN level - downgraded to debug since it is expected behavior when no explicit summon marker entries are configured
+
+### Removed
+
+- Flanking Angle field from Combat Styles config and Admin UI - the Hytale engine does not recognize this property on CombatActionOption
 
 ---
 
@@ -54,11 +63,15 @@ All notable changes to RPGMobs will be documented in this file.
 
 - NameplateBuilder dependency now requires version >= 4.260326.2 (breaking API changes)
 
+---
+
 ## [4.260326.3] - 2026-03-30
 
 ### Fixed
 
 - Crash when equipping NPCs with zero-capacity hotbar  -  NPCs from other mods (e.g. dialog NPCs) could match a mob rule but have no inventory slots, causing "Slot is outside capacity" crash
+
+---
 
 ## [4.260326.2] - 2026-03-30
 
@@ -66,12 +79,16 @@ All notable changes to RPGMobs will be documented in this file.
 
 - Crash from cross-world entity refs in PlayerAttackTracker  -  dodge roll and parry evaluation iterated refs from all worlds, causing "Incorrect store for entity reference" on multi-world servers
 
+---
+
 ## [4.260326.1] - 2026-03-30
 
 ### Fixed
 
 - Death message showing "Template" instead of the NPC name after CAE role change  -  added NameTranslationKey to generated role variants
 - Per-weapon basic attack sounds using sword sound for all weapons  -  generic swing interaction was hardcoded to SFX_Sword_T1_Swing
+
+---
 
 ## [4.260326.0] - 2026-03-28
 
@@ -140,11 +157,15 @@ All notable changes to RPGMobs will be documented in this file.
 - Ability weapon restrictions being silently ignored
 - Crash when switching between world instances
 
+---
+
 ## [3.260219.1] - 2026-03-05
 
 ### Fixed
 
 - Abilities (Charge Leap, Heal Leap, Undead Summon) not working in worlds that have a saved overlay  -  the weapon category tree was not carried over when merging per-world config overlays, causing the weapon gate to reject all weapons
+
+---
 
 ## [2.0.2] - 2026-02-18
 
@@ -159,6 +180,8 @@ All notable changes to RPGMobs will be documented in this file.
 
 - Summoned minions no longer survive when their summoner is killed after re-log or server restart  -  chain death now properly kills minions instead of applying an unreliable health modifier
 
+---
+
 ## [2.0.1] - 2026-02-18
 
 ### Removed
@@ -169,11 +192,15 @@ All notable changes to RPGMobs will be documented in this file.
 
 - Asset generation (could be) failing on startup due to `${...}` placeholders being split across multiple lines in all template files, causing unresolved placeholders in the generated JSON
 
+---
+
 ## [2.0.0] - 2026-02-18
 
 ### Changed
 
 - Rebranded to RPGMobs.
+
+---
 
 ## [1.1.1] - 2026-02-18
 
@@ -181,6 +208,8 @@ All notable changes to RPGMobs will be documented in this file.
 
 - Removed the combat overlay text as this can clash with other mods and is an addition that does not really belong to
   RPGMobs.
+
+---
 
 ## [1.1.0] - 2026-02-17
 
@@ -221,6 +250,8 @@ All notable changes to RPGMobs will be documented in this file.
 - Elites no longer briefly spin during the heal ability animation
 - Elites no longer attempt abilities without a valid target
 - Reconciliation no longer cascades when multiple elites spawn in quick succession
+
+---
 
 ## [1.0.0] - 2026-01-25
 

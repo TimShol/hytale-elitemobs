@@ -252,21 +252,13 @@ public final class CaeConfigGenerator {
             parameters.put("MaxSpeed", maxSpeedParam);
         }
 
-        var dropListParam = new LinkedHashMap<String, Object>();
-        dropListParam.put("Value", "Drop_" + mobRuleKey);
-        parameters.put("DropList", dropListParam);
-
         var nameTranslationKeyCompute = new LinkedHashMap<String, Object>();
         nameTranslationKeyCompute.put("Compute", "NameTranslationKey");
-
-        var dropListCompute = new LinkedHashMap<String, Object>();
-        dropListCompute.put("Compute", "DropList");
 
         var modify = new LinkedHashMap<String, Object>();
         modify.put("UseCombatActionEvaluator", true);
         modify.put("_CombatConfig", caeConfigName);
         modify.put("NameTranslationKey", nameTranslationKeyCompute);
-        modify.put("DropList", dropListCompute);
 
         var root = new LinkedHashMap<String, Object>();
         root.put("Type", "Variant");
@@ -506,14 +498,12 @@ public final class CaeConfigGenerator {
         action.put("Type", "Ability");
         action.put("Target", "Hostile");
         action.put("Positioning", "Flank");
-        action.put("FlankingAngle", faction.flankingAngle);
         action.put("PositionFirst", true);
         action.put("WeaponSlot", 0);
         action.put("Ability", attackRoot);
         action.put("SubState", "Default");
         action.put("AttackDistanceRange", List.of(1.5, 3.0));
         action.put("PostExecuteDistanceRange", List.of(2.0, 4.0));
-        action.put("Timeout", 5);
         action.put("FailureTimeout", 3);
         action.put("WeightCoefficient", 1.3);
 

@@ -1186,7 +1186,6 @@ public final class RPGMobsConfig {
         @Default public double reEngageDistanceMax = 3.0;
         @Default public double groupObserveDistanceMin = 8.0;
         @Default public double groupObserveDistanceMax = 12.0;
-        @Default public double flankingAngle = 90.0;
 
         public FactionStyle() {}
 
@@ -1197,7 +1196,7 @@ public final class RPGMobsConfig {
                             double strMin, double strMax, boolean observe, boolean flank, String group,
                             double guardRandMin, double guardRandMax, double boRandMin, double boRandMax,
                             double retCd, double reEngDistMin, double reEngDistMax,
-                            double obsDistMin, double obsDistMax, double flankAngle) {
+                            double obsDistMin, double obsDistMax) {
             this.attackCooldownMin = atkMin; this.attackCooldownMax = atkMax;
             this.shieldChargeFor = shieldCharge; this.shieldSwitchPoint = shieldSwitch;
             this.backOffDistanceMin = boMin; this.backOffDistanceMax = boMax; this.backOffSwitchPoint = boSwitch;
@@ -1211,7 +1210,6 @@ public final class RPGMobsConfig {
             this.retreatCooldown = retCd;
             this.reEngageDistanceMin = reEngDistMin; this.reEngageDistanceMax = reEngDistMax;
             this.groupObserveDistanceMin = obsDistMin; this.groupObserveDistanceMax = obsDistMax;
-            this.flankingAngle = flankAngle;
         }
     }
 
@@ -1289,13 +1287,13 @@ public final class RPGMobsConfig {
     private static Map<String, FactionStyle> defaultFactionStyles() {
         Map<String, FactionStyle> m = new LinkedHashMap<>();
         m.put("Disciplined", new FactionStyle(1.0, 2.0, 1.5, 0.5, 5, 8, 8, 10, 15, 5.0, 0, 12, 0.4, 0.6, 1.5, 3.0, true, false, "Skeleton",
-                0.4, 1.0, 0.6, 1.0, 15.0, 2.0, 3.0, 8.0, 12.0, 45.0));
+                0.4, 1.0, 0.6, 1.0, 15.0, 2.0, 3.0, 8.0, 12.0));
         m.put("Berserker",   new FactionStyle(0.5, 0.8, 2.0, 3.0, 3, 5, 14, 6, 8, 1.5, 0, 5, 0.6, 0.9, 0.8, 1.5, false, false, "Trork",
-                0.7, 1.0, 0.8, 1.0, 25.0, 1.5, 2.5, 5.0, 8.0, 30.0));
+                0.7, 1.0, 0.8, 1.0, 25.0, 1.5, 2.5, 5.0, 8.0));
         m.put("Tactical",    new FactionStyle(0.8, 1.2, 1.0, 0.3, 6, 10, 6, 12, 18, 8.0, 0, 14, 0.3, 0.5, 1.2, 2.5, true, true, "Outlander",
-                0.3, 0.9, 0.4, 0.8, 10.0, 3.0, 5.0, 10.0, 16.0, 90.0));
+                0.3, 0.9, 0.4, 0.8, 10.0, 3.0, 5.0, 10.0, 16.0));
         m.put("Chaotic",     new FactionStyle(0.5, 2.0, 0.8, 1.0, 3, 12, 5, 8, 20, 4.0, 0, 8, 0.2, 0.9, 0.5, 2.5, false, false, "Goblin",
-                0.6, 1.0, 0.3, 1.0, 12.0, 2.0, 6.0, 6.0, 14.0, 120.0));
+                0.6, 1.0, 0.3, 1.0, 12.0, 2.0, 6.0, 6.0, 14.0));
         return m;
     }
 
