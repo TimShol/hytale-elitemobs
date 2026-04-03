@@ -8,9 +8,6 @@ All notable changes to RPGMobs will be documented in this file.
 
 - 1486 SEVERE asset errors on startup from generated role variants referencing non-existent drop lists (e.g. `Drop_Skeleton_Fighter_Wander`) - the DropList parameter and compute were removed from variant generation since vanilla drops are already handled at runtime via `originalDropListId`. This also fixes role variants that previously failed to load entirely due to the missing asset reference
 - 180 asset warnings from MultiSlashMedium interaction templates having `MovementEffects` at the wrong nesting level - moved inside the `Effects` object to match MultiSlashShort/Long templates
-- Per-world family tier prefixes being erased when adding or saving new entries - the overlay UI was filtering out entries that matched the resolved config (which included the overlay itself), causing all existing families to be silently dropped on save
-- Per-world family tier prefixes using merge-with-base instead of full replacement - overlay families are now treated as a complete replacement list, matching the intended overlay semantics. The UI shows only what is configured in the overlay (or base defaults when no overlay exists)
-- Deleting a default family from a per-world overlay not persisting - removed families reappeared after save because the resolver merged base defaults back in. The overlay now stores the full list, so deletions are implicit
 - Debug nameplates not being removed from entities when debug mode is toggled off - reconciliation now explicitly clears the debug segment on all entities when debug mode changes
 - 9 asset warnings from Tactical T5 FlankPosition CAE configs using unrecognized `FlankingAngle` and `Timeout` keys - removed from generation since the Hytale engine does not support them
 - Empty spawn marker template warning logging at WARN level - downgraded to debug since it is expected behavior when no explicit summon marker entries are configured
@@ -18,6 +15,16 @@ All notable changes to RPGMobs will be documented in this file.
 ### Removed
 
 - Flanking Angle field from Combat Styles config and Admin UI - the Hytale engine does not recognize this property on CombatActionOption
+
+---
+
+## [4.260326.6] - 2026-04-03
+
+### Fixed
+
+- Per-world family tier prefixes being erased when adding or saving new entries -- the overlay UI was filtering out entries that matched the resolved config (which included the overlay itself), causing all existing families to be silently dropped on save
+- Per-world family tier prefixes using merge-with-base instead of full replacement -- overlay families are now treated as a complete replacement list, matching the intended overlay semantics. The UI shows only what is configured in the overlay (or base defaults when no overlay exists)
+- Deleting a default family from a per-world overlay not persisting -- removed families reappeared after save because the resolver merged base defaults back in. The overlay now stores the full list, so deletions are implicit
 
 ---
 
