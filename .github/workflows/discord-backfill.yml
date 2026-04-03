@@ -44,9 +44,13 @@ jobs:
 
           format_for_discord() {
             local download_url="$1"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
             sed -E 's/^### (.+)/**\1**/g'
             echo ""
             echo "**[Download the latest version here](${download_url})**"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           }
 
           post_discord() {
@@ -103,7 +107,7 @@ jobs:
           SUBPROJECT="${{ inputs.subproject }}"
 
           if [ "$SUBPROJECT" = "rpgmobs-server" ] || [ "$SUBPROJECT" = "both" ]; then
-            backfill_changelog "rpgmobs-server/CHANGELOG.md" "$WEBHOOK_SERVER" "RPGMobs Server" 5814783 "https://www.curseforge.com/hytale/mods/rpgmobs"
+            backfill_changelog "rpgmobs-server/CHANGELOG.md" "$WEBHOOK_SERVER" "RPGMobs" 5814783 "https://www.curseforge.com/hytale/mods/rpgmobs"
           fi
 
           if [ "$SUBPROJECT" = "rpgmobs-api" ] || [ "$SUBPROJECT" = "both" ]; then
