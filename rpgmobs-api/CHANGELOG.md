@@ -14,6 +14,8 @@ All notable changes to RPGMobs API will be documented in this file.
   - 8 typed failure reasons: `NOT_INITIALIZED`, `CONFIG_NOT_LOADED`, `NPC_SPAWN_FAILED`, `NO_MOB_RULE`, `MOB_RULE_DISABLED`, `RPGMOBS_DISABLED_IN_WORLD`, `EVENT_CANCELLED`, `TIER_APPLY_FAILED`
   - All methods must be called on the world thread  -  use `world.execute()` from other threads
 
+---
+
 ## [1.2.0] - 2026-03-28
 
 ### Added
@@ -27,6 +29,8 @@ All notable changes to RPGMobs API will be documented in this file.
 
 - `RPGMobsScalingAppliedEvent` converted from a record to a proper class extending `RPGMobsEvent`  -  now includes `World`, `entityRef`, `tierIndex`, and `roleName` consistent with all other events
 - Removed stale `war_cry` reference from `RPGMobsAbilityStartedEvent` Javadoc
+
+---
 
 ## [1.1.0] - 2026-03-16
 
@@ -49,6 +53,8 @@ All notable changes to RPGMobs API will be documented in this file.
 - `IRPGMobsQueryAPI.getSupportedTriggerTypes()`  -  returned a hardcoded set that was never kept in sync with actual trigger sources
 - `IRPGMobsQueryAPI.isTriggerTypeSupported(String)`  -  convenience wrapper around the removed `getSupportedTriggerTypes()`
 
+---
+
 ## [1.0.1] - 2026-02-18
 
 ### Added
@@ -60,6 +66,8 @@ All notable changes to RPGMobs API will be documented in this file.
 - Death events now fire for summoned minions (with `isMinion()` returning `true`)
 
 ## [1.0.0] - 2026-02-18
+
+---
 
 ### Added
 
