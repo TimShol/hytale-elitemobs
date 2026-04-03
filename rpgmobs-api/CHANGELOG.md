@@ -65,9 +65,9 @@ All notable changes to RPGMobs API will be documented in this file.
 - `IRPGMobsQueryAPI.isMinion(Ref<EntityStore>)`  -  checks whether an entity is a summoned minion
 - Death events now fire for summoned minions (with `isMinion()` returning `true`)
 
-## [1.0.0] - 2026-02-18
-
 ---
+
+## [1.0.0] - 2026-02-18
 
 ### Added
 
