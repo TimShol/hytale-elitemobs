@@ -2269,21 +2269,21 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
     private void resetFamilyRowKeys(@Nullable ConfigOverlay overlay, @Nullable ResolvedConfig res) {
         activeFamilyRowKeys.clear();
 
-        Map<String, List<String>> merged = new LinkedHashMap<>();
-        if (res != null && res.tierPrefixesByFamily != null) {
-            merged.putAll(res.tierPrefixesByFamily);
-        }
         if (overlay != null && overlay.tierPrefixesByFamily != null) {
-            merged.putAll(overlay.tierPrefixesByFamily);
+            activeFamilyRowKeys.addAll(overlay.tierPrefixesByFamily.keySet());
+        } else if (res != null && res.tierPrefixesByFamily != null) {
+            activeFamilyRowKeys.addAll(res.tierPrefixesByFamily.keySet());
         }
-        activeFamilyRowKeys.addAll(merged.keySet());
     }
 
     private void populateFamilyRows(UICommandBuilder c, ConfigOverlay overlay, ResolvedConfig res) {
 
         Map<String, List<String>> effectiveFamilies = new LinkedHashMap<>();
-        if (res.tierPrefixesByFamily != null) effectiveFamilies.putAll(res.tierPrefixesByFamily);
-        if (overlay.tierPrefixesByFamily != null) effectiveFamilies.putAll(overlay.tierPrefixesByFamily);
+        if (overlay.tierPrefixesByFamily != null) {
+            effectiveFamilies.putAll(overlay.tierPrefixesByFamily);
+        } else if (res.tierPrefixesByFamily != null) {
+            effectiveFamilies.putAll(res.tierPrefixesByFamily);
+        }
 
         int numRows = Math.min(activeFamilyRowKeys.size(), AdminUIData.MAX_FAMILIES);
         for (int i = 0; i < AdminUIData.MAX_FAMILIES; i++) {
@@ -2416,11 +2416,10 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
         if (!anyNonNull) return;
 
         Map<String, List<String>> effectiveFamilies = new LinkedHashMap<>();
-        if (resolvedForSelected != null && resolvedForSelected.tierPrefixesByFamily != null) {
-            effectiveFamilies.putAll(resolvedForSelected.tierPrefixesByFamily);
-        }
         if (editOverlay.tierPrefixesByFamily != null) {
             effectiveFamilies.putAll(editOverlay.tierPrefixesByFamily);
+        } else if (resolvedForSelected != null && resolvedForSelected.tierPrefixesByFamily != null) {
+            effectiveFamilies.putAll(resolvedForSelected.tierPrefixesByFamily);
         }
 
         if (activeFamilyRowKeys.isEmpty()) return;
@@ -2449,10 +2448,6 @@ public final class RPGMobsAdminPage extends InteractiveCustomUIPage<AdminUIData>
 
         updated.entrySet().removeIf(e -> e.getValue().stream().allMatch(s -> s == null || s.isBlank()));
 
-        if (resolvedForSelected != null && resolvedForSelected.tierPrefixesByFamily != null) {
-            Map<String, List<String>> base = resolvedForSelected.tierPrefixesByFamily;
-            updated.entrySet().removeIf(e -> e.getValue().equals(base.get(e.getKey())));
-        }
         editOverlay.tierPrefixesByFamily = updated.isEmpty() ? null : updated;
     }
 

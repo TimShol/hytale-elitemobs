@@ -2,6 +2,16 @@
 
 All notable changes to RPGMobs will be documented in this file.
 
+## [4.260326.6] - 2026-04-03
+
+### Fixed
+
+- Per-world family tier prefixes being erased when adding or saving new entries -- the overlay UI was filtering out entries that matched the resolved config (which included the overlay itself), causing all existing families to be silently dropped on save
+- Per-world family tier prefixes using merge-with-base instead of full replacement -- overlay families are now treated as a complete replacement list, matching the intended overlay semantics. The UI shows only what is configured in the overlay (or base defaults when no overlay exists)
+- Deleting a default family from a per-world overlay not persisting -- removed families reappeared after save because the resolver merged base defaults back in. The overlay now stores the full list, so deletions are implicit
+
+---
+
 ## [4.260326.5] - 2026-04-02
 
 ### Fixed
