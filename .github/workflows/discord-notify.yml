@@ -40,6 +40,7 @@ jobs:
           format_for_discord() {
             local download_url="$1"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
             sed -E 's/^### (.+)/**\1**/g'
             echo ""
             echo "**[Download the latest version here](${download_url})**"
@@ -51,6 +52,11 @@ jobs:
           extract_version() {
             local file="$1"
             grep -m1 -oP '(?<=^## \[)[^\]]+' "$file" || echo "unknown"
+          }
+
+          extract_date() {
+            local file="$1"
+            grep -m1 -oP '\d{4}-\d{2}-\d{2}' "$file" || echo ""
           }
 
           post_discord() {
@@ -76,9 +82,10 @@ jobs:
           if echo "$CHANGED_FILES" | grep -q '^rpgmobs-server/CHANGELOG.md$'; then
             if [ -n "$WEBHOOK_SERVER" ]; then
               VERSION=$(extract_version "rpgmobs-server/CHANGELOG.md")
+              DATE=$(extract_date "rpgmobs-server/CHANGELOG.md")
               BODY=$(extract_latest_entry "rpgmobs-server/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/rpgmobs")
               if [ -n "$BODY" ]; then
-                post_discord "$WEBHOOK_SERVER" "RPGMobs v${VERSION}" "$BODY" 5814783
+                post_discord "$WEBHOOK_SERVER" "RPGMobs v${VERSION} - ${DATE}" "$BODY" 5814783
                 echo "Posted RPGMobs v${VERSION} to Discord"
               fi
             fi
@@ -87,9 +94,10 @@ jobs:
           if echo "$CHANGED_FILES" | grep -q '^rpgmobs-api/CHANGELOG.md$'; then
             if [ -n "$WEBHOOK_API" ]; then
               VERSION=$(extract_version "rpgmobs-api/CHANGELOG.md")
+              DATE=$(extract_date "rpgmobs-api/CHANGELOG.md")
               BODY=$(extract_latest_entry "rpgmobs-api/CHANGELOG.md" | format_for_discord "https://www.curseforge.com/hytale/mods/rpgmobs-api")
               if [ -n "$BODY" ]; then
-                post_discord "$WEBHOOK_API" "RPGMobs API v${VERSION}" "$BODY" 5814783
+                post_discord "$WEBHOOK_API" "RPGMobs API v${VERSION} - ${DATE}" "$BODY" 5814783
                 echo "Posted RPGMobs API v${VERSION} to Discord"
               fi
             fi
